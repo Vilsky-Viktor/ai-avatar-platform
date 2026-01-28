@@ -22,7 +22,7 @@ function App() {
       <header className="navbar bg-base-100 shadow-md px-4">
         <div className="flex-1">
           <a className="btn btn-ghost text-xl normal-case font-bold tracking-tight">
-            identix.ai
+            loom24.ai
           </a>
         </div>
 
