@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import {
-  test,
-} from '../controllers/testController';
+  syncUser,
+} from '../controllers/userController';
 
 const router = Router();
 
-router.get('/', test);
+router.post('/sync', syncUser);
 
 export default router;

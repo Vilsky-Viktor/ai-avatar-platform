@@ -3,13 +3,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA954z7Q7oeAq4jLh9nSpw4H3SOXbhFiTA",
-  authDomain: "loom24-mvp.firebaseapp.com",
-  projectId: "loom24-mvp",
-  storageBucket: "loom24-mvp.firebasestorage.app",
-  messagingSenderId: "122333756015",
-  appId: "1:122333756015:web:a62af8a58c5d5f2a382b9a",
-  measurementId: "G-QLWH3VW8DM"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Prevent multiple initializations during Hot Module Replacement (HMR)

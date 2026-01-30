@@ -1,25 +1,20 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { auth } from '../firebase';
-
-type Theme = 'light' | 'dark';
-
-type User = {
-  id: string;
-  email: string;
-}
+import { type User } from '../types/user';
+import { type Theme, ThemeColor } from '../types/settings';
 
 interface AppContextType {
   theme: Theme;
   setTheme: (t: Theme) => void;
-  user: User;
+  user: User | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
-  const [theme, setTheme] = useState<Theme>((localStorage.getItem('theme') as Theme) || 'light');
-  const [user, setUser] = useState<any | null>(null);
+  const [theme, setTheme] = useState<Theme>((localStorage.getItem('theme') as Theme) || ThemeColor.Light);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -29,10 +24,14 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
-        setUser({
+        console.log(firebaseUser.getIdToken())
+        const userInfo: User = {
           id: firebaseUser.uid,
           email: firebaseUser.email!,
-        });
+          img: firebaseUser.photoURL,
+        }
+
+        setUser(userInfo);
       } else {
         setUser(null);
       }
