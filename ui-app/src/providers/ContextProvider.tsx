@@ -2,11 +2,13 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { auth } from '../firebase';
 import { type User } from '../types/user';
 import { type Theme, ThemeColor } from '../types/settings';
+import Loading from '../components/Loading';
 
 interface AppContextType {
   theme: Theme;
   setTheme: (t: Theme) => void;
   user: User | null;
+  loading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -24,12 +26,12 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
-        console.log(firebaseUser.getIdToken())
         const userInfo: User = {
           id: firebaseUser.uid,
-          email: firebaseUser.email!,
+          name: firebaseUser.displayName!,
+          email: firebaseUser.email ?? firebaseUser.providerData?.find(p => p.email)?.email ?? '',
           img: firebaseUser.photoURL,
-        }
+        };
 
         setUser(userInfo);
       } else {
@@ -42,8 +44,8 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AppContext.Provider value={{ theme, setTheme, user }}>
-      {!loading && children}
+    <AppContext.Provider value={{ theme, setTheme, user, loading }}>
+      {loading ? <Loading/> : children}
     </AppContext.Provider>
   );
 };

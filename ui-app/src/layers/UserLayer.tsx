@@ -1,4 +1,11 @@
+import { Routes, Route } from 'react-router-dom';
 import Header from '../components/Header'
+import AvatarsPage from '../pages/Avatars';
+import CreateIdPhotoPage from '../pages/createAvatar/createIdPhoto';
+import CreatePhotoSetPage from '../pages/createAvatar/createPhotoSet';
+import AssignVoicePage from '../pages/createAvatar/assignVoice';
+import AvatarTrainingPage from '../pages/createAvatar/avatarTraining';
+import GeneralPage from '../pages/createAvatar/general';
 
 function UserLayer() {
     return (
@@ -6,15 +13,14 @@ function UserLayer() {
             <Header/>
             <main className="flex-grow p-6">
                 <div className="max-w-7xl mx-auto w-full">
-                    <div className="card bg-base-100 shadow-lg border border-base-300">
-                        <div className="card-body">
-                        <h2 className="card-title text-2xl">Main Content Area</h2>
-                        <p className="text-base-content/70">
-                            Test
-                        </p>
-                        
-                        </div>
-                    </div>
+                    <Routes>
+                        <Route path="/" element={<AvatarsPage />} />
+                        <Route path="/avatar/create/general" element={<GeneralPage />} />
+                        <Route path="/avatar/create/id-photo" element={<CreateIdPhotoPage />} />
+                        <Route path="/avatar/create/photo-set" element={<CreatePhotoSetPage />} />
+                        <Route path="/avatar/create/assign-voice" element={<AssignVoicePage />} />
+                        <Route path="/avatar/create/training" element={<AvatarTrainingPage />} />
+                    </Routes>
                 </div>
             </main>
         </div>

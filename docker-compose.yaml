@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  ui-app:
+    build:
+      context: ./ui-app
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ui-app:/app
+      - /app/node_modules
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - USER_SERVICE_URL=http://user-service:3100
+      - AVATAR_SERVICE_URL=http://avatar-service:3200
+      - JOB_SERVICE_URL=http://job-manager-service:3300
+
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./user-service:/app
+      - /app/node_modules
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    environment:
+      - PORT=3100
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - PROJECT_ID=loom24-mvp
+      - DB_NAME=ai-avatar-db
+      - COLLECTION_NAME=users
+
+  avatar-service:
+    build:
+      context: ./avatar-service
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./avatar-service:/app
+      - /app/node_modules
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    environment:
+      - PORT=3200
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - PROJECT_ID=loom24-mvp
+      - DB_NAME=ai-avatar-db
+      - USERS_COLLECTION_NAME=users
+      - AVATARS_COLLECTION_NAME=avatars
+
+  job-manager-service:
+    build:
+      context: ./job-manager-service
+    ports:
+      - "3300:3300"
+    volumes:
+      - ./job-manager-service:/app
+      - /app/node_modules
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    environment:
+      - PORT=3300
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - PROJECT_ID=loom24-mvp
+      - DB_NAME=ai-avatar-db
+      - USERS_COLLECTION_NAME=users
+      - JOBS_COLLECTION_NAME=jobs
+
+  

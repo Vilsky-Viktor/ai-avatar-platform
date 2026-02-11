@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { auth } from '../firebase';
 import { type User } from '../types/user';
+import type { User as FirebaseUser } from "firebase/auth";
+import type { Avatar } from '../types/avatar';
+import type { Job, IdPhotoJob } from '../types/job';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
 
@@ -13,12 +16,64 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-export const createUser = async (user: User) => {
+export const syncUser = async (user: FirebaseUser): Promise<User> => {
   try {
-    const res = await apiClient.post('/users/create', user);
-    return res.data; 
+    const userInfo: User = {
+      id: user.uid,
+      name: user.displayName!,
+      email: user.email ?? user.providerData?.find(p => p.email)?.email ?? '',
+      img: user.photoURL,
+    };
+
+    const res = await apiClient.post('/users/sync', userInfo);
+    
+    return res.data as User; 
   } catch (error) {
     console.error("Error creating user:", error);
     throw error;
   }
 };
+
+export const getAllUserAvatars = async (): Promise<Avatar[]> => {
+  try {
+    const res = await apiClient.get('/avatars/get-all');
+
+    return res.data as Avatar[];
+  } catch (error) {
+    console.error("Error creating avatar:", error);
+    throw error;
+  }
+}
+
+export const createAvatar = async (avatar: Avatar): Promise<Avatar> => {
+  try {
+    const res = await apiClient.post('/avatars/create', avatar);
+
+    return res.data as Avatar;
+  } catch (error) {
+    console.error("Error creating avatar:", error);
+    throw error;
+  }
+}
+
+export const deleteAvatarById = async (avatarId: string): Promise<Avatar> => {
+  try {
+    const res = await apiClient.delete(`/avatars/delete-by-id/${avatarId}`);
+
+    return res.data;
+  } catch (error) {
+    console.error("Error creating avatar:", error);
+    throw error;
+  }
+}
+
+export const createIdPhotoJob = async (job: IdPhotoJob) => {
+  try {
+    const res = await apiClient.post('/jobs/create-id-photo', job);
+
+    return res.data as Job;
+  } catch (error) {
+    console.error("Error creating ID photo job:", error);
+    throw error;
+  }
+}

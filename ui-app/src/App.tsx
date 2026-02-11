@@ -4,20 +4,23 @@ import UserLayer from './layers/UserLayer';
 import AuthLayer from './layers/AuthLayer';
 
 const RootRouter = () => {
-  const { user } = useApp();
+  const { user, loading } = useApp();
+
+  if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-base-100">...</div>;
 
   return (
     <Routes>
       {user ? (
-        <Route path="/*" element={<UserLayer />} />
+        <>
+          <Route path="/auth/*" element={<Navigate to="/" replace />} />
+          <Route path="/*" element={<UserLayer />} />
+        </>
       ) : (
-        <Route path="/auth/*" element={<AuthLayer />} />
+        <>
+          <Route path="/auth/*" element={<AuthLayer />} />
+          <Route path="*" element={<Navigate to="/auth/login" replace />} />
+        </>
       )}
-      
-      <Route 
-        path="*" 
-        element={<Navigate to={user ? "/" : "/auth/login"} replace />} 
-      />
     </Routes>
   );
 };
