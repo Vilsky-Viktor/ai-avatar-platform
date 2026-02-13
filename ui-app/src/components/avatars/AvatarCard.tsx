@@ -1,120 +1,174 @@
-import { Image, Video, Calendar } from 'lucide-react';
+import { Image, Video, Calendar, MoreVertical, Trash2 } from 'lucide-react';
 import { type Avatar, AvatarStatus } from '../../types/avatar';
 import { useApp } from '../../providers/ContextProvider';
 import { ThemeColor } from '../../types/settings';
 import { AvatarGender } from '../../types/avatar';
 import type { FirestoreTimestamp } from '../../types/firestore';
+import { useState } from 'react';
 
 type PropType = {
     avatar: Avatar;
+    onDelete: (id: string) => void;
 }
 
-const AvatarCard = ({ avatar }: PropType) => {
+const AvatarCard = ({ avatar, onDelete }: PropType) => {
   const { theme } = useApp();
+  const [loadingDelete, setLoadingDelete] = useState(false);
+
+  const getStatusLabel = () => {
+    switch(avatar.status) {
+        case AvatarStatus.error: return 'Failed';
+        case AvatarStatus.trained: return 'Ready';
+        default: return 'Processing';
+    }
+  };
+
+  const getStatusColor = () => {
+    if (avatar.status === AvatarStatus.error) return 'text-error';
+    if (avatar.status === AvatarStatus.trained) return 'text-success';
+    return 'text-warning';
+  };
 
   const getStatus = () => {
-    if (avatar.status === AvatarStatus.error) {
-      return 'status-error';
-    } else if (avatar.status === AvatarStatus.trained) {
-      return 'status-success';
-    } else {
-      return 'status-warning';
-    }
+    if (avatar.status === AvatarStatus.error) return 'status-error';
+    if (avatar.status === AvatarStatus.trained) return 'status-success';
+    return 'status-warning';
   }
 
   const getAvatarImage = () => {
-    if (avatar.image) {
-      return avatar.image;
+    if (avatar.image) return avatar.image;
+    
+    const isDark = theme === ThemeColor.Dark;
+    if (avatar.gender === AvatarGender.male) {
+      return isDark ? '/avatar-male-2.png' : '/avatar-male.png';
     }
-
-    if (theme === ThemeColor.Dark && avatar.gender === AvatarGender.male) {
-      return '/avatar-male-2.png'
-    } else if (theme === ThemeColor.Dark && avatar.gender === AvatarGender.female) {
-      return '/avatar-female-2.png'
-    } else if (theme === ThemeColor.Light && avatar.gender === AvatarGender.male) {
-      return '/avatar-male.png'
-    } else {
-      return '/avatar-female.png' 
-    }
+    return isDark ? '/avatar-female-2.png' : '/avatar-female.png';
   }
 
   const getRelativeAge = (dateInput: FirestoreTimestamp): string => {
     if (!dateInput) return 'n/a';
-
     const date = new Date(dateInput._seconds * 1000);
-
     const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    
-    const diffInSeconds = Math.floor(diffInMs / 1000);
-    const diffInDays = Math.floor(diffInSeconds / 86400);
-    const diffInMonths = Math.floor(diffInDays / 30.44);
-    const diffInYears = Math.floor(diffInDays / 365.25);
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
 
-    if (diffInDays < 30) {
-      return `${Math.max(0, diffInDays)}d`;
-    } else if (diffInMonths < 12) {
-      return `${diffInMonths}m`;
-    } else {
-      return `${diffInYears}y`;
-    }
+    if (diffInDays < 30) return `${Math.max(0, diffInDays)}d`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30.44)}m`;
+    return `${Math.floor(diffInDays / 365.25)}y`;
   };
 
+  const deleteAvatar = async () => {
+    setLoadingDelete(true);
+    await onDelete(avatar.id!);
+    setLoadingDelete(false);
+  }
+
   return (
-    <button className="
-      group card bg-base-100 w-full h-[450px] shadow-md transition-all duration-300 
-      cursor-pointer overflow-hidden relative rounded-2xl text-left
-      active:scale-[0.98] hover:bg-base-200 focus:outline-none
-    ">
+    <div className="group card bg-base-100 w-full h-[450px] shadow-md transition-all duration-300 relative rounded-2xl overflow-hidden active:scale-[0.99] hover:bg-base-200">
       
-      <div className="
-          absolute inset-0 z-50 pointer-events-none 
-          rounded-2xl border-2 border-transparent 
-          group-hover:border-primary/50 transition-colors duration-300
-      " />
-
-      <div className="absolute inset-0 z-10 pointer-events-none bg-[radial-gradient(circle_at_50%_120%,rgba(var(--p),0.15),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="absolute inset-0 z-10 opacity-[0.03] pointer-events-none" 
-          style={{ backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
-
-      <figure className="h-[88%] w-full overflow-hidden bg-base-300 relative">
-        <img 
-          src={getAvatarImage()}
-          alt={name} 
-          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out" 
-        />
-        
-        <div className="absolute inset-0 bg-gradient-to-t from-base-100 group-hover:from-base-200 via-base-100/10 to-transparent z-20 transition-colors duration-300" />
-        
-        <div className="absolute bottom-2 left-6 right-6 z-30">
-          <h2 className="text-xl font-medium uppercase tracking-[0.2em] text-base-content drop-shadow-md truncate">
-            {avatar.name}
-            <div className={`status mb-1 ml-2 opacity-50 ${getStatus()}`}></div>
-          </h2>
-        </div>
-      </figure>
-
-      <div className="h-[12%] flex items-center px-7 relative z-20">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-2">
-            <Image size={20} strokeWidth={1.5} className="text-primary" />
-            <span className="text-sm font-semibold">{avatar.imageCount}</span>
-          </div>
+      {/* 3-DOT MENU - Absolute positioned top right */}
+      <div className="absolute top-5 right-5 z-[60]">
+        <div className="dropdown dropdown-end group/menu"> 
+          <label 
+            tabIndex={0} 
+            className="
+                btn btn-circle btn-ghost btn-sm 
+                bg-base-100/20 backdrop-blur-md border border-white/10 
+                hover:bg-base-100/60 hover:border-white/20
+                text-base-content transition-all duration-300
+                group-hover/menu:rotate-90 group-hover/menu:scale-110
+            "
+          >
+            <MoreVertical size={18} className="transition-transform duration-500" />
+          </label>
           
-          <div className="flex items-center gap-2">
-            <Video size={20} strokeWidth={1.5} className="text-primary" />
-            <span className="text-sm font-semibold">{avatar.videoCount}</span>
-          </div>
+          <ul tabIndex={0} className="
+            dropdown-content z-[100] menu p-2 shadow-2xl 
+            bg-base-100/95 backdrop-blur-xl rounded-xl w-52 
+            border border-base-content/5 mt-2
+            animate-in fade-in zoom-in-95 duration-200 origin-top-right
+          ">
+            {/* STATUS ITEM */}
+            <li className="animate-in slide-in-from-top-2 duration-300 delay-75">
+                <div className="flex justify-between items-center active:bg-transparent cursor-default">
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Status</span>
+                    <span className={`text-[10px] font-black uppercase tracking-tighter ${getStatusColor()}`}>
+                        {getStatusLabel()}
+                    </span>
+                </div>
+            </li>
 
-          <div className="flex items-center gap-2">
-            <Calendar size={20} strokeWidth={1.5} className="text-primary" />
-            <span className="text-sm font-semibold">{getRelativeAge(avatar.createdAt)}</span>
-          </div>
+            <div className="divider my-1 opacity-5"></div>
+
+            {/* DELETE ITEM */}
+            <li className="animate-in slide-in-from-top-2 duration-300 delay-150">
+                <button 
+                    onClick={(e) => {
+                        e.stopPropagation(); 
+                        onDelete?.(avatar.id!);
+                    }}
+                    className="flex items-center justify-between text-error hover:bg-error/10 transition-colors py-3 group/del"
+                >
+                    <span className="text-xs font-semibold tracking-[0.1em]">Delete Avatar</span>
+                    <Trash2 size={14} className="opacity-40 group-hover/del:opacity-100 transition-opacity" />
+                </button>
+            </li>
+          </ul>
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out z-50" />
-    </button>
+      {/* Main Card Interaction Area */}
+      <button className="w-full h-full text-left focus:outline-none overflow-hidden rounded-2xl relative">
+        {/* Hover Border Highlight */}
+        <div className="absolute inset-0 z-50 pointer-events-none rounded-2xl border-2 border-transparent group-hover:border-primary/40 transition-colors duration-300" />
+        
+        {/* Animated Background Glow */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-[radial-gradient(circle_at_50%_120%,rgba(var(--p),0.12),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Grid Texture Overlay */}
+        <div className="absolute inset-0 z-10 opacity-[0.02] pointer-events-none" 
+            style={{ backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
+
+        <figure className="h-[88%] w-full overflow-hidden bg-base-300 relative">
+          <img 
+            src={getAvatarImage()}
+            alt={avatar.name} 
+            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-1000 ease-out" 
+          />
+          
+          {/* Gradient Overlay for Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-base-100 group-hover:from-base-200 via-base-100/5 to-transparent z-20 transition-colors duration-300" />
+          
+          <div className="absolute bottom-4 left-7 right-7 z-30">
+            <h2 className="text-xl font-medium uppercase tracking-[0.2em] text-base-content drop-shadow-md truncate flex items-center">
+              {avatar.name}
+              <div className={`status mb-1 ml-3 opacity-60 ${getStatus()}`}></div>
+            </h2>
+          </div>
+        </figure>
+
+        <div className="h-[12%] flex items-center px-8 relative z-20">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2.5">
+              <Image size={18} strokeWidth={2} className="text-primary/70" />
+              <span className="text-sm font-bold tracking-tight">{avatar.imageCount || 0}</span>
+            </div>
+            
+            <div className="flex items-center gap-2.5">
+              <Video size={18} strokeWidth={2} className="text-primary/70" />
+              <span className="text-sm font-bold tracking-tight">{avatar.videoCount || 0}</span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <Calendar size={18} strokeWidth={2} className="text-primary/70" />
+              <span className="text-sm font-bold tracking-tight">{getRelativeAge(avatar.createdAt!)}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Animated Bottom Border Loading-style accent */}
+        <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out z-50" />
+      </button>
+    </div>
   )
 };
 

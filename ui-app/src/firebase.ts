@@ -12,10 +12,8 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Prevent multiple initializations during Hot Module Replacement (HMR)
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Export the specific service instances
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getFirestore(app, 'ai-avatar-db');
 export default app;

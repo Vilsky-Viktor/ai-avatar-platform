@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Avatar } from '../types/avatar';
 import { create as createDb, update as updateDb, deleteByAvatarId as deleteByAvatarIdDb, deleteByUserId as deleteByUserIdDb, getAll as getAllDb } from '../repositories/avatar';
 import { AvatarStatus } from '../types/avatar';
+import { deleteJobsByAvatarId, deleteJobsByUserId } from '../services/jobService';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
@@ -62,6 +63,7 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
 
   try {
     await deleteByAvatarIdDb(headerUserId as string, id as string);
+    await deleteJobsByAvatarId(req, headerUserId as string, id as string);
 
     return res.status(201).json({'result': 'ok'});
   } catch (error) {
@@ -77,6 +79,7 @@ export const deleteByUserId = async (req: Request, res: Response, next: NextFunc
 
   try {
     await deleteByUserIdDb(userId as string);
+    await deleteJobsByUserId(req, userId as string);
 
     return res.status(201).json({'result': 'ok'});
   } catch (error) {

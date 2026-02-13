@@ -24,7 +24,7 @@ services:
       - NODE_ENV=development
       - USER_SERVICE_URL=http://user-service:3100
       - AVATAR_SERVICE_URL=http://avatar-service:3200
-      - JOB_SERVICE_URL=http://job-manager-service:3300
+      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
 
   user-service:
     build:
@@ -60,6 +60,7 @@ services:
       - DB_NAME=ai-avatar-db
       - USERS_COLLECTION_NAME=users
       - AVATARS_COLLECTION_NAME=avatars
+      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
 
   job-manager-service:
     build:
@@ -76,7 +77,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
-      - USERS_COLLECTION_NAME=users
       - JOBS_COLLECTION_NAME=jobs
+      - GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC=generate-text-image-to-image
 
   

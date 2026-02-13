@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Request, Response, NextFunction } from 'express';
 
-const JOB_SERVICE_URL = process.env.JOB_SERVICE_URL;
+const JOB_MANAGER_SERVICE_URL = process.env.JOB_MANAGER_SERVICE_URL;
 
 export const createIdPhotoJob = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'];
@@ -10,7 +10,7 @@ export const createIdPhotoJob = async (req: Request, res: Response, next: NextFu
     req.log.info(`Create ID photo job`)
 
     const serviceResponse = await axios.post(
-      `${JOB_SERVICE_URL}/create-id-photo`, req.body,
+      `${JOB_MANAGER_SERVICE_URL}/create-id-photo`, req.body,
       { headers: {'x-user-id': userId} }
     );
 

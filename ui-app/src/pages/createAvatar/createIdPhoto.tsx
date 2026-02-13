@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
-import { Upload, Sparkles, User, ChevronDown, X, PersonStanding } from 'lucide-react';
+import { 
+    Upload, Sparkles, User, ChevronDown, X, 
+    PersonStanding, ChevronLeft, ChevronRight, 
+    Loader2, Clock, CheckSquare, Square 
+} from 'lucide-react';
 import { AvatarGender } from '../../types/avatar';
 import { createIdPhotoJob } from '../../services/apiGateway';
-import type { IdPhotoJobInput, Job } from '../../types/job';
+import { JobStatuses, type IdPhotoJobInput, type Job } from '../../types/job';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from "../../firebase";
 
 const STORAGE_KEY = 'avatar_creation_data';
 
@@ -57,34 +63,32 @@ function CreateIdPhotoPage() {
         body: null 
     });
 
-    const [jobs, setJobs] = useState([] as Job[]);
+    const [jobs, setJobs] = useState<Job[]>([]);
     const [generateLoading, setGenerateLoading] = useState(false);
+    const [activeJob, setActiveJob] = useState<Job | null>(null);
+    const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [carouselIndex, setCarouselIndex] = useState(0);
 
     const generateIdPhoto = async () => {
         setGenerateLoading(true);
-
         const idPhotoJob = {
             avatarId: getAvatarId(),
             input: {...selections, gender: getGender()} as IdPhotoJobInput,
-        }
+        };
 
         try {
             const job = await createIdPhotoJob(idPhotoJob);
-            setJobs((prev) => [...prev, job])
+            setJobs((prev) => [...prev, job]);
         } catch (error: any) {
-            console.log('Failed to generate ID photo');
+            console.error('Failed to generate ID photo');
         } finally {
             setGenerateLoading(false);
         }
-    }
+    };
 
-    const getAvatarId = (): string => {
-        return localStorage.getItem(`${STORAGE_KEY}_avatar_id`) || ''
-    }
-
-    const getGender = (): string => {
-        return localStorage.getItem(`${STORAGE_KEY}_gender`) || ''
-    }
+    const getAvatarId = (): string => localStorage.getItem(`${STORAGE_KEY}_avatar_id`) || '';
+    const getGender = (): string => localStorage.getItem(`${STORAGE_KEY}_gender`) || '';
 
     const handleModeSwitch = (newMode: 'generate' | 'upload') => {
         if (newMode === mode) return;
@@ -98,7 +102,6 @@ function CreateIdPhotoPage() {
     };
 
     useEffect(() => { localStorage.setItem(`${STORAGE_KEY}_mode`, mode); }, [mode]);
-    
     useEffect(() => {
         if (mode === 'generate') {
             localStorage.setItem(`${STORAGE_KEY}_selections`, JSON.stringify(selections));
@@ -106,8 +109,34 @@ function CreateIdPhotoPage() {
     }, [selections, mode]);
 
     useEffect(() => {
-        console.log(jobs);
-    }, [jobs])
+        if (jobs.length === 0) return;
+        const latestJob = jobs[jobs.length - 1];
+        setActiveJob(latestJob);
+        console.log(latestJob)
+    }, [jobs]);
+
+    useEffect(() => {
+        if (!activeJob?.id) return;
+
+        const unsubscribe = onSnapshot(doc(db, 'jobs', activeJob.id), (doc) => {
+            if (doc.exists()) {
+                const jobData = { id: doc.id, ...doc.data() } as Job;
+                setActiveJob(jobData);
+                console.log(jobData);
+
+                if (jobData.status === JobStatuses.completed && jobData.result?.mediaUrl) {
+                    setGeneratedImages((prev) => {
+                        if (prev.includes(jobData.result!.mediaUrl!)) return prev;
+                        const newList = [...prev, jobData.result!.mediaUrl!];
+                        setCarouselIndex(newList.length - 1);
+                        return newList;
+                    });
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [activeJob?.id]);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'portrait' | 'body') => {
         const file = e.target.files?.[0];
@@ -123,7 +152,108 @@ function CreateIdPhotoPage() {
 
     const isFormValid = Object.values(selections).every(value => value !== '');
     const arePhotosUploaded = photos.portrait !== null && photos.body !== null;
-    const canProceed = mode === 'generate' ? isFormValid : arePhotosUploaded;
+    const canProceed = mode === 'generate' ? (selectedImage !== null) : arePhotosUploaded;
+
+    const renderRightColumn = () => {
+        if (generatedImages.length > 0 && activeJob?.status !== JobStatuses.generating) {
+            const currentImg = generatedImages[carouselIndex];
+            const isSelected = selectedImage === currentImg;
+
+            return (
+                <div className="flex-1 relative rounded-[3rem] border border-base-content/10 bg-base-200/30 flex flex-col items-center justify-center min-h-[600px] overflow-hidden group">
+                    <img src={currentImg} className={`w-full h-full object-contain p-12 transition-all duration-700 ${isSelected ? 'scale-100 opacity-100' : 'scale-95 opacity-80'}`} alt="Generated" />
+                    
+                    {/* CHECKBOX SELECTION BUTTON */}
+                    <div className="absolute top-12 right-12 flex flex-col items-end gap-3">
+                        <button 
+                            onClick={() => setSelectedImage(isSelected ? null : currentImg)}
+                            className={`btn btn-lg h-16 w-16 btn-circle shadow-2xl transition-all duration-500 border-2 ${
+                                isSelected 
+                                ? 'btn-primary border-primary scale-110' 
+                                : 'bg-base-100/80 backdrop-blur-xl border-white/20 hover:border-primary/50 hover:scale-105'
+                            }`}
+                        >
+                            {isSelected ? (
+                                <CheckSquare size={28} strokeWidth={2.5} />
+                            ) : (
+                                <Square size={28} strokeWidth={1.5} className="text-base-content/40 group-hover:text-primary transition-colors" />
+                            )}
+                        </button>
+                        {isSelected && (
+                            <span className="bg-primary text-primary-content text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4">
+                                Photo Selected
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Carousel Navigation */}
+                    {generatedImages.length > 1 && (
+                        <div className="absolute bottom-12 flex gap-8 items-center bg-base-100/60 backdrop-blur-2xl px-8 py-4 rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 hover:bg-base-100/80">
+                            <button onClick={() => setCarouselIndex(p => (p - 1 + generatedImages.length) % generatedImages.length)} className="hover:text-primary transition-colors p-2">
+                                <ChevronLeft size={24} />
+                            </button>
+                            <span className="text-xs font-bold tracking-[0.4em] uppercase opacity-40">{carouselIndex + 1} / {generatedImages.length}</span>
+                            <button onClick={() => setCarouselIndex(p => (p + 1) % generatedImages.length)} className="hover:text-primary transition-colors p-2">
+                                <ChevronRight size={24} />
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="absolute top-12 left-12 w-8 h-8 border-t-2 border-l-2 border-base-content/10" />
+                    <div className="absolute bottom-12 right-12 w-8 h-8 border-b-2 border-r-2 border-base-content/10" />
+                </div>
+            );
+        }
+
+        if (activeJob?.status === JobStatuses.generating) {
+            return (
+                <div className="flex-1 relative rounded-[3rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center min-h-[600px]">
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="relative">
+                            <Loader2 size={48} strokeWidth={1} className="text-primary animate-spin" />
+                            <Sparkles size={20} className="absolute -top-2 -right-3 text-primary animate-pulse" />
+                        </div>
+                        <div className="text-center">
+                            <span className="text-[15px] font-bold uppercase tracking-[0.4em] text-primary">Generating</span>
+                            <p className="text-[11px] font-medium uppercase tracking-widest text-base-content/20 mt-1">Refining your avatar</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeJob?.status === JobStatuses.pending) {
+            return (
+                <div className="flex-1 relative rounded-[3rem] border border-base-content/10 bg-base-content/[0.02] flex flex-col items-center justify-center min-h-[600px]">
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="w-16 h-16 rounded-full border border-base-content/5 flex items-center justify-center animate-pulse">
+                            <Clock size={32} strokeWidth={0.5} className="text-base-content/30" />
+                        </div>
+                        <div className="text-center">
+                            <span className="text-[15px] font-bold uppercase tracking-[0.4em] text-base-content/20">Waiting...</span>
+                            <p className="text-[11px] font-medium uppercase tracking-widest text-base-content/10 mt-1">Position in queue</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex-1 relative rounded-[3rem] border border-dashed border-base-content/10 bg-transparent flex flex-col items-center justify-center min-h-[600px]">
+                <div className="flex flex-col items-center gap-6">
+                    <div className="w-24 h-24 rounded-3xl border border-base-content/5 bg-base-content/[0.01] flex items-center justify-center">
+                        <User size={40} strokeWidth={0.5} className="text-base-content/10" />
+                    </div>
+                    <div className="text-center">
+                        <span className="text-[15px] font-bold uppercase tracking-[0.4em] text-base-content/20">ID photo</span>
+                        <p className="text-[11px] font-medium uppercase tracking-widest text-base-content/10 mt-1">Click generate to visualize</p>
+                    </div>
+                </div>
+                <div className="absolute top-12 left-12 w-8 h-8 border-t-2 border-l-2 border-base-content/10" />
+                <div className="absolute bottom-12 right-12 w-8 h-8 border-b-2 border-r-2 border-base-content/10" />
+            </div>
+        );
+    };
 
     return (
         <div className="max-w-6xl mx-auto px-4 pb-20">
@@ -143,8 +273,8 @@ function CreateIdPhotoPage() {
             <div className="mt-12 w-full">
                 {mode === 'generate' ? (
                     <div className="flex flex-col lg:flex-row gap-8 w-full items-stretch">
-                        <div className="flex-1 relative rounded-[2.5rem] border border-base-content/5 bg-base-100 p-12 flex flex-col justify-between">
-                            <div className="grid grid-cols-2 gap-x-12 gap-y-12">
+                        <div className="w-full lg:max-w-[510px] relative rounded-[2.5rem] border border-base-content/5 bg-base-100 p-10 flex flex-col justify-between shrink-0">
+                            <div className="grid grid-cols-2 gap-x-10 gap-y-10">
                                 {[
                                     { label: "Ethnicity", key: "ethnicity", opts: OPTIONS.ethnicity },
                                     { label: "Age", key: "age", opts: OPTIONS.age },
@@ -162,38 +292,30 @@ function CreateIdPhotoPage() {
                                             <select 
                                                 value={selections[field.key as keyof typeof selections]}
                                                 onChange={(e) => setSelections({...selections, [field.key]: e.target.value})}
-                                                className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight appearance-none cursor-pointer pr-8"
+                                                className="w-full py-2 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-lg font-medium tracking-tight appearance-none cursor-pointer pr-8"
                                             >
                                                 <option value="" disabled>Select</option>
                                                 {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
                                             </select>
                                             <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
-                                                <ChevronDown size={18} strokeWidth={2.5} />
+                                                <ChevronDown size={16} strokeWidth={2.5} />
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={generateIdPhoto} className="btn btn-primary btn-dash group relative w-full h-20 mt-16 rounded-2xl transition-all duration-500 hover:scale-[1.01]">
+                            <button 
+                                onClick={generateIdPhoto} 
+                                disabled={!isFormValid || generateLoading}
+                                className="btn btn-primary btn-dash group relative w-full h-16 mt-12 rounded-2xl transition-all duration-500 hover:scale-[1.01]"
+                            >
                                 {generateLoading && <span className="loading loading-spinner"></span>}
                                 <span className="text-sm uppercase tracking-[0.4em]">Generate ID Photo</span>
                                 <Sparkles size={20} className="ml-2 group-hover:rotate-12 transition-transform" />
                             </button>
                         </div>
 
-                        <div className="flex-1 relative rounded-[3rem] border border-dashed border-base-content/10 bg-transparent flex flex-col items-center justify-center min-h-[600px]">
-                            <div className="flex flex-col items-center gap-6">
-                                <div className="w-24 h-24 rounded-3xl border border-base-content/5 bg-base-content/[0.01] flex items-center justify-center">
-                                    <User size={40} strokeWidth={0.5} className="text-base-content/10" />
-                                </div>
-                                <div className="text-center">
-                                    <span className="text-[15px] font-bold uppercase tracking-[0.4em] text-base-content/20">ID photo</span>
-                                    <p className="text-[11px] font-medium uppercase tracking-widest text-base-content/10 mt-1">Click generate to visualize</p>
-                                </div>
-                            </div>
-                            <div className="absolute top-12 left-12 w-8 h-8 border-t-2 border-l-2 border-base-content/10" />
-                            <div className="absolute bottom-12 right-12 w-8 h-8 border-b-2 border-r-2 border-base-content/10" />
-                        </div>
+                        {renderRightColumn()}
                     </div>
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-8 w-full items-stretch">
@@ -252,10 +374,11 @@ function CreateIdPhotoPage() {
                     Back
                 </button>
                 <button 
+                    disabled={!canProceed}
                     className={`btn btn-lg uppercase tracking-[0.3em] px-16 transition-all duration-500 ${
                         canProceed 
                         ? 'btn-primary shadow-primary/20 scale-100' 
-                        : 'btn-disabled opacity-30 scale-95 pointer-events-none'
+                        : 'btn-disabled opacity-30 scale-95'
                     }`}
                     onClick={() => canProceed && navigate('/avatar/create-photo-set')}
                 >

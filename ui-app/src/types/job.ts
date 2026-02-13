@@ -10,7 +10,7 @@ export enum JobTypes {
 export enum JobStatuses {
   pending = 'pending',
   generating = 'generating',
-  finished = 'finished',
+  completed = 'completed',
   error = 'error',
 }
 
@@ -33,6 +33,12 @@ export type IdPhotoJobInput = {
   facialHair: string;
 }
 
+export type JobResult = {
+  mediaId: string;
+  mediaUrl: string;
+  error?: string;
+}
+
 export type Job = {
   id: string;
   userId: string;
@@ -40,7 +46,7 @@ export type Job = {
   type: JobTypes;
   status: JobStatuses;
   input: JobInput
-  result?: object;
+  result?: JobResult;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
