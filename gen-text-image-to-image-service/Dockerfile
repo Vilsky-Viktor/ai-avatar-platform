@@ -37,9 +37,15 @@ RUN apt-get update && apt-get install -y software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update && apt-get install -y \
     python3.12 \
+    python3.12-dev \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CPATH="/usr/include/python3.12"
+ENV CC=gcc
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/flux2 /app/flux2
