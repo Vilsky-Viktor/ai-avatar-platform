@@ -20,7 +20,7 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 && \
 WORKDIR /app
 RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2
 
-RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage jupyterlab && \
+RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage jupyterlab runpodctl && \
     pip install --no-cache-dir -e ./flux2 --extra-index-url https://download.pytorch.org/whl/cu121
 
 FROM nvidia/cuda:12.9.0-runtime-ubuntu22.04

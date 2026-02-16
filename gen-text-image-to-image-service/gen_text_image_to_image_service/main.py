@@ -1,8 +1,8 @@
 import os
 import json
 import uuid
-import requests
 import threading
+import subprocess
 from google.cloud import pubsub_v1
 
 import gen_text_image_to_image_service.logger as log_module
@@ -15,28 +15,21 @@ logger = log_module.get_logger(__name__)
 PROJECT_ID = os.getenv("PROJECT_ID", "loom24-mvp")
 SUBSCRIPTION_ID = os.getenv("SUBSCRIPTION_ID", "generate-text-image-to-image-sub")
 MODEL_NAME = os.getenv("MODEL_NAME", "flux.2-klein-9b")
-RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
 RUNPOD_POD_ID = os.getenv("RUNPOD_POD_ID")
-INACTIVITY_TIMEOUT = int(os.getenv("INACTIVITY_TIMEOUT", "600"))
+INACTIVITY_TIMEOUT = int(os.getenv("INACTIVITY_TIMEOUT", "300"))
 
 inactivity_timer = None
 
 def terminate_pod():
-    """Triggers pod termination via RunPod API."""
-    if not RUNPOD_API_KEY or not RUNPOD_POD_ID:
-        logger.error("Inactivity timeout reached, but RUNPOD_API_KEY or RUNPOD_POD_ID is missing.")
+    if not RUNPOD_POD_ID:
+        logger.error("Inactivity timeout: RUNPOD_POD_ID is missing. Cannot terminate.")
         return
 
-    logger.info(f"Inactivity timeout reached ({INACTIVITY_TIMEOUT/60} mins). Terminating pod {RUNPOD_POD_ID}...")
-    
-    url = f"https://api.runpod.io/v2/pod/{RUNPOD_POD_ID}/terminate"
-    headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
-    
+    logger.info(f"Inactivity timeout reached. Terminating pod {RUNPOD_POD_ID}...")
     try:
-        response = requests.post(url, headers=headers)
-        logger.info(f"Termination request sent. Status: {response.status_code}, Response: {response.text}")
-    except Exception as e:
-        logger.error(f"Failed to send termination request: {e}")
+        subprocess.run(["runpodctl", "remove", "pod", RUNPOD_POD_ID], check=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"runpodctl failed: {e}")
 
 def reset_inactivity_timer():
     global inactivity_timer
