@@ -58,10 +58,11 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
     
     model_result = {
         "userId": user_id, "avatarId": avatar_id, "jobId": job_id,
-        "type": job.get("type", ""), "resultPath": None, "error": None
+        "type": job.get("type", ""), "resultPath": None, "status": "generating", "error": None
     }
     
     try:
+        mq_module.publish_status(model_result)
         params = model_module.prepare_params(job.get("input", {}))
         img_ctx = storage_module.load_input_images(
             job.get("input", {}).get("imageUrls", []), 
@@ -76,14 +77,15 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         storage_module.upload_result_image(result_path, img_payload)
         
         model_result["resultPath"] = result_path
+        model_result["status"] = "completed"
         message.ack()
     except Exception as error:
         logger.error(f"Error processing job {job_id}: {error}", exc_info=True)
+        model_result["status"] = "error"
         model_result["error"] = str(error)
         message.nack()
     finally:
         mq_module.publish_status(model_result)
-        # Reset timer again after processing finishes to account for long generation times
         reset_inactivity_timer()
 
 if __name__ == "__main__":
