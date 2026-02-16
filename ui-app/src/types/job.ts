@@ -16,7 +16,7 @@ export enum JobStatuses {
 
 export type JobInput = {
   prompt?: string;
-  imageUrl?: string;
+  imageUrls?: string[];
   videoUrl?: string;
 }
 

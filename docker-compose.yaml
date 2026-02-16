@@ -34,11 +34,11 @@ services:
     volumes:
       - ./user-service:/app
       - /app/node_modules
-      - ~/.config/gcloud:/root/.config/gcloud:ro
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
       - PORT=3100
       - NODE_ENV=development
-      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
       - COLLECTION_NAME=users
@@ -51,11 +51,11 @@ services:
     volumes:
       - ./avatar-service:/app
       - /app/node_modules
-      - ~/.config/gcloud:/root/.config/gcloud:ro
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
       - PORT=3200
       - NODE_ENV=development
-      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
       - USERS_COLLECTION_NAME=users
@@ -70,11 +70,11 @@ services:
     volumes:
       - ./job-manager-service:/app
       - /app/node_modules
-      - ~/.config/gcloud:/root/.config/gcloud:ro
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
       - PORT=3300
       - NODE_ENV=development
-      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
       - JOBS_COLLECTION_NAME=jobs

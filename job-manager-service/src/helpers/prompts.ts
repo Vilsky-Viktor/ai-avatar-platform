@@ -19,7 +19,7 @@ export const generateIdPhotoPrompt = (input: IdPhotoJobInput): string => {
   }
 
   return `Extreme high-quality biometric passport ID photo of a ${ethnicity} ${ageDescription}. 
-    Physical traits: ${body} build, ${face}-shaped face, ${skin} skin texture with realistic pores. 
+    Physical traits: ${body} build, ${face}-shaped face, ${skin} skin texture. 
     Features: ${eyes} eyes, ${hairStyle} hair in ${hairColor}. ${facialHairPart} 
     Styling: Wearing professional neutral business attire. 
     Technical specs: Frontal headshot, centered composition, looking directly into the camera with a neutral expression. 

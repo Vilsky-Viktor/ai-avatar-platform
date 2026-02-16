@@ -19,7 +19,7 @@ export const createIdPhoto = async (req: Request, res: Response, next: NextFunct
     avatarId: idPhotoJob.avatarId,
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
-    input: { prompt: generateIdPhotoPrompt(idPhotoJob.input) }
+    input: { prompt: generateIdPhotoPrompt(idPhotoJob.input), imageUrls: [], width: 1080, height: 1920, guidance: 1.0, numSteps: 13 }
   }
 
   try {
