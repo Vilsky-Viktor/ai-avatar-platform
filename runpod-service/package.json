@@ -1,5 +1,5 @@
 {
-  "name": "job-manager-service",
+  "name": "runpod-service",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@google-cloud/pubsub": "^5.2.3",
+    "@google-cloud/secret-manager": "^6.1.1",
     "axios": "^1.13.5",
     "firebase-admin": "^13.6.0",
     "pino": "^10.3.0",

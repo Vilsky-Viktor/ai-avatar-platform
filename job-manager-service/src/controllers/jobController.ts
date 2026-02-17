@@ -1,8 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { Job, IdPhotoJob, JobTypes, JobStatuses } from '../types/job';
 import { generateIdPhotoPrompt } from '../helpers/prompts';
-import { create as createDb, deleteById as deleteByIdDb, deleteByAvatarId as deleteByAvatarIdDb, deleteByUserId as deleteByUserIdDb } from '../repositories/job';
+import { 
+  create as createDb, 
+  update as updateDb,
+  deleteById as deleteByIdDb, 
+  deleteByAvatarId as deleteByAvatarIdDb, 
+  deleteByUserId as deleteByUserIdDb
+} from '../repositories/job';
 import { publishToTopic } from '../services/messageQueue';
+import { createPod } from '../services/runpodService';
 
 
 const GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC = process.env.GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC || 'generate-text-image-to-image';
@@ -25,11 +32,30 @@ export const createIdPhoto = async (req: Request, res: Response, next: NextFunct
   try {
     const jobDB = await createDb(headerUserId as string, job);
 
-    await publishToTopic(req, GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, jobDB)
+    createPod(jobDB).catch(err => req.log.error("Pod creation failed:", err));
+
+    await publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, jobDB);
 
     return res.status(201).json(jobDB);
   } catch (error) {
     req.log.info(`Failed to create ID photo job for ${headerUserId}: ${error}`);
+    next(error);
+  }
+};
+
+export const update = async (req: Request, res: Response, next: NextFunction) => {
+  const headerUserId = req.headers['x-user-id'];
+  const { id } = req.params;
+  const updateData: Partial<Job> = req.body;
+
+  req.log.info(`Update Job for ${id} for user ${headerUserId}`);
+
+  try {
+    const jobDB = await updateDb(headerUserId as string, id as string, updateData);
+
+    return res.status(201).json(jobDB);
+  } catch (error) {
+    req.log.info(`Failed to update job for ${id}: ${error}`);
     next(error);
   }
 };

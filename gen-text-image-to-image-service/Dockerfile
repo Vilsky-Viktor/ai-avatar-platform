@@ -20,8 +20,12 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 && \
 WORKDIR /app
 RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2
 
-RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage jupyterlab runpodctl && \
+RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage jupyterlab && \
     pip install --no-cache-dir -e ./flux2 --extra-index-url https://download.pytorch.org/whl/cu121
+
+RUN curl -fSsL https://github.com/runpod/runpodctl/releases/download/v1.14.3/runpodctl-linux-amd64 \
+    -o /usr/local/bin/runpodctl && \
+    chmod +x /usr/local/bin/runpodctl
 
 FROM nvidia/cuda:12.9.0-runtime-ubuntu22.04
 
@@ -49,6 +53,7 @@ ENV CC=gcc
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/flux2 /app/flux2
+COPY --from=builder /usr/local/bin/runpodctl /usr/local/bin/runpodctl
 
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -57,4 +62,5 @@ COPY gen_text_image_to_image_service ./gen_text_image_to_image_service
 
 EXPOSE 8888
 
-CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/ --ServerApp.allow_origin='*' --FileContentsManager.delete_to_trash=False & tail -f /dev/null"]
+CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/ --ServerApp.allow_origin='*' --FileContentsManager.delete_to_trash=False & python3.12 -m 'gen_text_image_to_image_service.main'"]
+# CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/ --ServerApp.allow_origin='*' --FileContentsManager.delete_to_trash=False & tail -f /dev/null"]

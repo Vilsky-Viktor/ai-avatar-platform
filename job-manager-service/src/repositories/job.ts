@@ -1,4 +1,4 @@
-import { Job, JobDB } from 'types/job';
+import { Job, JobDB } from '../types/job';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || '';
@@ -23,6 +23,26 @@ export const create = async (userId: string, job: Omit<Job, 'id'>): Promise<JobD
     await jobRef.set(dbJob);
     
     return dbJob;
+}
+
+export const update = async (userId: string, jobId: string, updateData: Partial<Job>): Promise<boolean> => {
+    try {
+        const jobRef = db.collection(JOBS_COLLECTION_NAME).doc(jobId);
+        const doc = await jobRef.get();
+
+        if (!doc.exists || doc.data()?.userId !== userId) {
+            return false;
+        }
+
+        await jobRef.update({
+            ...updateData,
+            updatedAt: Timestamp.now()
+        });
+
+        return true;
+    } catch (error) {
+        return false;
+    }
 }
 
 export const deleteById = async (userId: string, id: string): Promise<boolean> => {

@@ -79,5 +79,39 @@ services:
       - DB_NAME=ai-avatar-db
       - JOBS_COLLECTION_NAME=jobs
       - GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC=generate-text-image-to-image
+      - RUNPOD_SERVICE_URL=http://runpod-service:3500
 
-  
+  ai-model-result-service:
+    build:
+      context: ./ai-model-result-service
+    volumes:
+      - ./ai-model-result-service:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - AVATAR_SERVICE_URL=http://avatar-service:3200
+      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
+      - MEDIA_SERVICE_URL=http://media-service:3400
+      - SUBSCRIPTION_ID=ai-model-result-sub
+
+  runpod-service:
+    build:
+      context: ./runpod-service
+    ports:
+      - "3500:3500"
+    volumes:
+      - ./runpod-service:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - PORT=3500
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - RUNPOD_API_URL=https://rest.runpod.io
+      - NETWORK_VOLUME_ID=0p9gfckg9x
+      - TEXT_IMAGE_TO_IMAGE_TEMPLATE_ID=m1bv0g3gi7
+      - REGION=US-CA-2

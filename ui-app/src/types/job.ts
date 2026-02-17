@@ -24,6 +24,7 @@ export type IdPhotoJobInput = {
   gender: string;
   ethnicity: string;
   age: string;
+  attractiveness: string;
   body: string;
   face: string;
   hairStyle: string;
@@ -31,10 +32,13 @@ export type IdPhotoJobInput = {
   eyes: string;
   skin: string;
   facialHair: string;
+  nose: string;
+  eyeLashes: string;
+  eyeBrows: string;
+  outfit: string;
 }
 
 export type JobResult = {
-  mediaId: string;
   mediaUrl: string;
   error?: string;
 }

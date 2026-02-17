@@ -13,7 +13,7 @@ function GeneralPage() {
     const navigate = useNavigate();
 
     const [name, setName] = useState(() => localStorage.getItem(`${STORAGE_KEY}_name`) || '');
-    const [gender, setGender] = useState(() => localStorage.getItem(`${STORAGE_KEY}_gender`) || AvatarGender.female);
+    const [gender, setGender] = useState(() => localStorage.getItem(`${STORAGE_KEY}_gender`) as AvatarGender || AvatarGender.female);
     const [nextLoading, setNextLoading] = useState(false);
     const [cancelLoading, setCancelLoading] = useState(false);
 
@@ -32,6 +32,9 @@ function GeneralPage() {
         localStorage.removeItem(`${STORAGE_KEY}_mode`);
         localStorage.removeItem(`${STORAGE_KEY}_selections`);
         localStorage.removeItem(`${STORAGE_KEY}_avatar_id`);
+        localStorage.removeItem(`${STORAGE_KEY}_jobs`);
+        localStorage.removeItem(`${STORAGE_KEY}_generated_images`);
+        localStorage.removeItem(`${STORAGE_KEY}_selected_image`);
 
         if (avatarId) {
             setCancelLoading(true);
@@ -61,7 +64,7 @@ function GeneralPage() {
         try {
             if (!getAvatarId()) {
                 setNextLoading(true)
-                const avatar = {name, gender};
+                const avatar = {name, gender, imageCount: 0, videoCount: 0};
                 const avatarDb = await createAvatar(avatar);
                 saveAvatarId(avatarDb);
                 setNextLoading(false);
@@ -109,11 +112,11 @@ function GeneralPage() {
                         <div className="relative">
                             <select 
                                 value={gender} 
-                                onChange={(e) => setGender(e.target.value)} 
+                                onChange={(e) => setGender(e.target.value as AvatarGender)} 
                                 className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight appearance-none cursor-pointer pr-8"
                             >
-                                <option value="female">Female</option>
-                                <option value="male">Male</option>
+                                <option value={AvatarGender.female}>Female</option>
+                                <option value={AvatarGender.male}>Male</option>
                             </select>
                             <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
                                 <ChevronDown size={18} strokeWidth={2.5} />

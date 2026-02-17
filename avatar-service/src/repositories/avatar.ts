@@ -1,4 +1,4 @@
-import { Avatar, AvatarDB } from 'types/avatar';
+import { Avatar, AvatarDB } from '../types/avatar';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || ''

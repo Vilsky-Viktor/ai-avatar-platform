@@ -1,4 +1,4 @@
-import { User, UserDB } from 'types/user';
+import { User, UserDB } from '../types/user';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || ''

@@ -1,12 +1,12 @@
 import { PubSub } from '@google-cloud/pubsub';
-import { Request } from 'express';
 import { Job } from '../types/job';
+import logger from '../logger';
 
 const pubsub = new PubSub({
   projectId: process.env.PROJECT_ID
 });
 
-export const publishToTopic = async (req: Request, topicName: string, job: Job) => {
+export const publishToTopic = async (topicName: string, job: Job) => {
     try {
         const topic = pubsub.topic(topicName);
 
@@ -18,10 +18,10 @@ export const publishToTopic = async (req: Request, topicName: string, job: Job) 
             }
         });
 
-        req.log.info(`Message ${messageId} published successfully. Job: ${job.id}.`);
+        logger.info(`Message ${messageId} published successfully. Job: ${job.id}.`);
         return messageId;
     } catch (error: any) {
-        req.log.error(`Pub/Sub Publish Error: ${error.message}`);
+        logger.error(`Pub/Sub Publish Error: ${error.message}`);
         throw error;
     }
 };
