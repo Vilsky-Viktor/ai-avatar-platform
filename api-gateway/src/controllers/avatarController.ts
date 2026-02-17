@@ -53,12 +53,13 @@ export const createAvatar = async (req: Request, res: Response, next: NextFuncti
 
 export const updateAvatar = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'];
+  const {id} = req.params;
 
   try {
     req.log.info(`Update avatar`)
 
     const serviceResponse = await axios.post(
-      `${AVATAR_SERVICE_URL}/update`, req.body,
+      `${AVATAR_SERVICE_URL}/update/${id}`, req.body,
       { headers: {'x-user-id': userId} }
     );
 

@@ -10,7 +10,7 @@ const router = Router();
 
 router.get('/get-all', getAllAvatars);
 router.post('/create', createAvatar);
-router.post('/update', updateAvatar);
+router.post('/update/:id', updateAvatar);
 router.delete('/delete-by-id/:id', deleteAvatarById);
 
 export default router;

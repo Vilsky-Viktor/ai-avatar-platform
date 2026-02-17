@@ -1,7 +1,7 @@
 import { IdPhotoJobInput } from '../types/job';
 
 export const generateIdPhotoPrompt = (input: IdPhotoJobInput): string => {
-  const { gender, attractiveness, ethnicity, age, body, face, hairStyle, hairColor, nose, eyes, eyeLashes, eyeBrows, skin, facialHair, outfit } = input;
+  const { gender, attractiveness, ethnicity, skinColor, age, body, bustSize, face, hairStyle, hairColor, ears, nose, eyes, eyeLashes, eyeBrows, lips, skin, facialHair, outfit } = input;
 
   const ageDescription = age.toLowerCase().includes('s') 
     ? `${gender} in their ${age}` 
@@ -19,8 +19,8 @@ export const generateIdPhotoPrompt = (input: IdPhotoJobInput): string => {
   }
 
   return `Extreme high-quality biometric passport ID photo of a ${attractiveness} ${ethnicity} ${ageDescription}. 
-    Physical traits: ${body} build, ${face}-shaped face, ${skin} skin texture. 
-    Features: ${nose} nose, ${eyes} eyes, ${eyeLashes} eye lashes, ${eyeBrows} eye brows, ${hairStyle} hair in ${hairColor}. ${facialHairPart} 
+    Physical traits: ${body} build, ${face}-shaped face, ${skin} skin texture, ${skinColor} skin color, ${bustSize} bust size. 
+    Features: ${ears} ears, ${nose} nose, ${eyes} eyes, ${eyeLashes} eye lashes, ${eyeBrows} eye brows, ${lips} lips, ${hairStyle} hair in ${hairColor}. ${facialHairPart} 
     Styling: Wearing ${outfit} outfit. 
     Technical specs: Frontal headshot, centered composition, looking directly into the camera with a neutral smile. 
     Background: Plain, solid light grey studio background. 

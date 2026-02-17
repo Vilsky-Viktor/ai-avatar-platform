@@ -10,6 +10,7 @@ import {
 } from '../repositories/job';
 import { publishToTopic } from '../services/messageQueue';
 import { createPod } from '../services/runpodService';
+import uuid from 'uuid';
 
 
 const GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC = process.env.GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC || 'generate-text-image-to-image';
@@ -18,10 +19,12 @@ const GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC = process.env.GENERAGE_TEXT_IMAGE_TO_IM
 export const createIdPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
   const idPhotoJob: IdPhotoJob = req.body;
+  const groupId = uuid.v4();
 
   req.log.info(`Create ID Photo Job for ${headerUserId}`);
 
   const job: Job = {
+    groupId,
     userId: headerUserId as string,
     avatarId: idPhotoJob.avatarId,
     type: JobTypes.idPhoto,

@@ -23,6 +23,7 @@ export type JobInput = {
 export type IdPhotoJobInput = {
   gender: string;
   ethnicity: string;
+  skinColor: string;
   age: string;
   attractiveness: string;
   body: string;
@@ -36,6 +37,9 @@ export type IdPhotoJobInput = {
   eyeLashes: string;
   eyeBrows: string;
   outfit: string;
+  lips: string;
+  bustSize: string;
+  ears: string;
 }
 
 export type JobResult = {
@@ -45,6 +49,7 @@ export type JobResult = {
 
 export type Job = {
   id: string;
+  groupId?: string;
   userId: string;
   avatarId: string;
   type: JobTypes;

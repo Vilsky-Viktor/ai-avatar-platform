@@ -40,17 +40,17 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 
 export const update = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
-  const avatar: Avatar = req.body;
+  const avatarData: Partial<Avatar> = req.body;
+  const { id } = req.params;
 
-  req.log.info(`Update avatar ${avatar.id} for user ${headerUserId}`);
+  req.log.info(`Update avatar ${id} for user ${headerUserId}`);
 
   try {
-    const { id, ...avatarData } = avatar;
     const avatarDB = await updateDb(headerUserId as string, id as string, avatarData);
 
     return res.status(201).json(avatarDB);
   } catch (error) {
-    req.log.info(`Failed to update avatar ${avatar.id} for user ${headerUserId}: ${error}`);
+    req.log.info(`Failed to update avatar ${id} for user ${headerUserId}: ${error}`);
     next(error);
   }
 };

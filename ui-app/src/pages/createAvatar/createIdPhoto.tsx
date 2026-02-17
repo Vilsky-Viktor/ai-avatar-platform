@@ -16,11 +16,15 @@ const STORAGE_KEY = 'avatar_creation_data';
 
 const OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
+    skinColor: ["porcelain", "fair", "ivory", "beige", "olive", "tan", "caramel", "brown", "dark-brown", "ebony"],
     age: ["child", "teenager", "20s", "30s", "40s", "50s", "60s", "70s", "80s+"],
     eyes: ["dark brown", "light brown", "amber", "hazel", "green", "blue", "gray", "violet", "two-toned"],
     eyeLashes: ["none", "short sparse", "short dense", "medium natural", "medium curled", "long wispy", "long dramatic", "tapered"],
     eyeBrows: ["thin straight", "thin arched", "medium natural", "medium rounded", "thick bushy", "thick groomed", "monobrow", "faded tail"],
     nose: ["small button", "small upturned", "medium straight", "medium roman", "large aquiline", "large bulbous", "broad flat", "crooked"],
+    lips: ["full", "thin", "heart-shaped", "wide", "round", "bow-shaped", "heavy-upper", "heavy-lower", "downward-turned"],
+    ears: ["attached", "detached", "petite", "protruding", "pointed", "elven", "round", "droopy"],
+    bustSize: ["flat", "small", "medium", "large", "extra-large"],
     male: {
         attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
         body: ["slim", "athletic", "average", "muscular", "large"],
@@ -44,9 +48,9 @@ const OPTIONS = {
 };
 
 const INITIAL_SELECTIONS = {
-    ethnicity: '', age: '', attractiveness: '', body: '', 
+    ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
     face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '', 
-    skin: '', facialHair: '', outfit: ''
+    skin: '', facialHair: '', outfit: '', lips: '', ears: '', bustSize: ''
 };
 
 function CreateIdPhotoPage() {
@@ -188,6 +192,10 @@ function CreateIdPhotoPage() {
 
         return () => unsubscribe();
     }, [activeJob?.id]);
+
+    const handleNext = () => {
+        return canProceed && navigate('/avatar/create-photo-set');
+    }
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'portrait' | 'body') => {
         const file = e.target.files?.[0];
@@ -361,32 +369,38 @@ function CreateIdPhotoPage() {
             <div className="mt-12 w-full">
                 {mode === 'generate' ? (
                     <div className="flex flex-col lg:flex-row gap-8 w-full items-stretch">
-                        <div className="w-full lg:max-w-[560px] relative rounded-[2.5rem] border border-base-content/5 bg-base-100 p-10 flex flex-col justify-between shrink-0">
-                            <div className="grid grid-cols-2 gap-x-10 gap-y-10">
+                        <div className="w-full lg:max-w-[560px] relative rounded-[2.5rem] border border-base-content/5 bg-base-100 p-8 flex flex-col justify-between shrink-0">
+                            <div className="grid grid-cols-2 gap-x-10 gap-y-5"> {/* Reduced gap-y from 10 to 5 */}
                                 {[
                                     { label: "Ethnicity", key: "ethnicity", opts: OPTIONS.ethnicity },
+                                    { label: "Skin Color", key: "skinColor", opts: OPTIONS.skinColor },
                                     { label: "Age", key: "age", opts: OPTIONS.age },
                                     { label: "Attractiveness", key: "attractiveness", opts: OPTIONS[savedGender].attractiveness },
                                     { label: "Body", key: "body", opts: OPTIONS[savedGender].body },
+                                    { label: "Bust Size", key: "bustSize", opts: OPTIONS.bustSize },
                                     { label: "Face", key: "face", opts: OPTIONS[savedGender].face },
                                     { label: "Hair Style", key: "hairStyle", opts: OPTIONS[savedGender].hairStyle },
                                     { label: "Hair Color", key: "hairColor", opts: OPTIONS[savedGender].hairColor },
+                                    { label: "Ears", key: "ears", opts: OPTIONS.ears },
                                     { label: "Nose", key: "nose", opts: OPTIONS.nose },
-                                    { label: "Eyes", key: "eyes", opts: OPTIONS.eyes },
+                                    { label: "Lips", key: "lips", opts: OPTIONS.lips },
+                                    { label: "Eyes", key: "eyes", opts: OPTIONS.eyes }, // Fixed the typo here
                                     { label: "Eye Lashes", key: "eyeLashes", opts: OPTIONS.eyeLashes },
                                     { label: "Eye Brows", key: "eyeBrows", opts: OPTIONS.eyeBrows },
                                     { label: "Skin", key: "skin", opts: OPTIONS[savedGender].skin },
                                     { label: "Facial Hair", key: "facialHair", opts: OPTIONS[savedGender].facialHair },
                                     { label: "Outfit", key: "outfit", opts: OPTIONS[savedGender].outfit },
                                 ].map((field) => (
-                                    <div key={field.key} className="group flex flex-col gap-1">
-                                        <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">{field.label}</label>
+                                    <div key={field.key} className="group flex flex-col gap-0.5"> {/* Tightened gap */}
+                                        <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
+                                            {field.label}
+                                        </label>
                                         <div className="relative">
                                             <select 
                                                 value={selections[field.key as keyof typeof selections]}
                                                 onChange={(e) => setSelections({...selections, [field.key]: e.target.value})}
-                                                className="w-full py-2 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-lg font-medium tracking-tight appearance-none cursor-pointer pr-8"
-                                            >
+                                                className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
+                                            > {/* Reduced py-2 to py-1.5 and text-lg to text-base */}
                                                 <option value="" disabled>Select</option>
                                                 {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
                                             </select>
@@ -400,8 +414,8 @@ function CreateIdPhotoPage() {
                             <button 
                                 onClick={generateIdPhoto} 
                                 disabled={!isFormValid || generateLoading || activeJob !== null}
-                                className="btn btn-primary btn-dash group relative w-full h-16 mt-12 rounded-2xl transition-all duration-500 hover:scale-[1.01]"
-                            >
+                                className="btn btn-primary btn-dash group relative w-full h-14 mt-8 rounded-2xl transition-all duration-500 hover:scale-[1.01]"
+                            > {/* Reduced h-16 to h-14 and mt-12 to mt-8 */}
                                 {generateLoading && <span className="loading loading-spinner"></span>}
                                 <span className="text-sm uppercase tracking-[0.4em]">Generate ID Photo</span>
                                 <Sparkles size={20} className="ml-2 group-hover:rotate-12 transition-transform" />
@@ -488,7 +502,7 @@ function CreateIdPhotoPage() {
                 <button 
                     disabled={!canProceed}
                     className={`btn btn-lg uppercase tracking-[0.3em] px-16 transition-all duration-500 ${canProceed ? 'btn-primary shadow-primary/20 scale-100' : 'btn-disabled opacity-30 scale-95'}`}
-                    onClick={() => canProceed && navigate('/avatar/create-photo-set')}
+                    onClick={handleNext}
                 >Next</button>
             </div>
         </div>

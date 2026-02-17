@@ -38,7 +38,7 @@ export const create = async (userId: string, avatar: Omit<Avatar, 'id'>): Promis
     return dbAvatar;
 }
 
-export const update = async (userId: string, avatarId: string, avatarData: Avatar): Promise<AvatarDB> => {
+export const update = async (userId: string, avatarId: string, avatarData: Partial<Avatar>): Promise<AvatarDB> => {
     const avatarRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
         .collection(AVATARS_COLLECTION_NAME)
