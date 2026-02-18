@@ -4,6 +4,7 @@ import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
 import type { Avatar } from '../types/avatar';
 import type { Job, IdPhotoJob } from '../types/job';
+import type { Media } from '../types/media';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
 
@@ -56,6 +57,17 @@ export const createAvatar = async (avatar: Avatar): Promise<Avatar> => {
   }
 }
 
+export const updateAvatar = async (id: string, avatarData: Partial<Avatar>): Promise<Avatar> => {
+  try {
+    const res = await apiClient.patch(`/avatars/update/${id}`, avatarData);
+
+    return res.data as Avatar;
+  } catch (error) {
+    console.error("Error updating avatar:", error);
+    throw error;
+  }
+}
+
 export const deleteAvatarById = async (avatarId: string): Promise<Avatar> => {
   try {
     const res = await apiClient.delete(`/avatars/delete-by-id/${avatarId}`);
@@ -74,6 +86,17 @@ export const createIdPhotoJob = async (job: IdPhotoJob) => {
     return res.data as Job;
   } catch (error) {
     console.error("Error creating ID photo job:", error);
+    throw error;
+  }
+}
+
+export const createMedia = async (media: Media): Promise<Media> => {
+  try {
+    const res = await apiClient.post('/media/create', media);
+
+    return res.data as Media;
+  } catch (error) {
+    console.error("Error creating media:", error);
     throw error;
   }
 }

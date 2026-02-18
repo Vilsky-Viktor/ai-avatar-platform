@@ -47,7 +47,7 @@ export type IdPhotoJobInput = {
 }
 
 export type JobResult = {
-  mediaUrl: string;
+  mediaPath: string;
   error?: string;
 }
 

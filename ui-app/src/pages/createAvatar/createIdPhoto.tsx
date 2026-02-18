@@ -8,9 +8,12 @@ import {
 import { AvatarGender } from '../../types/avatar';
 import { createIdPhotoJob } from '../../services/apiGateway';
 import { JobStatuses, type IdPhotoJobInput, type Job } from '../../types/job';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db, storage } from "../../firebase";
-import { ref, getDownloadURL } from "firebase/storage";
+import { listenToDocChanges } from '../../services/db';
+import { useApp } from '../../providers/ContextProvider';
+import { v4 as uuid4 } from 'uuid';
+import { createMedia } from '../../services/apiGateway';
+import { MediaTypes, MediaSections, type Media } from '../../types/media';
+import { getMediaUrlFromPath, uploadMediaToBucket } from '../../services/storage';
 
 const STORAGE_KEY = 'avatar_creation_data';
 
@@ -56,6 +59,7 @@ const INITIAL_SELECTIONS = {
 function CreateIdPhotoPage() {
     const navigate = useNavigate();
     const portraitInputRef = useRef<HTMLInputElement>(null);
+    const { user } = useApp();
     
     const savedGender = (localStorage.getItem(`${STORAGE_KEY}_gender`) as AvatarGender) || AvatarGender.female;
     
@@ -68,11 +72,10 @@ function CreateIdPhotoPage() {
         return saved ? JSON.parse(saved) : INITIAL_SELECTIONS;
     });
 
-    const [photos, setPhotos] = useState<{portrait: string | null, body: string | null}>(() => {
+    const [photos, setPhotos] = useState<{portrait: string | null | null}>(() => {
         const savedPortrait = sessionStorage.getItem(`${STORAGE_KEY}_uploaded_portrait`);
         return { 
-            portrait: savedPortrait || null, 
-            body: null 
+            portrait: savedPortrait || null,
         };
     });
 
@@ -139,7 +142,7 @@ function CreateIdPhotoPage() {
     const handleModeSwitch = (newMode: 'generate' | 'upload') => {
         if (newMode === mode) return;
         if (newMode === 'generate') {
-            setPhotos({ portrait: null, body: null });
+            setPhotos({ portrait: null });
             sessionStorage.removeItem(`${STORAGE_KEY}_uploaded_portrait`);
         } else {
             setSelections(INITIAL_SELECTIONS);
@@ -169,19 +172,18 @@ function CreateIdPhotoPage() {
     useEffect(() => {
         if (!activeJob?.id) return;
 
-        const unsubscribe = onSnapshot(doc(db, 'jobs', activeJob.id), async (docSnap) => {
+        const unsubscribe = listenToDocChanges('jobs', activeJob.id, async (docSnap) => {
             if (docSnap.exists()) {
                 const jobData = { id: docSnap.id, ...docSnap.data() } as Job;
                 setJobs(prev => prev.map(j => j.id === jobData.id ? jobData : j));
                 setActiveJob(jobData);
 
-                if (jobData.status === JobStatuses.completed && jobData.result?.mediaUrl) {
-                    const storageRef = ref(storage, jobData.result.mediaUrl);
-                    const downloadUrl = await getDownloadURL(storageRef);
+                if (jobData.status === JobStatuses.completed && jobData.result?.mediaPath) {
+                    const downloadUrl = await getMediaUrlFromPath(jobData.result.mediaPath)
 
                     setGeneratedImages((prev) => {
-                        if (prev.some(img => img.bucketPath === jobData.result!.mediaUrl)) return prev;
-                        const newList = [...prev, { url: downloadUrl, bucketPath: jobData.result!.mediaUrl! }];
+                        if (prev.some(img => img.bucketPath === jobData.result!.mediaPath)) return prev;
+                        const newList = [...prev, { url: downloadUrl, bucketPath: jobData.result!.mediaPath! }];
                         setCarouselIndex(newList.length - 1);
                         return newList;
                     });
@@ -193,8 +195,42 @@ function CreateIdPhotoPage() {
         return () => unsubscribe();
     }, [activeJob?.id]);
 
-    const handleNext = () => {
-        return canProceed && navigate('/avatar/create-photo-set');
+    const handleNext = async () => {
+        if (!canProceed) return
+
+        const job = jobs.find((j: Job) => j.result?.mediaPath === selectedImage);
+
+        if (!job) {
+            console.log(`Did not find a job related to selected image - ${selectedImage}`)
+        }
+
+        const media: Media = {
+            userId: user?.id!,
+            avatarId: getAvatarId(),
+            jobId: job?.id!,
+            type: MediaTypes.image,
+            section: MediaSections.avatar,
+            isRemovable: false,
+            isIdPhoto: true,
+            isPhotoSet: false,
+            path: ''
+        }
+
+        try {
+            if (mode === 'generate') {
+                media.path = selectedImage!
+                await createMedia(media);
+            } else {
+                const mediaPath = `media/${user?.id}-user/avatars/${getAvatarId()}-avatar/images/${uuid4()}.png`;
+                await uploadMediaToBucket(mediaPath, photos.portrait!);
+                media.path = mediaPath;
+                await createMedia(media);
+            }
+
+            navigate('/avatar/create-photo-set');
+        } catch (error) {
+            console.log(`Did not manage to create a new media: ${error}`)
+        }
     }
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'portrait' | 'body') => {

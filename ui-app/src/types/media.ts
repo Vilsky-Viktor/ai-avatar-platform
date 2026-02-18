@@ -1,11 +1,11 @@
-import { Timestamp } from 'firebase-admin/firestore';
+import type { FirestoreTimestamp } from "./firestore";
 
-export enum MediaType {
+export enum MediaTypes {
     image = 'image',
     video = 'video'
 }
 
-export enum MediaSection {
+export enum MediaSections {
     avatar = 'avatar',
     private = 'private'
 }
@@ -15,12 +15,12 @@ export type Media = {
     userId: string;
     avatarId: string;
     jobId: string;
-    type: MediaType,
-    section: MediaSection,
+    type: MediaTypes,
+    section: MediaSections,
     isRemovable: boolean,
     isIdPhoto: boolean,
     isPhotoSet: boolean,
     path: string;
-    createdAt?: Timestamp;
-    updatedAt?: Timestamp;
+    updatedAt?: FirestoreTimestamp;
+    createdAt?: FirestoreTimestamp
 }

@@ -1,4 +1,5 @@
 import type { FirestoreTimestamp } from "./firestore";
+import type { IdPhotoJobInput } from "./job";
 
 export enum AvatarStatus {
   initialized = 'initialized',
@@ -22,7 +23,7 @@ export type Avatar = {
   gender: AvatarGender;
   imageCount: number;
   videoCount: number;
-  parameters?: object;
+  parameters?: IdPhotoJobInput;
   image?: string;
   status?: AvatarStatus;
   updatedAt?: FirestoreTimestamp;

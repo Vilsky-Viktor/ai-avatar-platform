@@ -13,7 +13,7 @@ export enum JobTypes {
 }
 
 export type JobResult = {
-  mediaUrl?: string;
+  mediaPath?: string;
   error?: string;
 }
 

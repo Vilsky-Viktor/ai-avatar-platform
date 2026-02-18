@@ -18,7 +18,7 @@ async function handleModelResult(result: AIModelResult) {
   }
 
   logger.info({ jobId, userId, resultPath }, 'Updating job status');
-  await updateJob(userId, jobId, status, {mediaUrl: resultPath!});
+  await updateJob(userId, jobId, status, {mediaPath: resultPath!});
 }
 
 function listenForResults() {
