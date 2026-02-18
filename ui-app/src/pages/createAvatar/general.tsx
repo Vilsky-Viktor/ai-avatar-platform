@@ -5,7 +5,8 @@ import { User, ChevronDown } from 'lucide-react';
 import { createAvatar } from '../../services/apiGateway';
 import type { Avatar } from '../../types/avatar';
 import { deleteAvatarById } from '../../services/apiGateway';
-import { AvatarGender } from '../../types/avatar';
+import { AvatarGender, AvatarStatus } from '../../types/avatar';
+import { JobStatuses } from '../../types/job';
 
 const STORAGE_KEY = 'avatar_creation_data';
 
@@ -64,8 +65,10 @@ function GeneralPage() {
         try {
             if (!getAvatarId()) {
                 setNextLoading(true)
+
                 const avatar = {name, gender, imageCount: 0, videoCount: 0};
                 const avatarDb = await createAvatar(avatar);
+
                 saveAvatarId(avatarDb);
                 setNextLoading(false);
             }

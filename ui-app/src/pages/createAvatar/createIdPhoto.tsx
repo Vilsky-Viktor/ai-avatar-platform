@@ -195,7 +195,7 @@ function CreateIdPhotoPage() {
         return () => unsubscribe();
     }, [activeJob?.id]);
 
-    const handleNext = async () => {
+    const nextStep = async () => {
         if (!canProceed) return
 
         const job = jobs.find((j: Job) => j.result?.mediaPath === selectedImage);
@@ -217,14 +217,18 @@ function CreateIdPhotoPage() {
         }
 
         try {
-            if (mode === 'generate') {
-                media.path = selectedImage!
-                await createMedia(media);
-            } else {
-                const mediaPath = `media/${user?.id}-user/avatars/${getAvatarId()}-avatar/images/${uuid4()}.png`;
-                await uploadMediaToBucket(mediaPath, photos.portrait!);
-                media.path = mediaPath;
-                await createMedia(media);
+            if (!localStorage.getItem(`${STORAGE_KEY}_id_media`)) {
+                if (mode === 'generate') {
+                    media.path = selectedImage!
+                    await createMedia(media);
+                } else {
+                    const mediaPath = `media/${user?.id}-user/avatars/${getAvatarId()}-avatar/images/${uuid4()}.png`;
+                    await uploadMediaToBucket(mediaPath, photos.portrait!);
+                    media.path = mediaPath;
+                    await createMedia(media);
+                }
+
+                localStorage.setItem(`${STORAGE_KEY}_id_media`, JSON.stringify(media));
             }
 
             navigate('/avatar/create-photo-set');
@@ -538,7 +542,7 @@ function CreateIdPhotoPage() {
                 <button 
                     disabled={!canProceed}
                     className={`btn btn-lg uppercase tracking-[0.3em] px-16 transition-all duration-500 ${canProceed ? 'btn-primary shadow-primary/20 scale-100' : 'btn-disabled opacity-30 scale-95'}`}
-                    onClick={handleNext}
+                    onClick={nextStep}
                 >Next</button>
             </div>
         </div>
