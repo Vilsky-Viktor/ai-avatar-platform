@@ -58,7 +58,7 @@ export const updateAvatar = async (req: Request, res: Response, next: NextFuncti
   try {
     req.log.info(`Update avatar`)
 
-    const serviceResponse = await axios.post(
+    const serviceResponse = await axios.patch(
       `${AVATAR_SERVICE_URL}/update/${id}`, req.body,
       { headers: {'x-user-id': userId} }
     );

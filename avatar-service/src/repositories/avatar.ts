@@ -1,5 +1,5 @@
 import { Avatar, AvatarDB } from '../types/avatar';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || ''
 const AVATARS_COLLECTION_NAME = process.env.AVATARS_COLLECTION_NAME || ''
@@ -59,6 +59,20 @@ export const update = async (userId: string, avatarId: string, avatarData: Parti
     }
 
     return snapshot.data() as AvatarDB;
+}
+
+export const updateCounter = async (userId: string, avatarId: string, fieldName: string, amount: number) => {
+    const avatarRef = db.collection(USERS_COLLECTION_NAME)
+        .doc(userId)
+        .collection(AVATARS_COLLECTION_NAME)
+        .doc(avatarId);
+
+    const now = Timestamp.now();
+
+    await avatarRef.update({
+      [fieldName]: FieldValue.increment(amount),
+      updatedAt: now
+    });
 }
 
 export const deleteByAvatarId = async (userId: string, avatarId: string): Promise<boolean> => {

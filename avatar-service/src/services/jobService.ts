@@ -1,9 +1,9 @@
-import { Request } from 'express';
 import axios from 'axios';
+import logger from '../logger';
 
 const JOB_MANAGER_SERVICE_URL = process.env.JOB_MANAGER_SERVICE_URL;
 
-export const deleteJobsByAvatarId = async (req: Request, userId: string, avatarId: string): Promise<void> => {
+export const deleteJobsByAvatarId = async (userId: string, avatarId: string): Promise<void> => {
     try {
         const url = `${JOB_MANAGER_SERVICE_URL}/delete-by-avatar-id/${avatarId}`;
 
@@ -13,12 +13,12 @@ export const deleteJobsByAvatarId = async (req: Request, userId: string, avatarI
             }
         });
     } catch (error: any) {
-        req.log.error(`Failed to remove jobs by avatarId with status ${error.response?.status}: ${error.message}`)
+        logger.error(`Failed to remove jobs by avatarId with status ${error.response?.status}: ${error.message}`)
         throw error;
     }
 };
 
-export const deleteJobsByUserId = async (req: Request, userId: string): Promise<void> => {
+export const deleteJobsByUserId = async (userId: string): Promise<void> => {
     try {
         const url = `${JOB_MANAGER_SERVICE_URL}/delete-by-user-id/${userId}`;
 
@@ -28,7 +28,7 @@ export const deleteJobsByUserId = async (req: Request, userId: string): Promise<
             }
         });
     } catch (error: any) {
-        req.log.error(`Failed to remove jobs by userId with status ${error.response?.status}: ${error.message}`)
+        logger.error(`Failed to remove jobs by userId with status ${error.response?.status}: ${error.message}`)
         throw error;
     }
 };

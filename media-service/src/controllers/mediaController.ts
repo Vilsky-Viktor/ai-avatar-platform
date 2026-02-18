@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { Media } from '../types/media';
+import { type Media, MediaSection, MediaType } from '../types/media';
 import { create as createDb } from '../repositories/media';
+import { updateCounter } from '../services/avatarService';
 
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
@@ -10,6 +11,11 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 
   try {
     const mediaDB = await createDb(headerUserId as string, media);
+
+    if (media.section === MediaSection.avatar) {
+      const counterFieldName = media.type === MediaType.image ? 'imageCount' : 'videoCount';
+      await updateCounter(headerUserId as string, media.avatarId, counterFieldName, 1);
+    }
 
     return res.status(201).json(mediaDB);
   } catch (error) {

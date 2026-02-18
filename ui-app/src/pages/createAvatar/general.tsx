@@ -36,6 +36,8 @@ function GeneralPage() {
         localStorage.removeItem(`${STORAGE_KEY}_jobs`);
         localStorage.removeItem(`${STORAGE_KEY}_generated_images`);
         localStorage.removeItem(`${STORAGE_KEY}_selected_image`);
+        localStorage.removeItem(`${STORAGE_KEY}_id_media`);
+        sessionStorage.removeItem(`${STORAGE_KEY}_uploaded_portrait`);
 
         if (avatarId) {
             setCancelLoading(true);

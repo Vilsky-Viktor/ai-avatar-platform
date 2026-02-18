@@ -13,10 +13,10 @@ function CreatePhotoSetPage() {
             </div>
 
             <div className="mt-10 w-full flex justify-center">
-                <button className="btn btn-lg btn-error btn-outline uppercase px-12 mr-4 opacity-50" onClick={() => navigate('/avatar/create-id-photo')}>
+                <button className="btn btn-lg btn-error btn-outline uppercase px-12 mr-4 opacity-50" onClick={() => navigate('/avatar/create/id-photo')}>
                     Back
                 </button>
-                <button className="btn btn-lg btn-primary uppercase" onClick={() => navigate('/avatar/assign-voice')}>
+                <button className="btn btn-lg btn-primary uppercase" onClick={() => navigate('/avatar/create/assign-voice')}>
                     Next
                 </button>
             </div>

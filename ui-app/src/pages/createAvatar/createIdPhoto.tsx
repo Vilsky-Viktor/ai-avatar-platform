@@ -5,8 +5,8 @@ import {
     Upload, Sparkles, User, ChevronDown, X, ChevronLeft, ChevronRight, 
     Loader2, Clock, CheckSquare, Square, Info 
 } from 'lucide-react';
-import { AvatarGender } from '../../types/avatar';
-import { createIdPhotoJob } from '../../services/apiGateway';
+import { AvatarGender, AvatarStatus } from '../../types/avatar';
+import { createIdPhotoJob, updateAvatar } from '../../services/apiGateway';
 import { JobStatuses, type IdPhotoJobInput, type Job } from '../../types/job';
 import { listenToDocChanges } from '../../services/db';
 import { useApp } from '../../providers/ContextProvider';
@@ -100,6 +100,7 @@ function CreateIdPhotoPage() {
     const [activeJob, setActiveJob] = useState<Job | null>(null);
     const [carouselIndex, setCarouselIndex] = useState(0);
     const [isImageRendering, setIsImageRendering] = useState(false);
+    const [nextLoading, setNextLoading] = useState(false);
 
     // --- Persistence Hooks ---
     useEffect(() => { localStorage.setItem(`${STORAGE_KEY}_mode`, mode); }, [mode]);
@@ -198,27 +199,31 @@ function CreateIdPhotoPage() {
     const nextStep = async () => {
         if (!canProceed) return
 
-        const job = jobs.find((j: Job) => j.result?.mediaPath === selectedImage);
+        setNextLoading(true);
 
-        if (!job) {
-            console.log(`Did not find a job related to selected image - ${selectedImage}`)
-        }
-
-        const media: Media = {
-            userId: user?.id!,
-            avatarId: getAvatarId(),
-            jobId: job?.id!,
-            type: MediaTypes.image,
-            section: MediaSections.avatar,
-            isRemovable: false,
-            isIdPhoto: true,
-            isPhotoSet: false,
-            path: ''
-        }
+        const avatarId = getAvatarId();
 
         try {
+            const media: Media = {
+                userId: user?.id!,
+                avatarId: avatarId,
+                jobId: '',
+                type: MediaTypes.image,
+                section: MediaSections.avatar,
+                isRemovable: false,
+                isIdPhoto: true,
+                isPhotoSet: false,
+                path: ''
+            }
+
             if (!localStorage.getItem(`${STORAGE_KEY}_id_media`)) {
                 if (mode === 'generate') {
+                    const job = jobs.find((j: Job) => j.result?.mediaPath === selectedImage);
+                    if (!job) {
+                        throw new Error(`Did not find a job related to selected image - ${selectedImage}`);
+                    }
+                    
+                    media.jobId = job?.id;
                     media.path = selectedImage!
                     await createMedia(media);
                 } else {
@@ -228,12 +233,16 @@ function CreateIdPhotoPage() {
                     await createMedia(media);
                 }
 
+                await updateAvatar(avatarId, {status: AvatarStatus.idCreated, parameters: selections});
+
                 localStorage.setItem(`${STORAGE_KEY}_id_media`, JSON.stringify(media));
             }
 
-            navigate('/avatar/create-photo-set');
+            setNextLoading(false);
+            navigate('/avatar/create/photo-set');
         } catch (error) {
-            console.log(`Did not manage to create a new media: ${error}`)
+            console.log(`Did not manage to create a new media: ${error}`);
+            setNextLoading(false);
         }
     }
 
@@ -543,7 +552,10 @@ function CreateIdPhotoPage() {
                     disabled={!canProceed}
                     className={`btn btn-lg uppercase tracking-[0.3em] px-16 transition-all duration-500 ${canProceed ? 'btn-primary shadow-primary/20 scale-100' : 'btn-disabled opacity-30 scale-95'}`}
                     onClick={nextStep}
-                >Next</button>
+                >
+                    {nextLoading && <span className="loading loading-spinner"></span>}
+                    Next
+                </button>
             </div>
         </div>
     );

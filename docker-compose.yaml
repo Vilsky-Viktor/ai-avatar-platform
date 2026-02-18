@@ -25,7 +25,7 @@ services:
       - USER_SERVICE_URL=http://user-service:3100
       - AVATAR_SERVICE_URL=http://avatar-service:3200
       - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
-      - MEDIA_SERVICE_URL=http://job-manager-service:3400
+      - MEDIA_SERVICE_URL=http://media-service:3400
 
   user-service:
     build:
@@ -114,6 +114,7 @@ services:
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
       - MEDIA_COLLECTION_NAME=media
+      - AVATAR_SERVICE_URL=http://avatar-service:3200
 
   runpod-service:
     build:
