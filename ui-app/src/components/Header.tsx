@@ -3,7 +3,7 @@ import { useApp } from '../providers/ContextProvider';
 import { signOut } from "firebase/auth";
 import { auth } from '../firebase';
 import { ThemeColor } from '../types/settings';
-import { ScanFace, HandCoins } from 'lucide-react';
+import { ScanFace, HeartPulse } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function Header() {
@@ -35,9 +35,9 @@ function Header() {
                     <div className="absolute inset-0 rounded-full bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                     <div className="flex items-center justify-center relative">
-                        <HandCoins 
+                        <HeartPulse 
                             size={18} 
-                            className="text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-12" 
+                            className="text-error animate-pulse drop-shadow-[0_0_8px_rgba(245,158,11,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-12" 
                         />
                     </div>
 
@@ -48,7 +48,7 @@ function Header() {
                             100
                         </span>
                         <span className="text-[9px] font-bold opacity-40 uppercase tracking-[0.15em] transition-opacity group-hover:opacity-60 duration-500">
-                            Credits
+                            pulses
                         </span>
                     </div>
                 </div>

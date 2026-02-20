@@ -16,8 +16,8 @@ export enum JobStatuses {
 
 export type JobInput = {
   prompt?: string;
-  imageUrls?: string[];
-  videoUrl?: string;
+  imagePaths?: string[];
+  videoPath?: string;
   width: number;
   height: number;
   guidance: number;
@@ -54,6 +54,7 @@ export type JobResult = {
 export type Job = {
   id?: string;
   groupId?: string;
+  order?: number;
   userId: string;
   avatarId: string;
   type: JobTypes;

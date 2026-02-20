@@ -39,8 +39,8 @@ def prepare_params(job_input):
     model_info = FLUX2_MODEL_INFO[MODEL_NAME]
     return {
         "prompt": job_input.get("prompt", ""),
-        "num_steps": int(job_input.get("numSteps", model_info.get("defaults", {}).get("num_steps", 50))),
-        "guidance": float(job_input.get("guidance", model_info.get("defaults", {}).get("guidance", 4.0))),
+        "num_steps": int(job_input.get("numSteps", model_info.get("defaults", {}).get("num_steps", 13))),
+        "guidance": float(job_input.get("guidance", model_info.get("defaults", {}).get("guidance", 1.0))),
         "width": int(job_input.get("width", 1360)),
         "height": int(job_input.get("height", 768)),
         "seed": job_input.get("seed") if job_input.get("seed") is not None else random.randrange(2**31),

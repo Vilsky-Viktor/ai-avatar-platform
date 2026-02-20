@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   createIdPhoto,
+  createPhotoSet,
   update,
   deleteById,
   deleteByAvatarId,
@@ -10,6 +11,7 @@ import {
 const router = Router();
 
 router.post('/create-id-photo', createIdPhoto);
+router.post('/create-photo-set', createPhotoSet);
 router.patch('/update/:id', update);
 router.delete('/delete-by-id/:id', deleteById);
 router.delete('/delete-by-avatar-id/:avatarId', deleteByAvatarId);

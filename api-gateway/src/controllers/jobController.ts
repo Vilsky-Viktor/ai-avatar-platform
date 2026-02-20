@@ -26,3 +26,27 @@ export const createIdPhotoJob = async (req: Request, res: Response, next: NextFu
     }
   }
 };
+
+export const createPhotoSetJob = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'];
+
+  try {
+    req.log.info(`Create photo set job`)
+
+    const serviceResponse = await axios.post(
+      `${JOB_MANAGER_SERVICE_URL}/create-photo-set`, req.body,
+      { headers: {'x-user-id': userId} }
+    );
+
+    return res.status(serviceResponse.status).json(serviceResponse.data);
+  } catch (error: any) {
+    if (error.response) {
+      req.log.error(`Failed to create photo set job with status ${error.response.status}`)
+      return res.status(error.response.status).json(error.response.data);
+    } else {
+      req.log.error(`Failed to create photo set job: ${error}`)
+      console.log(error);
+      return res.status(500).json(error);
+    }
+  }
+};

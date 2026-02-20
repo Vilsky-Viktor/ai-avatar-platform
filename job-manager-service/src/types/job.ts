@@ -16,8 +16,8 @@ export enum JobStatuses {
 
 export type JobInput = {
   prompt?: string;
-  imageUrls?: string[];
-  videoUrl?: string;
+  imagePaths?: string[];
+  videoPath?: string;
   width: number;
   height: number;
   guidance: number;
@@ -46,6 +46,13 @@ export type IdPhotoJobInput = {
   ears: string;
 }
 
+export type PhotoSetJobInput = {
+  idPhotoPath: string;
+  gender: string;
+  body: string;
+  bustSize: string;
+}
+
 export type JobResult = {
   mediaPath: string;
   error?: string;
@@ -54,6 +61,7 @@ export type JobResult = {
 export type Job = {
   id?: string;
   groupId?: string;
+  order?: number;
   userId: string;
   avatarId: string;
   type: JobTypes;
@@ -65,6 +73,11 @@ export type Job = {
 export type IdPhotoJob = {
   avatarId: string;
   input: IdPhotoJobInput;
+}
+
+export type PhotoSetJob = {
+  avatarId: string;
+  input: PhotoSetJobInput;
 }
 
 export type JobDB = Job & {

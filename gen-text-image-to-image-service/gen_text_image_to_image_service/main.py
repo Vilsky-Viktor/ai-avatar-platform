@@ -58,7 +58,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         mq_module.publish_status(model_result)
         params = model_module.prepare_params(job.get("input", {}))
         img_ctx = storage_module.load_input_images(
-            job.get("input", {}).get("imageUrls", []), 
+            job.get("input", {}).get("imagePaths", []), 
             model_module.get_upsampling_model()
         )
         final_prompt = model_module.refine_prompt(params, img_ctx)

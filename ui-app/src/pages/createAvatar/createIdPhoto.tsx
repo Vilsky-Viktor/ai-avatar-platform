@@ -14,122 +14,85 @@ import { v4 as uuid4 } from 'uuid';
 import { createMedia } from '../../services/apiGateway';
 import { MediaTypes, MediaSections, type Media } from '../../types/media';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../../services/storage';
-
-const STORAGE_KEY = 'avatar_creation_data';
-
-const OPTIONS = {
-    ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
-    skinColor: ["porcelain", "fair", "ivory", "beige", "olive", "tan", "caramel", "brown", "dark-brown", "ebony"],
-    age: ["child", "teenager", "20s", "30s", "40s", "50s", "60s", "70s", "80s+"],
-    eyes: ["dark brown", "light brown", "amber", "hazel", "green", "blue", "gray", "violet", "two-toned"],
-    eyeLashes: ["none", "short sparse", "short dense", "medium natural", "medium curled", "long wispy", "long dramatic", "tapered"],
-    eyeBrows: ["thin straight", "thin arched", "medium natural", "medium rounded", "thick bushy", "thick groomed", "monobrow", "faded tail"],
-    nose: ["small button", "small upturned", "medium straight", "medium roman", "large aquiline", "large bulbous", "broad flat", "crooked"],
-    lips: ["full", "thin", "heart-shaped", "wide", "round", "bow-shaped", "heavy-upper", "heavy-lower", "downward-turned"],
-    ears: ["attached", "detached", "petite", "protruding", "pointed", "elven", "round", "droopy"],
-    bustSize: ["flat", "small", "medium", "large", "extra-large"],
-    male: {
-        attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
-        body: ["slim", "athletic", "average", "muscular", "large"],
-        face: ["square", "oval", "round", "diamond", "angular"],
-        hairStyle: ["short cut", "crew cut", "side part", "long straight", "man bun", "waves", "dreadlocks", "afro", "undercut", "bald", "braids"],
-        hairColor: ["black", "dark brown", "light brown", "blonde", "ash blonde", "red", "platinum", "salt & pepper", "white"],
-        skin: ["smooth", "freckled", "tanned", "weathered"],
-        facialHair: ["clean-shaven", "stubble", "full beard", "short beard", "mustache", "goatee"],
-        outfit: ["minimalist", "streetwear", "business professional", "smart casual", "rugged outdoors", "vintage 90s", "skater", "preppy", "techwear", "athleisure", "bohemian", "classic tailored", "punk rock", "avant garde", "workwear"]
-    },
-    female: {
-        attractiveness: ["beautiful", "cute", "elegant", "androgynous", "striking", "ethereal", "youthful", "mature", "bold", "natural", "glamorous"],
-        body: ["slim", "athletic", "average", "curvy", "full-figured"],
-        face: ["oval", "heart", "round", "square", "diamond"],
-        hairStyle: ["long straight", "long waves", "pixie cut", "ponytail", "bob cut", "curly", "afro", "box braids", "space buns", "shaved sides"],
-        hairColor: ["black", "dark brown", "light brown", "honey blonde", "platinum", "auburn", "red", "silver", "pastel blue", "pastel pink"],
-        skin: ["smooth", "dewy", "freckled", "matte", "sun-kissed"],
-        facialHair: ["none", "full beard", "short stubble", "mustache", "light fuzz"],
-        outfit: ["chic minimalist", "streetwear", "business formal", "boho artistic", "cottagecore", "vintage glamour", "athleisure", "preppy academy", "grunge", "y2k aesthetic", "high fashion", "soft girl", "cyberpunk", "classic elegant", "tomboy"]
-    }
-};
-
-const INITIAL_SELECTIONS = {
-    ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
-    face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '', 
-    skin: '', facialHair: '', outfit: '', lips: '', ears: '', bustSize: ''
-};
+import { GENERAL_STORAGE_KEY, IdPhotoModes, type GeneralStepData, type IdPhotoStepData, type IdPhotoGeneratedImage, initialAvatarParameters, initialIdPhotoData, ID_PHOTO_STORAGE_KEY, AVATAR_PARAMETER_OPTIONS } from '../../utils/avatarCreation';
 
 function CreateIdPhotoPage() {
     const navigate = useNavigate();
     const portraitInputRef = useRef<HTMLInputElement>(null);
     const { user } = useApp();
-    
-    const savedGender = (localStorage.getItem(`${STORAGE_KEY}_gender`) as AvatarGender) || AvatarGender.female;
-    
-    const [mode, setMode] = useState<'generate' | 'upload'>(() => 
-        (localStorage.getItem(`${STORAGE_KEY}_mode`) as 'generate' | 'upload') || 'generate'
-    );
-    
-    const [selections, setSelections] = useState(() => {
-        const saved = localStorage.getItem(`${STORAGE_KEY}_selections`);
-        return saved ? JSON.parse(saved) : INITIAL_SELECTIONS;
-    });
 
-    const [photos, setPhotos] = useState<{portrait: string | null | null}>(() => {
-        const savedPortrait = sessionStorage.getItem(`${STORAGE_KEY}_uploaded_portrait`);
-        return { 
-            portrait: savedPortrait || null,
-        };
-    });
+    const generalData: GeneralStepData = JSON.parse(localStorage.getItem(GENERAL_STORAGE_KEY) || '{}')
+
+    const [stepData, setStepData] = useState(() => {
+        const dataStr = localStorage.getItem(ID_PHOTO_STORAGE_KEY);
+        const data = dataStr ? JSON.parse(dataStr) : initialIdPhotoData;
+        return data as IdPhotoStepData;
+    })
 
     const [isDragging, setIsDragging] = useState(false);
 
-    // --- Persisted State ---
-    const [jobs, setJobs] = useState<Job[]>(() => {
-        const saved = localStorage.getItem(`${STORAGE_KEY}_jobs`);
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [generatedImages, setGeneratedImages] = useState<{url: string, bucketPath: string}[]>(() => {
-        const saved = localStorage.getItem(`${STORAGE_KEY}_generated_images`);
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [selectedImage, setSelectedImage] = useState<string | null>(() => {
-        return localStorage.getItem(`${STORAGE_KEY}_selected_image`);
-    });
-
     const [generateLoading, setGenerateLoading] = useState(false);
-    const [activeJob, setActiveJob] = useState<Job | null>(null);
+    const [activeJob, setActiveJob] = useState<Partial<Job> | null>(null);
     const [carouselIndex, setCarouselIndex] = useState(0);
     const [isImageRendering, setIsImageRendering] = useState(false);
     const [nextLoading, setNextLoading] = useState(false);
 
-    // --- Persistence Hooks ---
-    useEffect(() => { localStorage.setItem(`${STORAGE_KEY}_mode`, mode); }, [mode]);
-    useEffect(() => { localStorage.setItem(`${STORAGE_KEY}_jobs`, JSON.stringify(jobs)); }, [jobs]);
-    useEffect(() => { localStorage.setItem(`${STORAGE_KEY}_generated_images`, JSON.stringify(generatedImages)); }, [generatedImages]);
     useEffect(() => {
-        if (selectedImage) localStorage.setItem(`${STORAGE_KEY}_selected_image`, selectedImage);
-        else localStorage.removeItem(`${STORAGE_KEY}_selected_image`);
-    }, [selectedImage]);
+        localStorage.setItem(ID_PHOTO_STORAGE_KEY, JSON.stringify(stepData));
+    }, [stepData]);
+
+    const setSelectedImage = (selectedImage: string) => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, selectedImage}));
+    }
+
+    const setJob = (job: Job) => {
+        const neededJobData = {id: job.id, result: job.result, input: { width: job.input.width, height: job.input.height }}
+        setStepData((prev: IdPhotoStepData) => ({...prev, jobs: [...prev.jobs, neededJobData]}));
+    }
+
+    const setParameters = (parameters: Omit<IdPhotoJobInput, 'gender'>) => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, parameters}));
+    }
+
+    const setGeneratedImages = (generatedImages: IdPhotoGeneratedImage[]) => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, generatedImages}));
+    }
+
+    const setGeneratedImage = (generatedImage: IdPhotoGeneratedImage) => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, generatedImages: [...prev.generatedImages, generatedImage]}));
+    }
+
+    const setUploadedPortrait = (uploadedPortrait: string | null) => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, uploadedPortrait}));
+    }
+
+    const setMode = (mode: IdPhotoModes) => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, mode}));
+    }
+
+    const setFinished = () => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, finished: true}));
+    }
 
     useEffect(() => {
-        if (selectedImage && generatedImages.length > 0) {
-            const index = generatedImages.findIndex(img => img.bucketPath === selectedImage);
+        if (stepData.selectedImage && stepData.generatedImages.length > 0) {
+            const index = stepData.generatedImages.findIndex(img => img.bucketPath === stepData.selectedImage);
             if (index !== -1) setCarouselIndex(index);
         }
     }, []);
 
     const generateIdPhoto = async () => {
         setGenerateLoading(true);
-        setSelectedImage(null);
+        setSelectedImage('');
         
         const idPhotoJob = {
-            avatarId: getAvatarId(),
-            input: {...selections, gender: getGender()} as IdPhotoJobInput,
+            avatarId: generalData.avatarId,
+            input: {...stepData.parameters, gender: generalData.gender} as IdPhotoJobInput,
         };
 
         try {
             const job = await createIdPhotoJob(idPhotoJob);
-            setJobs((prev) => [...prev, job]);
+            setJob(job);
         } catch (error: any) {
             console.error('Failed to generate ID photo');
         } finally {
@@ -137,38 +100,26 @@ function CreateIdPhotoPage() {
         }
     };
 
-    const getAvatarId = (): string => localStorage.getItem(`${STORAGE_KEY}_avatar_id`) || '';
-    const getGender = (): string => localStorage.getItem(`${STORAGE_KEY}_gender`) || '';
-
-    const handleModeSwitch = (newMode: 'generate' | 'upload') => {
-        if (newMode === mode) return;
+    const handleModeSwitch = (newMode: IdPhotoModes) => {
+        if (newMode === stepData.mode) return;
         if (newMode === 'generate') {
-            setPhotos({ portrait: null });
-            sessionStorage.removeItem(`${STORAGE_KEY}_uploaded_portrait`);
+            setParameters(initialAvatarParameters);
+            setUploadedPortrait(null);
         } else {
-            setSelections(INITIAL_SELECTIONS);
+            setParameters(initialAvatarParameters);
             setGeneratedImages([]);
-            setSelectedImage(null);
-            localStorage.removeItem(`${STORAGE_KEY}_selections`);
-            localStorage.removeItem(`${STORAGE_KEY}_generated_images`);
-            localStorage.removeItem(`${STORAGE_KEY}_selected_image`);
+            setSelectedImage('');
         }
         setMode(newMode);
     };
 
     useEffect(() => {
-        if (mode === 'generate') {
-            localStorage.setItem(`${STORAGE_KEY}_selections`, JSON.stringify(selections));
-        }
-    }, [selections, mode]);
-
-    useEffect(() => {
-        if (jobs.length === 0) return;
-        const latestJob = jobs[jobs.length - 1];
+        if (stepData.jobs.length === 0) return;
+        const latestJob = stepData.jobs[stepData.jobs.length - 1];
         if (latestJob.status !== JobStatuses.completed && latestJob.status !== JobStatuses.error) {
             setActiveJob(latestJob);
         }
-    }, [jobs]);
+    }, [stepData.jobs]);
 
     useEffect(() => {
         if (!activeJob?.id) return;
@@ -176,18 +127,13 @@ function CreateIdPhotoPage() {
         const unsubscribe = listenToDocChanges('jobs', activeJob.id, async (docSnap) => {
             if (docSnap.exists()) {
                 const jobData = { id: docSnap.id, ...docSnap.data() } as Job;
-                setJobs(prev => prev.map(j => j.id === jobData.id ? jobData : j));
+                setJob(jobData);
                 setActiveJob(jobData);
 
                 if (jobData.status === JobStatuses.completed && jobData.result?.mediaPath) {
                     const downloadUrl = await getMediaUrlFromPath(jobData.result.mediaPath)
 
-                    setGeneratedImages((prev) => {
-                        if (prev.some(img => img.bucketPath === jobData.result!.mediaPath)) return prev;
-                        const newList = [...prev, { url: downloadUrl, bucketPath: jobData.result!.mediaPath! }];
-                        setCarouselIndex(newList.length - 1);
-                        return newList;
-                    });
+                    setGeneratedImage({ url: downloadUrl, bucketPath: jobData.result!.mediaPath! });
                     setActiveJob(null);
                 }
             }
@@ -201,41 +147,43 @@ function CreateIdPhotoPage() {
 
         setNextLoading(true);
 
-        const avatarId = getAvatarId();
-
         try {
             const media: Media = {
                 userId: user?.id!,
-                avatarId: avatarId,
+                avatarId: generalData.avatarId,
                 jobId: '',
                 type: MediaTypes.image,
                 section: MediaSections.avatar,
                 isRemovable: false,
                 isIdPhoto: true,
                 isPhotoSet: false,
-                path: ''
+                path: '',
+                dimensions: '1024x1024',
+                upscaled: false
             }
 
-            if (!localStorage.getItem(`${STORAGE_KEY}_id_media`)) {
-                if (mode === 'generate') {
-                    const job = jobs.find((j: Job) => j.result?.mediaPath === selectedImage);
+            if (!stepData.finished) {
+                if (stepData.mode === 'generate') {
+                    const job = stepData.jobs.find((j: Partial<Job>) => j.result?.mediaPath === stepData.selectedImage);
                     if (!job) {
-                        throw new Error(`Did not find a job related to selected image - ${selectedImage}`);
+                        throw new Error(`Did not find a job related to selected image - ${stepData.selectedImage}`);
                     }
                     
-                    media.jobId = job?.id;
-                    media.path = selectedImage!
+                    media.jobId = job?.id!;
+                    media.path = stepData.selectedImage!
+                    media.dimensions = `${job.input?.height}x${job.input?.width}`;
                     await createMedia(media);
                 } else {
-                    const mediaPath = `media/${user?.id}-user/avatars/${getAvatarId()}-avatar/images/${uuid4()}.png`;
-                    await uploadMediaToBucket(mediaPath, photos.portrait!);
+                    const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/${uuid4()}.png`;
+                    await uploadMediaToBucket(mediaPath, stepData.uploadedPortrait!);
                     media.path = mediaPath;
+                    media.dimensions = '1024x1024';
                     await createMedia(media);
                 }
 
-                await updateAvatar(avatarId, {status: AvatarStatus.idCreated, parameters: selections});
+                await updateAvatar(generalData.avatarId, {status: AvatarStatus.idCreated, parameters: {...stepData.parameters, gender: generalData.gender}});
 
-                localStorage.setItem(`${STORAGE_KEY}_id_media`, JSON.stringify(media));
+                setFinished()
             }
 
             setNextLoading(false);
@@ -246,16 +194,13 @@ function CreateIdPhotoPage() {
         }
     }
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'portrait' | 'body') => {
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const result = reader.result as string;
-                setPhotos(prev => ({ ...prev, [type]: result }));
-                if (type === 'portrait') {
-                    sessionStorage.setItem(`${STORAGE_KEY}_uploaded_portrait`, result);
-                }
+                setUploadedPortrait(result);
                 e.target.value = ''; 
             };
             reader.readAsDataURL(file);
@@ -265,7 +210,7 @@ function CreateIdPhotoPage() {
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!photos.portrait) setIsDragging(true);
+        if (!stepData.uploadedPortrait) setIsDragging(true);
     };
 
     const handleDragLeave = (e: React.DragEvent) => {
@@ -278,22 +223,21 @@ function CreateIdPhotoPage() {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        if (photos.portrait) return;
+        if (stepData.uploadedPortrait) return;
 
         const file = e.dataTransfer.files?.[0];
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const result = reader.result as string;
-                setPhotos(prev => ({ ...prev, portrait: result }));
-                sessionStorage.setItem(`${STORAGE_KEY}_uploaded_portrait`, result);
+                setUploadedPortrait(result);
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const isFormValid = Object.values(selections).every(value => value !== '');
-    const canProceed = mode === 'generate' ? (selectedImage !== null) : (photos.portrait !== null);
+    const isFormValid = stepData.parameters && Object.values(stepData.parameters).every(value => value !== '');
+    const canProceed = stepData.mode === IdPhotoModes.generate ? (stepData.selectedImage !== null) : (stepData.uploadedPortrait !== null);
 
     const renderRightColumn = () => {
         const isJobActive = activeJob?.status === JobStatuses.pending || activeJob?.status === JobStatuses.generating;
@@ -328,9 +272,9 @@ function CreateIdPhotoPage() {
             );
         }
 
-        if (generatedImages.length > 0) {
-            const currentImg = generatedImages[carouselIndex];
-            const isSelected = selectedImage === currentImg.bucketPath;
+        if (stepData.generatedImages.length > 0) {
+            const currentImg = stepData.generatedImages[carouselIndex];
+            const isSelected = stepData.selectedImage === currentImg.bucketPath;
 
             return (
                 <div className="flex-1 relative rounded-[3rem] border border-base-content/10 bg-base-200/30 flex flex-col items-center justify-center min-h-[600px] overflow-hidden group">
@@ -350,7 +294,7 @@ function CreateIdPhotoPage() {
                     
                     <div className="absolute top-12 right-12 flex flex-col items-end gap-3 z-20">
                         <button 
-                            onClick={() => setSelectedImage(isSelected ? null : currentImg.bucketPath)}
+                            onClick={() => setSelectedImage(isSelected ? '' : currentImg.bucketPath)}
                             className={`btn btn-lg h-16 w-16 btn-circle shadow-2xl transition-all duration-500 border-2 ${
                                 isSelected 
                                 ? 'btn-primary border-primary scale-110' 
@@ -365,13 +309,13 @@ function CreateIdPhotoPage() {
                         </button>
                     </div>
 
-                    {generatedImages.length > 1 && (
+                    {stepData.generatedImages.length > 1 && (
                         <div className="absolute bottom-12 flex gap-8 items-center bg-base-100/60 backdrop-blur-2xl px-8 py-4 rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 hover:bg-base-100/80 z-20">
-                            <button onClick={() => { setIsImageRendering(true); setCarouselIndex(p => (p - 1 + generatedImages.length) % generatedImages.length); }} className="hover:text-primary transition-colors p-2">
+                            <button onClick={() => { setIsImageRendering(true); setCarouselIndex(p => (p - 1 + stepData.generatedImages.length) % stepData.generatedImages.length); }} className="hover:text-primary transition-colors p-2">
                                 <ChevronLeft size={24} />
                             </button>
-                            <span className="text-xs font-bold tracking-[0.4em] uppercase opacity-40">{carouselIndex + 1} / {generatedImages.length}</span>
-                            <button onClick={() => { setIsImageRendering(true); setCarouselIndex(p => (p + 1) % generatedImages.length); }} className="hover:text-primary transition-colors p-2">
+                            <span className="text-xs font-bold tracking-[0.4em] uppercase opacity-40">{carouselIndex + 1} / {stepData.generatedImages.length}</span>
+                            <button onClick={() => { setIsImageRendering(true); setCarouselIndex(p => (p + 1) % stepData.generatedImages.length); }} className="hover:text-primary transition-colors p-2">
                                 <ChevronRight size={24} />
                             </button>
                         </div>
@@ -406,39 +350,39 @@ function CreateIdPhotoPage() {
 
             <div className="flex justify-center mt-8">
                 <div className="bg-base-200 p-1 rounded-2xl flex gap-1 border border-base-content/5">
-                    <button onClick={() => handleModeSwitch('generate')} className={`px-6 py-2 cursor-pointer rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${mode === 'generate' ? 'bg-base-100 shadow-sm text-primary' : 'opacity-50 hover:opacity-100'}`}>
+                    <button onClick={() => handleModeSwitch(IdPhotoModes.generate)} className={`px-6 py-2 cursor-pointer rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${stepData.mode === IdPhotoModes.generate ? 'bg-base-100 shadow-sm text-primary' : 'opacity-50 hover:opacity-100'}`}>
                         <Sparkles size={16} /> Generate
                     </button>
-                    <button onClick={() => handleModeSwitch('upload')} className={`px-6 py-2 cursor-pointer rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${mode === 'upload' ? 'bg-base-100 shadow-sm text-primary' : 'opacity-50 hover:opacity-100'}`}>
+                    <button onClick={() => handleModeSwitch(IdPhotoModes.upload)} className={`px-6 py-2 cursor-pointer rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${stepData.mode === IdPhotoModes.upload ? 'bg-base-100 shadow-sm text-primary' : 'opacity-50 hover:opacity-100'}`}>
                         <Upload size={16} /> My Photos
                     </button>
                 </div>
             </div>
 
             <div className="mt-12 w-full">
-                {mode === 'generate' ? (
+                {stepData.mode === IdPhotoModes.generate ? (
                     <div className="flex flex-col lg:flex-row gap-8 w-full items-stretch">
                         <div className="w-full lg:max-w-[560px] relative rounded-[2.5rem] border border-base-content/5 bg-base-100 p-8 flex flex-col justify-between shrink-0">
                             <div className="grid grid-cols-2 gap-x-10 gap-y-5"> {/* Reduced gap-y from 10 to 5 */}
                                 {[
-                                    { label: "Ethnicity", key: "ethnicity", opts: OPTIONS.ethnicity },
-                                    { label: "Skin Color", key: "skinColor", opts: OPTIONS.skinColor },
-                                    { label: "Age", key: "age", opts: OPTIONS.age },
-                                    { label: "Attractiveness", key: "attractiveness", opts: OPTIONS[savedGender].attractiveness },
-                                    { label: "Body", key: "body", opts: OPTIONS[savedGender].body },
-                                    { label: "Bust Size", key: "bustSize", opts: OPTIONS.bustSize },
-                                    { label: "Face", key: "face", opts: OPTIONS[savedGender].face },
-                                    { label: "Hair Style", key: "hairStyle", opts: OPTIONS[savedGender].hairStyle },
-                                    { label: "Hair Color", key: "hairColor", opts: OPTIONS[savedGender].hairColor },
-                                    { label: "Ears", key: "ears", opts: OPTIONS.ears },
-                                    { label: "Nose", key: "nose", opts: OPTIONS.nose },
-                                    { label: "Lips", key: "lips", opts: OPTIONS.lips },
-                                    { label: "Eyes", key: "eyes", opts: OPTIONS.eyes }, // Fixed the typo here
-                                    { label: "Eye Lashes", key: "eyeLashes", opts: OPTIONS.eyeLashes },
-                                    { label: "Eye Brows", key: "eyeBrows", opts: OPTIONS.eyeBrows },
-                                    { label: "Skin", key: "skin", opts: OPTIONS[savedGender].skin },
-                                    { label: "Facial Hair", key: "facialHair", opts: OPTIONS[savedGender].facialHair },
-                                    { label: "Outfit", key: "outfit", opts: OPTIONS[savedGender].outfit },
+                                    { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
+                                    { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
+                                    { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
+                                    { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].attractiveness },
+                                    { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].body },
+                                    { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
+                                    { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].face },
+                                    { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].hairStyle },
+                                    { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].hairColor },
+                                    { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
+                                    { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
+                                    { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
+                                    { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes }, // Fixed the typo here
+                                    { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
+                                    { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
+                                    { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].skin },
+                                    { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].facialHair },
+                                    { label: "Outfit", key: "outfit", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].outfit },
                                 ].map((field) => (
                                     <div key={field.key} className="group flex flex-col gap-0.5"> {/* Tightened gap */}
                                         <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
@@ -446,8 +390,8 @@ function CreateIdPhotoPage() {
                                         </label>
                                         <div className="relative">
                                             <select 
-                                                value={selections[field.key as keyof typeof selections]}
-                                                onChange={(e) => setSelections({...selections, [field.key]: e.target.value})}
+                                                value={stepData.parameters[field.key as keyof typeof stepData.parameters]}
+                                                onChange={(e) => setParameters({...stepData.parameters, [field.key]: e.target.value})}
                                                 className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
                                             > {/* Reduced py-2 to py-1.5 and text-lg to text-base */}
                                                 <option value="" disabled>Select</option>
@@ -513,14 +457,14 @@ function CreateIdPhotoPage() {
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
-                            onClick={() => !photos.portrait && portraitInputRef.current?.click()}
-                            className={`flex-1 relative rounded-[3rem] border border-dashed flex flex-col items-center justify-center min-h-[600px] group transition-all duration-700 overflow-hidden ${photos.portrait ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'} ${isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : ''}`}
+                            onClick={() => !stepData.uploadedPortrait && portraitInputRef.current?.click()}
+                            className={`flex-1 relative rounded-[3rem] border border-dashed flex flex-col items-center justify-center min-h-[600px] group transition-all duration-700 overflow-hidden ${stepData.uploadedPortrait ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'} ${isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : ''}`}
                         >
-                            <input type="file" ref={portraitInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'portrait')} />
-                            {photos.portrait ? (
+                            <input type="file" ref={portraitInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e)} />
+                            {stepData.uploadedPortrait ? (
                                 <>
-                                    <img src={photos.portrait} className="absolute inset-0 w-full h-full object-contain p-16 z-0" alt="Portrait" />
-                                    <button onClick={(e) => { e.stopPropagation(); setPhotos(p => ({ ...p, portrait: null })); sessionStorage.removeItem(`${STORAGE_KEY}_uploaded_portrait`); }} className="btn btn-circle btn-primary btn-outline absolute top-8 right-8 z-50 shadow-lg"><X size={20} /></button>
+                                    <img src={stepData.uploadedPortrait!} className="absolute inset-0 w-full h-full object-contain p-16 z-0" alt="Portrait" />
+                                    <button onClick={(e) => { e.stopPropagation(); setUploadedPortrait(null); }} className="btn btn-circle btn-primary btn-outline absolute top-8 right-8 z-50 shadow-lg"><X size={20} /></button>
                                 </>
                             ) : (
                                 <div className="flex flex-col items-center gap-6 pointer-events-none">
@@ -535,7 +479,7 @@ function CreateIdPhotoPage() {
                                     </div>
                                 </div>
                             )}
-                            {!photos.portrait && (
+                            {!stepData.uploadedPortrait && (
                                 <>
                                     <div className="absolute top-12 left-12 w-8 h-8 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
                                     <div className="absolute bottom-12 right-12 w-8 h-8 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />

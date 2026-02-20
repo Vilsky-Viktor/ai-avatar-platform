@@ -21,6 +21,8 @@ export type Media = {
     isIdPhoto: boolean,
     isPhotoSet: boolean,
     path: string;
+    dimensions: string;
+    upscaled: boolean;
     updatedAt?: FirestoreTimestamp;
     createdAt?: FirestoreTimestamp
 }

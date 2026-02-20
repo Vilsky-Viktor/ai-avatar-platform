@@ -4,74 +4,53 @@ import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepp
 import { User, ChevronDown } from 'lucide-react';
 import { createAvatar } from '../../services/apiGateway';
 import type { Avatar } from '../../types/avatar';
-import { deleteAvatarById } from '../../services/apiGateway';
-import { AvatarGender, AvatarStatus } from '../../types/avatar';
-import { JobStatuses } from '../../types/job';
-
-const STORAGE_KEY = 'avatar_creation_data';
+import { AvatarGender } from '../../types/avatar';
+import { type GeneralStepData, GENERAL_STORAGE_KEY, handleCancel, initialGeneralData } from '../../utils/avatarCreation';
 
 function GeneralPage() {
     const navigate = useNavigate();
 
-    const [name, setName] = useState(() => localStorage.getItem(`${STORAGE_KEY}_name`) || '');
-    const [gender, setGender] = useState(() => localStorage.getItem(`${STORAGE_KEY}_gender`) as AvatarGender || AvatarGender.female);
+    const [stepData, setStepData] = useState(() => {
+        const dataStr = localStorage.getItem(GENERAL_STORAGE_KEY);
+        const data = dataStr ? JSON.parse(dataStr) : initialGeneralData;
+        return data as GeneralStepData;
+    })
+
     const [nextLoading, setNextLoading] = useState(false);
     const [cancelLoading, setCancelLoading] = useState(false);
 
-    const canProceed = name.trim().length > 0;
+    const canProceed = stepData.name.trim().length > 0;
 
     useEffect(() => {
-        localStorage.setItem(`${STORAGE_KEY}_name`, name);
-        localStorage.setItem(`${STORAGE_KEY}_gender`, gender);
-    }, [name, gender]);
+        localStorage.setItem(GENERAL_STORAGE_KEY, JSON.stringify(stepData));
+    }, [stepData]);
 
-    const handleCancel = async () => {
-        const avatarId = localStorage.getItem(`${STORAGE_KEY}_avatar_id`) || null
-
-        localStorage.removeItem(`${STORAGE_KEY}_name`);
-        localStorage.removeItem(`${STORAGE_KEY}_gender`);
-        localStorage.removeItem(`${STORAGE_KEY}_mode`);
-        localStorage.removeItem(`${STORAGE_KEY}_selections`);
-        localStorage.removeItem(`${STORAGE_KEY}_avatar_id`);
-        localStorage.removeItem(`${STORAGE_KEY}_jobs`);
-        localStorage.removeItem(`${STORAGE_KEY}_generated_images`);
-        localStorage.removeItem(`${STORAGE_KEY}_selected_image`);
-        localStorage.removeItem(`${STORAGE_KEY}_id_media`);
-        sessionStorage.removeItem(`${STORAGE_KEY}_uploaded_portrait`);
-
-        if (avatarId) {
-            setCancelLoading(true);
-            try {
-                await deleteAvatarById(avatarId);
-                setCancelLoading(false);
-            } catch (error: any) {
-                console.log(`Failed to remove avatar`);
-            } finally {
-                setCancelLoading(false);
-            }
-            
-        }
-
-        navigate('/');
-    };
-
-    const saveAvatarId = (avatar: Avatar) => {
-        localStorage.setItem(`${STORAGE_KEY}_avatar_id`, avatar.id!);
+    const setAvatarId = (avatar: Avatar) => {
+        setStepData((prev: GeneralStepData) => ({...prev, avatarId: avatar.id!}));
     }
 
-    const getAvatarId = (): string | null => {
-        return localStorage.getItem(`${STORAGE_KEY}_avatar_id`) || null;
+    const setName = (name: string) => {
+        setStepData((prev: GeneralStepData) => ({...prev, name}));
+    }
+
+    const setGender = (gender: AvatarGender) => {
+        setStepData((prev: GeneralStepData) => ({...prev, gender}));
+    }
+
+    const setFinished = () => {
+        setStepData((prev: GeneralStepData) => ({...prev, finished: true}));
     }
 
     const nextStep = async () => {
         try {
-            if (!getAvatarId()) {
+            if (!stepData.finished) {
                 setNextLoading(true)
 
-                const avatar = {name, gender, imageCount: 0, videoCount: 0};
+                const avatar = {name: stepData.name, gender: stepData.gender, imageCount: 0, videoCount: 0};
                 const avatarDb = await createAvatar(avatar);
 
-                saveAvatarId(avatarDb);
+                setAvatarId(avatarDb);
+                setFinished();
                 setNextLoading(false);
             }
 
@@ -98,8 +77,9 @@ function GeneralPage() {
                         <div className="relative">
                             <input 
                                 type="text"
-                                value={name}
+                                value={stepData.name}
                                 onChange={(e) => setName(e.target.value)}
+                                disabled={stepData.finished}
                                 placeholder="Enter name..."
                                 className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight"
                             />
@@ -116,7 +96,8 @@ function GeneralPage() {
                         </label>
                         <div className="relative">
                             <select 
-                                value={gender} 
+                                value={stepData.gender}
+                                disabled={stepData.finished}
                                 onChange={(e) => setGender(e.target.value as AvatarGender)} 
                                 className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight appearance-none cursor-pointer pr-8"
                             >
@@ -134,7 +115,7 @@ function GeneralPage() {
             <div className="mt-12 flex justify-center gap-6">
                 <button 
                     className="btn btn-lg btn-ghost uppercase tracking-widest px-12 opacity-50 hover:opacity-100" 
-                    onClick={handleCancel}
+                    onClick={() => handleCancel(stepData.avatarId, setCancelLoading, navigate)}
                 >
                     {cancelLoading && <span className="loading loading-spinner"></span>}
                     Cancel

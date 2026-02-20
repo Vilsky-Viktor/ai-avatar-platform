@@ -1,5 +1,7 @@
 import os
 import io
+import tempfile
+import uuid
 from pathlib import Path
 from google.cloud import storage
 from PIL import Image, ExifTags
@@ -36,14 +38,47 @@ def download_models(model_name):
         blob.download_to_filename(str(final_dest))
     logger.info(f"Sync for {model_name} complete")
 
-def load_input_images(image_urls, safety_checker):
-    """Downloads and converts input images while checking safety."""
+def load_input_images(image_paths: list[str], safety_checker) -> list[Image.Image]:
     img_ctx = []
-    for p in image_urls:
-        if os.path.exists(p):
-            if safety_checker.test_image(p):
+    bucket = storage_client.bucket(BUCKET_NAME)
+
+    with tempfile.TemporaryDirectory(prefix="input_imgs_") as tmp_dir:
+        tmp_path = Path(tmp_dir)
+
+        for image_path in image_paths:
+            blob = bucket.blob(image_path)
+
+            if not blob.exists():
+                logger.warning(f"Input image not found in GCS: {image_path}")
                 continue
-            img_ctx.append(Image.open(p).convert("RGB"))
+
+            local_filename = tmp_path / f"{uuid.uuid4()}_{Path(image_path).name}"
+            
+            try:
+                logger.debug(f"Downloading input: {image_path} → {local_filename}")
+                blob.download_to_filename(str(local_filename))
+
+                if local_filename.stat().st_size > 20 * 1024 * 1024:
+                    logger.warning(f"Input too large ({local_filename.stat().st_size / 1024**2:.1f} MB): {image_path}")
+                    local_filename.unlink()
+                    continue
+
+                if safety_checker.test_image(str(local_filename)):
+                    logger.info(f"Safety check blocked input: {image_path}")
+                    local_filename.unlink()
+                    continue
+
+                img = Image.open(local_filename).convert("RGB")
+                img_ctx.append(img)
+                
+                local_filename.unlink()
+
+            except Exception as e:
+                logger.error(f"Failed to process input {image_path}: {e}", exc_info=True)
+                if local_filename.exists():
+                    local_filename.unlink()
+
+    logger.info(f"Loaded {len(img_ctx)} valid input images")
     return img_ctx
 
 def prepare_image_payload(img):
