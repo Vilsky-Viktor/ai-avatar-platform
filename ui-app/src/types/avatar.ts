@@ -1,5 +1,4 @@
 import type { FirestoreTimestamp } from "./firestore";
-import type { IdPhotoJobInput } from "./job";
 
 export enum AvatarStatus {
   initialized = 'initialized',
@@ -16,15 +15,37 @@ export enum AvatarGender {
   female = 'female'
 }
 
+export type AvatarParameters = {
+  ethnicity: string;
+  skinColor: string;
+  age: string;
+  attractiveness: string;
+  body: string;
+  face: string;
+  hairStyle: string;
+  hairColor: string;
+  eyes: string;
+  skin: string;
+  facialHair: string;
+  nose: string;
+  eyeLashes: string;
+  eyeBrows: string;
+  lips: string;
+  bustSize: string;
+  ears: string;
+  bodyHair: string;
+}
+
 export type Avatar = {
   id?: string;
   userId?: string;
   name: string;
+  slug: string;
   gender: AvatarGender;
   imageCount: number;
   videoCount: number;
-  parameters?: IdPhotoJobInput;
-  image?: string;
+  parameters?: AvatarParameters;
+  idPhotoPaths?: string[];
   status?: AvatarStatus;
   updatedAt?: FirestoreTimestamp;
   createdAt?: FirestoreTimestamp

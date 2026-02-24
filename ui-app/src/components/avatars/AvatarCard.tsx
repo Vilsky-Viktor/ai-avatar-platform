@@ -4,7 +4,8 @@ import { useApp } from '../../providers/ContextProvider';
 import { ThemeColor } from '../../types/settings';
 import { AvatarGender } from '../../types/avatar';
 import type { FirestoreTimestamp } from '../../types/firestore';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getMediaUrlFromPath } from '../../services/storage';
 
 type PropType = {
     avatar: Avatar;
@@ -14,6 +15,28 @@ type PropType = {
 const AvatarCard = ({ avatar, onDelete }: PropType) => {
   const { theme } = useApp();
   const [loadingDelete, setLoadingDelete] = useState(false);
+
+  const getAvatarDefaultImage = () => {
+    const isDark = theme === ThemeColor.Dark;
+    if (avatar.gender === AvatarGender.male) {
+      return isDark ? '/avatar-male-2.png' : '/avatar-male.png';
+    }
+    return isDark ? '/avatar-female-2.png' : '/avatar-female.png';
+  }
+
+  const [imageSrc, setImageSrc] = useState(() => getAvatarDefaultImage());
+
+  useEffect(() => {
+    getAvatarImage();
+  }, [])
+
+  const getAvatarImage = async () => {
+    if (!avatar.idPhotoPaths) return;
+
+    const frontPicturePath = avatar.idPhotoPaths[0];
+    const frontPictureUrl = await getMediaUrlFromPath(frontPicturePath);
+    setImageSrc(frontPictureUrl);
+  }
 
   const getStatusLabel = () => {
     switch(avatar.status) {
@@ -35,16 +58,6 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
     return 'status-warning';
   }
 
-  const getAvatarImage = () => {
-    if (avatar.image) return avatar.image;
-    
-    const isDark = theme === ThemeColor.Dark;
-    if (avatar.gender === AvatarGender.male) {
-      return isDark ? '/avatar-male-2.png' : '/avatar-male.png';
-    }
-    return isDark ? '/avatar-female-2.png' : '/avatar-female.png';
-  }
-
   const getRelativeAge = (dateInput: FirestoreTimestamp): string => {
     if (!dateInput) return 'n/a';
     const date = new Date(dateInput._seconds * 1000);
@@ -63,7 +76,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
   }
 
   return (
-    <div className="group card bg-base-100 w-full h-[450px] shadow-md transition-all duration-300 relative rounded-2xl overflow-hidden active:scale-[0.99] hover:bg-base-200">
+    <div className="group card bg-base-100 w-full h-[450px] shadow-md transition-all duration-300 relative rounded-2xl overflow-hidden active:scale-[0.99] hover:bg-base-200 cursor-pointer">
       
       {/* 3-DOT MENU - Absolute positioned top right */}
       <div className="absolute top-5 right-5 z-[60]">
@@ -91,7 +104,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
             <li className="animate-in slide-in-from-top-2 duration-300 delay-75">
                 <div className="flex justify-between items-center active:bg-transparent cursor-default">
                     <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Status</span>
-                    <span className={`text-[10px] font-black uppercase tracking-tighter ${getStatusColor()}`}>
+                    <span className={`text-[10px] font-medium uppercase tracking-tighter ${getStatusColor()}`}>
                         {getStatusLabel()}
                     </span>
                 </div>
@@ -117,7 +130,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
       </div>
 
       {/* Main Card Interaction Area */}
-      <button className="w-full h-full text-left focus:outline-none overflow-hidden rounded-2xl relative">
+      <button className="w-full h-full text-left focus:outline-none overflow-hidden rounded-2xl relative cursor-pointer">
         {/* Hover Border Highlight */}
         <div className="absolute inset-0 z-50 pointer-events-none rounded-2xl border-2 border-transparent group-hover:border-primary/40 transition-colors duration-300" />
         
@@ -130,7 +143,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
 
         <figure className="h-[88%] w-full overflow-hidden bg-base-300 relative">
           <img 
-            src={getAvatarImage()}
+            src={imageSrc}
             alt={avatar.name} 
             className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-1000 ease-out" 
           />

@@ -24,30 +24,11 @@ export type JobInput = {
   numSteps: number;
 }
 
-export type IdPhotoJobInput = {
-  gender: string;
-  ethnicity: string;
-  skinColor: string;
-  age: string;
-  attractiveness: string;
-  body: string;
-  face: string;
-  hairStyle: string;
-  hairColor: string;
-  eyes: string;
-  skin: string;
-  facialHair: string;
-  nose: string;
-  eyeLashes: string;
-  eyeBrows: string;
-  outfit: string;
-  lips: string;
-  bustSize: string;
-  ears: string;
-}
-
 export type JobResult = {
   mediaPath: string;
+  minSimilarity?: number;
+  maxSimilarity?: number;
+  numTries?: number;
   error?: string;
 }
 
@@ -61,14 +42,6 @@ export type Job = {
   status: JobStatuses;
   input: JobInput
   result?: JobResult;
-}
-
-export type IdPhotoJob = {
-  avatarId: string;
-  input: IdPhotoJobInput;
-}
-
-export type JobDB = Job & {
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }

@@ -15,19 +15,39 @@ export enum AvatarGender {
   female = 'female'
 }
 
+export type AvatarParameters = {
+  ethnicity: string;
+  skinColor: string;
+  age: string;
+  attractiveness: string;
+  body: string;
+  face: string;
+  hairStyle: string;
+  hairColor: string;
+  eyes: string;
+  skin: string;
+  facialHair: string;
+  nose: string;
+  eyeLashes: string;
+  eyeBrows: string;
+  outfit: string;
+  lips: string;
+  bustSize: string;
+  ears: string;
+  bodyHair: string;
+}
+
 export type Avatar = {
   id?: string;
   userId: string;
   name: string;
+  slug: string;
   gender: AvatarGender;
   imageCount: number;
   videoCount: number;
-  parameters?: object;
-  image?: string;
+  parameters?: AvatarParameters;
+  idPhotoPaths?: string[];
   status: AvatarStatus;
-}
-
-export type AvatarDB = Avatar & {
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }

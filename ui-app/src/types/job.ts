@@ -1,4 +1,5 @@
 import type { FirestoreTimestamp } from "./firestore";
+import type { AvatarParameters } from "./avatar";
 
 export enum JobTypes {
   idPhoto = 'idPhoto',
@@ -22,37 +23,24 @@ export type JobInput = {
   height?: number;
 }
 
-export type IdPhotoJobInput = {
+export type JobRequestInput = {
   gender: string;
-  ethnicity: string;
-  skinColor: string;
-  age: string;
-  attractiveness: string;
-  body: string;
-  face: string;
-  hairStyle: string;
-  hairColor: string;
-  eyes: string;
-  skin: string;
-  facialHair: string;
-  nose: string;
-  eyeLashes: string;
-  eyeBrows: string;
-  outfit: string;
-  lips: string;
-  bustSize: string;
-  ears: string;
-}
+  parameters: AvatarParameters;
+  idPhotoPaths?: string[]
+};
 
 export type PhotoSetJobInput = {
-  idPhotoPath: string;
+  idPhotoPaths: string[];
   gender: string;
-  body: string;
-  bustSize: string;
+  parameters: AvatarParameters;
 }
 
 export type JobResult = {
   mediaPath: string;
+  mediaUrl?: string;
+  minSimilarity?: number;
+  maxSimilarity?: number;
+  numTries?: number;
   error?: string;
 }
 
@@ -70,12 +58,8 @@ export type Job = {
   updatedAt: FirestoreTimestamp;
 }
 
-export type IdPhotoJob = {
+export type JobRequest = {
+  groupId?: string;
   avatarId: string;
-  input: IdPhotoJobInput;
-}
-
-export type PhotoSetJob = {
-  avatarId: string;
-  input: PhotoSetJobInput;
+  input: JobRequestInput;
 }

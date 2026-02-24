@@ -7,5 +7,8 @@ export type AIModelResult = {
   type: JobTypes;
   status: JobStatuses;
   resultPath: string | null;
+  minSimilarity: number;
+  maxSimilarity: number;
+  numTries: number;
   error: string | null;
 }

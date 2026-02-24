@@ -1,4 +1,4 @@
-import { Avatar, AvatarDB } from '../types/avatar';
+import { Avatar } from '../types/avatar';
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || ''
@@ -6,17 +6,17 @@ const AVATARS_COLLECTION_NAME = process.env.AVATARS_COLLECTION_NAME || ''
 const USERS_COLLECTION_NAME = process.env.USERS_COLLECTION_NAME || ''
 const db = getFirestore(DB_NAME)
 
-export const getAll = async (userId: string): Promise<AvatarDB[]> => {
+export const getAll = async (userId: string): Promise<Avatar[]> => {
     const avatarsCollectionRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
         .collection(AVATARS_COLLECTION_NAME);
 
     const snapshot = await avatarsCollectionRef.get();
 
-    return snapshot.docs.map(doc => doc.data() as AvatarDB);
+    return snapshot.docs.map(doc => doc.data() as Avatar);
 }
 
-export const create = async (userId: string, avatar: Omit<Avatar, 'id'>): Promise<AvatarDB> => {
+export const create = async (userId: string, avatar: Omit<Avatar, 'id'>): Promise<Avatar> => {
     const avatarRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
         .collection(AVATARS_COLLECTION_NAME)
@@ -25,7 +25,7 @@ export const create = async (userId: string, avatar: Omit<Avatar, 'id'>): Promis
 
     const now = Timestamp.now();
 
-    const dbAvatar: AvatarDB = {
+    const dbAvatar: Avatar = {
         ...avatar,
         id: newId,
         userId: userId,
@@ -38,7 +38,7 @@ export const create = async (userId: string, avatar: Omit<Avatar, 'id'>): Promis
     return dbAvatar;
 }
 
-export const update = async (userId: string, avatarId: string, avatarData: Partial<Avatar>): Promise<AvatarDB> => {
+export const update = async (userId: string, avatarId: string, avatarData: Partial<Avatar>): Promise<Avatar> => {
     const avatarRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
         .collection(AVATARS_COLLECTION_NAME)
@@ -58,7 +58,7 @@ export const update = async (userId: string, avatarId: string, avatarData: Parti
         throw new Error(`Avatar with id ${avatarId} not found`);
     }
 
-    return snapshot.data() as AvatarDB;
+    return snapshot.data() as Avatar;
 }
 
 export const updateCounter = async (userId: string, avatarId: string, fieldName: string, amount: number) => {

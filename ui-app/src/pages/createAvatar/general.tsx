@@ -1,28 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepper';
-import { User, ChevronDown } from 'lucide-react';
+import { User } from 'lucide-react';
 import { createAvatar } from '../../services/apiGateway';
 import type { Avatar } from '../../types/avatar';
 import { AvatarGender } from '../../types/avatar';
-import { type GeneralStepData, GENERAL_STORAGE_KEY, handleCancel, initialGeneralData } from '../../utils/avatarCreation';
+import { GENERAL_STORAGE_KEY, getLocalStorageData, saveLocalStorageData } from '../../utils/avatarCreation';
+import { type GeneralStepData  } from "../../types/avatarCreation";
+import BottomDock from '../../components/createAvatar/BottomDock'
+
 
 function GeneralPage() {
     const navigate = useNavigate();
 
-    const [stepData, setStepData] = useState(() => {
-        const dataStr = localStorage.getItem(GENERAL_STORAGE_KEY);
-        const data = dataStr ? JSON.parse(dataStr) : initialGeneralData;
-        return data as GeneralStepData;
-    })
+    const [stepData, setStepData] = useState(() => getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY))
 
-    const [nextLoading, setNextLoading] = useState(false);
-    const [cancelLoading, setCancelLoading] = useState(false);
-
-    const canProceed = stepData.name.trim().length > 0;
+    const canProceed = () => stepData.name.trim().length > 3;
 
     useEffect(() => {
-        localStorage.setItem(GENERAL_STORAGE_KEY, JSON.stringify(stepData));
+        saveLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY, stepData)
     }, [stepData]);
 
     const setAvatarId = (avatar: Avatar) => {
@@ -31,6 +27,15 @@ function GeneralPage() {
 
     const setName = (name: string) => {
         setStepData((prev: GeneralStepData) => ({...prev, name}));
+
+        const slug = name
+        .toLowerCase()
+        .replace(/[_\s]+/g, '-')     
+        .replace(/[^a-z0-9-]/g, '')  
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+        setStepData((prev: GeneralStepData) => ({...prev, slug}));
     }
 
     const setGender = (gender: AvatarGender) => {
@@ -44,22 +49,17 @@ function GeneralPage() {
     const nextStep = async () => {
         try {
             if (!stepData.finished) {
-                setNextLoading(true)
-
-                const avatar = {name: stepData.name, gender: stepData.gender, imageCount: 0, videoCount: 0};
+                const avatar = {name: stepData.name, gender: stepData.gender, slug: stepData.slug, imageCount: 0, videoCount: 0};
                 const avatarDb = await createAvatar(avatar);
 
                 setAvatarId(avatarDb);
                 setFinished();
-                setNextLoading(false);
             }
 
             navigate('/avatar/create/id-photo');
         } catch (error) {
             console.log('Failed to create a new avatar');
-        } finally {
-            setNextLoading(false);
-        }
+        } 
     }
 
     return (
@@ -67,10 +67,9 @@ function GeneralPage() {
             <CreateAvatarStepper step={0}/>
 
             <div className="mt-12 w-full max-w-2xl mx-auto">
-                <div className="rounded-[2.5rem] border border-base-content/5 bg-base-100 p-12 flex flex-col gap-10 shadow-sm">
+                <div className="rounded-[2.5rem] border border-base-content/5 bg-base-100 p-12 flex flex-col gap-8 shadow-sm">
                     
-                    {/* Name Input */}
-                    <div className="group flex flex-col gap-1">
+                    <div className={`group flex flex-col gap-1 transition-opacity duration-500 ${stepData.finished ? 'opacity-50' : 'opacity-100'}`}>
                         <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-base-content/20">
                             Name of Avatar
                         </label>
@@ -81,7 +80,8 @@ function GeneralPage() {
                                 onChange={(e) => setName(e.target.value)}
                                 disabled={stepData.finished}
                                 placeholder="Enter name..."
-                                className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight"
+                                maxLength={20}
+                                className={`w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight ${stepData.finished ? 'cursor-not-allowed' : ''}`}
                             />
                             <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-focus-within:text-primary transition-colors">
                                 <User size={18} strokeWidth={2.5} />
@@ -89,49 +89,48 @@ function GeneralPage() {
                         </div>
                     </div>
 
-                    {/* Gender Switcher */}
-                    <div className="group flex flex-col gap-1">
-                        <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-base-content/20">
-                            Gender
-                        </label>
-                        <div className="relative">
-                            <select 
-                                value={stepData.gender}
-                                disabled={stepData.finished}
-                                onChange={(e) => setGender(e.target.value as AvatarGender)} 
-                                className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight appearance-none cursor-pointer pr-8"
-                            >
-                                <option value={AvatarGender.female}>Female</option>
-                                <option value={AvatarGender.male}>Male</option>
-                            </select>
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
-                                <ChevronDown size={18} strokeWidth={2.5} />
-                            </div>
+                    <div className="flex items-center justify-between px-1 -mt-4">
+                        <div className="flex items-center gap-2 group cursor-default">
+                            <span className="text-[11px] font-mono font-bold tracking-tight text-primary bg-primary/5 px-2 py-0.5 rounded-md border border-primary/5">
+                                /{stepData.slug || "---"}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col gap-4">
+                        <div className="flex w-full p-1.5 bg-base-content/5 rounded-2xl">
+                            {Object.values(AvatarGender).map((gender) => {
+                                const isActive = stepData.gender === gender;
+                                return (
+                                    <button
+                                        key={gender}
+                                        type="button"
+                                        disabled={stepData.finished}
+                                        onClick={() => setGender(gender)}
+                                        className={`
+                                            flex-1 py-4 px-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300
+                                            ${isActive 
+                                                ? 'bg-base-100 text-primary shadow-sm scale-[1.02]' 
+                                                : 'text-base-content/40 hover:text-base-content/60'
+                                            }
+                                            ${stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+                                        `}
+                                    >
+                                        {gender}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="mt-12 flex justify-center gap-6">
-                <button 
-                    className="btn btn-lg btn-ghost uppercase tracking-widest px-12 opacity-50 hover:opacity-100" 
-                    onClick={() => handleCancel(stepData.avatarId, setCancelLoading, navigate)}
-                >
-                    {cancelLoading && <span className="loading loading-spinner"></span>}
-                    Cancel
-                </button>
-                <button 
-                    className={`btn btn-lg uppercase tracking-[0.3em] px-16 transition-all duration-500 ${
-                        canProceed 
-                        ? 'btn-primary shadow-primary/20 scale-100' 
-                        : 'btn-disabled opacity-30 scale-95 pointer-events-none'
-                    }`}
-                    onClick={() => canProceed && nextStep()}
-                >
-                    {nextLoading && <span className="loading loading-spinner"></span>}
-                    Next
-                </button>
-            </div>
+            <BottomDock
+                avatarId={stepData.avatarId}
+                canProceed={canProceed}
+                nextStep={nextStep}
+                finish={false}
+            />
         </div>
     );
 }

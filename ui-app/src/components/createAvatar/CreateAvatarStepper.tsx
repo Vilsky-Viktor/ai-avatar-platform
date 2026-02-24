@@ -5,7 +5,7 @@ type Props = {
 function CreateAvatarStepper({ step }: Props) {
     const steps = [
         { id: 0, label: "General" },
-        { id: 1, label: "ID Photo" },
+        { id: 1, label: "ID Photos" },
         { id: 2, label: "Photo Set" },
         { id: 3, label: "Voice" },
         { id: 4, label: "Training" }

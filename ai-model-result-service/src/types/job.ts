@@ -14,6 +14,9 @@ export enum JobTypes {
 
 export type JobResult = {
   mediaPath?: string;
+  minSimilarity?: number;
+  maxSimilarity?: number;
+  numTries?: number;
   error?: string;
 }
 

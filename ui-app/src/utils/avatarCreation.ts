@@ -1,10 +1,23 @@
-import { AvatarGender } from "../types/avatar";
 import { deleteAvatarById } from "../services/apiGateway";
-import type { IdPhotoJobInput, Job } from "../types/job";
+import { AvatarGender } from "../types/avatar";
+import { IdPhotoModes, type IdPhotoStepData, type PhotoSetStepData, type GeneralStepData } from "../types/avatarCreation";
+
 
 export const GENERAL_STORAGE_KEY = 'avatar_general_data';
 export const ID_PHOTO_STORAGE_KEY = 'avatar_id_photo_data';
 export const PHOTO_SET_STORAGE_KEY = 'avatar_photo_set_data';
+export const UPLOADED_ID_PHOTO_VIEW0 = 'uploaded_id_photo_view0';
+export const UPLOADED_ID_PHOTO_VIEW45 = 'uploaded_id_photo_view45';
+export const UPLOADED_ID_PHOTO_VIEW90 = 'uploaded_id_photo_view90';
+
+
+function encodeBase64(text: string): string {
+  return btoa(text);
+}
+
+function decodeBase64(base64String: string): string {
+  return atob(base64String);
+}
 
 export const handleCancel = async (avatarId: string, setCancelLoading: Function, navigate: Function) => {
     localStorage.removeItem(GENERAL_STORAGE_KEY);
@@ -15,66 +28,46 @@ export const handleCancel = async (avatarId: string, setCancelLoading: Function,
         setCancelLoading(true);
         try {
             await deleteAvatarById(avatarId);
-            setCancelLoading(false);
-            navigate('/');
         } catch (error: any) {
             console.log(`Failed to remove avatar`);
-        } finally {
-            setCancelLoading(false);
         }
-        
     }
-};
 
-export type GeneralStepData = {
-    name: string;
-    gender: AvatarGender;
-    avatarId: string;
-    finished: boolean;
-};
-
-export const initialGeneralData = {
-    name: '',
-    gender: AvatarGender.female,
-    avatarId: '',
-    finished: false
-};
-
-export enum IdPhotoModes {
-  generate = 'generate',
-  upload = 'upload'
-};
-
-export type IdPhotoGeneratedImage = {
-  url: string;
-  bucketPath: string;
-};
-
-export type IdPhotoStepData = {
-  mode: IdPhotoModes;
-  parameters: Omit<IdPhotoJobInput, 'gender'>;
-  jobs: Partial<Job>[];
-  generatedImages: IdPhotoGeneratedImage[];
-  selectedImage: string;
-  uploadedPortrait: string | null;
-  finished: boolean;
+    setCancelLoading(false);
+    navigate('/');
 };
 
 export const initialAvatarParameters = {
     ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
     face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '', 
-    skin: '', facialHair: '', outfit: '', lips: '', ears: '', bustSize: ''
+    skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '',
 };
 
+export const initialIdPhotoVariantSet = [null, null, null]
+
 export const initialIdPhotoData = {
-  mode: IdPhotoModes.generate,
-  parameters: initialAvatarParameters,
-  jobs: [],
-  generatedImages: [],
-  selectedImage: '',
-  uploadedPortrait: '',
-  finished: false
+    mode: IdPhotoModes.generate,
+    parameters: initialAvatarParameters,
+    variantSets: [initialIdPhotoVariantSet],
+    carouselIndex: 0,
+    selectedVariant: null,
+    idPhotoPaths: [],
+    finished: false
 } as IdPhotoStepData;
+
+export const initialGeneralData = {
+    name: '',
+    slug: '',
+    gender: AvatarGender.female,
+    avatarId: '',
+    finished: false
+};
+
+export const initialUploadedIdPhotoSet = [
+    { photo: null, isDragging: false },
+    { photo: null, isDragging: false },
+    { photo: null, isDragging: false },
+]
 
 export const AVATAR_PARAMETER_OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
@@ -87,6 +80,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     lips: ["full", "thin", "heart-shaped", "wide", "round", "bow-shaped", "heavy-upper", "heavy-lower", "downward-turned"],
     ears: ["attached", "detached", "petite", "protruding", "pointed", "elven", "round", "droopy"],
     bustSize: ["flat", "small", "medium", "large", "extra-large"],
+    bodyHair: ["none", "peach_fuzz", "fine_light", "fine_medium", "textured_light", "textured_medium", "dense_moderate", "dense_intense"],
     male: {
         attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
         body: ["slim", "athletic", "average", "muscular", "large"],
@@ -95,7 +89,6 @@ export const AVATAR_PARAMETER_OPTIONS = {
         hairColor: ["black", "dark brown", "light brown", "blonde", "ash blonde", "red", "platinum", "salt & pepper", "white"],
         skin: ["smooth", "freckled", "tanned", "weathered"],
         facialHair: ["clean-shaven", "stubble", "full beard", "short beard", "mustache", "goatee"],
-        outfit: ["minimalist", "streetwear", "business professional", "smart casual", "rugged outdoors", "vintage 90s", "skater", "preppy", "techwear", "athleisure", "bohemian", "classic tailored", "punk rock", "avant garde", "workwear", "sport"]
     },
     female: {
         attractiveness: ["beautiful", "cute", "elegant", "androgynous", "striking", "ethereal", "youthful", "mature", "bold", "natural", "glamorous"],
@@ -105,18 +98,38 @@ export const AVATAR_PARAMETER_OPTIONS = {
         hairColor: ["black", "dark brown", "light brown", "honey blonde", "platinum", "auburn", "red", "silver", "pastel blue", "pastel pink"],
         skin: ["smooth", "dewy", "freckled", "matte", "sun-kissed"],
         facialHair: ["none", "full beard", "short stubble", "mustache", "light fuzz"],
-        outfit: ["chic minimalist", "streetwear", "business formal", "boho artistic", "cottagecore", "vintage glamour", "athleisure", "preppy academy", "grunge", "y2k aesthetic", "high fashion", "soft girl", "cyberpunk", "classic elegant", "tomboy", "sport"]
     }
 };
 
-export type PhotoSetStepData = {
-  jobs: Partial<Job>[];
-  generatedImages: IdPhotoGeneratedImage[];
-  finished: boolean;
-};
-
 export const initialPhotoSetData = {
-  jobs: [],
+  jobs: Array(40).fill(null),
   generatedImages: [],
   finished: false
 } as PhotoSetStepData;
+
+type StepData = GeneralStepData | IdPhotoStepData | PhotoSetStepData;
+
+export const getLocalStorageData = <T extends StepData>(key: string): T => {
+    const encodedData = localStorage.getItem(key);
+
+    if (encodedData) {
+        const decodedData = decodeBase64(encodedData);
+        return JSON.parse(decodedData);
+    }
+
+    if (key === GENERAL_STORAGE_KEY) {
+        return initialGeneralData as T;
+    } else if (key === ID_PHOTO_STORAGE_KEY) {
+        return initialIdPhotoData as T;
+    } else if (key === PHOTO_SET_STORAGE_KEY) {
+        return initialPhotoSetData as T;
+    } else {
+        return {} as T
+    }
+}
+
+export const saveLocalStorageData = <T extends StepData>(key: string, data: T): void => {
+    const jsonData = JSON.stringify(data);
+    const encodedData = encodeBase64(jsonData);
+    localStorage.setItem(key, encodedData);
+}

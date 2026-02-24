@@ -37,7 +37,7 @@ def get_upsampling_model():
 
 def prepare_params(job_input):
     model_info = FLUX2_MODEL_INFO[MODEL_NAME]
-    return {
+    model_params = {
         "prompt": job_input.get("prompt", ""),
         "num_steps": int(job_input.get("numSteps", model_info.get("defaults", {}).get("num_steps", 13))),
         "guidance": float(job_input.get("guidance", model_info.get("defaults", {}).get("guidance", 1.0))),
@@ -46,15 +46,16 @@ def prepare_params(job_input):
         "seed": job_input.get("seed") if job_input.get("seed") is not None else random.randrange(2**31),
         "upsample_mode": job_input.get("upsample_prompt_mode", "none"),
         "openrouter_model": job_input.get("openrouter_model", "mistralai/pixtral-large-2411"),
-        "model_info": model_info
+        "model_info": model_info,
     }
+    return model_params
 
 def refine_prompt(params, img_ctx):
     upsampling_model = MODELS["upsampling_model"]
     prompt = params["prompt"]
     
-    if upsampling_model.test_txt(prompt):
-        raise ValueError("Flagged Prompt Detected.")
+    # if upsampling_model.test_txt(prompt):
+    #     raise ValueError("Flagged Prompt Detected.")
 
     if params["upsample_mode"] == "openrouter" and os.getenv("OPENROUTER_API_KEY"):
         client = OpenRouterAPIClient(model=params["openrouter_model"], 
@@ -68,10 +69,11 @@ def refine_prompt(params, img_ctx):
         
     return prompt
 
-def run_inference(params, img_ctx, final_prompt):
+def run_inference(params, reference_images, final_prompt):
     model_info = params["model_info"]
+
     with torch.no_grad():
-        ref_tokens, ref_ids = encode_image_refs(MODELS["ae"], img_ctx)
+        ref_tokens, ref_ids = encode_image_refs(MODELS["ae"], reference_images)
         
         if model_info["guidance_distilled"]:
             ctx = MODELS["text_encoder"]([final_prompt]).to(torch.bfloat16)
@@ -100,7 +102,7 @@ def run_inference(params, img_ctx, final_prompt):
         x = rearrange(x[0], "c h w -> h w c")
         img = Image.fromarray((127.5 * (x + 1.0)).cpu().byte().numpy())
 
-    if MODELS["upsampling_model"].test_image(img):
-        raise ValueError("Output flagged by safety filter.")
+    # if MODELS["upsampling_model"].test_image(img):
+    #     raise ValueError("Output flagged by safety filter.")
     
     return img

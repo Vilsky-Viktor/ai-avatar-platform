@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
+import { AvatarParameters } from './avatar';
 
 export enum JobTypes {
   idPhoto = 'idPhoto',
@@ -16,45 +17,27 @@ export enum JobStatuses {
 
 export type JobInput = {
   prompt?: string;
+  idPhotoPaths?: string[];
   imagePaths?: string[];
   videoPath?: string;
   width: number;
   height: number;
   guidance: number;
   numSteps: number;
+  check_similarity?: boolean;
 }
 
-export type IdPhotoJobInput = {
+export type JobRequestInput = {
   gender: string;
-  ethnicity: string;
-  skinColor: string;
-  age: string;
-  attractiveness: string;
-  body: string;
-  face: string;
-  hairStyle: string;
-  hairColor: string;
-  eyes: string;
-  skin: string;
-  facialHair: string;
-  nose: string;
-  eyeLashes: string;
-  eyeBrows: string;
-  outfit: string;
-  lips: string;
-  bustSize: string;
-  ears: string;
-}
-
-export type PhotoSetJobInput = {
-  idPhotoPath: string;
-  gender: string;
-  body: string;
-  bustSize: string;
-}
+  parameters: AvatarParameters;
+  idPhotoPaths?: string[]
+};
 
 export type JobResult = {
   mediaPath: string;
+  minSimilarity?: number;
+  maxSimilarity?: number;
+  numTries?: number;
   error?: string;
 }
 
@@ -68,19 +51,12 @@ export type Job = {
   status: JobStatuses;
   input: JobInput
   result?: JobResult;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 
-export type IdPhotoJob = {
+export type JobRequest = {
+  groupId?: string;
   avatarId: string;
-  input: IdPhotoJobInput;
-}
-
-export type PhotoSetJob = {
-  avatarId: string;
-  input: PhotoSetJobInput;
-}
-
-export type JobDB = Job & {
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  input: JobRequestInput;
 }

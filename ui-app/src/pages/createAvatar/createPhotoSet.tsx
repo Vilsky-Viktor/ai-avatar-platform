@@ -1,97 +1,347 @@
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
-import { useState } from "react";
-import type { Job, PhotoSetJob } from "../../types/job";
+import { Sparkles, User, Clock, Loader2, CircleAlert } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { JobStatuses, type Job, type JobRequest } from "../../types/job";
 import { createPhotoSetJobs } from "../../services/apiGateway";
-import { ID_PHOTO_STORAGE_KEY, GENERAL_STORAGE_KEY, type IdPhotoStepData, type GeneralStepData, PHOTO_SET_STORAGE_KEY, initialPhotoSetData, type PhotoSetStepData } from '../../utils/avatarCreation';
+import { 
+    ID_PHOTO_STORAGE_KEY, 
+    GENERAL_STORAGE_KEY,  
+    PHOTO_SET_STORAGE_KEY, 
+    getLocalStorageData,
+    saveLocalStorageData
+} from '../../utils/avatarCreation';
+import BottomDock from "../../components/createAvatar/BottomDock";
+import { listenToDocChanges, listenToCollectionByGroupId } from '../../services/db';
+import type { DocumentSnapshot, QuerySnapshot } from 'firebase/firestore';
+import { getMediaUrlFromPath } from '../../services/storage';
+import { useApp } from '../../providers/ContextProvider';
+import { type IdPhotoStepData, type GeneralStepData, type PhotoSetStepData  } from "../../types/avatarCreation";
+import { type Media, MediaTypes, MediaSections } from "../../types/media";
+import { createMedia, updateAvatar } from '../../services/apiGateway';
+import { type Avatar, AvatarStatus } from "../../types/avatar";
+
 
 function CreatePhotoSetPage() {
     const navigate = useNavigate();
+    const { user } = useApp();
 
-    const generalData: GeneralStepData = JSON.parse(localStorage.getItem(GENERAL_STORAGE_KEY) || '{}');
-    const idPhotoData: IdPhotoStepData = JSON.parse(localStorage.getItem(ID_PHOTO_STORAGE_KEY) || '{}');
+    const generalData = getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY);
+    const idPhotoData = getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY)
 
-    const [stepData, setStepData] = useState(() => {
-        const dataStr = localStorage.getItem(PHOTO_SET_STORAGE_KEY);
-        const data = dataStr ? JSON.parse(dataStr) : initialPhotoSetData;
-        return data as PhotoSetStepData;
-    })
+    const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
+    const [generationInitialized, setGenerationInitialized] = useState(false);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
+    useEffect(() => {
+        saveLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY, stepData);
+    }, [stepData]);
+
+    useEffect(() => {
+        if (!generatingStarted()) return;
+
+        const groupId = stepData.jobs[0]?.groupId!;
+
+        const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
+            await listener(querySnap);
+        })
+
+        return () => unsubscribe();
+    }, [stepData.jobs]);
+
+    const listener = async (querySnap: QuerySnapshot) => {
+        console.log(`listener triggered`)
+
+        for (const docSnap of querySnap.docs) {
+            const job = docSnap.data() as Job;
+
+            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
+                const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
+                job.result.mediaUrl = downloadUrl;
+            }
+
+            const jobIndex = stepData.jobs.findIndex((item) => item?.id === job.id);
+            const oldJob = stepData.jobs[jobIndex];
+
+            if (oldJob?.status !== job.status) {
+                console.log(`job updated ${JSON.stringify(job)}`)
+                setJob(jobIndex, job);
+            }
+        }
+    }
+
+    const generatingStarted = () => {
+        return stepData.jobs[0] !== null;
+    }
+
+    const generatingCompleted = () => {
+        const lastJob = stepData.jobs[stepData.jobs.length - 1];
+        return lastJob && lastJob.status === JobStatuses.completed;
+    }
+
+    const canProceed = () => {
+        return stepData.jobs.every((job: Partial<Job> | null) => job && job.status === JobStatuses.completed);
+    };
 
     const setJobs = (jobs: Job[]) => {
-        const neededJobData = jobs.map((job: Job) => ({id: job.id, result: job.result, input: { width: job.input.width, height: job.input.height }}))
+        const neededJobData = jobs.map((job: Job) => {
+            return {
+                id: job.id, 
+                status: job.status, 
+                groupId: job.groupId,
+                input: { height: job.input?.height, width: job.input?.width },
+            }
+        })
         setStepData((prev: PhotoSetStepData) => ({...prev, jobs: neededJobData}));
     }
 
+    const setJob = (jobIndex: number, job: Partial<Job>) => {
+        const { id, status, groupId, input, result } = job;
+
+        const filteredJob = {
+            id,
+            status,
+            groupId,
+            input: input ? { height: input.height, width: input.width } : undefined,
+            result: result ? { mediaPath: result.mediaPath, mediaUrl: result.mediaUrl } : undefined
+        };
+
+        setStepData((prev) => ({
+            ...prev,
+            jobs: prev.jobs.map((oldJob, idx) => idx === jobIndex ? filteredJob : oldJob)
+        }));
+    };
+
+    const setFinished = () => {
+        setStepData((prev: PhotoSetStepData) => ({...prev, finished: true}));
+    }
+
     const createJobs = async () => {
-        const job: PhotoSetJob = {
+        setGenerationInitialized(true);
+        const job: JobRequest = {
             avatarId: generalData.avatarId,
             input: {
                 gender: generalData.gender,
-                idPhotoPath: idPhotoData.selectedImage,
-                ...idPhotoData.parameters
+                idPhotoPaths: idPhotoData.idPhotoPaths,
+                parameters: idPhotoData.parameters
             }
         }
-        setJobs(await createPhotoSetJobs(job))
+
+        try {
+            const jobs = await createPhotoSetJobs(job);
+            setJobs(jobs);
+        } catch (error) {
+            console.log('Failed to create jobs for photo set')
+        } finally {
+            setGenerationInitialized(false);
+        }
+        
     }
 
-    const photos = Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        status: 'queued', // 'queued', 'generating', 'completed'
-    }));
+    const nextStep = async () => {
+        if (!canProceed) return;
 
-    const canProceed = false;
+        try {
+            if (!stepData.finished) {
+                const media: Media = {
+                    userId: user?.id!,
+                    avatarId: generalData.avatarId,
+                    jobId: '',
+                    type: MediaTypes.image,
+                    section: MediaSections.avatar,
+                    isRemovable: false,
+                    isIdPhoto: false,
+                    isPhotoSet: true,
+                    path: '',
+                    dimensions: '1024x1024',
+                    upscaled: false,
+                    order: 0,
+                }
+
+                let allMedia: Media[] = [];
+
+                for (const [idx, job] of stepData.jobs.entries()) {
+                    allMedia.push({
+                        ...media, 
+                        jobId: job?.id!, 
+                        path: job?.result?.mediaPath!,
+                        dimensions: `${job?.input?.height}x${job?.input?.width}`,
+                        order: idx
+                    })
+                }
+
+                await Promise.all(allMedia.map((media: Media) => createMedia(media)));
+
+                const payload: Partial<Avatar> = {
+                    status: AvatarStatus.photosetCreated, 
+                };
+                await updateAvatar(generalData.avatarId, payload);
+
+                setFinished()
+            }
+        } catch (error) {
+            console.log(`Did not manage to create a new media: ${error}`);
+        }
+
+        navigate('/avatar/create/assign-voice');
+    }
+
+    const previousStep = () => {
+        navigate('/avatar/create/id-photo');
+    }
+
+    const renderPhotoArea = (job: Partial<Job> | null, idx: number) => {
+        if (job === null) {
+            return (
+                <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center min-h-[200px] py-8">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-15 h-15 rounded-2xl border border-base-content/5 bg-base-content/[0.01] flex items-center justify-center">
+                            <User size={27} strokeWidth={0.5} className="text-base-content/10" />
+                        </div>
+
+                        <div className="text-center">
+                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-base-content/30">
+                                Photo {idx + 1}
+                            </span>
+
+                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
+                                Click generate
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
+                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
+                </div>
+            )
+        }
+
+        if (job.status === JobStatuses.pending) {
+            return (
+                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center min-h-[200px] py-8">
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="relative">
+                            <div className="w-15 h-15 rounded-2xl border border-base-content/5 flex items-center justify-center animate-pulse">
+                                <Clock size={27} strokeWidth={0.5} className="text-base-content/30" />
+                            </div>
+                        </div>
+
+                        <div className="text-center">
+                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
+                                Waiting
+                            </span>
+                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
+                                Queue processing
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (job.status === JobStatuses.generating) {
+            return (
+                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center min-h-[200px] py-8">
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="relative">
+                            <>
+                                <Loader2 size={60} strokeWidth={1} className="text-primary animate-spin" />
+                                <Sparkles size={20} className="absolute -top-3 -right-3 text-primary animate-pulse" />
+                            </>
+                        </div>
+
+                        <div className="text-center">
+                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
+                                Generating
+                            </span>
+                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
+                                Creating a new life
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (job.status === JobStatuses.error) {
+            return (
+                <div className="flex relative rounded-[1rem] border border-error/20 bg-error/[0.02] flex flex-col items-center justify-center min-h-[200px] py-8">
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="relative">
+                            <div className="w-15 h-15 rounded-full border border-base-content/5 flex items-center justify-center animate-pulse">
+                                <CircleAlert size={27} strokeWidth={0.5} className="text-base-content/30" />
+                            </div>
+                        </div>
+
+                        <div className="text-center">
+                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
+                                Error
+                            </span>
+
+                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
+                                Something went wrong
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (job.status === JobStatuses.completed) {
+            return (
+                <div className="flex relative rounded-[1rem] border border-base-content/10 bg-base-200/30 flex-col items-center justify-center min-h-[200px] overflow-hidden group py-8">
+                    <img
+                        key={job.result?.mediaUrl}
+                        src={job.result?.mediaUrl}
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-0 rounded-[1rem]"
+                        alt="Generated"
+                    />
+                </div>
+            );
+        }
+    }
 
     return ( 
         <>
             <CreateAvatarStepper step={2}/>
 
-            <div className="max-w-6xl mx-auto px-4 pt-12">
+            <div className="max-w-6xl mx-auto px-4 pt-12 mb-30">
 
-                <button className={`btn btn-lg uppercase tracking-[0.3em] px-16 transition-all duration-500 btn-primary shadow-primary/20 scale-100`} onClick={createJobs}>
-                    Generate Photo Set
-                </button>
+                <div className="flex justify-center w-full mb-8">
+                    <button
+                        onClick={createJobs}
+                        disabled={generatingStarted() || stepData.finished || generationInitialized}
+                        className={`btn btn-primary btn-dash group relative w-full max-w-md h-14 mt-8 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                    >   
+                        {((generatingStarted() && !generatingCompleted()) || generationInitialized) && <span className="loading loading-spinner"></span>}
+                        <span className="text-sm uppercase tracking-[0.4em]">Generate Photo Set</span>
+                        
+                        <Sparkles 
+                            size={20} 
+                            className="ml-2 group-hover:rotate-12 transition-transform" 
+                        />
+                    </button>
+                </div>
 
-                {/* 5-Column Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {photos.map((photo) => (
-                    <div 
-                        key={photo.id}
-                        className="group relative aspect-[3/4] rounded-2xl border border-base-content/5 bg-base-100 flex flex-col items-center justify-center overflow-hidden transition-all duration-500 hover:border-primary/30"
-                    >
-                        {/* Background "Scan" Animation for Queued State */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent -translate-y-full animate-[scan_3s_infinite] pointer-events-none" />
-
-                        <div className="flex flex-col items-center gap-3 z-10">
-                        <div className="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center text-base-content/20 group-hover:text-primary/40 transition-colors">
-                            <Clock size={20} strokeWidth={1.5} />
+                    {stepData.jobs.map((job, idx) => (
+                        <div key={idx}>
+                            {renderPhotoArea(job, idx)}
                         </div>
-                        <div className="text-center">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-base-content/20">
-                            Queued
-                            </span>
-                            <p className="text-[9px] font-medium text-base-content/10 mt-0.5">
-                            #{String(photo.id + 1).padStart(2, '0')}
-                            </p>
-                        </div>
-                        </div>
-
-                        {/* Corner Accents */}
-                        <div className="absolute top-3 left-3 w-2 h-2 border-t border-l border-base-content/10" />
-                        <div className="absolute bottom-3 right-3 w-2 h-2 border-b border-r border-base-content/10" />
-                    </div>
                     ))}
                 </div>
             </div>
 
-            <div className="my-15 flex justify-center gap-6">
-                <button className="btn btn-lg btn-ghost uppercase tracking-widest px-12 opacity-50 hover:opacity-100" onClick={() => navigate('/avatar/create/id-photo')}>
-                    Back
-                </button>
-                <button className={`btn btn-lg uppercase tracking-[0.3em] px-16 transition-all duration-500 ${canProceed ? 'btn-primary shadow-primary/20 scale-100' : 'btn-disabled opacity-30 scale-95'}`} onClick={() => navigate('/avatar/create/assign-voice')}>
-                    Next
-                </button>
-            </div>
+            <BottomDock
+                avatarId={generalData.avatarId}
+                canProceed={canProceed}
+                nextStep={nextStep}
+                previousStep={previousStep}
+                finish={false}
+            />
         </>
     );
 }

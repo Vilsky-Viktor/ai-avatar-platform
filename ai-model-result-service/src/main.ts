@@ -9,16 +9,16 @@ const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'ai-model-result-sub';
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
 async function handleModelResult(result: AIModelResult) {
-  const { jobId, userId, status, resultPath, error } = result;
-
-  if (error) {
+  if (result.error) {
+    const { jobId, userId, status, error } = result;
     logger.error({ jobId, userId, error }, 'Updating job status');
     await updateJob(userId, jobId, status, {error});
     return;
   }
 
+  const { jobId, userId, status, resultPath, minSimilarity, maxSimilarity, numTries, error } = result;
   logger.info({ jobId, userId, resultPath }, 'Updating job status');
-  await updateJob(userId, jobId, status, {mediaPath: resultPath!});
+  await updateJob(userId, jobId, status, {mediaPath: resultPath!, minSimilarity, maxSimilarity, numTries});
 }
 
 function listenForResults() {

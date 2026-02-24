@@ -5,13 +5,6 @@ export type User = {
   name: string;
   email: string;
   img: string | null;
-}
-
-export type UserDB = {
-  id: string;
-  name: string;
-  email: string;
-  img: string | null;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }

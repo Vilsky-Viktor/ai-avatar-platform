@@ -30,10 +30,10 @@ const CreateAvatarCard = () => {
 
                 <div className="space-y-1">
                     <span className="block text-xl font-medium uppercase tracking-[0.25em] text-base-content/80 group-hover:text-base-content transition-colors">
-                        Create AI Avatar
+                        Create New Life
                     </span>
                     <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-base-content/40 group-hover:text-primary/70 transition-colors">
-                        Start a new life
+                        Generate AI avatar
                     </span>
                 </div>
             </div>

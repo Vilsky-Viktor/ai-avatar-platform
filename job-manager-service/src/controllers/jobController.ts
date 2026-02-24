@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, IdPhotoJob, JobTypes, JobStatuses, PhotoSetJob, JobDB } from '../types/job';
-import { generateIdPhotoPrompt, generatePhotoSetPrompts } from '../helpers/prompts';
+import { Job, JobTypes, JobStatuses, JobRequest } from '../types/job';
+import { generateIdPhotoView0Prompt, generateIdPhotoView45Prompt, generateIdPhotoView90Prompt, generatePhotoSetPrompts } from '../utils/prompts';
 import { 
   create as createDb, 
   update as updateDb,
@@ -14,23 +14,35 @@ import uuid from 'uuid';
 
 
 const GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC = process.env.GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC || 'generate-text-image-to-image';
+const ID_PHOTO_WIDTH = 1024;
+const ID_PHOTO_HEIGHT = 1024;
+const ID_PHOTO_GUIDANCE = 1.0;
+const ID_PHOTO_NUM_STEPS = 15
 
 
-export const createIdPhoto = async (req: Request, res: Response, next: NextFunction) => {
+export const createIdPhotoView0 = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
-  const idPhotoJob: IdPhotoJob = req.body;
+  const jobRequest: JobRequest = req.body;
   const groupId = uuid.v4();
 
-  req.log.info(`Create ID Photo Job for ${headerUserId}`);
+  req.log.info(`Create ID Photo view 0 job for ${headerUserId}`);
 
   const job: Job = {
     groupId,
     order: 0,
     userId: headerUserId as string,
-    avatarId: idPhotoJob.avatarId,
+    avatarId: jobRequest.avatarId,
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
-    input: { prompt: generateIdPhotoPrompt(idPhotoJob.input), imagePaths: [], width: 1024, height: 1024, guidance: 1.0, numSteps: 13 }
+    input: { 
+      prompt: generateIdPhotoView0Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
+      imagePaths: [],
+      idPhotoPaths: [],
+      width: ID_PHOTO_WIDTH, 
+      height: ID_PHOTO_HEIGHT, 
+      guidance: ID_PHOTO_GUIDANCE, 
+      numSteps: ID_PHOTO_NUM_STEPS, 
+    }
   }
 
   try {
@@ -42,38 +54,122 @@ export const createIdPhoto = async (req: Request, res: Response, next: NextFunct
 
     return res.status(201).json(dbJob);
   } catch (error) {
-    req.log.info(`Failed to create ID photo job for ${headerUserId}: ${error}`);
+    req.log.info(`Failed to create ID photo view 0 job for ${headerUserId}: ${error}`);
+    next(error);
+  }
+};
+
+export const createIdPhotoView45 = async (req: Request, res: Response, next: NextFunction) => {
+  const headerUserId = req.headers['x-user-id'];
+  const jobRequest: JobRequest = req.body;
+
+  req.log.info(`Create ID Photo view 45 job for ${headerUserId}`);
+
+  const job: Job = {
+    groupId: jobRequest.groupId,
+    order: 1,
+    userId: headerUserId as string,
+    avatarId: jobRequest.avatarId,
+    type: JobTypes.idPhoto,
+    status: JobStatuses.pending,
+    input: { 
+      prompt: generateIdPhotoView45Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
+      imagePaths: jobRequest.input.idPhotoPaths,
+      idPhotoPaths: jobRequest.input.idPhotoPaths,
+      width: ID_PHOTO_WIDTH, 
+      height: ID_PHOTO_HEIGHT, 
+      guidance: ID_PHOTO_GUIDANCE, 
+      numSteps: ID_PHOTO_NUM_STEPS, 
+    }
+  }
+
+  try {
+    const dbJob = await createDb(headerUserId as string, job);
+
+    createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
+
+    await publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob);
+
+    return res.status(201).json(dbJob);
+  } catch (error) {
+    req.log.info(`Failed to create ID photo view 45 job for ${headerUserId}: ${error}`);
+    next(error);
+  }
+};
+
+export const createIdPhotoView90 = async (req: Request, res: Response, next: NextFunction) => {
+  const headerUserId = req.headers['x-user-id'];
+  const jobRequest: JobRequest = req.body;
+
+  req.log.info(`Create ID Photo view 90 job for ${headerUserId}`);
+
+  const job: Job = {
+    groupId: jobRequest.groupId,
+    order: 2,
+    userId: headerUserId as string,
+    avatarId: jobRequest.avatarId,
+    type: JobTypes.idPhoto,
+    status: JobStatuses.pending,
+    input: { 
+      prompt: generateIdPhotoView90Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
+      imagePaths: jobRequest.input.idPhotoPaths,
+      idPhotoPaths: jobRequest.input.idPhotoPaths,
+      width: ID_PHOTO_WIDTH, 
+      height: ID_PHOTO_HEIGHT, 
+      guidance: ID_PHOTO_GUIDANCE, 
+      numSteps: ID_PHOTO_NUM_STEPS, 
+    }
+  }
+
+  try {
+    const dbJob = await createDb(headerUserId as string, job);
+
+    createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
+
+    await publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob);
+
+    return res.status(201).json(dbJob);
+  } catch (error) {
+    req.log.info(`Failed to create ID photo view 90 job for ${headerUserId}: ${error}`);
     next(error);
   }
 };
 
 export const createPhotoSet = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
-  const photoSetJob: PhotoSetJob = req.body;
+  const jobRequest: JobRequest = req.body;
   const groupId = uuid.v4();
 
   req.log.info(`Create Photo Set jobs for user ${headerUserId} with group ID ${groupId}`);
 
   try {
-    const prompts = generatePhotoSetPrompts(photoSetJob.input);
+    const prompts = generatePhotoSetPrompts({...jobRequest.input.parameters, gender: jobRequest.input.gender});
 
     const jobs: Job[] = prompts.map((prompt: string, index) => {
       return {
         groupId,
         order: index,
         userId: headerUserId as string,
-        avatarId: photoSetJob.avatarId,
+        avatarId: jobRequest.avatarId,
         type: JobTypes.photoSet,
         status: JobStatuses.pending,
-        input: { prompt, imagePaths: [photoSetJob.input.idPhotoPath], width: 1024, height: 1024, guidance: 1.0, numSteps: 13 }
-      }
+        input: { 
+          prompt, 
+          imagePaths: jobRequest.input.idPhotoPaths,
+          idPhotoPaths: jobRequest.input.idPhotoPaths,
+          width: 1024, 
+          height: 1024, 
+          guidance: 1.0, 
+          numSteps: 13, 
+        }
+      } as Job
     })
 
     const dbJobs = await Promise.all(jobs.map((job: Job) => createDb(headerUserId as string, job)));
 
     createPod(dbJobs[0]).catch(err => req.log.error("Pod creation failed:", err));
 
-    await Promise.all(dbJobs.map((dbJob: JobDB) => publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob)));
+    await Promise.all(dbJobs.map((dbJob: Job) => publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob)));
 
     return res.status(201).json(dbJobs);
   } catch (error) {

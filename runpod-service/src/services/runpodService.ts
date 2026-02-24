@@ -40,8 +40,8 @@ export const createPod = async (podName: string, region: string, networkVolumeId
         "gpuTypeIds": [
             "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
             "NVIDIA H100 NVL",
-            "NVIDIA H200",
-            "NVIDIA H200 NVL"
+            // "NVIDIA H200",
+            // "NVIDIA H200 NVL"
         ],
         "gpuTypePriority": "availability",
         "interruptible": false,

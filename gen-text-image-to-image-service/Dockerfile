@@ -20,7 +20,7 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 && \
 WORKDIR /app
 RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2
 
-RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage jupyterlab && \
+RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage jupyterlab deepface scipy numpy tenacity tf-keras && \
     pip install --no-cache-dir -e ./flux2 --extra-index-url https://download.pytorch.org/whl/cu121
 
 RUN curl -fSsL https://github.com/runpod/runpodctl/releases/download/v1.14.3/runpodctl-linux-amd64 \
@@ -56,6 +56,7 @@ COPY --from=builder /app/flux2 /app/flux2
 COPY --from=builder /usr/local/bin/runpodctl /usr/local/bin/runpodctl
 
 ENV PATH="/opt/venv/bin:$PATH"
+ENV TF_USE_LEGACY_KERAS=1
 
 WORKDIR /app
 COPY gen_text_image_to_image_service ./gen_text_image_to_image_service

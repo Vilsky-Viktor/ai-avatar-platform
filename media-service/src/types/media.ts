@@ -23,6 +23,7 @@ export type Media = {
     path: string;
     dimensions: string;
     upscaled: boolean;
+    order: number;
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
 }
