@@ -3,13 +3,14 @@ import { Avatar } from '../types/avatar';
 import { 
   create as createDb, 
   update as updateDb,
-  updateCounter as updateCounterDb,
+  updateCounterByFieldName as updateCounterByFieldNameDb,
   deleteByAvatarId as deleteByAvatarIdDb, 
   deleteByUserId as deleteByUserIdDb, 
   getAll as getAllDb 
 } from '../repositories/avatar';
 import { AvatarStatus } from '../types/avatar';
 import { deleteJobsByAvatarId, deleteJobsByUserId } from '../services/jobService';
+import { deleteMediaByAvatarId } from '../services/mediaService';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
@@ -62,7 +63,7 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const updateCounter = async (req: Request, res: Response, next: NextFunction) => {
+export const updateCounterByFieldName = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
   const {fieldName, amount} = req.body;
   const { id } = req.params;
@@ -70,7 +71,7 @@ export const updateCounter = async (req: Request, res: Response, next: NextFunct
   req.log.info(`Update avatar ${id} field counter for user ${headerUserId}`);
 
   try {
-    const avatarDB = await updateCounterDb(headerUserId as string, id as string, fieldName, amount);
+    const avatarDB = await updateCounterByFieldNameDb(headerUserId as string, id as string, fieldName, amount);
 
     return res.status(201).json(avatarDB);
   } catch (error) {
@@ -86,9 +87,13 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
   req.log.info(`Delete avatar ${id} for user ${headerUserId}`);
 
   try {
-    await deleteByAvatarIdDb(headerUserId as string, id as string);
-    await deleteJobsByAvatarId(headerUserId as string, id as string);
+    await Promise.all([
+      deleteJobsByAvatarId(headerUserId as string, id as string),
+      deleteMediaByAvatarId(headerUserId as string, id as string)
+    ]);
 
+    await deleteByAvatarIdDb(headerUserId as string, id as string);
+    
     return res.status(201).json({'result': 'ok'});
   } catch (error) {
     req.log.info(`Failed to delete avatar ${id} for user ${headerUserId}: ${error}`);

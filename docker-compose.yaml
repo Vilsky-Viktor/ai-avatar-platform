@@ -62,6 +62,7 @@ services:
       - USERS_COLLECTION_NAME=users
       - AVATARS_COLLECTION_NAME=avatars
       - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
+      - MEDIA_SERVICE_URL=http://media-service:3400
 
   job-manager-service:
     build:
@@ -113,6 +114,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - MEDIA_COLLECTION_NAME=media
       - AVATAR_SERVICE_URL=http://avatar-service:3200
 
@@ -134,3 +136,22 @@ services:
       - NETWORK_VOLUME_ID=0p9gfckg9x
       - TEXT_IMAGE_TO_IMAGE_TEMPLATE_ID=m1bv0g3gi7
       - REGION=US-CA-2
+
+  voice-service:
+    build:
+      context: ./voice-service
+    ports:
+      - "3600:3600"
+    volumes:
+      - ./voice-service:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - PORT=3600
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - DB_NAME=ai-avatar-db
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - MEDIA_COLLECTION_NAME=voices

@@ -1,11 +1,16 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import Cropper, { type Point, type Area } from 'react-easy-crop';
-import { User, Info, X, Check, Minus, Plus } from "lucide-react";
+import { User, Info, X, Check, Minus, Plus, ChevronDown } from "lucide-react";
 import { type UploadedIdPhoto } from "../../../types/avatarCreation";
+import { AVATAR_PARAMETER_OPTIONS } from "../../../utils/avatarCreation";
+import type { IdPhotoStepData, GeneralStepData } from '../../../types/avatarCreation';
 
 type Props = {
+    stepData: IdPhotoStepData,
+    generalData: GeneralStepData,
     uploadedPhotos: UploadedIdPhoto[],
-    setUploadedPhotos: React.Dispatch<React.SetStateAction<UploadedIdPhoto[]>>
+    setUploadedPhotos: React.Dispatch<React.SetStateAction<UploadedIdPhoto[]>>,
+    setParameters: Function,
 }
 
 // Utility to handle image cropping
@@ -36,7 +41,7 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string>
     return canvas.toDataURL('image/jpeg', 0.9);
 };
 
-function UploadPhotos({ setUploadedPhotos, uploadedPhotos }: Props) {
+function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos, setParameters }: Props) {
     // We map indices to views for clarity in the UI
     const VIEW_CONFIG = [
         { label: 'Front View', ref: useRef<HTMLInputElement>(null) },
@@ -50,6 +55,13 @@ function UploadPhotos({ setUploadedPhotos, uploadedPhotos }: Props) {
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [idPhotoUrls, setIdPhotoUrls] = useState([]);
+
+    useEffect(() => {
+        if (stepData.finished) {
+            
+        }
+    }, [])
 
     // Update specific index in the array
     const updatePhotoAtIndex = (index: number, photo: string | null) => {
@@ -195,11 +207,35 @@ function UploadPhotos({ setUploadedPhotos, uploadedPhotos }: Props) {
                     </ul>
                 </div>
                 
-                <div className="hidden md:flex p-6 rounded-3xl bg-base-200/50 border border-base-content/5 items-center justify-center opacity-40">
-                    <div className="relative">
-                        <User size={48} strokeWidth={0.5} />
-                        <div className="absolute inset-0 border-2 border-dashed border-primary/30 rounded-full scale-125" />
-                    </div>
+                <div className="hidden md:flex flex-col p-6 rounded-3xl bg-base-200/50 border border-base-content/5 gap-6 w-[300px]">
+                    {[
+                        { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].body },
+                        { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
+                        { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },
+                    ].map((field) => (
+                        <div key={field.key} className={`group flex flex-col gap-0.5 ${stepData.finished ? 'opacity-50' : 'opacity-100'}`}>
+                            <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
+                                {field.label}
+                            </label>
+
+                            <div className="relative">
+                                <select
+                                    value={stepData.parameters[field.key as keyof typeof stepData.parameters]}
+                                    disabled={stepData.finished}
+                                    onChange={(e) => setParameters({...stepData.parameters, [field.key]: e.target.value})}
+                                    className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
+                                >
+                                    <option value="" disabled>Select</option>
+                                    {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
+
+                                </select>
+
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
+                                    <ChevronDown size={16} strokeWidth={2.5} />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 

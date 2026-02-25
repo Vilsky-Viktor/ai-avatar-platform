@@ -10,6 +10,7 @@ import { v4 as uuid4 } from 'uuid';
 import { createMedia } from '../../services/apiGateway';
 import { MediaTypes, MediaSections, type Media } from '../../types/media';
 import { uploadMediaToBucket } from '../../services/storage';
+import { type AvatarParameters } from "../../types/avatar";
 import { 
     GENERAL_STORAGE_KEY,  
     ID_PHOTO_STORAGE_KEY, 
@@ -43,7 +44,10 @@ function CreateIdPhotoPage() {
     }, [stepData]);
 
     const canProceed = () => {
-        console.log(stepData.selectedVariant)
+        if (stepData.finished) {
+            return true;
+        }
+
         if (stepData.mode === IdPhotoModes.generate && generatingCompleted() && stepData.selectedVariant !== null) {
             return true;
         }
@@ -66,6 +70,10 @@ function CreateIdPhotoPage() {
 
     const setFinished = () => {
         setStepData((prev: IdPhotoStepData) => ({...prev, finished: true}));
+    }
+
+    const setParameters = (parameters: AvatarParameters) => {
+        setStepData((prev: IdPhotoStepData) => ({...prev, parameters}));
     }
 
     const generatingStarted = () => {
@@ -174,11 +182,15 @@ function CreateIdPhotoPage() {
                         generatingStarted={generatingStarted}
                         generatingCompleted={generatingCompleted}
                         isFormValid={isFormValid}
+                        setParameters={setParameters}
                     />
                 ) : (
                     <UploadPhotos
+                        stepData={stepData}
+                        generalData={generalData}
                         uploadedPhotos={uploadedPhotos}
                         setUploadedPhotos={setUploadedPhotos}
+                        setParameters={setParameters}
                     />
                 )}
             </div>

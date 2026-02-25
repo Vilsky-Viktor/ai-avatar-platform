@@ -61,7 +61,7 @@ export const update = async (userId: string, avatarId: string, avatarData: Parti
     return snapshot.data() as Avatar;
 }
 
-export const updateCounter = async (userId: string, avatarId: string, fieldName: string, amount: number) => {
+export const updateCounterByFieldName = async (userId: string, avatarId: string, fieldName: string, amount: number) => {
     const avatarRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
         .collection(AVATARS_COLLECTION_NAME)

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { JobStatuses, type Job, type JobRequest } from "../../../types/job";
-import { type AvatarParameters } from "../../../types/avatar";
 import { User, Clock, Loader2, CircleAlert, Sparkles, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { AVATAR_PARAMETER_OPTIONS, initialIdPhotoVariantSet } from "../../../utils/avatarCreation";
 import type { GeneralStepData, IdPhotoStepData } from "../../../types/avatarCreation";
@@ -17,9 +16,10 @@ type Props = {
     generatingStarted: Function,
     generatingCompleted: Function,
     isFormValid: boolean,
+    setParameters: Function,
 }
 
-function GeneratePhotos({ stepData, setStepData, generalData, generatingStarted, generatingCompleted, isFormValid }: Props) {
+function GeneratePhotos({ stepData, setStepData, generalData, generatingStarted, generatingCompleted, isFormValid,setParameters }: Props) {
     const [generationInitialized, setGenerationInitialized] = useState(false);
     const lastVariantSetIndexRef = useRef(stepData.variantSets.length - 1)
 
@@ -105,10 +105,6 @@ function GeneratePhotos({ stepData, setStepData, generalData, generatingStarted,
             };
         });
     };
-
-    const setParameters = (parameters: AvatarParameters) => {
-        setStepData((prev: IdPhotoStepData) => ({...prev, parameters}));
-    }
 
     const setSelectedVariant = (e: React.ChangeEvent<HTMLInputElement>) => {
         setStepData((prev: IdPhotoStepData) => ({...prev, selectedVariant: e.target.checked ? prev.carouselIndex : null}));

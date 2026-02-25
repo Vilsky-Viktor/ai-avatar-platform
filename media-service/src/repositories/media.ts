@@ -23,3 +23,58 @@ export const create = async (userId: string, media: Omit<Media, 'id'>): Promise<
     
     return dbAvatar;
 }
+
+export const deleteById = async (userId: string, id: string): Promise<Media | null> => {
+    const jobRef = db.collection(MEDIA_COLLECTION_NAME).doc(id);
+    const doc = await jobRef.get();
+    
+    if (!doc.exists) {
+        return null;
+    }
+
+    if (doc.data()?.userId !== userId) {
+        throw new Error("Unauthorized: User does not own this job resource.");
+    }
+
+    await jobRef.delete();
+    return doc.data() as Media;
+};
+
+export const deleteByAvatarId = async (userId: string, avatarId: string): Promise<Media[]> => {
+    const jobsQuery = db.collection(MEDIA_COLLECTION_NAME)
+        .where("userId", "==", userId)
+        .where("avatarId", "==", avatarId);
+
+    const snapshot = await jobsQuery.get();
+    
+    if (snapshot.empty) {
+        return [];
+    }
+
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+    return snapshot.docs.map((doc) => doc.data() as Media);
+};
+
+export const deleteByUserId = async (userId: string): Promise<Media[]> => {
+    const jobsQuery = db.collection(MEDIA_COLLECTION_NAME)
+        .where("userId", "==", userId);
+
+    const snapshot = await jobsQuery.get();
+    
+    if (snapshot.empty) {
+        return [];
+    }
+
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+    return snapshot.docs.map((doc) => doc.data() as Media);
+};
