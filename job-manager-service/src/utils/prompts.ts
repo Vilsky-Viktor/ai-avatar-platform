@@ -1,4 +1,4 @@
-import { AvatarParameters } from '../types/avatar';
+import { AvatarParameters, AvatarGender } from '../types/avatar';
 
 export const AVATAR_REFERENCE_NAME = 'AVATARLIFE';
 
@@ -26,7 +26,7 @@ export const generateIdPhotoView0Prompt = (parameters: AvatarParameters & {gende
   } = parameters;
 
   const facialHairDesc = facialHair === 'none' ? 'clean-shaven, no facial hair' : `with ${facialHair}`;
-  const bodyHariDesc = bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`;
+  const bodyHairDesc = bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`;
 
   let prompt = `Ultra-realistic passport-style ID photo, professional studio portrait of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, `;
 
@@ -37,7 +37,7 @@ export const generateIdPhotoView0Prompt = (parameters: AvatarParameters & {gende
   prompt += `${hairColor} hair in ${hairStyle} style, `;
 
   if (body || bustSize) prompt += `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, `;
-  if (bodyHariDesc) prompt += `${bodyHariDesc}, `
+  if (bodyHairDesc) prompt += `${bodyHairDesc}, `
 
   prompt += `skin is ${skin} with highly detailed realistic natural pores, subtle texture and imperfections for lifelike appearance. `;
 
@@ -61,122 +61,122 @@ export const generatePhotoSetPrompts = (parameters: AvatarParameters & {gender: 
 
   const isFemale = gender === 'female';
 
-  // Fix: Corrected variable naming and typos
-  const bodyHairDesc = bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`;
-  const bodyDesc = `, ${body} body, ${bodyHairDesc} and ${bustSize} bust size`;
+  const bodyHariDesc = bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`;
+  const bodyDesc = `, ${body} body, ${bodyHariDesc} and ${bustSize} bust size`;
   
-  const baseIdentity = `${AVATAR_REFERENCE_NAME}, identical facial features, highly detailed skin texture, pores, natural eye color, ultra-realistic photorealistic photo`;
+  const baseIdentity = `The exact same person as in the reference images, identical face, identical facial features, body, skin texture, eye color, hair, ultra-realistic photorealistic photo`;
 
-  const qualitySuffix = ", sharp focus, DSLR quality, 8k, natural lighting balance, high resolution, no artifacts";
+  const qualitySuffix = ", sharp focus, photorealistic, DSLR quality, 8k, natural lighting balance, no artifacts";
 
-  return [
-    // --- Headshots & Tight Portraits (Face Lock) ---
-    `${baseIdentity}, front view close-up headshot, neutral calm expression, soft even studio lighting, plain light gray background, wearing white shirt with open top buttons${qualitySuffix}`,
-    `${baseIdentity}, front-facing portrait, subtle thoughtful expression looking slightly upward, warm natural window light from left, indoor neutral setting, wearing dark gray t-shirt${qualitySuffix}`,
-    `${baseIdentity}, direct gaze at camera, very slight gentle smile, golden hour soft side lighting, outdoor blurred park background, wearing dark green t-shirt${qualitySuffix}`,
-    `${baseIdentity}, front view, relaxed neutral face, dramatic low-key lighting with soft rim light, dark studio background, wearing black shirt${qualitySuffix}`,
-    `${baseIdentity}, close frontal portrait, eyes looking straight, mild surprise expression, cool blue-toned office lighting, modern indoor environment, wearing light blue shirt and dark jacket${qualitySuffix}`,
-    `${baseIdentity}, front view, confident direct stare, harsh midday sunlight with soft shadows, urban street blurred backdrop, wearing light gray t-shirt${qualitySuffix}`,
-    `${baseIdentity}, portrait, subtle curious expression, warm candle-like indoor lighting, cozy living room setting, wearing pastel yellow home t-shirt${qualitySuffix}`,
-    `${baseIdentity}, front view upper chest included, soft smile, evening warm tungsten light, blurred city night background, wearing red shirt${bodyDesc}${qualitySuffix}`,
+return [
+    // Headshots & tight portraits (strong face lock)
+    `${baseIdentity}, front view close-up headshot, neutral calm expression, soft even studio lighting, plain light gray background, wearing ${isFemale ? 'a crisp white silk blouse with subtle pearl buttons' : 'a fitted charcoal gray crewneck t-shirt under an open navy blazer'}${qualitySuffix}`,
+    `${baseIdentity}, front-facing portrait, subtle thoughtful expression looking slightly upward, warm natural window light from left, indoor neutral setting, wearing ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'a slim-fit olive green henley shirt'}${qualitySuffix}`,
+    `${baseIdentity}, direct gaze at camera, very slight gentle smile, golden hour soft side lighting, outdoor blurred park background, wearing ${isFemale ? 'a flowy off-white linen button-up shirt' : 'a relaxed-fit white linen shirt with rolled sleeves'}${qualitySuffix}`,
+    `${baseIdentity}, front view, relaxed neutral face, dramatic low-key lighting with soft rim light, dark studio background, wearing ${isFemale ? 'a sleek black mock-neck top' : 'a deep charcoal slim-fit polo'}${qualitySuffix}`,
+    `${baseIdentity}, close frontal portrait, eyes looking straight, mild surprise expression, cool blue-toned office lighting, modern indoor environment, wearing ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern'}${qualitySuffix}`,
+    `${baseIdentity}, front view, confident direct stare, harsh midday sunlight with soft shadows, urban street blurred backdrop, wearing ${isFemale ? 'a cropped black leather jacket over a white tank' : 'a black bomber jacket over a gray graphic tee'}${qualitySuffix}`,
+    `${baseIdentity}, portrait, subtle curious expression, warm candle-like indoor lighting, cozy living room setting, wearing ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}${qualitySuffix}`,
+    `${baseIdentity}, front view upper chest included, soft smile, evening warm tungsten light, blurred city night background, wearing ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}${bodyDesc}${qualitySuffix}`,
 
-    // --- 3/4 and Profile Angles (Angular Coverage) ---
-    `${baseIdentity}, three-quarter view facing left, neutral expression, soft natural daylight from window, indoor cafe setting, wearing casual clothes${qualitySuffix}`,
-    `${baseIdentity}, 3/4 right angle portrait, thoughtful gaze slightly away, golden hour warm side lighting, outdoor blurred nature, wearing sleeveless white t-shirt${qualitySuffix}`,
-    `${baseIdentity}, three-quarter left, mild happy expression, dramatic cinematic side lighting with rim, dark moody background, wearing dark gray sweater${qualitySuffix}`,
-    `${baseIdentity}, 3/4 facing right, relaxed neutral, cool overcast daylight, urban street environment, wearing light gray hoodie${qualitySuffix}`,
-    `${baseIdentity}, three-quarter view, subtle surprised look, warm sunset backlight with front fill, park scenery, wearing pink shirt${qualitySuffix}`,
-    `${baseIdentity}, 3/4 angle left, calm serene face, soft indoor lamp light, home interior blurred, wearing dark gray home t-shirt${qualitySuffix}`,
-    `${baseIdentity}, pure left profile view, neutral expression, soft even side lighting, plain background, wearing dark blue shirt${qualitySuffix}`,
-    `${baseIdentity}, right side profile, looking forward, warm golden hour rim light, outdoor blurred, wearing black turtleneck sweater${qualitySuffix}`,
+    // 3/4 and profile angles (good angular coverage)
+    `${baseIdentity}, three-quarter view facing left, neutral expression, soft natural daylight from window, indoor cafe setting, wearing ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}${qualitySuffix}`,
+    `${baseIdentity}, 3/4 right angle portrait, thoughtful gaze slightly away, golden hour warm side lighting, outdoor blurred nature, wearing ${isFemale ? 'a flowy terracotta midi dress with subtle puff sleeves' : 'a rust-colored chore jacket over a white tee'}${qualitySuffix}`,
+    `${baseIdentity}, three-quarter left, mild happy expression, dramatic cinematic side lighting with rim, dark moody background, wearing ${isFemale ? 'a structured black blazer with strong shoulders' : 'a tailored navy suit jacket unbuttoned over white shirt'}${qualitySuffix}`,
+    `${baseIdentity}, 3/4 facing right, relaxed neutral, cool overcast daylight, urban street environment, wearing ${isFemale ? 'oversized denim jacket in medium wash over cropped hoodie' : 'baggy cargo pants with a black tech hoodie'}${qualitySuffix}`,
+    `${baseIdentity}, three-quarter view, subtle surprised look, warm sunset backlight with front fill, park scenery, wearing ${isFemale ? 'a butter-yellow linen blazer and matching shorts' : 'a lightweight khaki utility jacket and cream chinos'}${qualitySuffix}`,
+    `${baseIdentity}, 3/4 angle left, calm serene face, soft indoor lamp light, home interior blurred, wearing ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}${qualitySuffix}`,
+    `${baseIdentity}, pure left profile view, neutral expression, soft even side lighting, plain background, wearing ${isFemale ? 'a high-neck ribbed black top' : 'a fitted ribbed gray long-sleeve tee'}${qualitySuffix}`,
+    `${baseIdentity}, right side profile, looking forward, warm golden hour rim light, outdoor blurred, wearing ${isFemale ? 'a sleeveless white linen top' : 'a relaxed white linen camp-collar shirt'}${qualitySuffix}`,
 
-    // --- Additional Profiles & Dynamic Head Angles ---
-    `${baseIdentity}, left profile close-up, thoughtful expression, dramatic low-key single source light, studio dark, wearing dark brown t-shirt${qualitySuffix}`,
-    `${baseIdentity}, side view right, relaxed face, natural window light from behind creating silhouette edge, indoor, wearing yellow shirt${qualitySuffix}`,
-    `${baseIdentity}, profile left, subtle smile, cool blue evening light, city rooftop blurred background, wearing orange t-shirt${qualitySuffix}`,
-    `${baseIdentity}, three-quarter right looking slightly down, gentle expression, soft morning light, bedroom window setting, wearing army green flannel shirt${qualitySuffix}`,
-    `${baseIdentity}, front three-quarter slight head tilt, confident expression, mixed natural + studio lighting, modern workspace, wearing white shirt and light gray jacket${qualitySuffix}`,
+    // Additional profiles & dynamic head angles
+    `${baseIdentity}, left profile close-up, thoughtful expression, dramatic low-key single source light, studio dark, wearing ${isFemale ? 'a dramatic black asymmetrical top' : 'a charcoal turtleneck sweater'}${qualitySuffix}`,
+    `${baseIdentity}, side view right, relaxed face, natural window light from behind creating silhouette edge, indoor, wearing ${isFemale ? 'a sheer black mesh long-sleeve' : 'a fitted black long-sleeve compression top'}${qualitySuffix}`,
+    `${baseIdentity}, profile left, subtle smile, cool blue evening light, city rooftop blurred background, wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}${qualitySuffix}`,
+    `${baseIdentity}, three-quarter right looking slightly down, gentle expression, soft morning light, bedroom window setting, wearing ${isFemale ? 'a pastel lavender oversized button-up' : 'a soft mint green oxford shirt'}${qualitySuffix}`,
+    `${baseIdentity}, front three-quarter slight head tilt, confident expression, mixed natural + studio lighting, modern workspace, wearing ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee' : 'a modern slim-fit navy blazer with white dress shirt'}${qualitySuffix}`,
 
-    // --- Full-Body Shots (Diversity Boost) ---
-    `${baseIdentity}, full body standing front, relaxed pose hands in pockets, confident look, wearing black hoodie and cargo pants${bodyDesc}, urban street golden hour${qualitySuffix}`,
-    `${baseIdentity}, full body walking pose side view, natural stride, wearing athletic tank top and shorts${bodyDesc}, overcast daylight, city sidewalk background${qualitySuffix}`,
-    `${baseIdentity}, full body casual standing, looking over shoulder at camera, ${isFemale ? 'wearing light summer sundress' : 'wearing casual polo shirt and chinos'}${bodyDesc}, soft forest diffused light, outdoor nature${qualitySuffix}`,
-    `${baseIdentity}, full body standing barefoot on wooden floor, relaxed pose, arms at sides, simple home interior soft light, wearing white shirt and dark blue shorts${bodyDesc}${qualitySuffix}`,
-    `${baseIdentity}, full body barefoot standing on beach sand, wearing ${isFemale ? 'red bikini' : 'red swimming shorts'}${bodyDesc}, golden hour ocean background${qualitySuffix}`,
-    `${baseIdentity}, full body barefoot laying on the lounge chair on the beach, wearing ${isFemale ? 'white skirt and pastel pink blouse' : 'Hawaiian shirt and white shorts'}${bodyDesc}, golden hour ocean background${qualitySuffix}`,
-    `${baseIdentity}, full body walking barefoot toward camera, natural stride, visible feet, tropical path soft daylight, wearing denim shorts and white t-shirt${bodyDesc}${qualitySuffix}`,
-    `${baseIdentity}, full body sitting on modern chair, legs crossed at the knee, thoughtful expression, wearing light button-up and chinos${bodyDesc}, indoor cafe warm light${qualitySuffix}`,
-    `${baseIdentity}, full body sitting cross-legged on ground barefoot, relaxed pose, wearing casual shorts and shirt, park grass soft daylight${bodyDesc}${qualitySuffix}`,
-    `${baseIdentity}, full body sitting on low wall barefoot, legs dangling, hands supporting the body on the sides, subtle smile, urban rooftop evening light, wearing tracksuit${bodyDesc}${qualitySuffix}`,
-    `${baseIdentity}, full body leaning against wall standing barefoot, arms crossed, confident pose, simple crew-neck sweater and pants${bodyDesc}, studio even lighting${qualitySuffix}`,
-    `${baseIdentity}, full body laying on the bed, wearing neutral color pajama set${bodyDesc}, early morning sunrise${qualitySuffix}`,
+    // Full-body shots — 10 total (increased diversity)
+    `${baseIdentity}, full body standing front, relaxed pose hands in pockets, confident look, wearing ${isFemale ? 'high-waisted cream tailored trousers and silk blouse' : 'slim-fit dark gray chinos and white button-down'}${bodyDesc}, urban street golden hour${qualitySuffix}`,
+    `${baseIdentity}, full body walking pose side view, natural stride, wearing ${isFemale ? 'wide-leg black denim jeans and cropped leather jacket' : 'relaxed olive cargo pants and black tech hoodie'}${bodyDesc}, overcast daylight, city sidewalk background${qualitySuffix}`,
+    `${baseIdentity}, full body casual standing, looking over shoulder at camera, wearing ${isFemale ? 'flowy midi skirt in sage green with fitted tank' : 'straight-leg beige chinos and olive utility shirt'}${bodyDesc}, soft forest diffused light, outdoor nature${qualitySuffix}`,
+    `${baseIdentity}, full body standing barefoot on wooden floor, relaxed pose, arms at sides, visible ankles and toes, simple home interior soft light, wearing ${isFemale ? 'cozy oversized linen shirt dress in off-white' : 'relaxed gray joggers and white t-shirt'}${bodyDesc}${qualitySuffix}`,
+    `${baseIdentity}, full body barefoot standing on beach sand, weight shifted to one leg, wearing ${isFemale ? 'a chic white one-piece swimsuit with high-cut legs' : 'navy swim trunks with side stripes'}${bodyDesc}, golden hour ocean background${qualitySuffix}`,
+    `${baseIdentity}, full body barefoot laying on the lounge chair on the beach, wearing ${isFemale ? 'a stylish black bikini with gold hardware' : 'charcoal swim shorts'}${bodyDesc}, golden hour ocean background${qualitySuffix}`,
+    `${baseIdentity}, full body walking barefoot toward camera, natural stride, visible feet and toes, tropical path soft daylight, wearing ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and open white shirt'}${bodyDesc}${qualitySuffix}`,
+    `${baseIdentity}, full body sitting on modern chair, legs crossed, thoughtful expression, wearing ${isFemale ? 'tailored black wide-leg trousers and silk blouse' : 'slim charcoal trousers and crisp white shirt'}${bodyDesc}, indoor cafe warm light${qualitySuffix}`,
+    `${baseIdentity}, full body sitting cross-legged on ground barefoot, relaxed pose, wearing ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit cargo shorts and graphic tee'}${bodyDesc}, visible bare feet and toes, park grass soft daylight${qualitySuffix}`,
+    `${baseIdentity}, full body sitting on low wall barefoot, legs dangling, subtle smile, visible ankles and toes, urban rooftop evening light, wearing ${isFemale ? 'high-waisted denim shorts and cropped hoodie' : 'relaxed black joggers and fitted tee'}${bodyDesc}${qualitySuffix}`,
+    `${baseIdentity}, full body leaning against wall standing barefoot, arms crossed, confident pose, wearing ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines'}${bodyDesc}, studio even lighting${qualitySuffix}`,
+    `${baseIdentity}, full body laying on the bed, wearing ${isFemale ? 'a soft oversized sleep shirt in pale pink' : 'gray modal lounge shorts and t-shirt'}${bodyDesc}, early morning sunrise${qualitySuffix}`,
 
-    // --- Upper-Body & Variations ---
-    `${baseIdentity}, upper body three-quarter pose standing, arms relaxed, wearing casual white t-shirt and jeans${bodyDesc}, soft natural park daylight${qualitySuffix}`,
-    `${baseIdentity}, upper body portrait leaning against wall, subtle smile, wearing dark blazer over neutral shirt${bodyDesc}, dramatic neon evening city lighting${qualitySuffix}`,
-    `${baseIdentity}, upper body three-quarter, arms crossed, wearing a textured wool cable-knit sweater${bodyDesc}, studio even lighting, plain background${qualitySuffix}`,
-    `${baseIdentity}, upper body sitting on stool, thoughtful expression, leaning forward slightly, wearing casual shirt${bodyDesc}, warm indoor lamp light${qualitySuffix}`,
-    `${baseIdentity}, upper body sitting on couch barefoot, legs tucked to side positioned parallel one to another, relaxed pose, cozy living room setting, wearing light blue jeans and white sleeveless t-shirt${bodyDesc}${qualitySuffix}`,
-    `${baseIdentity}, upper body standing three-quarter back view turning head, casual hoodie${bodyDesc}, urban street golden hour${qualitySuffix}`,
-    `${baseIdentity}, upper body close-up sitting, arms on knees barefoot, visible feet, soft indoor natural light, wearing light gray home shorts and t-shirt${bodyDesc}${qualitySuffix}`
+    // Upper-body & additional sitting/leaning variations
+    `${baseIdentity}, upper body three-quarter pose standing, arms relaxed, neutral expression, wearing ${isFemale ? 'a cream knit polo sweater' : 'a taupe cashmere crewneck'}${bodyDesc}, soft natural park daylight${qualitySuffix}`,
+    `${baseIdentity}, upper body portrait leaning against wall, subtle smile, wearing ${isFemale ? 'a structured blazer in chocolate brown over white tee' : 'a slim charcoal blazer over black turtleneck'}${bodyDesc}, dramatic neon evening city lighting${qualitySuffix}`,
+    `${baseIdentity}, upper body three-quarter, arms crossed confident pose, wearing ${isFemale ? 'a tailored white power blazer' : 'a modern navy suit jacket'}${bodyDesc}, studio even lighting, plain background${qualitySuffix}`,
+    `${baseIdentity}, upper body sitting on stool, thoughtful expression, leaning forward slightly, wearing ${isFemale ? 'a soft camel knit top' : 'a fitted olive green polo'}${bodyDesc}, warm indoor lamp light${qualitySuffix}`,
+    `${baseIdentity}, upper body sitting on couch barefoot, legs tucked to side, relaxed pose, visible ankles, cozy living room setting, wearing ${isFemale ? 'an oversized chunky cardigan in oatmeal' : 'a soft gray hoodie'}${bodyDesc}${qualitySuffix}`,
+    `${baseIdentity}, upper body standing three-quarter back view turning head, wearing ${isFemale ? 'a cropped denim jacket and high-neck top' : 'a black hoodie and relaxed jeans'}${bodyDesc}, urban street golden hour${qualitySuffix}`,
+    `${baseIdentity}, upper body close-up sitting, arms on knees barefoot, visible feet close to camera, soft indoor natural light, wearing ${isFemale ? 'a loose white linen shirt' : 'a relaxed white camp-collar shirt'}${bodyDesc}${qualitySuffix}`
   ];
 };
 
 export const generatePhotoSetCaptions = (parameters: AvatarParameters & {gender: string}): string[] => {
-  const { gender, body, bustSize } = parameters;
+  const { gender, body, bodyHair, bustSize } = parameters;
   const isFemale = gender === 'female';
   
-  const bodyTag = `${body} build, ${bustSize} bust`;
+  const bodyHairTag = bodyHair === 'none' ? 'smooth skin' : `${bodyHair} body hair`;
+  const bodyTag = `${body} build, ${bodyHairTag}, ${bustSize} bust`;
 
   return [
-    // --- Headshots: Isolating Upper Garments ---
-    `${AVATAR_REFERENCE_NAME}, close-up headshot, front view, white button-down shirt, open collar, studio lighting`,
-    `${AVATAR_REFERENCE_NAME}, portrait, thoughtful expression, dark gray cotton t-shirt, indoor window light`,
-    `${AVATAR_REFERENCE_NAME}, front view, gentle smile, dark green crew-neck t-shirt, outdoor park, golden hour`,
-    `${AVATAR_REFERENCE_NAME}, front view, black dress shirt, low-key lighting, rim light, dark studio`,
-    `${AVATAR_REFERENCE_NAME}, frontal portrait, light blue collared shirt, dark suit jacket, office environment`,
-    `${AVATAR_REFERENCE_NAME}, front view, direct stare, light gray t-shirt, harsh sunlight, urban street`,
-    `${AVATAR_REFERENCE_NAME}, portrait, curious expression, pastel yellow t-shirt, cozy living room, warm light`,
-    `${AVATAR_REFERENCE_NAME}, upper chest view, soft smile, red silk shirt, city night background, ${bustSize}`,
+    // --- Headshots & Tight Portraits ---
+    `${AVATAR_REFERENCE_NAME}, close-up headshot, front view, neutral expression, white button-down shirt, open top buttons, studio lighting`,
+    `${AVATAR_REFERENCE_NAME}, front-facing portrait, thoughtful expression, dark gray cotton t-shirt, indoor window light`,
+    `${AVATAR_REFERENCE_NAME}, front view, gentle smile, dark green crew-neck t-shirt, outdoor park, golden hour side lighting`,
+    `${AVATAR_REFERENCE_NAME}, front view, relaxed face, black dress shirt, low-key lighting, rim light, dark studio`,
+    `${AVATAR_REFERENCE_NAME}, frontal portrait, mild surprise, light blue collared shirt, dark suit jacket, office environment`,
+    `${AVATAR_REFERENCE_NAME}, front view, confident stare, light gray crew-neck t-shirt, harsh midday sunlight, urban street`,
+    `${AVATAR_REFERENCE_NAME}, portrait, curious expression, pastel yellow home t-shirt, cozy living room, warm light`,
+    `${AVATAR_REFERENCE_NAME}, upper chest view, soft smile, red silk shirt, city night background, tungsten light, ${bustSize} bust`,
 
-    // --- Angles & Profiles: Defining Silhouettes ---
-    `${AVATAR_REFERENCE_NAME}, 3/4 view left, casual clothes, indoor cafe, natural daylight`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view right, white sleeveless tank top, outdoor nature, side lighting`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view left, happy expression, dark gray knit sweater, cinematic lighting`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view right, light gray fleece hoodie, urban street, overcast daylight`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view, pink button-up shirt, park scenery, sunset backlight`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view left, dark gray home t-shirt, indoor lamp light`,
-    `${AVATAR_REFERENCE_NAME}, left profile, dark blue shirt, even side lighting, plain background`,
-    `${AVATAR_REFERENCE_NAME}, right profile, black turtleneck sweater, golden hour rim light`,
+    // --- 3/4 and Profile Angles ---
+    `${AVATAR_REFERENCE_NAME}, three-quarter view facing left, neutral, casual clothing, indoor cafe, natural daylight`,
+    `${AVATAR_REFERENCE_NAME}, 3/4 right angle portrait, white sleeveless t-shirt, outdoor nature, golden hour side lighting`,
+    `${AVATAR_REFERENCE_NAME}, three-quarter left, happy expression, dark gray knit sweater, dramatic cinematic lighting`,
+    `${AVATAR_REFERENCE_NAME}, 3/4 facing right, light gray fleece hoodie, urban street, overcast daylight`,
+    `${AVATAR_REFERENCE_NAME}, three-quarter view, surprised look, pink button-up shirt, park scenery, sunset backlight`,
+    `${AVATAR_REFERENCE_NAME}, 3/4 angle left, calm face, dark gray home t-shirt, indoor lamp light`,
+    `${AVATAR_REFERENCE_NAME}, left profile view, neutral expression, dark blue shirt, even side lighting, plain background`,
+    `${AVATAR_REFERENCE_NAME}, right side profile, black long neck turtleneck sweater, golden hour rim light`,
 
-    // --- Specific Textures & Layers ---
-    `${AVATAR_REFERENCE_NAME}, left profile close-up, dark brown t-shirt, low-key lighting`,
+    // --- Additional Profiles & Dynamic Angles ---
+    `${AVATAR_REFERENCE_NAME}, left profile close-up, dark brown t-shirt, dramatic low-key lighting, studio setting`,
     `${AVATAR_REFERENCE_NAME}, side view right, yellow cotton shirt, window backlight, silhouette edge`,
-    `${AVATAR_REFERENCE_NAME}, left profile, orange t-shirt, rooftop background, blue evening light`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view right, army green flannel shirt, bedroom window, morning light`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view, white dress shirt, gray blazer, modern workspace, mixed lighting`,
+    `${AVATAR_REFERENCE_NAME}, profile left, subtle smile, orange t-shirt, city rooftop, blue evening light`,
+    `${AVATAR_REFERENCE_NAME}, three-quarter right looking down, army green t-shirt, bedroom window, morning light`,
+    `${AVATAR_REFERENCE_NAME}, 3/4 view, head tilt, white dress shirt, light gray blazer, modern workspace`,
 
-    // --- Full Body: Separating Person from Outfit & Environment ---
-    `${AVATAR_REFERENCE_NAME}, full body, black oversized hoodie, cargo pants, ${bodyTag}, urban street, golden hour`,
-    `${AVATAR_REFERENCE_NAME}, full body, athletic tank top, spandex shorts, ${bodyTag}, city sidewalk`,
-    `${AVATAR_REFERENCE_NAME}, full body, ${isFemale ? 'floral summer sundress' : 'polo shirt, khaki chinos'}, ${bodyTag}, forest nature`,
-    `${AVATAR_REFERENCE_NAME}, full body, barefoot, white linen shirt, dark blue shorts, visible ankles and toes, ${bodyTag}, wooden floor`,
-    `${AVATAR_REFERENCE_NAME}, full body, barefoot, wearing ${isFemale ? 'red bikini' : 'red swimming shorts'}, ${bodyTag}, beach, ocean background`,
-    `${AVATAR_REFERENCE_NAME}, full body, barefoot, wearing ${isFemale ? 'white skirt, pink blouse' : 'Hawaiian patterned shirt, white shorts'}, ${bodyTag}, lounge chair`,
-    `${AVATAR_REFERENCE_NAME}, full body, walking barefoot, denim shorts, white t-shirt, visible feet and toes, ${bodyTag}, tropical path`,
-    `${AVATAR_REFERENCE_NAME}, full body, sitting, light blue button-up shirt, tan chinos, ${bodyTag}, cafe, warm light`,
-    `${AVATAR_REFERENCE_NAME}, full body, sitting cross-legged, barefoot, casual cotton shorts, t-shirt, visible feet, ${bodyTag}, park grass`,
-    `${AVATAR_REFERENCE_NAME}, full body, sitting on low wall, barefoot, gray tracksuit, visible ankles, ${bodyTag}, rooftop, evening`,
-    `${AVATAR_REFERENCE_NAME}, full body, leaning against wall, barefoot, wool crew-neck sweater, trousers, ${bodyTag}, studio lighting`,
-    `${AVATAR_REFERENCE_NAME}, full body, laying on bed, neutral colored pajamas, ${bodyTag}, sunrise lighting`,
+    // --- Full-Body Shots ---
+    `${AVATAR_REFERENCE_NAME}, full body standing, black hoodie, cargo pants, ${bodyTag}, urban street, golden hour`,
+    `${AVATAR_REFERENCE_NAME}, full body walking side view, athletic tank top, spandex shorts, ${bodyTag}, city sidewalk`,
+    `${AVATAR_REFERENCE_NAME}, full body casual, looking over shoulder, ${isFemale ? 'summer sundress' : 'polo shirt and chinos'}, ${bodyTag}, forest nature`,
+    `${AVATAR_REFERENCE_NAME}, full body standing barefoot, white linen shirt, dark blue shorts, visible feet and toes, ${bodyTag}, wooden floor`,
+    `${AVATAR_REFERENCE_NAME}, full body barefoot, wearing ${isFemale ? 'red bikini' : 'red swimming shorts'}, ${bodyTag}, beach sand, ocean background`,
+    `${AVATAR_REFERENCE_NAME}, full body barefoot on lounge chair, ${isFemale ? 'white skirt and pink blouse' : 'Hawaiian shirt and white shorts'}, ${bodyTag}, beach background`,
+    `${AVATAR_REFERENCE_NAME}, full body walking barefoot, denim shorts, white t-shirt, visible feet and toes, ${bodyTag}, tropical path`,
+    `${AVATAR_REFERENCE_NAME}, full body sitting on chair, light button-up shirt, tan chinos, ${bodyTag}, indoor cafe`,
+    `${AVATAR_REFERENCE_NAME}, full body sitting cross-legged, barefoot, casual shorts and t-shirt, visible bare feet, ${bodyTag}, park grass`,
+    `${AVATAR_REFERENCE_NAME}, full body sitting on low wall, barefoot, athletic sport suit, visible ankles and feet, ${bodyTag}, urban rooftop`,
+    `${AVATAR_REFERENCE_NAME}, full body leaning against wall, barefoot, crew-neck sweater and trousers, ${bodyTag}, studio lighting`,
+    `${AVATAR_REFERENCE_NAME}, full body laying on bed, neutral color pajamas, ${bodyTag}, early morning sunrise`,
 
-    // --- Upper Body: Final Variety Check ---
-    `${AVATAR_REFERENCE_NAME}, upper body, white t-shirt, blue jeans, ${bodyTag}, park daylight`,
-    `${AVATAR_REFERENCE_NAME}, upper body, navy blazer, neutral inner shirt, ${bodyTag}, neon city lighting`,
-    `${AVATAR_REFERENCE_NAME}, upper body, textured cable-knit sweater, ${bodyTag}, studio lighting`,
-    `${AVATAR_REFERENCE_NAME}, upper body, sitting, olive green casual shirt, ${bodyTag}, indoor lamp light`,
-    `${AVATAR_REFERENCE_NAME}, upper body, sitting on couch, barefoot, light blue jeans, sleeveless t-shirt, ${bodyTag}, living room`,
-    `${AVATAR_REFERENCE_NAME}, upper body, back view turning head, black hoodie, ${bodyTag}, urban street`,
-    `${AVATAR_REFERENCE_NAME}, upper body, close-up sitting, barefoot, gray home shorts, matching t-shirt, ${bodyTag}, natural light`
+    // --- Upper-Body Variations ---
+    `${AVATAR_REFERENCE_NAME}, upper body 3/4 pose, casual white t-shirt, blue jeans, ${bodyTag}, park daylight`,
+    `${AVATAR_REFERENCE_NAME}, upper body leaning, dark blazer over neutral shirt, ${bodyTag}, neon city lighting`,
+    `${AVATAR_REFERENCE_NAME}, upper body 3/4 view, arms crossed, crew-neck sweater, ${bodyTag}, studio lighting`,
+    `${AVATAR_REFERENCE_NAME}, upper body sitting, casual olive shirt, leaning forward, ${bodyTag}, indoor lamp light`,
+    `${AVATAR_REFERENCE_NAME}, upper body sitting on couch, barefoot, sleeveless white t-shirt, light blue jeans, ${bodyTag}, living room`,
+    `${AVATAR_REFERENCE_NAME}, upper body back view turning head, casual hoodie, ${bodyTag}, urban street`,
+    `${AVATAR_REFERENCE_NAME}, upper body sitting, barefoot, gray home shorts and t-shirt, visible feet, ${bodyTag}, natural light`
   ];
 };

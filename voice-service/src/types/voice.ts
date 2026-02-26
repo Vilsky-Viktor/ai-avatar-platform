@@ -6,4 +6,6 @@ export type Voice = {
     gender: AvatarGender;
     imagePath: string;
     audioPath: string;
+    languages: string[];
+    features: string[];
 }

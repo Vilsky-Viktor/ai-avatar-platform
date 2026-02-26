@@ -35,7 +35,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     KLEIN_9B_MODEL_PATH="/workspace/models/flux.2-klein-9b/flux-2-klein-9b.safetensors" \
     AE_MODEL_PATH="/workspace/models/flux.2-klein-9b/ae.safetensors" \
-    HF_HOME="/workspace/models"
+    HF_HOME="/workspace/models" \
+    DEEPFACE_HOME="/workspace/models"
 
 RUN apt-get update && apt-get install -y software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \

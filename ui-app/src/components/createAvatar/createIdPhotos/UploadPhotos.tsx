@@ -44,9 +44,10 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string>
 function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos, setParameters }: Props) {
     // We map indices to views for clarity in the UI
     const VIEW_CONFIG = [
-        { label: 'Front View', ref: useRef<HTMLInputElement>(null) },
-        { label: '45° Angle', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Profile (90°)', ref: useRef<HTMLInputElement>(null) }
+        { label: 'Portrait Front', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Portrait 45°', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Portrait 90°', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Full body', ref: useRef<HTMLInputElement>(null) }
     ];
 
     // Cropper State
@@ -240,7 +241,7 @@ function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos
             </div>
 
             {/* Bottom Section: Three Upload Slots Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full">
                 {VIEW_CONFIG.map((view, index) => {
                     const photoData = uploadedPhotos[index];
                     const hasPhoto = !!photoData?.photo;
@@ -252,7 +253,7 @@ function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos
                             onDragLeave={(e) => handleDragLeave(index, e)}
                             onDrop={(e) => handleDrop(index, e)}
                             onClick={() => !hasPhoto && view.ref.current?.click()}
-                            className={`relative rounded-[2.5rem] border border-dashed flex flex-col items-center justify-center min-h-[400px] group transition-all duration-700 overflow-hidden 
+                            className={`relative rounded-[2.5rem] border border-dashed flex flex-col items-center justify-center min-h-[265px] group transition-all duration-700 overflow-hidden 
                                 ${hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'} 
                                 ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
                         >
@@ -268,7 +269,7 @@ function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos
                                 <>
                                     <img 
                                         src={photoData.photo!} 
-                                        className="absolute inset-0 w-full h-full object-contain p-8 z-0" 
+                                        className="absolute inset-0 w-full h-full object-contain z-0 rounded-[2.5rem]" 
                                         alt={view.label} 
                                     />
                                     <button 

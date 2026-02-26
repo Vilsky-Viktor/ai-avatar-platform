@@ -144,30 +144,43 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
 
   try {
     const prompts = generatePhotoSetPrompts({...jobRequest.input.parameters, gender: jobRequest.input.gender});
+    let index = 0;
+    const jobs: Job[] = [];
 
-    const jobs: Job[] = prompts.map((prompt: string, index) => {
-      return {
-        groupId,
-        order: index,
-        userId: headerUserId as string,
-        avatarId: jobRequest.avatarId,
-        type: JobTypes.photoSet,
-        status: JobStatuses.pending,
-        input: { 
-          prompt, 
-          imagePaths: jobRequest.input.idPhotoPaths,
-          idPhotoPaths: jobRequest.input.idPhotoPaths,
-          width: 1024, 
-          height: 1024, 
-          guidance: 1.0, 
-          numSteps: 13, 
-        }
-      } as Job
-    })
+    const baseJob: Job = {
+      groupId,
+      userId: headerUserId as string,
+      avatarId: jobRequest.avatarId,
+      order: 0,
+      type: JobTypes.photoSet,
+      status: JobStatuses.pending,
+      input: {
+        prompt: '',
+        imagePaths: jobRequest.input.idPhotoPaths,
+        idPhotoPaths: jobRequest.input.idPhotoPaths?.slice(0,3),
+        width: 1024, 
+        height: 1024, 
+        guidance: 1.0, 
+        numSteps: 13, 
+      }
+    }
+
+    for (const [idx, prompt] of prompts.entries()) {
+      const newJob = {...baseJob};
+      newJob.order = idx;
+      newJob.input = {
+        ...baseJob.input,
+        prompt,
+      }
+
+      jobs.push(newJob);
+
+      index++;
+    }
 
     const dbJobs = await Promise.all(jobs.map((job: Job) => createDb(headerUserId as string, job)));
 
-    createPod(dbJobs[0]).catch(err => req.log.error("Pod creation failed:", err));
+    // createPod(dbJobs[0]).catch(err => req.log.error("Pod creation failed:", err));
 
     await Promise.all(dbJobs.map((dbJob: Job) => publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob)));
 

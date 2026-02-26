@@ -43,7 +43,6 @@ def prepare_params(job_input):
         "guidance": float(job_input.get("guidance", model_info.get("defaults", {}).get("guidance", 1.0))),
         "width": int(job_input.get("width", 1360)),
         "height": int(job_input.get("height", 768)),
-        "seed": job_input.get("seed") if job_input.get("seed") is not None else random.randrange(2**31),
         "upsample_mode": job_input.get("upsample_prompt_mode", "none"),
         "openrouter_model": job_input.get("openrouter_model", "mistralai/pixtral-large-2411"),
         "model_info": model_info,
@@ -71,6 +70,8 @@ def refine_prompt(params, img_ctx):
 
 def run_inference(params, reference_images, final_prompt):
     model_info = params["model_info"]
+    seed = random.randint(0, 2**32 - 1)
+    logger.info(f"use seed {seed}")
 
     with torch.no_grad():
         ref_tokens, ref_ids = encode_image_refs(MODELS["ae"], reference_images)
@@ -84,7 +85,7 @@ def run_inference(params, reference_images, final_prompt):
         
         ctx, ctx_ids = batched_prc_txt(ctx)
         shape = (1, 128, params["height"] // 16, params["width"] // 16)
-        generator = torch.Generator(device="cuda").manual_seed(params["seed"])
+        generator = torch.Generator(device="cuda").manual_seed(seed)
         randn = torch.randn(shape, generator=generator, dtype=torch.bfloat16, device="cuda")
         x, x_ids = batched_prc_img(randn)
         timesteps = get_schedule(params["num_steps"], x.shape[1])

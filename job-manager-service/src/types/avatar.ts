@@ -19,3 +19,8 @@ export type AvatarParameters = {
   ears: string;
   bodyHair: string;
 }
+
+export enum AvatarGender {
+  male = 'male',
+  female = 'female'
+}

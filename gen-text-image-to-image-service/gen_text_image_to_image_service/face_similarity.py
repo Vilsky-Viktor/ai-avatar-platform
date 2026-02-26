@@ -11,9 +11,8 @@ import gen_text_image_to_image_service.logger as log_module
 import gen_text_image_to_image_service.ai_model as model_module
 
 
-RETRY_DELAY = float(os.getenv("RETRY_DELAY", 2.0))
-MIN_ALLOWED_SIMILARITY = float(os.getenv("MIN_ALLOWED_SIMILARITE", 0.6))
-MAX_QUALITY_RETRIES = int(os.getenv("MAX_QUALITY_RETRIES", 3))
+MIN_ALLOWED_SIMILARITY = float(os.getenv("MIN_ALLOWED_SIMILARITE", 0.7))
+MAX_QUALITY_RETRIES = int(os.getenv("MAX_QUALITY_RETRIES", 4))
 DEFAULT_CONFIG = {
     "detector_backend": "retinaface",
     "model_name": "ArcFace",
@@ -87,6 +86,7 @@ def run_similarity_check(model_params, prompt, img, id_photos, reference_images)
     min_similarity = 0
 
     if len(id_photos) == 0:
+        logger.info(f"ID photos not provided for similarity check")
         return img, max_similarity, min_similarity, num_tries
     
     image_bytes = utils_module.to_image_bytes(img)
@@ -98,10 +98,11 @@ def run_similarity_check(model_params, prompt, img, id_photos, reference_images)
 
     # face not found
     if max_similarity == None:
+        logger.info(f"Face not found to check similarity")
         return img, -1, -1, num_tries
 
     if max_similarity >= MIN_ALLOWED_SIMILARITY:
-        logger.debug(f"First generation good enough ({max_similarity:.3f} ≥ {MIN_ALLOWED_SIMILARITY})")
+        logger.info(f"First generation good enough ({max_similarity:.3f} ≥ {MIN_ALLOWED_SIMILARITY})")
         return best_img, max_similarity, min_similarity, num_tries
 
     for attempt in range(1, MAX_QUALITY_RETRIES + 1):
@@ -123,8 +124,6 @@ def run_similarity_check(model_params, prompt, img, id_photos, reference_images)
         if current_sim >= MIN_ALLOWED_SIMILARITY:
             logger.info(f"Retry {attempt} succeeded ({current_sim:.3f} ≥ {MIN_ALLOWED_SIMILARITY})")
             break
-
-        time.sleep(RETRY_DELAY)
 
     if max_similarity >= MIN_ALLOWED_SIMILARITY:
         logger.info(f"Final similarity achieved: {max_similarity:.3f}")

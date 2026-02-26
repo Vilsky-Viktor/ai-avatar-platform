@@ -9,17 +9,18 @@ import gen_text_image_to_image_service.storage as storage_module
 import gen_text_image_to_image_service.message_queue as mq_module
 import gen_text_image_to_image_service.ai_model as model_module
 import gen_text_image_to_image_service.face_similarity as similarity_module
-import gen_text_image_to_image_service.termination_timer as timer_module
+# import gen_text_image_to_image_service.termination_timer as timer_module
 
 logger = log_module.get_logger(__name__)
 
 PROJECT_ID = os.getenv("PROJECT_ID", "loom24-mvp")
 SUBSCRIPTION_ID = os.getenv("SUBSCRIPTION_ID", "generate-text-image-to-image-sub")
 MODEL_NAME = os.getenv("MODEL_NAME", "flux.2-klein-9b")
+MESSAGE_CONCURRENCY = int(os.getenv("MESSAGE_CONCURRENCY", "1"))
 
 
 def process_job(message: pubsub_v1.subscriber.message.Message):
-    timer_module.reset_inactivity_timer()
+    # timer_module.reset_inactivity_timer()
     
     job = json.loads(message.data.decode("utf-8"))
     job_id = job.get("id", "unknown")
@@ -68,13 +69,13 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         message.nack()
     finally:
         mq_module.publish_status(model_result)
-        timer_module.reset_inactivity_timer()
+        # timer_module.reset_inactivity_timer()
 
 if __name__ == "__main__":
     storage_module.download_models(MODEL_NAME)
     model_module.load_models_into_vram()
 
-    timer_module.reset_inactivity_timer()
+    # timer_module.reset_inactivity_timer()
 
     subscriber = mq_module.get_subscriber_client()
     sub_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
@@ -85,12 +86,12 @@ if __name__ == "__main__":
         streaming_pull = subscriber.subscribe(
             sub_path, 
             callback=process_job,
-            flow_control=pubsub_v1.types.FlowControl(max_messages=1)
+            flow_control=pubsub_v1.types.FlowControl(max_messages=MESSAGE_CONCURRENCY)
         )
         try:
             streaming_pull.result()
         except KeyboardInterrupt:
             logger.info("Shutdown signal received.")
-            if timer_module.inactivity_timer:
-                timer_module.inactivity_timer.cancel()
+            # if timer_module.inactivity_timer:
+            #     timer_module.inactivity_timer.cancel()
             streaming_pull.cancel()

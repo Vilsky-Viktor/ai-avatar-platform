@@ -31,6 +31,9 @@ function CreatePhotoSetPage() {
 
     const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
     const [generationInitialized, setGenerationInitialized] = useState(false);
+    
+    // ── New: state for fullscreen modal ────────────────────────────────
+    const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -106,7 +109,7 @@ function CreatePhotoSetPage() {
             status,
             groupId,
             input: input ? { height: input.height, width: input.width } : undefined,
-            result: result ? { mediaPath: result.mediaPath, mediaUrl: result.mediaUrl } : undefined
+            result: result ? { mediaPath: result.mediaPath, mediaUrl: result.mediaUrl, maxSimilarity: result.maxSimilarity } : undefined
         };
 
         setStepData((prev) => ({
@@ -138,7 +141,6 @@ function CreatePhotoSetPage() {
         } finally {
             setGenerationInitialized(false);
         }
-        
     }
 
     const nextStep = async () => {
@@ -192,6 +194,31 @@ function CreatePhotoSetPage() {
     const previousStep = () => {
         navigate('/avatar/create/id-photo');
     }
+
+    const FullscreenModal = () => {
+        if (!fullscreenSrc) return null;
+
+        return (
+            <div
+                className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center backdrop-blur-sm transition-opacity duration-200"
+                onClick={() => setFullscreenSrc(null)}
+            >
+                <button
+                    className="absolute top-5 right-6 z-10 text-white text-6xl font-light hover:scale-110 hover:rotate-6 transition-transform duration-200"
+                    onClick={() => setFullscreenSrc(null)}
+                >
+                    ×
+                </button>
+
+                <img
+                    src={fullscreenSrc}
+                    alt="Full size generated avatar"
+                    className="max-w-[96vw] max-h-[96vh] object-contain rounded-xl shadow-2xl transition-transform duration-300 scale-100"
+                    onClick={(e) => e.stopPropagation()}
+                />
+            </div>
+        );
+    };
 
     const renderPhotoArea = (job: Partial<Job> | null, idx: number) => {
         if (job === null) {
@@ -291,17 +318,51 @@ function CreatePhotoSetPage() {
         }
 
         if (job.status === JobStatuses.completed) {
+            const url = job.result?.mediaUrl;
+            const maxSimilarity = job.result?.maxSimilarity || 0;
+
+            if (!url) {
+                return (
+                    <div className="relative rounded-[1rem] border border-base-content/10 bg-base-200/30 min-h-[200px]" />
+                );
+            }
+
             return (
-                <div className="flex relative rounded-[1rem] border border-base-content/10 bg-base-200/30 flex-col items-center justify-center min-h-[200px] overflow-hidden group py-8">
+                <div
+                    className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer min-h-[200px]"
+                    onClick={() => setFullscreenSrc(url)}
+                    >
                     <img
-                        key={job.result?.mediaUrl}
-                        src={job.result?.mediaUrl}
-                        className="absolute inset-0 w-full h-full object-cover transition-all duration-700 z-0 rounded-[1rem]"
-                        alt="Generated"
+                        src={url}
+                        alt={`Generated avatar photo ${idx + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
                     />
+
+                    <div className="absolute bottom-3 right-3 z-10">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-full border border-white/10 shadow-lg text-white text-xs font-medium">
+                            <span>Match</span>
+                            <span className="font-bold">
+                                {(maxSimilarity * 100).toFixed(0)}%
+                            </span>
+
+                            <div
+                                className={`w-2 h-2 rounded-full ${
+                                    maxSimilarity >= 0.7
+                                    ? 'bg-green-400'
+                                    : maxSimilarity >= 0.6
+                                    ? 'bg-yellow-400'
+                                    : maxSimilarity >= 0.5
+                                    ? 'bg-orange-400'
+                                    : 'bg-red-400'
+                                }`}
+                            />
+                        </div>
+                    </div>
                 </div>
             );
         }
+
+        return null;
     }
 
     return ( 
@@ -342,6 +403,9 @@ function CreatePhotoSetPage() {
                 previousStep={previousStep}
                 finish={false}
             />
+
+            {/* ── Fullscreen modal ──────────────────────────────────────── */}
+            <FullscreenModal />
         </>
     );
 }
