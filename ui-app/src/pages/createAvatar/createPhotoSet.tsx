@@ -31,6 +31,7 @@ function CreatePhotoSetPage() {
 
     const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
     const [generationInitialized, setGenerationInitialized] = useState(false);
+    const [avgSimilarity, setAvgSimilarity] = useState(0);
     
     // ── New: state for fullscreen modal ────────────────────────────────
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
@@ -51,6 +52,12 @@ function CreatePhotoSetPage() {
         const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
         })
+
+        const sumSimilarities = stepData.jobs.reduce((acc, job) => {
+            return acc + (job?.result?.maxSimilarity ?? 0);
+        }, 0);
+        const countSimilarities = stepData.jobs.filter(job => job?.result?.maxSimilarity != null).length;
+        setAvgSimilarity(countSimilarities > 0 ? sumSimilarities / countSimilarities : 0);
 
         return () => unsubscribe();
     }, [stepData.jobs]);
@@ -371,20 +378,46 @@ function CreatePhotoSetPage() {
 
             <div className="max-w-6xl mx-auto px-4 pt-12 mb-30">
 
-                <div className="flex justify-center w-full mb-8">
+                <div className="flex justify-center w-full mb-8 items-center gap-8">
                     <button
                         onClick={createJobs}
                         disabled={generatingStarted() || stepData.finished || generationInitialized}
                         className={`btn btn-primary btn-dash group relative w-full max-w-md h-14 mt-8 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >   
-                        {((generatingStarted() && !generatingCompleted()) || generationInitialized) && <span className="loading loading-spinner"></span>}
+                        {((generatingStarted() && !generatingCompleted()) || generationInitialized) && (
+                        <span className="loading loading-spinner"></span>
+                        )}
                         <span className="text-sm uppercase tracking-[0.4em]">Generate Photo Set</span>
                         
                         <Sparkles 
-                            size={20} 
-                            className="ml-2 group-hover:rotate-12 transition-transform" 
+                        size={20} 
+                        className="ml-2 group-hover:rotate-12 transition-transform" 
                         />
                     </button>
+
+                    {stepData.jobs.some(job => job?.result?.maxSimilarity != null) && (
+                        <div className="mt-8">
+                            <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-[1em] bg-base-200/40 backdrop-blur-md border border-base-content/8 shadow-sm">
+                                <span className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/60">
+                                    AVG Match
+                                </span>
+                                <span className="text-2xl font-semibold text-primary tabular-nums">
+                                    {(avgSimilarity * 100).toFixed(0)}%
+                                </span>
+                                <div
+                                    className={`w-2 h-2 rounded-full ${
+                                        avgSimilarity >= 0.7
+                                        ? 'bg-green-400'
+                                        : avgSimilarity >= 0.6
+                                        ? 'bg-yellow-400'
+                                        : avgSimilarity >= 0.5
+                                        ? 'bg-orange-400'
+                                        : 'bg-red-400'
+                                    }`}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

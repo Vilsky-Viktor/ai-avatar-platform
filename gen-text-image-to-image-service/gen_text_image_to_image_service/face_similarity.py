@@ -111,6 +111,8 @@ def run_similarity_check(model_params, prompt, img, id_photos, reference_images)
 
         model_params["seed"] = random.randrange(2**31)
 
+        random.shuffle(reference_images)
+
         candidate_image = model_module.run_inference(model_params, reference_images, prompt)
         candidate_image_bytes = utils_module.to_image_bytes(candidate_image)
         current_sim = calc_face_similarity(id_images_bytes, candidate_image_bytes)
