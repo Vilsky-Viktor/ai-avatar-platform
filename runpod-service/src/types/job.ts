@@ -26,9 +26,8 @@ export type JobInput = {
 
 export type JobResult = {
   mediaPath: string;
-  minSimilarity?: number;
+  similarities?: number[];
   maxSimilarity?: number;
-  numTries?: number;
   error?: string;
 }
 

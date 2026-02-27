@@ -40,7 +40,6 @@ export type JobResult = {
   mediaUrl?: string;
   minSimilarity?: number;
   maxSimilarity?: number;
-  numTries?: number;
   error?: string;
 }
 

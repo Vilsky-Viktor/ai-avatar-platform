@@ -6,9 +6,9 @@ export type AIModelResult = {
   jobId: string;
   type: JobTypes;
   status: JobStatuses;
-  resultPath: string | null;
-  minSimilarity: number;
+  mediaPath: string | null;
+  similarities: number[];
   maxSimilarity: number;
-  numTries: number;
+  numRuns: number;
   error: string | null;
 }

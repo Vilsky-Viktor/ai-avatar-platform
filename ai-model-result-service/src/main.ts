@@ -10,15 +10,15 @@ const pubsub = new PubSub({ projectId: PROJECT_ID });
 
 async function handleModelResult(result: AIModelResult) {
   if (result.error) {
-    const { jobId, userId, status, error } = result;
+    const { jobId, userId, status, error, numRuns } = result;
     logger.error({ jobId, userId, error }, 'Updating job status');
-    await updateJob(userId, jobId, status, {error});
+    await updateJob(userId, jobId, status, numRuns, {error});
     return;
   }
 
-  const { jobId, userId, status, resultPath, minSimilarity, maxSimilarity, numTries, error } = result;
-  logger.info({ jobId, userId, resultPath }, 'Updating job status');
-  await updateJob(userId, jobId, status, {mediaPath: resultPath!, minSimilarity, maxSimilarity, numTries});
+  const { jobId, userId, status, mediaPath, similarities, maxSimilarity, numRuns } = result;
+  logger.info({ jobId, userId, mediaPath }, 'Updating job status');
+  await updateJob(userId, jobId, status, numRuns, {mediaPath: mediaPath!, similarities, maxSimilarity});
 }
 
 function listenForResults() {

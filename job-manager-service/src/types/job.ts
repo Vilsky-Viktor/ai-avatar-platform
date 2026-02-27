@@ -35,9 +35,8 @@ export type JobRequestInput = {
 
 export type JobResult = {
   mediaPath: string;
-  minSimilarity?: number;
+  similarities?: number[];
   maxSimilarity?: number;
-  numTries?: number;
   error?: string;
 }
 
@@ -51,6 +50,7 @@ export type Job = {
   status: JobStatuses;
   input: JobInput
   result?: JobResult;
+  numRuns: number;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

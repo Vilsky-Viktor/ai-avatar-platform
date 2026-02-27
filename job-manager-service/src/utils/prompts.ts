@@ -77,21 +77,21 @@ return [
     `${baseIdentity}, portrait, subtle curious expression, warm candle-like indoor lighting, cozy living room setting, wearing ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}`,
     `${baseIdentity}, front view upper chest included, soft smile, evening warm tungsten light, blurred city night background, wearing ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}${bodyDesc}`,
 
-    // 3/4 and profile angles (good angular coverage)
+    // // 3/4 and profile angles (good angular coverage)
     `${baseIdentity}, three-quarter view facing left, neutral expression, soft natural daylight from window, indoor cafe setting, wearing ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}`,
     `${baseIdentity}, 3/4 right angle portrait, thoughtful gaze slightly away, golden hour warm side lighting, outdoor blurred nature, wearing ${isFemale ? 'a flowy terracotta midi dress with subtle puff sleeves' : 'a rust-colored chore jacket over a white tee'}`,
-    `${baseIdentity}, three-quarter left, mild happy expression, dramatic cinematic side lighting with rim, dark moody background, wearing ${isFemale ? 'a structured black blazer with strong shoulders' : 'a tailored navy suit jacket unbuttoned over white shirt'}`,
+    `${baseIdentity}, three-quarter left, soft dramatic cinematic side lighting with rim preserving facial details, dark moody background, wearing ${isFemale ? 'a structured black blazer with strong shoulders' : 'a tailored navy suit jacket unbuttoned over white shirt'}, hyper-realistic detailed face, sharp facial features`,
     `${baseIdentity}, 3/4 facing right, relaxed neutral, cool overcast daylight, urban street environment, wearing ${isFemale ? 'oversized denim jacket in medium wash over cropped hoodie' : 'baggy cargo pants with a black tech hoodie'}`,
     `${baseIdentity}, three-quarter view, subtle surprised look with closed mouth, warm sunset backlight with front fill, park scenery, wearing ${isFemale ? 'a butter-yellow linen blazer and matching shorts' : 'a lightweight khaki utility jacket and cream chinos'}`,
     `${baseIdentity}, 3/4 angle left, calm serene face, soft indoor lamp light, home interior blurred, wearing ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}`,
-    `${baseIdentity}, pure left profile view, neutral expression, soft even side lighting, plain background, wearing ${isFemale ? 'a high-neck ribbed black top' : 'a fitted ribbed gray long-sleeve tee'}`,
+    `${baseIdentity}, pure left side profile view exactly matching reference proportions, neutral expression with no rotation distortion, soft even side lighting gently illuminating the full clear profile silhouette, jawline, nose bridge, ear position and eye contour visible, plain background, wearing ${isFemale ? 'a high-neck ribbed black top' : 'a fitted ribbed gray long-sleeve tee'}, exact same face and identity as reference image, preserve identical side facial structure proportions bone structure and features, hyper-realistic detailed face, sharp consistent facial identity`,
     `${baseIdentity}, right side profile, looking forward, warm golden hour rim light, outdoor blurred, wearing ${isFemale ? 'a sleeveless white linen top' : 'a relaxed white linen camp-collar shirt'}`,
 
     // Additional profiles & dynamic head angles
-    `${baseIdentity}, left profile close-up, thoughtful expression, dramatic low-key single source light, studio dark, wearing ${isFemale ? 'a dramatic black asymmetrical top' : 'a charcoal turtleneck sweater'}`,
+    `${baseIdentity}, left profile close-up, soft dramatic low-key single source light preserving sharp features, studio dark, wearing ${isFemale ? 'a dramatic black asymmetrical top' : 'a charcoal turtleneck sweater'}, hyper-realistic detailed face, clear eyes and profile details`,
     `${baseIdentity}, side view right, relaxed face, natural window light from behind creating silhouette edge, indoor, wearing ${isFemale ? 'a sheer black mesh long-sleeve' : 'a fitted black long-sleeve compression top'}`,
-    `${baseIdentity}, profile left, subtle smile, cool blue evening light, city rooftop blurred background, wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}`,
-    `${baseIdentity}, three-quarter right looking slightly down, gentle expression, soft morning light, bedroom window setting, wearing ${isFemale ? 'a pastel lavender oversized button-up' : 'a soft mint green oxford shirt'}`,
+    `${baseIdentity}, profile left side, evening cloudy weather, city rooftop blurred background, wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}`,
+    `${baseIdentity}, three-quarter right looking slightly down, soft morning light illuminating facial details, bedroom window setting, wearing ${isFemale ? 'a pastel lavender oversized button-up' : 'a soft mint green oxford shirt'}, hyper-realistic detailed face, sharp eyes and expression from reference images`,
     `${baseIdentity}, front three-quarter slight head tilt, confident expression, mixed natural + studio lighting, modern workspace, wearing ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee' : 'a modern slim-fit navy blazer with white dress shirt'}`,
 
     // Full-body shots — 10 total (increased diversity)

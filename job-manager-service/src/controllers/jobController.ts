@@ -34,6 +34,7 @@ export const createIdPhotoView0 = async (req: Request, res: Response, next: Next
     avatarId: jobRequest.avatarId,
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
+    numRuns: 0,
     input: { 
       prompt: generateIdPhotoView0Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
       imagePaths: [],
@@ -72,6 +73,7 @@ export const createIdPhotoView45 = async (req: Request, res: Response, next: Nex
     avatarId: jobRequest.avatarId,
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
+    numRuns: 0,
     input: { 
       prompt: generateIdPhotoView45Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
       imagePaths: jobRequest.input.idPhotoPaths,
@@ -110,6 +112,7 @@ export const createIdPhotoView90 = async (req: Request, res: Response, next: Nex
     avatarId: jobRequest.avatarId,
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
+    numRuns: 0,
     input: { 
       prompt: generateIdPhotoView90Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
       imagePaths: jobRequest.input.idPhotoPaths,
@@ -154,6 +157,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       order: 0,
       type: JobTypes.photoSet,
       status: JobStatuses.pending,
+      numRuns: 0,
       input: {
         prompt: '',
         imagePaths: jobRequest.input.idPhotoPaths,
