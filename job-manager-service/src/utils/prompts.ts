@@ -111,7 +111,7 @@ return [
     // Upper-body & additional sitting/leaning variations
     `${baseIdentity}, upper body three-quarter pose standing, arms relaxed, neutral expression, wearing ${isFemale ? 'a cream knit polo sweater' : 'a taupe cashmere crewneck'}${bodyDesc}, soft natural park daylight`,
     `${baseIdentity}, upper body portrait leaning against wall, subtle smile, wearing ${isFemale ? 'a structured blazer in chocolate brown over white tee' : 'a slim charcoal blazer over black turtleneck'}${bodyDesc}, dramatic neon evening city lighting`,
-    `${baseIdentity}, upper body three-quarter, arms crossed confident pose, wearing ${isFemale ? 'a tailored white power blazer' : 'a modern navy suit jacket'}${bodyDesc}, studio even lighting, plain background`,
+    `${baseIdentity}, upper body three-quarter, arms crossed confident pose, wearing ${isFemale ? 'a tailored white power blazer with white t-shirt' : 'a modern navy suit jacket with white shirt'}${bodyDesc}, studio even lighting, plain background`,
     `${baseIdentity}, upper body sitting on stool, thoughtful expression, leaning forward slightly, wearing ${isFemale ? 'a soft camel knit top' : 'a fitted olive green polo'}${bodyDesc}, warm indoor lamp light`,
     `${baseIdentity}, upper body sitting on couch barefoot, legs tucked to side, relaxed pose, visible ankles, cozy living room setting, wearing ${isFemale ? 'an oversized chunky cardigan in oatmeal' : 'a soft gray hoodie'}${bodyDesc}`,
     `${baseIdentity}, upper body standing three-quarter back view turning head, wearing ${isFemale ? 'a cropped denim jacket and high-neck top' : 'a black hoodie and relaxed jeans'}${bodyDesc}, urban street golden hour`,

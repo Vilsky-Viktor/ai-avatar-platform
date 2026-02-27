@@ -22,6 +22,8 @@ export type JobInput = {
   height: number;
   guidance: number;
   numSteps: number;
+  maxRuns: number;
+  similarityThreshold?: number;
 }
 
 export type JobResult = {

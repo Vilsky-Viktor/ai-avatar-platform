@@ -54,19 +54,12 @@ def extract_previous_result(job: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def should_skip_job(job: dict, num_runs: int) -> bool:
-    return num_runs >= MAX_JOB_RUNS or job.get("status") == "completed"
+    max_runs = job.get("input", {}).get("maxRuns")
+    return num_runs >= max_runs or job.get("status") == "completed"
 
 
 def is_first_run(num_runs: int) -> bool:
     return num_runs == 0
-
-
-def has_reached_max_runs(num_runs: int) -> bool:
-    return num_runs >= MAX_JOB_RUNS
-
-
-def has_passed_similarity_threshold(similarity: float) -> bool:
-    return similarity >= MIN_ALLOWED_SIMILARITY
 
 
 # ---------------------------------------------------------------------------
@@ -151,32 +144,38 @@ def handle_improved_similarity(result: dict, job: dict, img, user_id: str, avata
                                 similarity: float, previous: dict, num_runs: int, job_id: str):
     media_path = upload_image(img, user_id, avatar_id)
     updated_similarities = previous["similarities"] + [similarity]
+    similarity_threshold = job.get("input", {}).get("similarityThreshold")
+    max_runs = job.get("input", {}).get("maxRuns")
 
-    if has_reached_max_runs(num_runs) or has_passed_similarity_threshold(similarity):
-        reason = "max runs reached" if has_reached_max_runs(num_runs) else f"similarity {similarity} >= threshold {MIN_ALLOWED_SIMILARITY}"
+    if num_runs >= max_runs or similarity >= similarity_threshold:
+        reason = "max runs reached" if num_runs >= max_runs else f"similarity {similarity} >= threshold {similarity_threshold}"
         complete_result(result, media_path, similarity, updated_similarities, num_runs)
         publish_completed_result(result, job_id, reason)
     else:
         partial_result = {**result, "mediaPath": media_path, "maxSimilarity": similarity, "similarities": updated_similarities}
-        resend_job_for_retry(job, partial_result, num_runs, job_id, reason=f"similarity {similarity} below threshold {MIN_ALLOWED_SIMILARITY}")
+        resend_job_for_retry(job, partial_result, num_runs, job_id, reason=f"similarity {similarity} below threshold {similarity_threshold}")
 
 
 def handle_worse_similarity(result: dict, job: dict, similarity: float,
                              previous: dict, num_runs: int, job_id: str):
     updated_similarities = previous["similarities"] + [similarity]
+    similarity_threshold = job.get("input", {}).get("similarityThreshold")
+    max_runs = job.get("input", {}).get("maxRuns")
 
-    if has_reached_max_runs(num_runs):
+    if num_runs >= max_runs:
         complete_result(result, previous["media_path"], previous["max_similarity"], updated_similarities, num_runs)
         publish_completed_result(result, job_id, reason=f"max runs reached, best similarity was {previous['max_similarity']}")
     else:
         partial_result = {**result, "mediaPath": previous["media_path"], "maxSimilarity": previous["max_similarity"], "similarities": updated_similarities}
-        resend_job_for_retry(job, partial_result, num_runs, job_id, reason=f"similarity {similarity} below threshold {MIN_ALLOWED_SIMILARITY}")
+        resend_job_for_retry(job, partial_result, num_runs, job_id, reason=f"similarity {similarity} below threshold {similarity_threshold}")
 
 
 def handle_inference_error(result: dict, job: dict, error: Exception, previous: dict, num_runs: int, job_id: str):
+    max_runs = job.get("input", {}).get("maxRuns")
+
     logger.error(f"Error processing job {job_id}: {error}", exc_info=True)
 
-    if has_reached_max_runs(num_runs):
+    if num_runs >= max_runs:
         if previous["media_path"]:
             complete_result(result, previous["media_path"], previous["max_similarity"], previous["similarities"], num_runs)
             publish_completed_result(result, job_id, reason=f"max runs reached with prior best similarity {previous['max_similarity']}")

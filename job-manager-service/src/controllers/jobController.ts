@@ -42,7 +42,8 @@ export const createIdPhotoView0 = async (req: Request, res: Response, next: Next
       width: ID_PHOTO_WIDTH, 
       height: ID_PHOTO_HEIGHT, 
       guidance: ID_PHOTO_GUIDANCE, 
-      numSteps: ID_PHOTO_NUM_STEPS, 
+      numSteps: ID_PHOTO_NUM_STEPS,
+      maxRuns: 5,
     }
   }
 
@@ -81,7 +82,9 @@ export const createIdPhotoView45 = async (req: Request, res: Response, next: Nex
       width: ID_PHOTO_WIDTH, 
       height: ID_PHOTO_HEIGHT, 
       guidance: ID_PHOTO_GUIDANCE, 
-      numSteps: ID_PHOTO_NUM_STEPS, 
+      numSteps: ID_PHOTO_NUM_STEPS,
+      maxRuns: 5,
+      similarityThreshold: 0.8
     }
   }
 
@@ -120,7 +123,9 @@ export const createIdPhotoView90 = async (req: Request, res: Response, next: Nex
       width: ID_PHOTO_WIDTH, 
       height: ID_PHOTO_HEIGHT, 
       guidance: ID_PHOTO_GUIDANCE, 
-      numSteps: ID_PHOTO_NUM_STEPS, 
+      numSteps: ID_PHOTO_NUM_STEPS,
+      maxRuns: 5,
+      similarityThreshold: 0.8
     }
   }
 
@@ -165,12 +170,15 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         width: 1024, 
         height: 1024, 
         guidance: 1.0, 
-        numSteps: 13, 
+        numSteps: 13,
+        maxRuns: 5,
+        similarityThreshold: 0.75
       }
     }
 
     for (const [idx, prompt] of prompts.entries()) {
       const newJob = {...baseJob};
+
       newJob.order = idx;
       newJob.input = {
         ...baseJob.input,
