@@ -35,6 +35,7 @@ export type AvatarParameters = {
   bustSize: string;
   ears: string;
   bodyHair: string;
+  height: string;
 }
 
 export type Avatar = {

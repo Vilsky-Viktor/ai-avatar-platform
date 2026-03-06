@@ -278,7 +278,7 @@ function GeneratePhotos({ stepData, setStepData, generalData, generatingStarted,
                         </div>
 
                         <div className="text-center">
-                            <span className="text-[15px] font-bold uppercase tracking-[0.4em] text-primary">
+                            <span className="text-[15px] font-bold uppercase tracking-[0.4em] text-error">
                                 Error
                             </span>
 
@@ -315,6 +315,7 @@ function GeneratePhotos({ stepData, setStepData, generalData, generatingStarted,
                         { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
                         { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
                         { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
+                        { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
                         { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].attractiveness },
                         { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].body },
                         { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },

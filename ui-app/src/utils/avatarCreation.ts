@@ -40,7 +40,7 @@ export const handleCancel = async (avatarId: string, setCancelLoading: Function,
 export const initialAvatarParameters = {
     ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
     face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '', 
-    skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '',
+    skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '', height: ''
 };
 
 export const initialIdPhotoVariantSet = [null, null, null]
@@ -74,6 +74,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
     skinColor: ["porcelain", "fair", "ivory", "beige", "olive", "tan", "caramel", "brown", "dark-brown", "ebony"],
     age: ["child", "teenager", "20s", "30s", "40s", "50s", "60s", "70s", "80s+"],
+    height: ["150", "160", "170", "180", "190", "200"],
     eyes: ["dark brown", "light brown", "amber", "hazel", "green", "blue", "gray", "violet", "two-toned"],
     eyeLashes: ["none", "short sparse", "short dense", "medium natural", "medium curled", "long wispy", "long dramatic", "tapered"],
     eyeBrows: ["thin straight", "thin arched", "medium natural", "medium rounded", "thick bushy", "thick groomed", "monobrow", "faded tail"],
@@ -81,7 +82,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     lips: ["full", "thin", "heart-shaped", "wide", "round", "bow-shaped", "heavy-upper", "heavy-lower", "downward-turned"],
     ears: ["attached", "detached", "petite", "protruding", "pointed", "elven", "round", "droopy"],
     bustSize: ["flat", "small", "medium", "large", "extra-large"],
-    bodyHair: ["none", "peach_fuzz", "fine_light", "fine_medium", "textured_light", "textured_medium", "dense_moderate", "dense_intense"],
+    bodyHair: ["none", "peach fuzz", "fine light", "fine medium", "textured light", "textured medium", "dense moderate", "dense intense"],
     male: {
         attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
         body: ["slim", "athletic", "average", "muscular", "large"],

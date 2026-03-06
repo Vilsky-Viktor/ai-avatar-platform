@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Job, JobTypes, JobStatuses, JobRequest } from '../types/job';
-import { generateIdPhotoView0Prompt, generateIdPhotoView45Prompt, generateIdPhotoView90Prompt, generatePhotoSetPrompts } from '../utils/prompts';
+import { generateIdPhotoView0Prompt, generateIdPhotoView45Prompt, generateIdPhotoView90Prompt, generatePhotoSetInputs } from '../utils/prompts';
 import { 
   create as createDb, 
   update as updateDb,
@@ -44,6 +44,8 @@ export const createIdPhotoView0 = async (req: Request, res: Response, next: Next
       guidance: ID_PHOTO_GUIDANCE, 
       numSteps: ID_PHOTO_NUM_STEPS,
       maxRuns: 5,
+      checkDependencyImageExistance: false,
+      upsamplePromptMode: "local"
     }
   }
 
@@ -84,7 +86,9 @@ export const createIdPhotoView45 = async (req: Request, res: Response, next: Nex
       guidance: ID_PHOTO_GUIDANCE, 
       numSteps: ID_PHOTO_NUM_STEPS,
       maxRuns: 5,
-      similarityThreshold: 0.8
+      similarityThreshold: 0.8,
+      checkDependencyImageExistance: true,
+      upsamplePromptMode: "local"
     }
   }
 
@@ -125,7 +129,9 @@ export const createIdPhotoView90 = async (req: Request, res: Response, next: Nex
       guidance: ID_PHOTO_GUIDANCE, 
       numSteps: ID_PHOTO_NUM_STEPS,
       maxRuns: 5,
-      similarityThreshold: 0.8
+      similarityThreshold: 0.8,
+      checkDependencyImageExistance: true,
+      upsamplePromptMode: "local"
     }
   }
 
@@ -151,7 +157,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
   req.log.info(`Create Photo Set jobs for user ${headerUserId} with group ID ${groupId}`);
 
   try {
-    const prompts = generatePhotoSetPrompts({...jobRequest.input.parameters, gender: jobRequest.input.gender});
+    const inputs = generatePhotoSetInputs(headerUserId as string, jobRequest.avatarId, {...jobRequest.input.parameters, gender: jobRequest.input.gender});
     let index = 0;
     const jobs: Job[] = [];
 
@@ -164,25 +170,30 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       numRuns: 0,
       input: {
-        prompt: '',
-        imagePaths: jobRequest.input.idPhotoPaths,
-        idPhotoPaths: jobRequest.input.idPhotoPaths?.slice(0,3),
         width: 1024, 
         height: 1024, 
         guidance: 1.0, 
         numSteps: 13,
-        maxRuns: 5,
-        similarityThreshold: 0.75
+        maxRuns: 4,
+        checkDependencyImageExistance: true,
+        upsamplePromptMode: "openrouter"
       }
     }
 
-    for (const [idx, prompt] of prompts.entries()) {
+    for (const [idx, input] of inputs.entries()) {
       const newJob = {...baseJob};
 
       newJob.order = idx;
       newJob.input = {
         ...baseJob.input,
-        prompt,
+        prompt: input.prompt,
+        imagePaths: input.imagePaths,
+        idPhotoPaths: input.idPhotoPaths,
+        guidance: input.guidance,
+        numSteps: input.numSteps,
+        maxRuns: input.maxRuns,
+        similarityThreshold: input.similarityThreshold,
+        resultFileName: input.resultFileName
       }
 
       jobs.push(newJob);

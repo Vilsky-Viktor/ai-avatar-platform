@@ -18,35 +18,39 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 && \
     python3.12 -m pip install --upgrade pip setuptools wheel
 
 WORKDIR /app
-RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2
+RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2 && \
+    rm -rf /app/flux2/.git /app/flux2/tests /app/flux2/docs /app/flux2/assets
 
-RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage jupyterlab deepface scipy numpy tenacity tf-keras && \
+RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage insightface onnxruntime-gpu && \
     pip install --no-cache-dir -e ./flux2 --extra-index-url https://download.pytorch.org/whl/cu121
+
+RUN find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null; \
+    find /opt/venv -type d -name "__pycache__" -exec rm -rf {} +; \
+    find /opt/venv -name "*.pyc" -delete; \
+    find /opt/venv -name "*.pyo" -delete
 
 RUN curl -fSsL https://github.com/runpod/runpodctl/releases/download/v1.14.3/runpodctl-linux-amd64 \
     -o /usr/local/bin/runpodctl && \
     chmod +x /usr/local/bin/runpodctl
 
-FROM nvidia/cuda:12.9.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.9.0-base-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app/src:/app/flux2:${PYTHONPATH}" \
     GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
-    KLEIN_9B_MODEL_PATH="/workspace/models/flux.2-klein-9b/flux-2-klein-9b.safetensors" \
-    AE_MODEL_PATH="/workspace/models/flux.2-klein-9b/ae.safetensors" \
+    MODEL_NAME="flux.2-dev" \
+    FLUX2_MODEL_PATH="/workspace/models/flux.2-dev/flux2-dev-fp8_scaled.safetensors" \
+    AE_MODEL_PATH="/workspace/models/flux.2-dev/ae.safetensors" \
     HF_HOME="/workspace/models" \
-    DEEPFACE_HOME="/workspace/models"
+    LOG_LEVEL="INFO"
 
 RUN apt-get update && apt-get install -y software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && apt-get install -y \
+    apt-get update && apt-get install -y --no-install-recommends \
     python3.12 \
-    python3.12-dev \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    gcc \
-    g++ \
     && rm -rf /var/lib/apt/lists/*
 
 ENV CPATH="/usr/include/python3.12"

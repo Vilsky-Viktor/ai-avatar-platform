@@ -44,19 +44,20 @@ function CreateIdPhotoPage() {
     }, [stepData]);
 
     const canProceed = () => {
-        if (stepData.finished) {
-            return true;
-        }
+        // if (stepData.finished) {
+        //     return true;
+        // }
 
-        if (stepData.mode === IdPhotoModes.generate && generatingCompleted() && stepData.selectedVariant !== null) {
-            return true;
-        }
+        // if (stepData.mode === IdPhotoModes.generate && generatingCompleted() && stepData.selectedVariant !== null) {
+        //     return true;
+        // }
 
-        if (stepData.mode === IdPhotoModes.upload && uploadedPhotos.every((item) => item.photo)) {
-            return true;
-        }
+        // if (stepData.mode === IdPhotoModes.upload && uploadedPhotos.every((item) => item.photo)) {
+        //     return true;
+        // }
 
-        return false;
+        // return false;
+        return true;
     };
 
 
@@ -121,16 +122,35 @@ function CreateIdPhotoPage() {
                         })
                     }
                 } else {
-
                     for (const [idx, item] of uploadedPhotos.entries()) {
-                        const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/${uuid4()}.png`;
-                        await uploadMediaToBucket(mediaPath, item.photo!);
-                        allMedia.push({
-                            ...media,
-                            path: mediaPath,
-                            dimensions: '1024x1024',
-                            order: idx
-                        })
+                        if (idx === 0) {
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-front-portrait-1024x1024.png`;
+                            await uploadMediaToBucket(mediaPath, item.photo!);
+                            allMedia.push({
+                                ...media,
+                                path: mediaPath,
+                                dimensions: '1024x1024',
+                                order: idx
+                            })
+                        } else if (idx === 1) {
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-quarter-portrait-1024x1024.png`;
+                            await uploadMediaToBucket(mediaPath, item.photo!);
+                            allMedia.push({
+                                ...media,
+                                path: mediaPath,
+                                dimensions: '1024x1024',
+                                order: idx
+                            })
+                        } else if (idx === 2) {
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-profile-portrait-1024x1024.png`;
+                            await uploadMediaToBucket(mediaPath, item.photo!);
+                            allMedia.push({
+                                ...media,
+                                path: mediaPath,
+                                dimensions: '1024x1024',
+                                order: idx
+                            })
+                        }
                     }
                 }
 

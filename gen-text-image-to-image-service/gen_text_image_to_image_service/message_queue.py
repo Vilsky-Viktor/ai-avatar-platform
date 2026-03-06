@@ -17,7 +17,7 @@ def publish_status(result_payload):
     try:
         data = json.dumps(result_payload).encode("utf-8")
         future = publisher.publish(result_topic_path, data=data)
-        logger.info(f"Result published: {future.result()}")
+        logger.info(f"Result/update published: {future.result()}")
     except Exception as error:
         logger.error(f"Failed to publish result to Pub/Sub: {error}")
 

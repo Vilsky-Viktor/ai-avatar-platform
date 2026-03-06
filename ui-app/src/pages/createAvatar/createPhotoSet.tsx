@@ -47,6 +47,8 @@ function CreatePhotoSetPage() {
     useEffect(() => {
         if (!generatingStarted()) return;
 
+        console.log("jobs updated")
+
         const groupId = stepData.jobs[0]?.groupId!;
 
         const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
@@ -311,7 +313,7 @@ function CreatePhotoSetPage() {
                         </div>
 
                         <div className="text-center">
-                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
+                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-error">
                                 Error
                             </span>
 
@@ -381,7 +383,7 @@ function CreatePhotoSetPage() {
                 <div className="flex justify-center w-full mb-8 items-center gap-8">
                     <button
                         onClick={createJobs}
-                        disabled={generatingStarted() || stepData.finished || generationInitialized}
+                        // disabled={generatingStarted() || stepData.finished || generationInitialized}
                         className={`btn btn-primary btn-dash group relative w-full max-w-md h-14 mt-8 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >   
                         {((generatingStarted() && !generatingCompleted()) || generationInitialized) && (

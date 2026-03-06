@@ -210,6 +210,7 @@ function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos
                 
                 <div className="hidden md:flex flex-col p-6 rounded-3xl bg-base-200/50 border border-base-content/5 gap-6 w-[300px]">
                     {[
+                        { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
                         { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[generalData.gender].body },
                         { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
                         { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },

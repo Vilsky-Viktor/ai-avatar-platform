@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Job, JobTypes } from '../types/job';
 import { getPods as getPodsService, createPod as createPodService } from '../services/runpodService';
 
-const REGION = process.env.REGION || '';
+const REGION = process.env.REGION || 'EUR-IS-1';
 const NETWORK_VOLUME_ID = process.env.NETWORK_VOLUME_ID || '';
 const TEXT_IMAGE_TO_IMAGE_TEMPLATE_ID = process.env.TEXT_IMAGE_TO_IMAGE_TEMPLATE_ID || '';
 

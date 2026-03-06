@@ -26,6 +26,9 @@ export type JobInput = {
   numSteps: number;
   maxRuns: number;
   similarityThreshold?: number;
+  checkDependencyImageExistance: boolean;
+  resultFileName?: string;
+  upsamplePromptMode: string;
 }
 
 export type JobRequestInput = {
