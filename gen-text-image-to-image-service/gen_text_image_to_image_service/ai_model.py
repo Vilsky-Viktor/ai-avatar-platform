@@ -3,7 +3,6 @@ import torch
 import random
 from PIL import Image
 from einops import rearrange
-from flux2.openrouter_api_client import DEFAULT_SAMPLING_PARAMS, OpenRouterAPIClient
 from flux2.model import Flux2
 from flux2.sampling import (
     batched_prc_img, batched_prc_txt, denoise, denoise_cfg,
@@ -13,6 +12,7 @@ from flux2.util import FLUX2_MODEL_INFO, load_ae, load_flow_model, load_text_enc
 from safetensors import safe_open
 from safetensors.torch import load_file
 from gen_text_image_to_image_service.logger import get_logger
+from gen_text_image_to_image_service.openrouter import DEFAULT_SAMPLING_PARAMS, OpenRouterAPIClient
 
 logger = get_logger(__name__)
 DEVICE = torch.device("cuda")
@@ -20,6 +20,8 @@ MODELS = {}
 MODEL_NAME = os.getenv("MODEL_NAME", "flux.2-dev")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "mistralai/pixtral-large-2411")
 
+def _generate_random_seed():
+    return random.randint(0, 2**32 - 1)
 
 def detect_model_format(model_path: str) -> str:
     """
@@ -202,6 +204,7 @@ def prepare_params(job_input):
         "height":           int(job_input.get("height", 768)),
         "upsample_mode":    job_input.get("upsamplePromptMode", "local"),
         "model_info":       model_info,
+        "seed":             job_input.get("seed", None),
     }
     return model_params
 
@@ -214,25 +217,30 @@ def refine_prompt(params, img_ctx):
     #     raise ValueError("Flagged Prompt Detected.")
 
     if params["upsample_mode"] == "openrouter" and os.getenv("OPENROUTER_API_KEY"):
-        logger.info(f"Upsampling prompt with OpenRouter")
+        logger.debug(f"Upsampling prompt with OpenRouter")
         client = OpenRouterAPIClient(
             model=OPENROUTER_MODEL,
             sampling_params=DEFAULT_SAMPLING_PARAMS.get(OPENROUTER_MODEL, {}),
         )
         upsampled = client.upsample_prompt([prompt], img=[img_ctx] if img_ctx else None)
-        return upsampled[0] if upsampled else prompt
+        prompt = upsampled[0] if upsampled else prompt
+        logger.info(prompt)
+        logger.info(f"prompt size: {len(prompt.split())} words")
+        return prompt
 
     if params["upsample_mode"] == "local":
-        logger.info(f"Upsampling prompt with local text encoder")
+        logger.debug(f"Upsampling prompt with local text encoder")
         upsampled = upsampling_model.upsample_prompt([prompt], img=[img_ctx] if img_ctx else None)
         return upsampled[0] if upsampled else prompt
 
     return prompt
 
 
-def run_inference(params, reference_images, final_prompt):
+def run_inference(avatar_id, params, reference_images, final_prompt):
     model_info = params["model_info"]
-    seed = random.randint(0, 2**32 - 1)
+
+    seed = params["seed"] if params["seed"] else _generate_random_seed()
+    logger.info(f"Seed {seed}")
 
     with torch.no_grad():
         ref_tokens, ref_ids = encode_image_refs(MODELS["ae"], reference_images)

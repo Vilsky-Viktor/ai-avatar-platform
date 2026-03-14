@@ -74,7 +74,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
     skinColor: ["porcelain", "fair", "ivory", "beige", "olive", "tan", "caramel", "brown", "dark-brown", "ebony"],
     age: ["child", "teenager", "20s", "30s", "40s", "50s", "60s", "70s", "80s+"],
-    height: ["150", "160", "170", "180", "190", "200"],
+    height: ["petite", "average", "tall"],
     eyes: ["dark brown", "light brown", "amber", "hazel", "green", "blue", "gray", "violet", "two-toned"],
     eyeLashes: ["none", "short sparse", "short dense", "medium natural", "medium curled", "long wispy", "long dramatic", "tapered"],
     eyeBrows: ["thin straight", "thin arched", "medium natural", "medium rounded", "thick bushy", "thick groomed", "monobrow", "faded tail"],
@@ -85,7 +85,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     bodyHair: ["none", "peach fuzz", "fine light", "fine medium", "textured light", "textured medium", "dense moderate", "dense intense"],
     male: {
         attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
-        body: ["slim", "athletic", "average", "muscular", "large"],
+        body: ["slim", "athletic", "average", "muscular", "large", "fat"],
         face: ["square", "oval", "round", "diamond", "angular"],
         hairStyle: ["short cut", "crew cut", "side part", "long straight", "man bun", "waves", "dreadlocks", "afro", "undercut", "bald", "braids"],
         hairColor: ["black", "dark brown", "light brown", "blonde", "ash blonde", "red", "platinum", "salt & pepper", "white"],

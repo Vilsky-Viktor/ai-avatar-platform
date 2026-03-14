@@ -1,7 +1,7 @@
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, User, Clock, Loader2, CircleAlert } from 'lucide-react';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { JobStatuses, type Job, type JobRequest } from "../../types/job";
 import { createPhotoSetJobs } from "../../services/apiGateway";
 import { 
@@ -30,14 +30,38 @@ function CreatePhotoSetPage() {
     const idPhotoData = getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY)
 
     const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
-    const [generationInitialized, setGenerationInitialized] = useState(false);
     const [avgSimilarity, setAvgSimilarity] = useState(0);
     
     // ── New: state for fullscreen modal ────────────────────────────────
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
 
+    const initialized = useRef<boolean>(false);
+
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        const initialize = () => {
+            if (initialized.current) return;
+            initialized.current = true;
+
+            if (stepData.jobs.every((job: Partial<Job> | null) => job === null)) {
+                console.log("create jobs")
+                createJobs();
+            } else {
+                console.log(stepData.jobs);
+                setJobs(stepData.jobs);
+                console.log("update jobs")
+            }
+        };
+
+        initialize();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') initialize();
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
 
     useEffect(() => {
@@ -45,7 +69,7 @@ function CreatePhotoSetPage() {
     }, [stepData]);
 
     useEffect(() => {
-        if (!generatingStarted()) return;
+        if (!generatingStarted()) return 
 
         console.log("jobs updated")
 
@@ -56,9 +80,10 @@ function CreatePhotoSetPage() {
         })
 
         const sumSimilarities = stepData.jobs.reduce((acc, job) => {
-            return acc + (job?.result?.maxSimilarity ?? 0);
+            return acc + (job?.result?.maxSimilarity && job?.result?.maxSimilarity > 0 ? job?.result?.maxSimilarity : 0);
         }, 0);
-        const countSimilarities = stepData.jobs.filter(job => job?.result?.maxSimilarity != null).length;
+        const countSimilarities = stepData.jobs.filter(job => job?.result?.maxSimilarity && job?.result?.maxSimilarity > 0).length;
+
         setAvgSimilarity(countSimilarities > 0 ? sumSimilarities / countSimilarities : 0);
 
         return () => unsubscribe();
@@ -98,28 +123,30 @@ function CreatePhotoSetPage() {
         return stepData.jobs.every((job: Partial<Job> | null) => job && job.status === JobStatuses.completed);
     };
 
-    const setJobs = (jobs: Job[]) => {
-        const neededJobData = jobs.map((job: Job) => {
-            return {
-                id: job.id, 
-                status: job.status, 
-                groupId: job.groupId,
-                input: { height: job.input?.height, width: job.input?.width },
-            }
+    const filterJobData = (job: Job | (Partial<Job> | null)): Partial<Job> | null  => {
+        if (!job) return null;
+
+        const { id, status, groupId, order, input, result } = job;
+
+        return {
+            id,
+            status,
+            groupId,
+            order,
+            input: input ? { height: input.height, width: input.width } : undefined,
+            result: result ? { mediaPath: result.mediaPath, mediaUrl: result.mediaUrl, maxSimilarity: result.maxSimilarity } : undefined
+        };
+    }
+
+    const setJobs = (jobs: Job[] | (Partial<Job> | null)[]) => {
+        const neededJobData = jobs.map((job: Job | (Partial<Job> | null)) => {
+            return job ? filterJobData(job) : null;
         })
         setStepData((prev: PhotoSetStepData) => ({...prev, jobs: neededJobData}));
     }
 
     const setJob = (jobIndex: number, job: Partial<Job>) => {
-        const { id, status, groupId, input, result } = job;
-
-        const filteredJob = {
-            id,
-            status,
-            groupId,
-            input: input ? { height: input.height, width: input.width } : undefined,
-            result: result ? { mediaPath: result.mediaPath, mediaUrl: result.mediaUrl, maxSimilarity: result.maxSimilarity } : undefined
-        };
+        const filteredJob = filterJobData(job);
 
         setStepData((prev) => ({
             ...prev,
@@ -132,7 +159,6 @@ function CreatePhotoSetPage() {
     }
 
     const createJobs = async () => {
-        setGenerationInitialized(true);
         const job: JobRequest = {
             avatarId: generalData.avatarId,
             input: {
@@ -147,8 +173,6 @@ function CreatePhotoSetPage() {
             setJobs(jobs);
         } catch (error) {
             console.log('Failed to create jobs for photo set')
-        } finally {
-            setGenerationInitialized(false);
         }
     }
 
@@ -347,26 +371,33 @@ function CreatePhotoSetPage() {
                         className="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
                     />
 
-                    <div className="absolute bottom-3 right-3 z-10">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-full border border-white/10 shadow-lg text-white text-xs font-medium">
-                            <span>Match</span>
-                            <span className="font-bold">
-                                {(maxSimilarity * 100).toFixed(0)}%
-                            </span>
-
-                            <div
-                                className={`w-2 h-2 rounded-full ${
-                                    maxSimilarity >= 0.7
-                                    ? 'bg-green-400'
-                                    : maxSimilarity >= 0.6
-                                    ? 'bg-yellow-400'
-                                    : maxSimilarity >= 0.5
-                                    ? 'bg-orange-400'
-                                    : 'bg-red-400'
-                                }`}
-                            />
+                    <div className="absolute top-1 left-1 z-10">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
+                            <span className="font-bold">{job.order}</span>
                         </div>
                     </div>
+
+                    {maxSimilarity > 0 && (
+                        <div className="absolute bottom-1 right-1 z-10">
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
+                                <span className="font-bold">
+                                    {(maxSimilarity * 100).toFixed(0)}%
+                                </span>
+
+                                <div
+                                    className={`w-2 h-2 rounded-full ${
+                                        maxSimilarity >= 0.7
+                                        ? 'bg-green-400'
+                                        : maxSimilarity >= 0.6
+                                        ? 'bg-yellow-400'
+                                        : maxSimilarity >= 0.55
+                                        ? 'bg-orange-400'
+                                        : 'bg-red-400'
+                                    }`}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -381,23 +412,7 @@ function CreatePhotoSetPage() {
             <div className="max-w-6xl mx-auto px-4 pt-12 mb-30">
 
                 <div className="flex justify-center w-full mb-8 items-center gap-8">
-                    <button
-                        onClick={createJobs}
-                        // disabled={generatingStarted() || stepData.finished || generationInitialized}
-                        className={`btn btn-primary btn-dash group relative w-full max-w-md h-14 mt-8 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                    >   
-                        {((generatingStarted() && !generatingCompleted()) || generationInitialized) && (
-                        <span className="loading loading-spinner"></span>
-                        )}
-                        <span className="text-sm uppercase tracking-[0.4em]">Generate Photo Set</span>
-                        
-                        <Sparkles 
-                        size={20} 
-                        className="ml-2 group-hover:rotate-12 transition-transform" 
-                        />
-                    </button>
-
-                    {stepData.jobs.some(job => job?.result?.maxSimilarity != null) && (
+                    {avgSimilarity > 0 && (
                         <div className="mt-8">
                             <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-[1em] bg-base-200/40 backdrop-blur-md border border-base-content/8 shadow-sm">
                                 <span className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/60">

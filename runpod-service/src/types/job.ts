@@ -27,6 +27,7 @@ export type JobInput = {
   checkDependencyImageExistance: boolean;
   resultFileName?: string;
   upsamplePromptMode: string;
+  seed?: number;
 }
 
 export type JobResult = {

@@ -68,5 +68,7 @@ COPY gen_text_image_to_image_service ./gen_text_image_to_image_service
 
 EXPOSE 8888
 
-CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/ --ServerApp.allow_origin='*' --FileContentsManager.delete_to_trash=False & python3.12 -m 'gen_text_image_to_image_service.main'"]
-# CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/ --ServerApp.allow_origin='*' --FileContentsManager.delete_to_trash=False & tail -f /dev/null"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

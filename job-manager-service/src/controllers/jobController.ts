@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Job, JobTypes, JobStatuses, JobRequest } from '../types/job';
+import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
 import { generateIdPhotoView0Prompt, generateIdPhotoView45Prompt, generateIdPhotoView90Prompt, generatePhotoSetInputs } from '../utils/prompts';
 import { 
   create as createDb, 
@@ -8,6 +9,7 @@ import {
   deleteByAvatarId as deleteByAvatarIdDb, 
   deleteByUserId as deleteByUserIdDb
 } from '../repositories/job';
+import { upsample } from '../services/promptUpsamplerService';
 import { publishToTopic } from '../services/messageQueue';
 import { createPod } from '../services/runpodService';
 import uuid from 'uuid';
@@ -153,52 +155,74 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
   const headerUserId = req.headers['x-user-id'];
   const jobRequest: JobRequest = req.body;
   const groupId = uuid.v4();
+  const imageWidth = 1024;
+  const imageHeight = 1024;
 
   req.log.info(`Create Photo Set jobs for user ${headerUserId} with group ID ${groupId}`);
 
   try {
-    const inputs = generatePhotoSetInputs(headerUserId as string, jobRequest.avatarId, {...jobRequest.input.parameters, gender: jobRequest.input.gender});
-    let index = 0;
+    const dimensionSuffix = `${imageWidth}x${imageHeight}`;
+    const avatarMediaPath = `media/${headerUserId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
+
+    const idPhotoSet: IdPhotoSetPaths = {
+      front: `${avatarMediaPath}/000-uploaded-front-${dimensionSuffix}.png`,
+      frontSmile: `${avatarMediaPath}/000-uploaded-front-smile-${dimensionSuffix}.png`,
+      rightQuarter: `${avatarMediaPath}/000-uploaded-right-quarter-${dimensionSuffix}.png`,
+      leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${dimensionSuffix}.png`,
+      rightSide: `${avatarMediaPath}/005-training-photo-set-${dimensionSuffix}-final.png`,
+      leftSide: `${avatarMediaPath}/006-training-photo-set-${dimensionSuffix}-final.png`,
+      bodyFront: `${avatarMediaPath}/007-training-photo-set-${dimensionSuffix}-final.png`,
+    }
+
+    const inputs = generatePhotoSetInputs(
+      headerUserId as string, 
+      jobRequest.avatarId, 
+      {...jobRequest.input.parameters, gender: jobRequest.input.gender}, 
+      idPhotoSet
+    );
     const jobs: Job[] = [];
 
     const baseJob: Job = {
       groupId,
       userId: headerUserId as string,
       avatarId: jobRequest.avatarId,
-      order: 0,
       type: JobTypes.photoSet,
       status: JobStatuses.pending,
       numRuns: 0,
       input: {
-        width: 1024, 
-        height: 1024, 
-        guidance: 1.0, 
-        numSteps: 13,
-        maxRuns: 4,
+        width: imageWidth, 
+        height: imageHeight, 
+        guidance: 4.0, 
+        numSteps: 50,
+        maxRuns: 3,
+        similarityThreshold: 0.8,
         checkDependencyImageExistance: true,
-        upsamplePromptMode: "openrouter"
+        upsamplePromptMode: 'none',
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile, idPhotoSet.rightQuarter, idPhotoSet.leftQuarter, idPhotoSet.rightSide, idPhotoSet.leftSide],
       }
     }
 
     for (const [idx, input] of inputs.entries()) {
       const newJob = {...baseJob};
 
-      newJob.order = idx;
+      // const upsampled = await upsample(input.prompt, input.imagePaths, 'qwen/qwen3.5-plus-02-15', 'flux.2-dev', 'descPerson')
+      // req.log.info(`Upsampled prompt: ${JSON.stringify(upsampled)}`);
+
+      newJob.order = input.order;
       newJob.input = {
         ...baseJob.input,
         prompt: input.prompt,
         imagePaths: input.imagePaths,
-        idPhotoPaths: input.idPhotoPaths,
-        guidance: input.guidance,
-        numSteps: input.numSteps,
-        maxRuns: input.maxRuns,
-        similarityThreshold: input.similarityThreshold,
-        resultFileName: input.resultFileName
+        idPhotoPaths: input.idPhotoPaths ?? baseJob.input.idPhotoPaths,
+        numSteps: input.numSteps ?? baseJob.input.numSteps,
+        guidance: input.guidance ?? baseJob.input.guidance,
+        maxRuns: input.maxRuns ?? baseJob.input.maxRuns,
+        upsamplePromptMode: input.upsamplePromptMode ?? baseJob.input.upsamplePromptMode,
+        similarityThreshold: input.similarityThreshold ?? baseJob.input.similarityThreshold,
+        resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}.png`,
       }
 
       jobs.push(newJob);
-
-      index++;
     }
 
     const dbJobs = await Promise.all(jobs.map((job: Job) => createDb(headerUserId as string, job)));

@@ -1,4 +1,5 @@
 import { AvatarParameters, AvatarGender } from '../types/avatar';
+import { TrainingPhotoSetPrompts, IdPhotoSetPaths } from '../types/trainingPhotoSet';
 
 export const AVATAR_REFERENCE_NAME = 'AVATARLIFE';
 
@@ -56,725 +57,456 @@ export const generateIdPhotoView90Prompt = (parameters: AvatarParameters & {gend
   return 'Rotate the person 45 degrees to the left to generate a side 90 degree view. Maintain the same person, face features, body features, facial emotions, outfit, background and everything else as in the reference images';
 }
 
-type PhotoSetPrompts = {
-  prompt: string;
-  maxRuns: number;
-  guidance: number;
-  numSteps: number;
-  similarityThreshold: number;
-  imagePaths: string[],
-  idPhotoPaths: string[],
-  resultFileName: string;
-}
-
-export const generatePhotoSetInputs = (userId: string, avatarId: string, parameters: AvatarParameters & {gender: string}): PhotoSetPrompts[] => {
+export const generatePhotoSetInputs = (userId: string, avatarId: string, parameters: AvatarParameters & {gender: string}, idPhotoSet: IdPhotoSetPaths): TrainingPhotoSetPrompts[] => {
   const { gender, height, body, bodyHair, bustSize } = parameters;
 
-  const avatarMediaPath = `media/${userId}-user/avatars/${avatarId}-avatar/images`;
-  const dimensionSuffix = '1024x1024';
   const isFemale = gender === 'female';
 
-  const bodyHairDesc = bodyHair === 'none' ? 'no body hair' : `${bodyHair} body hair`;
-  const bodyDesc = `Person height: ${height}cm, body style: ${body}, body hair: ${bodyHairDesc}, ${isFemale ? 'bust' : 'chest'} size: ${bustSize}. Maintain described body description. Keep natural proportions`
+  const bodyHairDesc = bodyHair === 'none' ? 'no hair' : `${bodyHair} hair`;
+  const bodyHairByParts = `${bodyHairDesc} on chest, ${bodyHairDesc} on abdomen, ${bodyHairDesc} on legs, ${bodyHairDesc} on arms, ${bodyHairDesc} on back`;
 
-
-  const numSteps = 40;
-  const guidance = 4.0;
-  const maxRuns = 3;
-  const similarityThreshold = 0.85;
-  
-  const baseIdentity = `Maintain exactly same face, face shape, facial features, head shape, body, skin texture, eye color, nose and hair style, person age as in the reference images. High quality, sharp focus on face`;
+  const bodyDesc = `${body} body type, ${bodyHairByParts}, ${isFemale ? `${bustSize} bust` : `${bustSize} chest`}, ${height} height`;
+  const qualityAddition = 'Hyperrealistic photograph, 8K detail, skin details, hair details. Sharp focus on face';
 
   return [
-    // ID photos
+    // -----------------------------------------------------------------
+    // ID photos (strong identity lock)
+    // -----------------------------------------------------------------
+
+    // Front facing ID headshot
     {
-      prompt: `Front view close-up headshot, no head tilt, neutral calm expression, soft even studio lighting, plain light gray background, wearing white shirt with open top buttons. ${bodyDesc}. ${baseIdentity}`,
-      maxRuns: 5,
-      guidance,
-      numSteps,
-      similarityThreshold: 0.9,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`
-      ],
-      resultFileName: `001-training-photo-set-${dimensionSuffix}.png`,
+      prompt: `Keep exact facial identity and proportions from reference image. Close-up headshot. Wearing white crew-neck t-shirt. Soft diffused studio lighting. Plain light gray background. ${qualityAddition}`,
+      similarityThreshold: 0.95,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 50,
+      order: 1,
     },
+    // Front facing ID headshot
     {
-      prompt: `Quarter view close-up headshot, no head tilt, neutral calm expression, soft even studio lighting, plain light gray background, wearing white shirt with open top buttons. ${bodyDesc}. ${baseIdentity}`,
-      maxRuns: 5,
-      guidance,
-      numSteps,
-      similarityThreshold: 0.9,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `002-training-photo-set-${dimensionSuffix}.png`,
+      prompt: `Keep exact facial identity and proportions from reference image. Close-up headshot. Wearing white crew-neck t-shirt. Soft diffused studio lighting. Plain light gray background. ${qualityAddition}`,
+      similarityThreshold: 0.95,
+      imagePaths: [idPhotoSet.frontSmile],
+      idPhotoPaths: [idPhotoSet.frontSmile],
+      numSteps: 50,
+      order: 2,
     },
+    // Right quater ID headshot   
     {
-      prompt: `Pure side profile close-up headshot, no head tilt, neutral calm expression, soft even studio lighting, plain light gray background, wearing white shirt with open top buttons. ${bodyDesc}. ${baseIdentity}`,
-      maxRuns: 5,
-      guidance,
-      numSteps,
-      similarityThreshold: 0.75,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `003-training-photo-set-${dimensionSuffix}.png`,
+      prompt: `Keep exact facial identity and proportions from reference image. Close-up headshot. Wearing white crew-neck t-shirt. Soft diffused studio lighting. Plain light gray background. ${qualityAddition}`,
+      similarityThreshold: 0.95,
+      imagePaths: [idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+      numSteps: 50,
+      order: 3,
     },
+    // Left quater ID headshot 
     {
-      prompt: `Full body front shot barefoot, no head tilt, neutral calm expression, soft even studio lighting, plain light gray background, wearing ${isFemale ? 'strapless bandeau crop top and denim cutoff micro shorts' : 'drop armhole tank and denim shorts'}. ${bodyDesc}. ${baseIdentity}`,
-      maxRuns: 5,
-      guidance,
-      numSteps,
+      prompt: `Keep exact facial identity and proportions from reference image. Close-up headshot. Wearing white crew-neck t-shirt. Soft diffused studio lighting. Plain light gray background. ${qualityAddition}`,
+      similarityThreshold: 0.95,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+      numSteps: 50,
+      order: 4,
+    },
+    // Right side profile ID headshot
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. 90-degree side view close-up headshot. Wearing white crew-neck t-shirt. Soft diffused studio lighting. Plain light gray background. ${qualityAddition}`,
+      similarityThreshold: 0.72,
+      imagePaths: [idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+      numSteps: 60,
+      guidance: 4.5,
+      order: 5,
+    },
+    // Left side profile ID headshot
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. 90-degree side view close-up headshot. Wearing white crew-neck t-shirt. Soft diffused studio lighting. Plain light gray background. ${qualityAddition}`,
+      similarityThreshold: 0.72,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+      numSteps: 60,
+      guidance: 4.5,
+      order: 6,
+    },
+    // Full body ID
+    {
+      prompt: `Full-body front view of the ${gender} from the reference image, preserving exact facial identity and head-to-body proportions. ${isFemale ? 'She' : 'He'} has ${body} body type, ${bustSize} chest, and ${height}cm height. ${bodyHair !== 'none' ? `Visible ${bodyHair} body hair covers his chest, abdomen, arms, legs` : 'No body hair'}. Wearing white ${isFemale ? 'bikini top and bottom, barefoot' : 'boxer trunks, no top, barefoot'}. Soft diffused studio lighting illuminates the subject against a plain light gray background. ${qualityAddition}`,
       similarityThreshold: 0.85,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `004-training-photo-set-${dimensionSuffix}.png`,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 60,
+      order: 7,
+    },
+
+    // -----------------------------------------------------------------
+    // Extreme close-up
+    // -----------------------------------------------------------------
+
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Extreme close-up, eyes and nose filling the entire frame. Plain light gray background. ${qualityAddition}`,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [],
+      maxRuns: 1,
+      numSteps: 60,
+      order: 8,
     },
     
-    // Headshots & tight portraits (strong face lock)
+    // -----------------------------------------------------------------
+    // // Chest-up portraits (strong face lock)
+    // -----------------------------------------------------------------
+
     {
-      prompt: `Front-facing portrait, head perfectly straight, zero tilt, eyes only looking slightly up-left, subtle thoughtful expression, warm natural window light from left, indoor neutral setting, wearing ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'a slim-fit olive green henley shirt'}. ${baseIdentity}`,
-      maxRuns,
-      guidance,
-      numSteps,
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'a slim-fit olive green henley shirt'}. Indoor neutral setting, softly blurred. Warm natural window light from left, soft shadows on right side. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 50,
+      order: 9,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a flowy terracotta midi dress with subtle puff sleeves' : 'a rust-colored chore jacket over a white tee'}. Outdoor blurred park background. Golden hour soft side lighting. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.frontSmile],
+      idPhotoPaths: [idPhotoSet.frontSmile],
+      numSteps: 50,
+      order: 10,
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a sleek black mock-neck top' : 'a deep charcoal slim-fit polo'}. Dark studio background. Low key lighting from camera-left, light gradually fading across the face to another side of the face. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 50,
+      order: 11,
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern'}. Modern indoor environment. Cool blue-toned office lighting. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 50,
+      order: 12,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a cropped black leather jacket over a white tank' : 'a black bomber jacket over a gray graphic tee'}. Urban street blurred backdrop. Bright outdoor daylight, soft natural shadows on face, clear even skin illumination. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 50,
+      order: 13,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. Cozy living room setting. Soft warm candlelight. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 50,
+      order: 14,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}. Blurred rooftop city night background. Evening warm tungsten light. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front],
+      idPhotoPaths: [idPhotoSet.front],
+      numSteps: 50,
+      order: 15,  
+    },
+
+    // -----------------------------------------------------------------
+    // Quater and side profile angles (good angular coverage)
+    // -----------------------------------------------------------------
+
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. Indoor cafe setting. Soft natural daylight from window. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+      numSteps: 50,
+      order: 16,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a flowy terracotta midi dress with subtle puff sleeves' : 'a rust-colored chore jacket over a white tee'}. Outdoor blurred nature. Golden hour warm side lighting. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+      numSteps: 50,
+      order: 17,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a structured black blazer with strong shoulders' : 'a tailored navy suit jacket unbuttoned over white shirt'}. Dark moody background. Soft dramatic cinematic side lighting with rim preserving facial details. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+      numSteps: 50,
+      order: 18,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'oversized denim jacket in medium wash over cropped hoodie' : 'black minimalist hoodie'}. Urban street environment. Cool overcast daylight. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+      numSteps: 50,
+      order: 19,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a butter-yellow linen blazer' : 'a lightweight khaki utility jacket'}. Park scenery. Warm sunset backlight with front fill. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+      numSteps: 50,
+      order: 20,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. Home interior blurred. Soft indoor lamp light. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+      numSteps: 50,
+      order: 21,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. 90-degree side view chest-up portrait. Wearing ${isFemale ? 'a sleeveless white linen top' : 'a relaxed white linen camp-collar shirt'}. Outdoor blurred. Warm golden hour rim light. ${qualityAddition}`,
       similarityThreshold: 0.75,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `005-training-photo-set-${dimensionSuffix}.png`,
+      imagePaths: [idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter, idPhotoSet.rightSide],
+      numSteps: 50,
+      order: 22,  
+    },
+
+    // -----------------------------------------------------------------
+    // Additional profiles & dynamic head angles
+    // -----------------------------------------------------------------
+
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. 90-degree side view chest-up portrait. Wearing ${isFemale ? 'a dramatic black asymmetrical top' : 'a charcoal turtleneck sweater'}. Studio dark. Soft dramatic low-key single source light preserving sharp facial features. ${qualityAddition}`,
+      similarityThreshold: 0.75,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter, idPhotoSet.leftSide],
+      numSteps: 50,
+      order: 23,  
     },
     {
-      prompt: `Portrait with a subtle smile, happy and joyful smiling mood, golden hour soft side lighting, outdoor blurred park background, wearing ${isFemale ? 'a flowy off-white linen button-up shirt' : 'a relaxed-fit white linen shirt with rolled sleeves'}. ${baseIdentity}`,
-      maxRuns,
-      guidance,
-      numSteps,
+      prompt: `Keep exact facial identity and proportions from reference image. 90-degree side view chest-up portrait. Wearing ${isFemale ? 'a sheer black mesh' : 'a fitted black compression top'}. Indoor. Natural window light from behind creating silhouette edge. ${qualityAddition}`,
+      similarityThreshold: 0.75,
+      imagePaths: [idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter, idPhotoSet.rightSide],
+      numSteps: 50,
+      order: 24,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. 90-degree side view chest-up portrait. Wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. City rooftop blurred background. Evening cloudy weather. ${qualityAddition}`,
+      similarityThreshold: 0.75,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter, idPhotoSet.leftSide],
+      numSteps: 50,
+      order: 25,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from reference image. Chest-up portrait. Wearing ${isFemale ? 'a pastel lavender oversized button-up' : 'a soft mint green oxford shirt'}. Bedroom ceiling to floor window setting. Soft morning light illuminating facial details. ${qualityAddition}`,
       similarityThreshold: 0.8,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `006-training-photo-set-${dimensionSuffix}.png`,
+      imagePaths: [idPhotoSet.leftQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+      numSteps: 50,
+      order: 26,  
     },
     {
-      prompt: `Front view, relaxed neutral face, soft split lighting from camera-left, light gradually fading across face to a visible shadow side, face fully recognizable, dark studio background, wearing ${isFemale ? 'a sleek black mock-neck top' : 'a deep charcoal slim-fit polo'}. ${baseIdentity}`,
-      maxRuns,
-      guidance,
-      numSteps,
-      similarityThreshold: 0.85,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `007-training-photo-set-${dimensionSuffix}.png`,
-    },
-    {
-      prompt: `Subtle hint of surprise, eyes opened very slightly wider than on reference image, mouth barely parted, composed professional expression, cool blue-toned office lighting, modern indoor environment, wearing ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern'}. ${baseIdentity}`,
-      maxRuns,
-      guidance,
-      numSteps,
-      similarityThreshold: 0.85,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `008-training-photo-set-${dimensionSuffix}.png`,
-    },
-    {
-      prompt: `Front view portrait, confident direct stare, bright outdoor daylight, soft natural shadows on face, clear even skin illumination, urban street blurred backdrop, wearing ${isFemale ? 'a cropped black leather jacket over a white tank' : 'a black bomber jacket over a gray graphic tee'}. ${baseIdentity}`,
-      maxRuns,
-      guidance,
-      numSteps,
+      prompt: `Keep exact facial identity and proportions from reference images. Chest-up portrait, quarter 45-degree view looking at camera. Wearing ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee' : 'a modern slim-fit navy blazer with white dress shirt'}. Modern workspace. Neutral calm expression, mixed natural + studio lighting. ${qualityAddition}`,
       similarityThreshold: 0.8,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `009-training-photo-set-${dimensionSuffix}.png`,
+      imagePaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+      numSteps: 50,
+      order: 27,  
+    },
+
+    // -----------------------------------------------------------------
+    // Full-body shots
+    // -----------------------------------------------------------------
+
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body standing. ${isFemale ? 'high-waisted cream tailored trousers, silk blouse and white heels' : 'slim-fit dark gray chinos, white button-down and black oxford shoes'}. Urban street golden hour. ${qualityAddition}`,
+      similarityThreshold: 0.85,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 60,
+      order: 28,  
     },
     {
-      prompt: `Portrait, one eyebrow very slightly raised, lips lightly pressed together, soft warm candlelight, cozy living room setting, wearing ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. ${baseIdentity}`,
-      maxRuns,
-      guidance,
-      numSteps,
-      similarityThreshold: 0.85,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `010-training-photo-set-${dimensionSuffix}.png`,
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body side view walking. Wearing ${isFemale ? 'a fitted short cocktail dress with spaghetti straps, high heels, sleek and elegant' : 'a slim fit charcoal suit with white dress shirt, no tie, loafers, smart casual'}. City sidewalk background. Overcast daylight. ${qualityAddition}`,
+      similarityThreshold: 0.75,
+      imagePaths: [idPhotoSet.rightSide, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter, idPhotoSet.rightSide],
+      numSteps: 50,
+      order: 29,  
     },
     {
-      prompt: `Front view upper chest included, subtle scared expression, eyes very slightly widened, mouth barely open, evening warm tungsten light, blurred city night background, wearing ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}. ${baseIdentity}`,
-      maxRuns,
-      guidance,
-      numSteps,
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body casual standing, body from the back, looking over shoulder at camera. Wearing ${isFemale ? 'a flowy white broderie anglaise midi sundress with thin straps and tiered skirt' : 'straight-leg beige chinos and olive utility shirt'}. Outdoor nature. Soft forest diffused light. ${qualityAddition}`,
+      similarityThreshold: 0.7,
+      imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter, idPhotoSet.leftSide, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 30,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body sitting. Wearing ${isFemale ? 'pink fitted racerback crop tank top, light gray fleece sweat shorts with elastic waistband and hotel slippers' : 'relaxed gray joggers, white t-shirt and hotel slippers'}. On king size bed in the hotel room. Simple home interior soft light. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 31,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body standing, weight shifted to one leg. Wearing ${isFemale ? 'stylish black bikini' : 'black swim shorts'}. On the beach sand, ocean background with a small sail yacht. Golden hour. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 60,
+      order: 32,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body laying, head slightly lifted, looking at camera, hands clasped behind head, one knee bent upward. Wearing ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'pastel yellow shorts and hawaiian shirt'}. On the lounge chair on the beach. Golden hour. ${qualityAddition}`,
+      similarityThreshold: 0.75,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 60,
+      order: 33,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body walking towards camera, visible feet and toes. Wearing ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and open white shirt'}. Tropical path. Soft daylight. ${qualityAddition}`,
+      similarityThreshold: 0.8,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 34,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body sitting, body three-quarter angle, head turned towards camera, one leg resting on top of another. Wearing ${isFemale ? 'tailored black wide-leg trousers, silk blouse and pointed-toe heels' : 'slim charcoal trousers, crisp white shirt and white minimalist leather sneakers'}. On modern chair in cafe. Indoor cafe warm light. ${qualityAddition}`,
       similarityThreshold: 0.85,
-      imagePaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      idPhotoPaths: [
-        `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-      ],
-      resultFileName: `011-training-photo-set-${dimensionSuffix}.png`,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 35,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body sitting cross-legged, relaxed pose, visible bare feet and toes. Wearing ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit cargo shorts and graphic tee'}. On ground, park grass. Soft daylight. ${qualityAddition}`,
+      similarityThreshold: 0.85,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 36,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body sitting, legs dangling. Wearing ${isFemale ? 'high-waisted denim shorts' : 'relaxed black joggers'}, fitted tee and black sneakers. On low wall urban rooftop. Evening light. ${qualityAddition}`,
+      similarityThreshold: 0.85,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 37,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body leaning against wall standing, confident pose. Wearing ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines'} and sport shoes. Gym changing room. Studio even lighting. ${qualityAddition}`,
+      similarityThreshold: 0.85,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 38,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body resting, relaxed body and head. Wearing ${isFemale ? 'a stylish soft sleep pink pajama and white socks' : 'gray modal lounge shorts, t-shirt and socks'}. On the bed in the bedroom. Early morning sunrise. ${qualityAddition}`,
+      similarityThreshold: 0.75,
+      imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter, idPhotoSet.rightSide, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 39,  
     },
 
-    // // 3/4 and profile angles (good angular coverage)
-    // {
-    //   prompt: `Three-quarter view facing left, neutral expression, soft natural daylight from window, indoor cafe setting, wearing ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `012-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `3/4 right angle portrait, thoughtful gaze slightly away, golden hour warm side lighting, outdoor blurred nature, wearing ${isFemale ? 'a flowy terracotta midi dress with subtle puff sleeves' : 'a rust-colored chore jacket over a white tee'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `013-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Three-quarter left, soft dramatic cinematic side lighting with rim preserving facial details, dark moody background, wearing ${isFemale ? 'a structured black blazer with strong shoulders' : 'a tailored navy suit jacket unbuttoned over white shirt'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `014-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `3/4 facing right, relaxed neutral, cool overcast daylight, urban street environment, wearing ${isFemale ? 'oversized denim jacket in medium wash over cropped hoodie' : 'baggy cargo pants with a black tech hoodie'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `015-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Three-quarter view, subtle surprised look with closed mouth, warm sunset backlight with front fill, park scenery, wearing ${isFemale ? 'a butter-yellow linen blazer and matching shorts' : 'a lightweight khaki utility jacket and cream chinos'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `016-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `3/4 left angle, calm serene face, soft indoor lamp light, home interior blurred, wearing ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `017-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Pure side profile, looking forward, warm golden hour rim light, outdoor blurred, wearing ${isFemale ? 'a sleeveless white linen top' : 'a relaxed white linen camp-collar shirt'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `018-training-photo-set-${dimensionSuffix}.png`,
-    // },
+    // -----------------------------------------------------------------
+    // Extreme angles
+    // -----------------------------------------------------------------
 
-    // // Additional profiles & dynamic head angles
-    // {
-    //   prompt: `Pure side profile close-up, soft dramatic low-key single source light preserving sharp features, studio dark, wearing ${isFemale ? 'a dramatic black asymmetrical top' : 'a charcoal turtleneck sweater'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `019-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Pure side profile, natural window light from behind creating silhouette edge, indoor, wearing ${isFemale ? 'a sheer black mesh long-sleeve' : 'a fitted black long-sleeve compression top'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `020-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Pure side profile, evening cloudy weather, city rooftop blurred background, wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-profile-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `021-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Three-quarter view, eyes looking slightly down, soft morning light illuminating facial details, bedroom window setting, wearing ${isFemale ? 'a pastel lavender oversized button-up' : 'a soft mint green oxford shirt'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `022-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Three-quarter view with slight head tilt, looking towards camera, confident expression, mixed natural + studio lighting, modern workspace, wearing ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee' : 'a modern slim-fit navy blazer with white dress shirt'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `023-training-photo-set-${dimensionSuffix}.png`,
-    // },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body standing, extreme camera angle from the bottom, looking down into camera. Wearing blue jeans, light gray polo and navy/white Converse-style canvas sneakers. White clouds background, pebbles ground. Daylight. ${qualityAddition}`,
+      similarityThreshold: 0.7,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 40,  
+    },
+    {
+      prompt: `Keep exact facial identity and proportions from image 1. Keep exact body proportions and size from image 2. Full body standing, extreme camera angle from the top, looking up into camera. Wearing white shorts, white t-shirt and orange flip flops. Sahara desert. Sunny and hot. ${qualityAddition}`,
+      similarityThreshold: 0.75,
+      imagePaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      idPhotoPaths: [idPhotoSet.front, idPhotoSet.bodyFront],
+      numSteps: 50,
+      order: 41,  
+    },
 
-    // // Full-body shots — 10 total (increased diversity)
+    // // Back view
     // {
-    //   prompt: `Full body standing front, relaxed pose hands in pockets, confident look, wearing ${isFemale ? 'high-waisted cream tailored trousers and silk blouse' : 'slim-fit dark gray chinos and white button-down'}, urban street golden hour. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `024-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body walking pose side view, natural stride, wearing ${isFemale ? 'a fitted short cocktail dress with spaghetti straps, high heels, sleek and elegant' : 'a slim fit charcoal suit with white dress shirt, no tie, mocassin, smart casual'}, overcast daylight, city sidewalk background. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `025-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body casual standing, looking over shoulder at camera, wearing ${isFemale ? 'a flowy white broderie anglaise midi sundress with thin straps and tiered skirt' : 'straight-leg beige chinos and olive utility shirt'}, soft forest diffused light, outdoor nature. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `026-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body sitting barefoot on the bed in the hotel, relaxed pose, arms at sides, visible ankles and toes, simple home interior soft light, wearing ${isFemale ? 'pink fitted racerback crop tank top and light gray fleece sweat shorts with elastic waistband' : 'relaxed gray joggers and white t-shirt'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `027-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body barefoot standing on beach sand, weight shifted to one leg, wearing ${isFemale ? 'stylish black bikini' : 'navy swim trunks with side stripes'}, golden hour ocean background. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `028-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body barefoot laying on the lounge chair on the beach, looking towards camera, wearing ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'shorts and hawaiian shirt'}, golden hour ocean background. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `029-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body walking barefoot toward camera, natural stride, visible feet and toes, tropical path soft daylight, wearing ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and open white shirt'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `030-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body sitting on modern chair, legs crossed, thoughtful expression, wearing ${isFemale ? 'tailored black wide-leg trousers and silk blouse' : 'slim charcoal trousers and crisp white shirt'}, indoor cafe warm light. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `031-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body sitting cross-legged on ground barefoot, relaxed pose, wearing ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit cargo shorts and graphic tee'}, visible bare feet and toes, park grass soft daylight. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `032-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body sitting on low wall barefoot, legs dangling, slight smile, visible ankles and toes, urban rooftop evening light, wearing ${isFemale ? 'high-waisted denim shorts and cropped hoodie' : 'relaxed black joggers and fitted tee'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-        
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `033-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body leaning against wall standing barefoot, arms crossed, confident pose, wearing ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines'}, studio even lighting in gym changing room. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `034-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body laying on the bed, wearing ${isFemale ? 'a soft sleep pink pajama' : 'gray modal lounge shorts and t-shirt'}, early morning sunrise. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `035-training-photo-set-${dimensionSuffix}.png`,
-    // },
-
-    // // // Upper-body & additional sitting/leaning variations
-    // {
-    //   prompt: `Upper body three-quarter pose standing, arms relaxed, neutral expression, wearing ${isFemale ? 'a cream knit polo sweater' : 'a taupe cashmere crewneck'}, soft natural park daylight. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `036-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Upper body portrait leaning against wall, subtle smile, wearing ${isFemale ? 'a structured blazer in chocolate brown over white tee' : 'a slim charcoal blazer over black turtleneck'}, dramatic neon evening city lighting. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `037-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Upper body three-quarter, arms crossed confident pose, wearing ${isFemale ? 'a tailored white power blazer with white t-shirt' : 'a modern navy suit jacket with white shirt'}, studio even lighting, plain background. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `038-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Upper body sitting on stool, thoughtful expression, leaning forward slightly, wearing ${isFemale ? 'a soft camel knit top' : 'a fitted olive green polo'}, warm indoor lamp light. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `039-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Upper body sitting on couch barefoot, legs tucked to side, relaxed pose, visible ankles, cozy living room setting, wearing ${isFemale ? 'an oversized chunky cardigan in oatmeal' : 'a soft gray hoodie'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `040-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Upper body standing three-quarter back view turning head, wearing ${isFemale ? 'a cropped denim jacket and high-neck top' : 'a black hoodie and relaxed jeans'}, urban street golden hour. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-quarter-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `041-training-photo-set-${dimensionSuffix}.png`,
-    // },
-    // {
-    //   prompt: `Full body close-up sitting, arms on knees barefoot, visible feet close to camera, soft indoor natural light, wearing ${isFemale ? 'a loose white linen shirt' : 'a relaxed white camp-collar shirt'}. ${baseIdentity}`,
-    //   maxRuns,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `042-training-photo-set-${dimensionSuffix}.png`,
-    // },
-
-    // // Full body back view
-    // {
-    //   prompt: `Full body back view standing, hair fully visible from behind, arms relaxed at sides, urban street golden hour background, wearing ${isFemale ? 'high-waisted black tailored trousers and fitted white crop top' : 'slim dark navy chinos and white oxford shirt'}. ${baseIdentity}`,
+    //   prompt: `Keep exact body proportions and size from image 2. Full body rear view walking. ${bodyHair !== 'none' ? `Keep body hair intensity from image 2` : 'No body hair'}. Wearing ${isFemale ? 'stylish red bikini with white pareo' : 'Red swim shorts with a white towel on shoulder'}. On the beach sand towards beach bar. Golden hour. ${qualityAddition}`,
+    //   imagePaths: [idPhotoSet.bodyFront],
+    //   idPhotoPaths: [],
+    //   numSteps: 60,
     //   maxRuns: 1,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `043-training-photo-set-${dimensionSuffix}.png`,
+    //   order: 42,  
     // },
     // {
-    //   prompt: `Full body back view standing barefoot on beach sand, hair visible from behind, relaxed pose, golden hour ocean background, wearing ${isFemale ? 'a stylish black bikini' : 'navy swim trunks with side stripes'}. ${baseIdentity}`,
+    //   prompt: `Full body back view standing, head fully visible only from behind, arms relaxed at sides, city skyline balcony view, hands resting on balcony rails, wearing ${isFemale ? 'high-waisted black tailored trousers, fitted white crop top, white sneakers' : 'slim dark navy chinos, white oxford shirt, chelsea boots '}. ${bodyDesc}. ${baseIdentity}`,
     //   maxRuns: 1,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `044-training-photo-set-${dimensionSuffix}.png`,
+    //   similarityThreshold: 0,
+    //   imagePaths: [idPhotoSet.bodyFront],
+    //   idPhotoPaths: []
+    //   order: 43,  
     // },
     // {
-    //   prompt: `Upper body back view, head slightly turned showing partial profile, hair detail visible, soft indoor natural window light, wearing ${isFemale ? 'a sleeveless open-back black top' : 'a relaxed gray crewneck sweatshirt'}. ${baseIdentity}`,
+    //   prompt: `Upper body back view, head fully visible only from behind, mountain view, wearing ${isFemale ? 'a sleeveless open-back black top' : 'a relaxed gray crewneck sweatshirt'}. ${bodyDesc}. ${baseIdentity}`,
     //   maxRuns: 1,
-    //   guidance,
-    //   numSteps,
-    //   similarityThreshold,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/002-training-photo-set-${dimensionSuffix}-final.png`,
-    //   ],
-    //   resultFileName: `045-training-photo-set-${dimensionSuffix}.png`,
+    //   similarityThreshold: 0,
+    //   imagePaths: [idPhotoSet.bodyFront],
+    //   idPhotoPaths: []
+    //   order: 44,  
     // },
 
-    // // Extreme close-up
+    // // Upper-body & additional sitting/leaning variations
     // {
-    //   prompt: `Extreme close-up portrait filling entire frame, eyes and nose only, sharp iris texture and detail, natural skin pores visible, soft diffused studio lighting, no harsh shadows, photorealistic macro. ${baseIdentity}`,
-    //   maxRuns: 1,
-    //   guidance,
-    //   numSteps: 50,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   idPhotoPaths: [
-    //     `${avatarMediaPath}/000-uploaded-front-portrait-${dimensionSuffix}.png`,
-    //   ],
-    //   resultFileName: `046-training-photo-set-${dimensionSuffix}.png`,
+    //   prompt: `Upper body three-quarter pose standing, arms relaxed, neutral expression, wearing ${isFemale ? 'a cream knit polo sweater' : 'a taupe cashmere crewneck'}, soft natural park daylight. ${bodyDesc}. ${baseIdentity}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.quarter],
+    //   order: 45,  
+    // },
+    // {
+    //   prompt: `Upper body portrait leaning against wall, neutral calm expression, wearing ${isFemale ? 'a structured blazer in chocolate brown over white tee' : 'a slim charcoal blazer over black turtleneck'}, dramatic neon evening city lighting. ${bodyDesc}. ${baseIdentity}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.front],
+    //   order: 46,  
+    // },
+    // {
+    //   prompt: `Upper body three-quarter, arms crossed confident pose, wearing ${isFemale ? 'a tailored white power blazer with white t-shirt' : 'a modern navy suit jacket with white shirt'}, studio even lighting, plain background. ${bodyDesc}. ${baseIdentity}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.quarter],
+    //   order: 47,  
+    // },
+    // {
+    //   prompt: `Upper body sitting on stool, neutral calm expression, leaning forward slightly, wearing ${isFemale ? 'a soft camel knit top' : 'a fitted olive green polo'}, warm indoor lamp light. ${bodyDesc}. ${baseIdentity}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //   order: 48,  
+    // },
+    // {
+    //   prompt: `Upper body sitting on couch barefoot, legs tucked to side, relaxed pose, visible ankles, cozy living room setting, wearing ${isFemale ? 'an oversized chunky cardigan in oatmeal' : 'a soft gray hoodie'}. ${bodyDesc}. ${baseIdentity}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //   order: 49,  
+    // },
+    // {
+    //   prompt: `Upper body standing three-quarter back view turning head, wearing ${isFemale ? 'a cropped denim jacket and high-neck top' : 'a black hoodie and relaxed jeans'}, urban street golden hour. ${bodyDesc}. ${baseIdentity}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.quarter],
+    //   order: 50,  
+    // },
+    // {
+    //   prompt: `Full body close-up sitting on the floor, arms on knees barefoot, visible feet close to camera, soft indoor natural window light, wearing ${isFemale ? 'a loose white linen shirt' : 'a relaxed white camp-collar shirt'}. ${bodyDesc}. ${baseIdentity}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //   order: 51,  
     // },
   ];
 };

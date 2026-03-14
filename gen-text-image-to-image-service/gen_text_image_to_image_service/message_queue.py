@@ -17,7 +17,7 @@ def publish_status(result_payload):
     try:
         data = json.dumps(result_payload).encode("utf-8")
         future = publisher.publish(result_topic_path, data=data)
-        logger.info(f"Result/update published: {future.result()}")
+        logger.debug(f"Result/update published: {future.result()}")
     except Exception as error:
         logger.error(f"Failed to publish result to Pub/Sub: {error}")
 
@@ -28,6 +28,6 @@ def resend_job(job_payload):
     try:
         data = json.dumps(job_payload).encode("utf-8")
         future = publisher.publish(job_topic_path, data=data)
-        logger.info(f"Job has been resent: {future.result()}")
+        logger.debug(f"Job has been resent: {future.result()}")
     except Exception as error:
         logger.error(f"Failed to resent job to Pub/Sub: {error}")

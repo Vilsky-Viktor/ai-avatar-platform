@@ -89,11 +89,11 @@ def _evict_embedding_cache(now: float) -> None:
     for k in expired_keys:
         del _id_embedding_cache[k]
     if expired_keys:
-        logger.info(f"Evicted {len(expired_keys)} expired embedding cache entries ({len(_id_embedding_cache)} remaining)")
+        logger.debug(f"Evicted {len(expired_keys)} expired embedding cache entries ({len(_id_embedding_cache)} remaining)")
 
     while len(_id_embedding_cache) >= EMBEDDING_CACHE_MAX_SIZE:
         _id_embedding_cache.popitem(last=False)
-        logger.info(f"Embedding cache full ({EMBEDDING_CACHE_MAX_SIZE}) — evicted oldest LRU entry")
+        logger.debug(f"Embedding cache full ({EMBEDDING_CACHE_MAX_SIZE}) — evicted oldest LRU entry")
 
 
 def get_face_embedding_cached(image_bytes: bytes) -> np.ndarray | None:
@@ -104,12 +104,11 @@ def get_face_embedding_cached(image_bytes: bytes) -> np.ndarray | None:
 
     if cached is not None and now <= cached[1]:
         _id_embedding_cache.move_to_end(key)
-        logger.info("embeddings from cache")
         return cached[0]
 
     _evict_embedding_cache(now)
 
-    logger.info(f"Cache miss for embedding — get face embedding")
+    logger.debug(f"Cache miss for embedding — get face embedding")
     embedding = get_face_embedding(image_bytes)
 
     _id_embedding_cache[key] = (embedding, now + EMBEDDING_CACHE_TTL)
@@ -129,7 +128,7 @@ def calc_face_similarity(
     max_similarity = 0.0
     found_any = False
 
-    for id_image_bytes in id_images_bytes:
+    for index, id_image_bytes in enumerate(id_images_bytes):
         emb_id = get_face_embedding_cached(id_image_bytes)
 
         if emb_id is None:
@@ -139,6 +138,7 @@ def calc_face_similarity(
         found_any = True
         distance = cosine(emb_id, emb_test)
         curr_similarity = 1.0 - distance
+        logger.debug(f"Face match {index}: {curr_similarity}")
         max_similarity = max(max_similarity, curr_similarity)
 
     return max_similarity if found_any else None
@@ -147,7 +147,7 @@ def calc_face_similarity(
 def run_similarity_check(img, id_photos) -> float | None:
     if not id_photos:
         logger.info("ID photos not provided for similarity check")
-        return None
+        return 0
 
     image_bytes = utils_module.to_image_bytes(img)
     id_images_bytes = [utils_module.to_image_bytes(id_photo) for id_photo in id_photos]
@@ -156,6 +156,6 @@ def run_similarity_check(img, id_photos) -> float | None:
 
     if similarity is None:
         logger.info("Face not found to check similarity")
-        return None
+        return 0
 
     return float(similarity)

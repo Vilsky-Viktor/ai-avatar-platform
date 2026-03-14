@@ -122,35 +122,46 @@ function CreateIdPhotoPage() {
                         })
                     }
                 } else {
+                    const dimensions = '1024x1024';
+
                     for (const [idx, item] of uploadedPhotos.entries()) {
                         if (idx === 0) {
-                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-front-portrait-1024x1024.png`;
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-front-${dimensions}.png`;
                             await uploadMediaToBucket(mediaPath, item.photo!);
                             allMedia.push({
                                 ...media,
                                 path: mediaPath,
-                                dimensions: '1024x1024',
+                                dimensions: dimensions,
                                 order: idx
                             })
                         } else if (idx === 1) {
-                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-quarter-portrait-1024x1024.png`;
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-front-smile-${dimensions}.png`;
                             await uploadMediaToBucket(mediaPath, item.photo!);
                             allMedia.push({
                                 ...media,
                                 path: mediaPath,
-                                dimensions: '1024x1024',
+                                dimensions: dimensions,
                                 order: idx
                             })
-                        } else if (idx === 2) {
-                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-profile-portrait-1024x1024.png`;
+                        }else if (idx === 2) {
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-right-quarter-${dimensions}.png`;
                             await uploadMediaToBucket(mediaPath, item.photo!);
                             allMedia.push({
                                 ...media,
                                 path: mediaPath,
-                                dimensions: '1024x1024',
+                                dimensions: dimensions,
                                 order: idx
                             })
-                        }
+                        } else if (idx === 3) {
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-left-quarter-${dimensions}.png`;
+                            await uploadMediaToBucket(mediaPath, item.photo!);
+                            allMedia.push({
+                                ...media,
+                                path: mediaPath,
+                                dimensions: dimensions,
+                                order: idx
+                            })
+                        } 
                     }
                 }
 

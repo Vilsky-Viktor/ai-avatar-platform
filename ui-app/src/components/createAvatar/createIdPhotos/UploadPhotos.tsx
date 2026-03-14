@@ -44,10 +44,10 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string>
 function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos, setParameters }: Props) {
     // We map indices to views for clarity in the UI
     const VIEW_CONFIG = [
-        { label: 'Portrait Front', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Portrait 45°', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Portrait 90°', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Full body', ref: useRef<HTMLInputElement>(null) }
+        { label: 'Front', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Front smile', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Right quarter', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Left quarter', ref: useRef<HTMLInputElement>(null) },
     ];
 
     // Cropper State

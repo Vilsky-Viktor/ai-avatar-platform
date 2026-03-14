@@ -40,12 +40,12 @@ def _evict_folder_cache(now: float) -> None:
     for key in expired_keys:
         del _folder_cache[key]
     if expired_keys:
-        logger.info(f"Cache cleanup: evicted {len(expired_keys)} expired folder entries "
+        logger.debug(f"Cache cleanup: evicted {len(expired_keys)} expired folder entries "
                     f"({len(_folder_cache)} remaining)")
 
     while len(_folder_cache) >= _IMAGE_FOLDER_CACHE_MAX_SIZE:
         evicted_key, _ = _folder_cache.popitem(last=False)
-        logger.info(f"Folder cache full ({_IMAGE_FOLDER_CACHE_MAX_SIZE}) — "
+        logger.debug(f"Folder cache full ({_IMAGE_FOLDER_CACHE_MAX_SIZE}) — "
                     f"evicted oldest: {evicted_key}")
 
 
@@ -56,12 +56,11 @@ def _get_cached_folder_files(folder_prefix: str) -> set[str]:
 
     if cached is not None and now <= cached[1]:
         _folder_cache.move_to_end(folder_prefix)
-        logger.info("Folder file list from cache")
         return cached[0]
 
     _evict_folder_cache(now)
 
-    logger.info(f"Cache miss for folder: {folder_prefix} — fetching from GCS")
+    logger.debug(f"Cache miss for folder: {folder_prefix} — fetching from GCS")
     files = _fetch_folder_files(folder_prefix)
 
     _folder_cache[folder_prefix] = (files, now + _IMAGE_FOLDER_CACHE_TTL_SEC)
@@ -143,7 +142,7 @@ def load_input_images(image_paths: list[str], safety_checker) -> list[Image.Imag
                 if local_filename.exists():
                     local_filename.unlink()
 
-    logger.info(f"Loaded {len(img_ctx)} valid input images")
+    logger.debug(f"Loaded {len(img_ctx)} valid input images")
     return img_ctx
 
 
@@ -162,7 +161,7 @@ def upload_result_image(dest_path, img_byte_arr):
     bucket = storage_client.bucket(BUCKET_NAME)
     blob = bucket.blob(dest_path)
     blob.upload_from_file(img_byte_arr, content_type="image/png")
-    logger.info(f"Image uploaded to {dest_path}")
+    logger.debug(f"Image uploaded to {dest_path}")
 
 
 def add_final_suffix(path):
