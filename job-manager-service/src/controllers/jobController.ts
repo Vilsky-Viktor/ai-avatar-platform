@@ -193,7 +193,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         width: imageWidth, 
         height: imageHeight, 
         guidance: 4.0, 
-        numSteps: 50,
+        numSteps: 40,
         maxRuns: 3,
         similarityThreshold: 0.8,
         checkDependencyImageExistance: true,
