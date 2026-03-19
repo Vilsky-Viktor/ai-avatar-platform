@@ -30,6 +30,7 @@ export type JobInput = {
   resultFileName?: string;
   upsamplePromptMode: string;
   seed?: number;
+  swapFace?: boolean;
 }
 
 export type JobRequestInput = {

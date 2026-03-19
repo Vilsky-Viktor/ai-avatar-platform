@@ -171,8 +171,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${dimensionSuffix}.png`,
       rightSide: `${avatarMediaPath}/006-training-photo-set-${dimensionSuffix}-${groupId}.png`,
       leftSide: `${avatarMediaPath}/007-training-photo-set-${dimensionSuffix}-${groupId}.png`,
-      bodyTop: `${avatarMediaPath}/008-training-photo-set-${dimensionSuffix}-${groupId}.png`,
-      bodyBottom: `${avatarMediaPath}/009-training-photo-set-${dimensionSuffix}-${groupId}.png`,
+      body: `${avatarMediaPath}/008-training-photo-set-${dimensionSuffix}-${groupId}.png`,
     }
 
     const inputs = generatePhotoSetInputs(
@@ -200,6 +199,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         checkDependencyImageExistance: true,
         upsamplePromptMode: 'none',
         idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile, idPhotoSet.rightQuarter, idPhotoSet.leftQuarter],
+        swapFace: false,
       }
     }
 
@@ -222,6 +222,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         similarityThreshold: input.similarityThreshold ?? baseJob.input.similarityThreshold,
         width: baseJob.input.width,
         height: baseJob.input.height,
+        swapFace: input.swapFace ?? baseJob.input.swapFace,
         resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}-${groupId}.png`,
       }
 

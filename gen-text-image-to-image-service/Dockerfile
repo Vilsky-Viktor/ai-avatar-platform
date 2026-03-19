@@ -18,11 +18,20 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 && \
     python3.12 -m pip install --upgrade pip setuptools wheel
 
 WORKDIR /app
+
 RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2 && \
     rm -rf /app/flux2/.git /app/flux2/tests /app/flux2/docs /app/flux2/assets
 
+# Clone FaceFusion separately so it stays self-contained
+RUN git clone https://github.com/facefusion/facefusion.git ./facefusion
+
 RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage google-cloud-firestore insightface onnxruntime-gpu && \
     pip install --no-cache-dir -e ./flux2 --extra-index-url https://download.pytorch.org/whl/cu121
+
+# Install FaceFusion deps manually (skip its installer — it assumes Conda)
+RUN pip install --no-cache-dir \
+    -r ./facefusion/requirements.txt \
+    --extra-index-url https://download.pytorch.org/whl/cu121
 
 RUN find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null; \
     find /opt/venv -type d -name "__pycache__" -exec rm -rf {} +; \
@@ -33,16 +42,19 @@ RUN curl -fSsL https://github.com/runpod/runpodctl/releases/download/v1.14.3/run
     -o /usr/local/bin/runpodctl && \
     chmod +x /usr/local/bin/runpodctl
 
+# --- Stage 2: Runtime ---
 FROM nvidia/cuda:12.9.0-base-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH="/app/src:/app/flux2:${PYTHONPATH}" \
+    PYTHONPATH="/app/src:/app/flux2:/app/facefusion:${PYTHONPATH}" \
     GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     MODEL_NAME="flux.2-dev" \
     FLUX2_MODEL_PATH="/workspace/models/flux.2-dev/flux2-dev-fp8_scaled.safetensors" \
     AE_MODEL_PATH="/workspace/models/flux.2-dev/ae.safetensors" \
     HF_HOME="/workspace/models" \
+    FACEFUSION_DIR="/app/facefusion" \
+    FACEFUSION_MODELS_DIR="/workspace/models/facefusion" \
     LOG_LEVEL="INFO"
 
 RUN apt-get update && apt-get install -y software-properties-common && \
@@ -51,6 +63,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
     python3.12 \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 ENV CPATH="/usr/include/python3.12"
@@ -58,6 +71,7 @@ ENV CC=gcc
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/flux2 /app/flux2
+COPY --from=builder /app/facefusion /app/facefusion
 COPY --from=builder /usr/local/bin/runpodctl /usr/local/bin/runpodctl
 
 ENV PATH="/opt/venv/bin:$PATH"

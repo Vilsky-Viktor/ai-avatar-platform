@@ -72,6 +72,11 @@ def get_face_embedding(image_bytes: bytes) -> np.ndarray | None:
     faces = _face_app.get(img)
 
     if not faces:
+        pad = 200
+        padded = cv2.copyMakeBorder(img, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=(128, 128, 128))
+        faces = _face_app.get(padded)
+
+    if not faces:
         return None
 
     if len(faces) > 1:

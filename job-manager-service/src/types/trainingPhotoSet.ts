@@ -12,6 +12,7 @@ export type TrainingPhotoSetInput = {
     order: number;
     width?: number;
     height?: number;
+    swapFace?: boolean;
 };
 
 export type IdPhotoSetPaths = {
@@ -22,6 +23,5 @@ export type IdPhotoSetPaths = {
     leftQuarter: string;
     rightSide: string;
     leftSide: string;
-    bodyTop: string;
-    bodyBottom: string;
+    body: string;
 }

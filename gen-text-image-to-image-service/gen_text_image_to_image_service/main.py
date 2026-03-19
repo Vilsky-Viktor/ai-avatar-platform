@@ -10,6 +10,7 @@ import gen_text_image_to_image_service.ai_model as model_module
 import gen_text_image_to_image_service.face_similarity as similarity_module
 import gen_text_image_to_image_service.utils as utils_module
 import gen_text_image_to_image_service.db as db_module
+import gen_text_image_to_image_service.face_fusion as face_fusion_module
 
 logger = log_module.get_logger(__name__)
 
@@ -221,11 +222,13 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
     avatar_id = job.get("avatarId", "")
     job_input = job.get("input", {})
     check_dependency_image_existence = job_input.get("checkDependencyImageExistance", False)
-    max_runs = job.get("input", {}).get("maxRuns")
-    similarity_threshold = job.get("input", {}).get("similarityThreshold")
-    num_runs = int(job.get("numRuns", 0))
+    max_runs = job_input.get("maxRuns")
+    similarity_threshold = job_input.get("similarityThreshold")
+    num_runs = job.get("numRuns", 0)
     image_paths = job_input.get("imagePaths", [])
     id_photo_paths = job_input.get("idPhotoPaths", [])
+    swap_face = job_input.get("swapFace", False)
+    
     previous = extract_previous_result(job)
     result = build_initial_result(job)
 
@@ -254,6 +257,10 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
                 return
 
         img, _ = generate_image(job, reference_images)
+
+        if swap_face and len(id_photos) > 0:
+            img = face_fusion_module.swap_face(img, id_photos[0])
+
         similarity = check_face_similarity(img, id_photos)
 
         logger.info(f"Face match {similarity or 0} / threshold {similarity_threshold}. Job {job_id}")
