@@ -9,7 +9,6 @@ import {
   deleteByAvatarId as deleteByAvatarIdDb, 
   deleteByUserId as deleteByUserIdDb
 } from '../repositories/job';
-import { upsample } from '../services/promptUpsamplerService';
 import { publishToTopic } from '../services/messageQueue';
 import { createPod } from '../services/runpodService';
 import uuid from 'uuid';
@@ -165,19 +164,21 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
     const avatarMediaPath = `media/${headerUserId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
 
     const idPhotoSet: IdPhotoSetPaths = {
+      microPortrait: `${avatarMediaPath}/001-training-photo-set-${dimensionSuffix}-${groupId}.png`,
       front: `${avatarMediaPath}/000-uploaded-front-${dimensionSuffix}.png`,
       frontSmile: `${avatarMediaPath}/000-uploaded-front-smile-${dimensionSuffix}.png`,
       rightQuarter: `${avatarMediaPath}/000-uploaded-right-quarter-${dimensionSuffix}.png`,
       leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${dimensionSuffix}.png`,
-      rightSide: `${avatarMediaPath}/005-training-photo-set-${dimensionSuffix}-final.png`,
-      leftSide: `${avatarMediaPath}/006-training-photo-set-${dimensionSuffix}-final.png`,
-      bodyFront: `${avatarMediaPath}/007-training-photo-set-${dimensionSuffix}-final.png`,
+      rightSide: `${avatarMediaPath}/006-training-photo-set-${dimensionSuffix}-${groupId}.png`,
+      leftSide: `${avatarMediaPath}/007-training-photo-set-${dimensionSuffix}-${groupId}.png`,
+      bodyTop: `${avatarMediaPath}/008-training-photo-set-${dimensionSuffix}-${groupId}.png`,
+      bodyBottom: `${avatarMediaPath}/009-training-photo-set-${dimensionSuffix}-${groupId}.png`,
     }
 
     const inputs = generatePhotoSetInputs(
       headerUserId as string, 
       jobRequest.avatarId, 
-      {...jobRequest.input.parameters, gender: jobRequest.input.gender}, 
+      {...jobRequest.input.parameters, gender: jobRequest.input.gender},
       idPhotoSet
     );
     const jobs: Job[] = [];
@@ -193,12 +194,12 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         width: imageWidth, 
         height: imageHeight, 
         guidance: 4.0, 
-        numSteps: 40,
+        numSteps: 35,
         maxRuns: 3,
-        similarityThreshold: 0.8,
+        similarityThreshold: 0.99,
         checkDependencyImageExistance: true,
         upsamplePromptMode: 'none',
-        idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile, idPhotoSet.rightQuarter, idPhotoSet.leftQuarter, idPhotoSet.rightSide, idPhotoSet.leftSide],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile, idPhotoSet.rightQuarter, idPhotoSet.leftQuarter],
       }
     }
 
@@ -219,7 +220,9 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         maxRuns: input.maxRuns ?? baseJob.input.maxRuns,
         upsamplePromptMode: input.upsamplePromptMode ?? baseJob.input.upsamplePromptMode,
         similarityThreshold: input.similarityThreshold ?? baseJob.input.similarityThreshold,
-        resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}.png`,
+        width: baseJob.input.width,
+        height: baseJob.input.height,
+        resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}-${groupId}.png`,
       }
 
       jobs.push(newJob);

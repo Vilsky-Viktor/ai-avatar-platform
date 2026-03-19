@@ -1,6 +1,6 @@
 import { JobInput } from '../types/job';
 
-export type TrainingPhotoSetPrompts = {
+export type TrainingPhotoSetInput = {
     prompt: string;
     imagePaths: string[];
     maxRuns?: number;
@@ -10,14 +10,18 @@ export type TrainingPhotoSetPrompts = {
     idPhotoPaths?: string[];
     upsamplePromptMode?: string;
     order: number;
+    width?: number;
+    height?: number;
 };
 
 export type IdPhotoSetPaths = {
+    microPortrait: string;
     front: string;
     frontSmile: string;
     rightQuarter: string;
     leftQuarter: string;
     rightSide: string;
     leftSide: string;
-    bodyFront: string;
+    bodyTop: string;
+    bodyBottom: string;
 }

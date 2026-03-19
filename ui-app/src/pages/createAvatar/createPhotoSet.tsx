@@ -89,6 +89,19 @@ function CreatePhotoSetPage() {
         return () => unsubscribe();
     }, [stepData.jobs]);
 
+    useEffect(() => {
+        if (!fullscreenSrc) return;
+
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+            setFullscreenSrc(null);
+            }
+        };
+
+        window.addEventListener("keydown", handleEsc);
+        return () => window.removeEventListener("keydown", handleEsc);
+    }, [fullscreenSrc]);
+
     const listener = async (querySnap: QuerySnapshot) => {
         console.log(`listener triggered`)
 
@@ -233,22 +246,23 @@ function CreatePhotoSetPage() {
 
         return (
             <div
-                className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center backdrop-blur-sm transition-opacity duration-200"
-                onClick={() => setFullscreenSrc(null)}
+            className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center backdrop-blur-sm transition-opacity duration-200"
+            onClick={() => setFullscreenSrc(null)}
             >
-                <button
-                    className="absolute top-5 right-6 z-10 text-white text-6xl font-light hover:scale-110 hover:rotate-6 transition-transform duration-200"
-                    onClick={() => setFullscreenSrc(null)}
-                >
-                    ×
-                </button>
+            <button
+                className="absolute top-5 right-6 z-10 text-white text-6xl font-light hover:scale-110 hover:rotate-6 transition-transform duration-200"
+                onClick={() => setFullscreenSrc(null)}
+                aria-label="Close fullscreen view"
+            >
+                ×
+            </button>
 
-                <img
-                    src={fullscreenSrc}
-                    alt="Full size generated avatar"
-                    className="max-w-[96vw] max-h-[96vh] object-contain rounded-xl shadow-2xl transition-transform duration-300 scale-100"
-                    onClick={(e) => e.stopPropagation()}
-                />
+            <img
+                src={fullscreenSrc}
+                alt="Full size generated avatar"
+                className="max-w-[96vw] max-h-[96vh] object-contain rounded-xl shadow-2xl transition-transform duration-300 scale-100"
+                onClick={(e) => e.stopPropagation()}
+            />
             </div>
         );
     };
@@ -412,29 +426,27 @@ function CreatePhotoSetPage() {
             <div className="max-w-6xl mx-auto px-4 pt-12 mb-30">
 
                 <div className="flex justify-center w-full mb-8 items-center gap-8">
-                    {avgSimilarity > 0 && (
-                        <div className="mt-8">
-                            <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-[1em] bg-base-200/40 backdrop-blur-md border border-base-content/8 shadow-sm">
-                                <span className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/60">
-                                    AVG Match
-                                </span>
-                                <span className="text-2xl font-semibold text-primary tabular-nums">
-                                    {(avgSimilarity * 100).toFixed(0)}%
-                                </span>
-                                <div
-                                    className={`w-2 h-2 rounded-full ${
-                                        avgSimilarity >= 0.7
-                                        ? 'bg-green-400'
-                                        : avgSimilarity >= 0.6
-                                        ? 'bg-yellow-400'
-                                        : avgSimilarity >= 0.5
-                                        ? 'bg-orange-400'
-                                        : 'bg-red-400'
-                                    }`}
-                                />
-                            </div>
+                    <div className="mt-8">
+                        <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-[1em] bg-base-200/40 backdrop-blur-md border border-base-content/8 shadow-sm">
+                            <span className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/60">
+                                AVG Match
+                            </span>
+                            <span className="text-2xl font-semibold text-primary tabular-nums">
+                                {(avgSimilarity * 100).toFixed(0)}%
+                            </span>
+                            <div
+                                className={`w-2 h-2 rounded-full ${
+                                    avgSimilarity >= 0.7
+                                    ? 'bg-green-400'
+                                    : avgSimilarity >= 0.6
+                                    ? 'bg-yellow-400'
+                                    : avgSimilarity >= 0.5
+                                    ? 'bg-orange-400'
+                                    : 'bg-red-400'
+                                }`}
+                            />
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

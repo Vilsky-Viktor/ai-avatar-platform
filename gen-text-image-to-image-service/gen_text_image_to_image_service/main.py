@@ -1,6 +1,5 @@
 import os
 import json
-import uuid
 
 from google.cloud import pubsub_v1
 
@@ -10,14 +9,13 @@ import gen_text_image_to_image_service.message_queue as mq_module
 import gen_text_image_to_image_service.ai_model as model_module
 import gen_text_image_to_image_service.face_similarity as similarity_module
 import gen_text_image_to_image_service.utils as utils_module
+import gen_text_image_to_image_service.db as db_module
 
 logger = log_module.get_logger(__name__)
 
 PROJECT_ID          = os.getenv("PROJECT_ID", "loom24-mvp")
 SUBSCRIPTION_ID     = os.getenv("SUBSCRIPTION_ID", "generate-text-image-to-image-sub")
 MODEL_NAME          = os.getenv("MODEL_NAME", "flux.2-dev")
-
-
 
 # ---------------------------------------------------------------------------
 # Job parsing helpers
@@ -56,6 +54,14 @@ def should_skip_job(job: dict, num_runs: int) -> bool:
 def is_first_run(num_runs: int) -> bool:
     return num_runs == 0
 
+def job_canceled(job_id: str):
+    db_job = db_module.get_job_by_id(job_id)
+    if not db_job or (db_job and db_job["status"] == "canceled"):
+        logger.info(f"Job {job_id} was removed or canceled")
+        return True
+    
+    return False
+
 # ---------------------------------------------------------------------------
 # Inference pipeline
 # ---------------------------------------------------------------------------
@@ -81,14 +87,11 @@ def check_face_similarity(img, id_photos) -> float | None:
     similarity = similarity_module.run_similarity_check(img, id_photos)
     return round(similarity, 2)
 
-def upload_image(job: dict, img, user_id: str, avatar_id: str) -> str:
-    width, height = img.size
-    result_file_name = job.get("input", {}).get("resultFileName", None)
-    file_name = result_file_name if result_file_name else f"{uuid.uuid4()}-{width}x{height}.png"
+def get_media_path(job, user_id, avatar_id):
+    job_input = job.get("input", {})
+    result_file_name = job_input.get("resultFileName", None)
+    media_path = f"media/{user_id}-user/avatars/{avatar_id}-avatar/images/{result_file_name}"
 
-    media_path = f"media/{user_id}-user/avatars/{avatar_id}-avatar/images/{file_name}"
-    img_payload = storage_module.prepare_image_payload(img)
-    storage_module.upload_result_image(media_path, img_payload)
     return media_path
 
 # ---------------------------------------------------------------------------
@@ -129,11 +132,14 @@ def handle_no_face_detected(result: dict, job: dict, img, user_id: str, avatar_i
     logger.info("No faces detected")
 
     job_id = job.get("id", "unknown")
-    media_path = upload_image(job, img, user_id, avatar_id)
-    final_media_path = storage_module.add_final_suffix(media_path)
+    media_path = get_media_path(job, user_id, avatar_id)
 
-    complete_result(result, final_media_path, similarity=None, similarities=[], num_runs=num_runs)
-    storage_module.rename_final_image(media_path)
+    img_payload = storage_module.prepare_image_payload(img)
+    storage_module.save_result_image_locally(media_path, img_payload)
+    storage_module.upload_result_image(media_path, img_payload)
+    storage_module.rename_completed_local_image(media_path)
+
+    complete_result(result, media_path, similarity=None, similarities=[], num_runs=num_runs)
     publish_completed_result(result, job_id)
 
 @utils_module.timeit
@@ -141,15 +147,20 @@ def handle_improved_similarity(result: dict, job: dict, img, user_id: str, avata
                                 similarity: float, previous: dict, num_runs: int, job_id: str):
     logger.info("Face match is improved")
 
-    media_path = upload_image(job, img, user_id, avatar_id)
+    media_path = get_media_path(job, user_id, avatar_id)
+    img_payload = storage_module.prepare_image_payload(img)
+
+    storage_module.save_result_image_locally(media_path, img_payload)
+
     updated_similarities = previous["similarities"] + [similarity]
     similarity_threshold = job.get("input", {}).get("similarityThreshold")
     max_runs = job.get("input", {}).get("maxRuns")
 
     if num_runs >= max_runs or similarity >= similarity_threshold:
-        final_media_path = storage_module.add_final_suffix(media_path)
-        complete_result(result, final_media_path, similarity, updated_similarities, num_runs)
-        storage_module.rename_final_image(media_path)
+        storage_module.upload_result_image(media_path, img_payload)
+        storage_module.rename_completed_local_image(media_path)
+
+        complete_result(result, media_path, similarity, updated_similarities, num_runs)
         publish_completed_result(result, job_id)
     else:
         partial_result = {**result, "mediaPath": media_path, "maxSimilarity": similarity, "similarities": updated_similarities}
@@ -160,16 +171,20 @@ def handle_worse_or_same_similarity(result: dict, job: dict, similarity: float,
                              previous: dict, num_runs: int, job_id: str):
     logger.info("Face match is worse or same")
 
-    updated_similarities = previous["similarities"] + [similarity]
+    user_id = job.get("userId")
+    avatar_id = job.get("avatarId")
     max_runs = job.get("input", {}).get("maxRuns")
-
+    media_path = get_media_path(job, user_id, avatar_id)
+    updated_similarities = previous["similarities"] + [similarity]
+    
     if num_runs >= max_runs:
-        final_media_path = storage_module.add_final_suffix(previous["media_path"])
-        complete_result(result, final_media_path, previous["max_similarity"], updated_similarities, num_runs)
-        storage_module.rename_final_image(previous["media_path"])
+        storage_module.upload_result_image_from_local_disk(media_path)
+        storage_module.rename_completed_local_image(media_path)
+
+        complete_result(result, media_path, previous["max_similarity"], updated_similarities, num_runs)
         publish_completed_result(result, job_id)
     else:
-        partial_result = {**result, "mediaPath": previous["media_path"], "maxSimilarity": previous["max_similarity"], "similarities": updated_similarities}
+        partial_result = {**result, "mediaPath": media_path, "maxSimilarity": previous["max_similarity"], "similarities": updated_similarities}
         resend_job_for_retry(job, partial_result, num_runs, job_id)
 
 @utils_module.timeit
@@ -180,7 +195,14 @@ def handle_inference_error(result: dict, job: dict, error: Exception, previous: 
 
     if num_runs >= max_runs:
         if previous["media_path"]:
-            complete_result(result, previous["media_path"], previous["max_similarity"], previous["similarities"], num_runs)
+            user_id = job.get("userId")
+            avatar_id = job.get("avatarId")
+            media_path = get_media_path(job, user_id, avatar_id)
+
+            storage_module.upload_result_image_from_local_disk(media_path)
+            storage_module.rename_completed_local_image(media_path)  
+
+            complete_result(result, media_path, previous["max_similarity"], previous["similarities"], num_runs)
             publish_completed_result(result, job_id)
         else:
             publish_error_result(result, error, job_id, num_runs)
@@ -202,22 +224,16 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
     max_runs = job.get("input", {}).get("maxRuns")
     similarity_threshold = job.get("input", {}).get("similarityThreshold")
     num_runs = int(job.get("numRuns", 0))
+    image_paths = job_input.get("imagePaths", [])
     id_photo_paths = job_input.get("idPhotoPaths", [])
     previous = extract_previous_result(job)
     result = build_initial_result(job)
 
     logger.info(f"========= Processing job {job_id}, run {num_runs + 1}/{max_runs} =========")
 
-    if check_dependency_image_existence:
-        image_paths = job_input.get("imagePaths", [])
-        dependency_images = list(set(image_paths + id_photo_paths))
-        all_exist, missing = storage_module.all_blobs_exist(dependency_images)
-
-        if not all_exist:
-            logger.warning(f"Missing dependency images, skipping job {job_id}")
-            logger.debug(f"Missing images: ${json.dumps(missing)}")
-            message.nack()
-            return
+    if job_canceled(job_id):
+        message.ack()
+        return
 
     if should_skip_job(job, num_runs):
         message.ack()
@@ -230,6 +246,13 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 
     try:
         id_photos, reference_images = load_images(job)
+
+        if check_dependency_image_existence:
+            if len(id_photos) != len(id_photo_paths) or len(reference_images) != len(image_paths):
+                logger.warning(f"Missing dependency images, skipping job {job_id}")
+                message.nack()
+                return
+
         img, _ = generate_image(job, reference_images)
         similarity = check_face_similarity(img, id_photos)
 

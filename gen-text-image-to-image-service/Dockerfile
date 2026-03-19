@@ -21,7 +21,7 @@ WORKDIR /app
 RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2 && \
     rm -rf /app/flux2/.git /app/flux2/tests /app/flux2/docs /app/flux2/assets
 
-RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage insightface onnxruntime-gpu && \
+RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage google-cloud-firestore insightface onnxruntime-gpu && \
     pip install --no-cache-dir -e ./flux2 --extra-index-url https://download.pytorch.org/whl/cu121
 
 RUN find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null; \

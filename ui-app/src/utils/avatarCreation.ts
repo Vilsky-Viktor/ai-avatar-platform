@@ -85,7 +85,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     bodyHair: ["none", "peach fuzz", "fine light", "fine medium", "textured light", "textured medium", "dense moderate", "dense intense"],
     male: {
         attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
-        body: ["slim", "athletic", "average", "muscular", "large", "fat"],
+        body: ["slim", "athletic", "average", "muscular", "large"],
         face: ["square", "oval", "round", "diamond", "angular"],
         hairStyle: ["short cut", "crew cut", "side part", "long straight", "man bun", "waves", "dreadlocks", "afro", "undercut", "bald", "braids"],
         hairColor: ["black", "dark brown", "light brown", "blonde", "ash blonde", "red", "platinum", "salt & pepper", "white"],
