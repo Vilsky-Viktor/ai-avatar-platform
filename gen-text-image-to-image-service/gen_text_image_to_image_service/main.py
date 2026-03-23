@@ -10,7 +10,7 @@ import gen_text_image_to_image_service.ai_model as model_module
 import gen_text_image_to_image_service.face_similarity as similarity_module
 import gen_text_image_to_image_service.utils as utils_module
 import gen_text_image_to_image_service.db as db_module
-import gen_text_image_to_image_service.face_fusion as face_fusion_module
+import gen_text_image_to_image_service.face_swap as face_swap_module
 
 logger = log_module.get_logger(__name__)
 
@@ -86,7 +86,7 @@ def generate_image(job: dict, reference_images: list):
 @utils_module.timeit
 def check_face_similarity(img, id_photos) -> float | None:
     similarity = similarity_module.run_similarity_check(img, id_photos)
-    return round(similarity, 2)
+    return round(similarity, 4)
 
 def get_media_path(job, user_id, avatar_id):
     job_input = job.get("input", {})
@@ -124,28 +124,54 @@ def resend_job_for_retry(job: dict, result: dict, num_runs: int, job_id: str):
     logger.info(f"Resending job {job_id}")
     mq_module.resend_job(job)
 
+def finalize_completed_result(media_path, result, max_similarity, similarities, num_runs, job, id_photos, reference_images):
+    job_input = job.get("input", {})
+    face_swap_params = job_input.get("faceSwap", {"enabled": False})
+    face_enhancement_params = job_input.get("faceEnhancement", {"enabled": False})
+    job_id = job.get("id")
+    similarity_threshold = job_input.get("similarityThreshold")
+
+    if face_swap_params["enabled"] and max_similarity > 0:
+        img = storage_module.load_tmp_image_from_local_disk(media_path)
+        img = face_swap_module.swap_face(reference_images, img, face_swap_params, face_enhancement_params)
+        img_payload = storage_module.prepare_image_payload(img)
+
+        swap_similarity = check_face_similarity(img, id_photos)
+        logger.info(f"Swap face match {swap_similarity or 0} / threshold {similarity_threshold}. Job {job_id}")
+
+        if swap_similarity > max_similarity:
+            logger.info("Apply face swap version")
+            storage_module.save_result_image_locally(media_path, img_payload)
+            max_similarity = swap_similarity
+        else:
+            logger.info("Keep generated version")
+        
+        similarities.append(swap_similarity)
+
+    storage_module.upload_result_image_from_local_disk(media_path)
+    storage_module.rename_completed_local_image(media_path)
+
+    complete_result(result, media_path, max_similarity, similarities, num_runs)
+    publish_completed_result(result, job_id)
+
 # ---------------------------------------------------------------------------
 # Outcome handlers
 # ---------------------------------------------------------------------------
 
 @utils_module.timeit
-def handle_no_face_detected(result: dict, job: dict, img, user_id: str, avatar_id: str, num_runs: int):
+def handle_no_face_detected(result: dict, job: dict, img, user_id: str, avatar_id: str, num_runs: int, id_photos, reference_images):
     logger.info("No faces detected")
 
-    job_id = job.get("id", "unknown")
     media_path = get_media_path(job, user_id, avatar_id)
 
     img_payload = storage_module.prepare_image_payload(img)
     storage_module.save_result_image_locally(media_path, img_payload)
-    storage_module.upload_result_image(media_path, img_payload)
-    storage_module.rename_completed_local_image(media_path)
 
-    complete_result(result, media_path, similarity=None, similarities=[], num_runs=num_runs)
-    publish_completed_result(result, job_id)
+    finalize_completed_result(media_path, result, 0, [], num_runs, job, id_photos, reference_images)
 
 @utils_module.timeit
 def handle_improved_similarity(result: dict, job: dict, img, user_id: str, avatar_id: str,
-                                similarity: float, previous: dict, num_runs: int, job_id: str):
+                                similarity: float, previous: dict, num_runs: int, job_id: str, id_photos, reference_images):
     logger.info("Face match is improved")
 
     media_path = get_media_path(job, user_id, avatar_id)
@@ -158,18 +184,14 @@ def handle_improved_similarity(result: dict, job: dict, img, user_id: str, avata
     max_runs = job.get("input", {}).get("maxRuns")
 
     if num_runs >= max_runs or similarity >= similarity_threshold:
-        storage_module.upload_result_image(media_path, img_payload)
-        storage_module.rename_completed_local_image(media_path)
-
-        complete_result(result, media_path, similarity, updated_similarities, num_runs)
-        publish_completed_result(result, job_id)
+        finalize_completed_result(media_path, result, similarity, updated_similarities, num_runs, job, id_photos, reference_images)
     else:
         partial_result = {**result, "mediaPath": media_path, "maxSimilarity": similarity, "similarities": updated_similarities}
         resend_job_for_retry(job, partial_result, num_runs, job_id)
 
 @utils_module.timeit
 def handle_worse_or_same_similarity(result: dict, job: dict, similarity: float,
-                             previous: dict, num_runs: int, job_id: str):
+                             previous: dict, num_runs: int, job_id: str, id_photos, reference_images):
     logger.info("Face match is worse or same")
 
     user_id = job.get("userId")
@@ -179,17 +201,13 @@ def handle_worse_or_same_similarity(result: dict, job: dict, similarity: float,
     updated_similarities = previous["similarities"] + [similarity]
     
     if num_runs >= max_runs:
-        storage_module.upload_result_image_from_local_disk(media_path)
-        storage_module.rename_completed_local_image(media_path)
-
-        complete_result(result, media_path, previous["max_similarity"], updated_similarities, num_runs)
-        publish_completed_result(result, job_id)
+        finalize_completed_result(media_path, result, previous["max_similarity"], updated_similarities, num_runs, job, id_photos, reference_images)
     else:
         partial_result = {**result, "mediaPath": media_path, "maxSimilarity": previous["max_similarity"], "similarities": updated_similarities}
         resend_job_for_retry(job, partial_result, num_runs, job_id)
 
 @utils_module.timeit
-def handle_inference_error(result: dict, job: dict, error: Exception, previous: dict, num_runs: int, job_id: str):
+def handle_inference_error(result: dict, job: dict, error: Exception, previous: dict, num_runs: int, job_id: str, id_photos, reference_images):
     max_runs = job.get("input", {}).get("maxRuns")
 
     logger.error(f"Error processing job {job_id}: {error}", exc_info=True)
@@ -200,11 +218,7 @@ def handle_inference_error(result: dict, job: dict, error: Exception, previous: 
             avatar_id = job.get("avatarId")
             media_path = get_media_path(job, user_id, avatar_id)
 
-            storage_module.upload_result_image_from_local_disk(media_path)
-            storage_module.rename_completed_local_image(media_path)  
-
-            complete_result(result, media_path, previous["max_similarity"], previous["similarities"], num_runs)
-            publish_completed_result(result, job_id)
+            finalize_completed_result(media_path, result, previous["max_similarity"], previous["similarities"], num_runs, job, id_photos, reference_images)
         else:
             publish_error_result(result, error, job_id, num_runs)
     else:
@@ -227,7 +241,6 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
     num_runs = job.get("numRuns", 0)
     image_paths = job_input.get("imagePaths", [])
     id_photo_paths = job_input.get("idPhotoPaths", [])
-    swap_face = job_input.get("swapFace", False)
     
     previous = extract_previous_result(job)
     result = build_initial_result(job)
@@ -247,35 +260,32 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 
     num_runs += 1
 
-    try:
-        id_photos, reference_images = load_images(job)
+    id_photos, reference_images = load_images(job)
 
+    try:
         if check_dependency_image_existence:
             if len(id_photos) != len(id_photo_paths) or len(reference_images) != len(image_paths):
                 logger.warning(f"Missing dependency images, skipping job {job_id}")
                 message.nack()
                 return
 
+
         img, _ = generate_image(job, reference_images)
-
-        if swap_face and len(id_photos) > 0:
-            img = face_fusion_module.swap_face(img, id_photos[0])
-
         similarity = check_face_similarity(img, id_photos)
 
         logger.info(f"Face match {similarity or 0} / threshold {similarity_threshold}. Job {job_id}")
 
         if similarity < 0.4 or not id_photo_paths:
-            handle_no_face_detected(result, job, img, user_id, avatar_id, num_runs)
+            handle_no_face_detected(result, job, img, user_id, avatar_id, num_runs, id_photos, reference_images)
         elif similarity > previous["max_similarity"]:
-            handle_improved_similarity(result, job, img, user_id, avatar_id, similarity, previous, num_runs, job_id)
+            handle_improved_similarity(result, job, img, user_id, avatar_id, similarity, previous, num_runs, job_id, id_photos, reference_images)
         else:
-            handle_worse_or_same_similarity(result, job, similarity, previous, num_runs, job_id)
+            handle_worse_or_same_similarity(result, job, similarity, previous, num_runs, job_id, id_photos, reference_images)
 
         message.ack()
 
     except Exception as error:
-        handle_inference_error(result, job, error, previous, num_runs, job_id)
+        handle_inference_error(result, job, error, previous, num_runs, job_id, id_photos, reference_images)
         message.ack()  # ack — retry logic handled by resend_job_for_retry
 
 # ---------------------------------------------------------------------------

@@ -70,7 +70,6 @@ def _load_image_from_disk(local_path: Path, label: str) -> Image.Image | None:
     try:
         return Image.open(local_path).convert("RGB")
     except FileNotFoundError:
-        # File was evicted by another pod between the freshness check and open — normal at TTL boundary
         logger.debug(f"Cache file disappeared before open (evicted mid-read?): {label}")
         return None
     except Exception as e:
@@ -206,8 +205,8 @@ def upload_result_image(dest_path, img_byte_arr):
 def upload_result_image_from_local_disk(blob_path):
     local_path = _get_local_image_path(blob_path)
     local_tmp_path = add_tmp_suffix(local_path)
-    with open(local_tmp_path, "rb") as f:
-        upload_result_image(blob_path, f)
+    with open(local_tmp_path, "rb") as file:
+        upload_result_image(blob_path, file)
 
 def save_result_image_locally(blob_path, img_byte_arr):
     local_path = _get_local_image_path(blob_path)
@@ -215,8 +214,8 @@ def save_result_image_locally(blob_path, img_byte_arr):
     
     os.makedirs(os.path.dirname(local_tmp_path), exist_ok=True)
     
-    with open(local_tmp_path, "wb") as f:
-        f.write(img_byte_arr.getvalue())
+    with open(local_tmp_path, "wb") as file:
+        file.write(img_byte_arr.getvalue())
     
     return local_tmp_path
 
@@ -228,3 +227,9 @@ def rename_completed_local_image(blob_path):
 
 def add_tmp_suffix(path: Path) -> Path:
     return path.with_stem(path.stem + "-tmp")
+
+def load_tmp_image_from_local_disk(blob_path: str) -> Image.Image:
+    local_path = _get_local_image_path(blob_path)
+    local_tmp_path = add_tmp_suffix(local_path)
+
+    return Image.open(local_tmp_path).convert("RGB")

@@ -199,7 +199,8 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         checkDependencyImageExistance: true,
         upsamplePromptMode: 'none',
         idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile, idPhotoSet.rightQuarter, idPhotoSet.leftQuarter],
-        swapFace: false,
+        faceSwap: { enabled: false },
+        faceEnhancement: { enabled: false },
       }
     }
 
@@ -222,7 +223,8 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         similarityThreshold: input.similarityThreshold ?? baseJob.input.similarityThreshold,
         width: baseJob.input.width,
         height: baseJob.input.height,
-        swapFace: input.swapFace ?? baseJob.input.swapFace,
+        faceSwap: input.faceSwap ?? baseJob.input.faceSwap,
+        faceEnhancement: input.faceEnhancement ?? baseJob.input.faceEnhancement,
         resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}-${groupId}.png`,
       }
 

@@ -25,13 +25,16 @@ RUN git clone https://github.com/black-forest-labs/flux2.git ./flux2 && \
 # Clone FaceFusion separately so it stays self-contained
 RUN git clone https://github.com/facefusion/facefusion.git ./facefusion
 
-RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage google-cloud-firestore insightface onnxruntime-gpu && \
+RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage google-cloud-firestore insightface pydantic && \
     pip install --no-cache-dir -e ./flux2 --extra-index-url https://download.pytorch.org/whl/cu121
 
 # Install FaceFusion deps manually (skip its installer — it assumes Conda)
 RUN pip install --no-cache-dir \
     -r ./facefusion/requirements.txt \
     --extra-index-url https://download.pytorch.org/whl/cu121
+
+RUN pip install --no-cache-dir --force-reinstall onnxruntime-gpu==1.20.1 \
+    --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 RUN find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null; \
     find /opt/venv -type d -name "__pycache__" -exec rm -rf {} +; \
@@ -43,7 +46,7 @@ RUN curl -fSsL https://github.com/runpod/runpodctl/releases/download/v1.14.3/run
     chmod +x /usr/local/bin/runpodctl
 
 # --- Stage 2: Runtime ---
-FROM nvidia/cuda:12.9.0-base-ubuntu22.04
+FROM nvidia/cuda:12.9.0-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -64,6 +67,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
     libgl1-mesa-glx \
     libglib2.0-0 \
     ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 ENV CPATH="/usr/include/python3.12"

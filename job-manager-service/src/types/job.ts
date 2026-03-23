@@ -15,6 +15,21 @@ export enum JobStatuses {
   error = 'error',
 }
 
+export type FaceSwapParams = {
+  enabled: boolean;
+  model?: string;
+  weight?: number;
+  pixelBoost?: string;
+  referenceIdx?: number;
+}
+
+export type FaceEnhancementParams = {
+  enabled: boolean;
+  model?: string;
+  weight?: number;
+  blend?: number;
+}
+
 export type JobInput = {
   prompt?: string;
   idPhotoPaths?: string[];
@@ -30,7 +45,8 @@ export type JobInput = {
   resultFileName?: string;
   upsamplePromptMode: string;
   seed?: number;
-  swapFace?: boolean;
+  faceSwap?: FaceSwapParams;
+  faceEnhancement?: FaceEnhancementParams;
 }
 
 export type JobRequestInput = {
@@ -54,9 +70,9 @@ export type Job = {
   avatarId: string;
   type: JobTypes;
   status: JobStatuses;
+  numRuns: number;
   input: JobInput
   result?: JobResult;
-  numRuns: number;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

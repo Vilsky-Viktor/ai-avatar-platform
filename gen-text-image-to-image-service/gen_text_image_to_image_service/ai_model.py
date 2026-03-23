@@ -15,10 +15,13 @@ from gen_text_image_to_image_service.logger import get_logger
 from gen_text_image_to_image_service.openrouter import DEFAULT_SAMPLING_PARAMS, OpenRouterAPIClient
 
 logger = get_logger(__name__)
+
 DEVICE = torch.device("cuda")
 MODELS = {}
 MODEL_NAME = os.getenv("MODEL_NAME", "flux.2-dev")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "mistralai/pixtral-large-2411")
+CONTROLNET_PATH = os.environ.get("CONTROLNET_PATH")
+FLUX2_MODEL_PATH = os.environ.get("FLUX2_MODEL_PATH")
 
 def _generate_random_seed():
     return random.randint(0, 2**32 - 1)
