@@ -2,7 +2,7 @@ import io
 import time
 import functools
 import base64
-from gen_text_image_to_image_service.logger import get_logger
+from gen_ti2i_controlnet.logger import get_logger
 from PIL import Image
 
 logger = get_logger("utils")

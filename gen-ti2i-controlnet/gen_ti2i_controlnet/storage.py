@@ -6,7 +6,7 @@ from uuid import uuid4
 from google.cloud import storage
 from PIL import Image, ExifTags
 from filelock import FileLock, Timeout
-from gen_text_image_to_image_service.logger import get_logger
+from gen_ti2i_controlnet.logger import get_logger
 
 logger = get_logger(__name__)
 storage_client = storage.Client()
@@ -15,19 +15,29 @@ BUCKET_NAME = os.getenv("BUCKET_NAME", "loom24-mvp.firebasestorage.app")
 BUCKET_MODELS_PATH = "models"
 LOCAL_MODELS_PATH = "/workspace/models"
 
-# Local image cache settings
-LOCAL_IMAGE_CACHE_DIR = Path("/workspace/images")
-IMAGE_CACHE_TTL_SECONDS = int(os.getenv("IMAGE_CACHE_TTL_SECONDS", "3600"))
+# Media cache — downloaded inputs and finalized results (evicted after TTL, re-downloadable)
+LOCAL_MEDIA_CACHE_DIR = Path("/workspace/media_cache")
+MEDIA_CACHE_TTL_SECONDS = int(os.getenv("MEDIA_CACHE_TTL_SECONDS", "3600"))
 
-# Ensure cache directory exists
-LOCAL_IMAGE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+# Tmp dir — per-run generated files, not yet uploaded
+# TTL acts as a safety net for orphaned files from uncaught exceptions
+LOCAL_TMP_DIR = Path("/workspace/tmp")
+TMP_TTL_SECONDS = int(os.getenv("TMP_TTL_SECONDS", str(7 * 24 * 3600)))
+
+LOCAL_MEDIA_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+LOCAL_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def _get_local_image_path(blob_path: str) -> Path:
-    """Map GCS blob path → local cache path (preserving folder structure)"""
-    # blob_path e.g. "users/abc123/inputs/photo.jpg"
-    # → /workspace/images/users/abc123/inputs/photo.jpg
-    return LOCAL_IMAGE_CACHE_DIR / blob_path.lstrip("/")
+def _get_media_cache_path(blob_path: str) -> Path:
+    """Map GCS blob path → local media cache path (preserving folder structure)"""
+    return LOCAL_MEDIA_CACHE_DIR / blob_path.lstrip("/")
+
+
+def _get_tmp_path(blob_path: str, num_runs: int) -> Path:
+    """Map GCS blob path → per-run tmp file: {num_runs}-{stem}-tmp.{ext}"""
+    path = Path(blob_path.lstrip("/"))
+    name = f"{num_runs}-{path.stem}-tmp{path.suffix}"
+    return LOCAL_TMP_DIR / path.parent / name
 
 
 def _is_file_fresh_enough(path: Path) -> bool:
@@ -35,22 +45,21 @@ def _is_file_fresh_enough(path: Path) -> bool:
     if not path.exists():
         return False
     age = time.time() - path.stat().st_mtime
-    return age < IMAGE_CACHE_TTL_SECONDS
+    return age < MEDIA_CACHE_TTL_SECONDS
 
 
-def _evict_expired_images() -> None:
-    """Opportunistic cleanup — remove files older than TTL"""
+def _evict_expired_media() -> None:
+    """Opportunistic cleanup — remove files older than TTL from media cache only"""
     now = time.time()
     removed = 0
 
-    for file_path in LOCAL_IMAGE_CACHE_DIR.rglob("*"):
+    for file_path in LOCAL_MEDIA_CACHE_DIR.rglob("*"):
         if not file_path.is_file():
             continue
-        # Skip lock files — they are tied to open fds and safe to leave
-        if file_path.suffix == ".lock" or file_path.stem.endswith("-tmp"):
+        if file_path.suffix == ".lock":
             continue
         age = now - file_path.stat().st_mtime
-        if age >= IMAGE_CACHE_TTL_SECONDS:
+        if age >= MEDIA_CACHE_TTL_SECONDS:
             try:
                 file_path.unlink()
                 removed += 1
@@ -58,7 +67,27 @@ def _evict_expired_images() -> None:
                 logger.warning(f"Failed to evict expired file {file_path}: {e}")
 
     if removed > 0:
-        logger.debug(f"Evicted {removed} expired images from local cache")
+        logger.debug(f"Evicted {removed} expired files from media cache")
+
+
+def _evict_expired_tmp() -> None:
+    """Safety-net cleanup — remove orphaned tmp files older than TMP_TTL (default 1 week)"""
+    now = time.time()
+    removed = 0
+
+    for file_path in LOCAL_TMP_DIR.rglob("*"):
+        if not file_path.is_file():
+            continue
+        age = now - file_path.stat().st_mtime
+        if age >= TMP_TTL_SECONDS:
+            try:
+                file_path.unlink()
+                removed += 1
+            except Exception as e:
+                logger.warning(f"Failed to evict expired tmp file {file_path}: {e}")
+
+    if removed > 0:
+        logger.debug(f"Evicted {removed} orphaned tmp files")
 
 
 def _load_image_from_disk(local_path: Path, label: str) -> Image.Image | None:
@@ -105,22 +134,20 @@ def download_models(model_name):
 
 
 def load_input_images(image_paths: list[str], safety_checker=None) -> list[Image.Image]:
-    _evict_expired_images()
+    _evict_expired_media()
+    _evict_expired_tmp()
 
     bucket = storage_client.bucket(BUCKET_NAME)
     valid_images = []
 
     for blob_path in image_paths:
-        local_path = _get_local_image_path(blob_path)
+        local_path = _get_media_cache_path(blob_path)
         lock_path = local_path.with_suffix(local_path.suffix + ".lock")
 
         # ── Fast path: file looks fresh, try to load without acquiring the lock ──
         if _is_file_fresh_enough(local_path):
             img = _load_image_from_disk(local_path, blob_path)
             if img is not None:
-                # if safety_checker and safety_checker.test_image(str(local_path)):
-                #     logger.info(f"Safety blocked cached image: {blob_path}")
-                #     continue
                 valid_images.append(img)
                 logger.debug(f"Loaded from cache: {blob_path}")
                 continue
@@ -159,11 +186,6 @@ def load_input_images(image_paths: list[str], safety_checker=None) -> list[Image
                         tmp_path.unlink(missing_ok=True)
                         continue
 
-                    # if safety_checker and safety_checker.test_image(str(tmp_path)):
-                    #     logger.info(f"Safety blocked downloaded image: {blob_path}")
-                    #     tmp_path.unlink()
-                    #     continue
-
                     # Atomic on local fs; atomic on NFSv4, not guaranteed on NFSv3
                     tmp_path.replace(local_path)
                     logger.debug(f"Cached fresh image: {blob_path}")
@@ -196,40 +218,47 @@ def prepare_image_payload(img):
     img_byte_arr.seek(0)
     return img_byte_arr
 
-def upload_result_image(dest_path, img_byte_arr):
+
+def upload_result_image(dest_path: str, img_byte_arr):
     bucket = storage_client.bucket(BUCKET_NAME)
     blob = bucket.blob(dest_path)
     blob.upload_from_file(img_byte_arr, content_type="image/png")
-    logger.debug(f"Image uploaded to {dest_path}")
+    logger.debug(f"Uploaded to {dest_path}")
 
-def upload_result_image_from_local_disk(blob_path):
-    local_path = _get_local_image_path(blob_path)
-    local_tmp_path = add_tmp_suffix(local_path)
-    with open(local_tmp_path, "rb") as file:
+
+def save_result_image_locally(blob_path: str, img_byte_arr, num_runs: int) -> str:
+    """Save generated image as a per-run tmp file. Never evicted automatically."""
+    tmp_path = _get_tmp_path(blob_path, num_runs)
+    tmp_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(tmp_path, "wb") as file:
+        file.write(img_byte_arr.getvalue())
+
+    return str(tmp_path)
+
+
+def load_tmp_image_from_local_disk(blob_path: str, num_runs: int) -> Image.Image:
+    """Load a specific run's tmp file."""
+    tmp_path = _get_tmp_path(blob_path, num_runs)
+    return Image.open(tmp_path).convert("RGB")
+
+
+def upload_result_image_from_local_disk(blob_path: str, num_runs: int):
+    """Upload a specific run's tmp file to GCS."""
+    tmp_path = _get_tmp_path(blob_path, num_runs)
+    with open(tmp_path, "rb") as file:
         upload_result_image(blob_path, file)
 
-def save_result_image_locally(blob_path, img_byte_arr):
-    local_path = _get_local_image_path(blob_path)
-    local_tmp_path = str(add_tmp_suffix(local_path))
-    
-    os.makedirs(os.path.dirname(local_tmp_path), exist_ok=True)
-    
-    with open(local_tmp_path, "wb") as file:
-        file.write(img_byte_arr.getvalue())
-    
-    return local_tmp_path
 
-def rename_completed_local_image(blob_path):
-    local_path = _get_local_image_path(blob_path)
-    local_tmp_path = add_tmp_suffix(local_path)
+def move_tmp_to_media_cache(blob_path: str, num_runs: int):
+    """Move a specific run's tmp file to the media cache after upload."""
+    tmp_path = _get_tmp_path(blob_path, num_runs)
+    cache_path = _get_media_cache_path(blob_path)
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path.replace(cache_path)
 
-    os.rename(str(local_tmp_path), str(local_path))
 
-def add_tmp_suffix(path: Path) -> Path:
-    return path.with_stem(path.stem + "-tmp")
-
-def load_tmp_image_from_local_disk(blob_path: str) -> Image.Image:
-    local_path = _get_local_image_path(blob_path)
-    local_tmp_path = add_tmp_suffix(local_path)
-
-    return Image.open(local_tmp_path).convert("RGB")
+def cleanup_tmp_files(blob_path: str, total_runs: int):
+    """Remove all per-run tmp files for a job after finalization."""
+    for run in range(1, total_runs + 1):
+        _get_tmp_path(blob_path, run).unlink(missing_ok=True)

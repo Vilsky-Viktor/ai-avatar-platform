@@ -1,7 +1,7 @@
 import os
 import json
 from google.cloud import pubsub_v1
-from gen_text_image_to_image_service.logger import get_logger
+from gen_ti2i_controlnet.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -201,6 +201,8 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile, idPhotoSet.rightQuarter, idPhotoSet.leftQuarter],
         faceSwap: { enabled: false },
         faceEnhancement: { enabled: false },
+        controlImage: "",
+        controlnetScale: 0.75,
       }
     }
 
@@ -226,6 +228,8 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
         faceSwap: input.faceSwap ?? baseJob.input.faceSwap,
         faceEnhancement: input.faceEnhancement ?? baseJob.input.faceEnhancement,
         resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}-${groupId}.png`,
+        controlImage: input.controlImage ?? baseJob.input.controlImage,
+        controlnetScale: input.controlnetScale ?? baseJob.input.controlnetScale,
       }
 
       jobs.push(newJob);

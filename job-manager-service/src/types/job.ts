@@ -47,6 +47,8 @@ export type JobInput = {
   seed?: number;
   faceSwap?: FaceSwapParams;
   faceEnhancement?: FaceEnhancementParams;
+  controlImage?: string;
+  controlnetScale?: number;
 }
 
 export type JobRequestInput = {
@@ -59,6 +61,7 @@ export type JobResult = {
   mediaPath: string;
   similarities?: number[];
   maxSimilarity?: number;
+  bestRunNum?: number;
   error?: string;
 }
 

@@ -1,36 +1,30 @@
 # --- Stage 1: Build Environment ---
-FROM nvidia/cuda:12.9.0-devel-ubuntu22.04 AS builder
+FROM nvidia/cuda:12.8.1-devel-ubuntu24.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONUNBUFFERED=1 \
-    POETRY_VERSION=1.8.3
+    PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && apt-get install -y \
-    git python3.12 python3.12-dev python3.12-venv curl && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git python3.12 python3.12-dev python3.12-venv python3-pip curl build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN python3.12 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 && \
-    python3.12 -m pip install --upgrade pip setuptools wheel
+RUN pip install --upgrade pip setuptools wheel
 
 WORKDIR /app
 
 # Clone FaceFusion separately so it stays self-contained
-RUN git clone https://github.com/facefusion/facefusion.git ./facefusion
-
-RUN pip install --no-cache-dir google-cloud-pubsub google-cloud-storage google-cloud-firestore insightface pydantic
+RUN git clone --depth 1 --branch 3.6.0 https://github.com/facefusion/facefusion.git ./facefusion
 
 COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r ./requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
+RUN pip install --no-cache-dir -r ./requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
 
 # Install FaceFusion deps manually (skip its installer — it assumes Conda)
 RUN pip install --no-cache-dir \
     -r ./facefusion/requirements.txt \
-    --extra-index-url https://download.pytorch.org/whl/cu121
+    --extra-index-url https://download.pytorch.org/whl/cu128
 
 RUN pip install --no-cache-dir --force-reinstall onnxruntime-gpu==1.20.1 \
     --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
@@ -45,32 +39,33 @@ RUN curl -fSsL https://github.com/runpod/runpodctl/releases/download/v1.14.3/run
     chmod +x /usr/local/bin/runpodctl
 
 # --- Stage 2: Runtime ---
-FROM nvidia/cuda:12.9.0-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH="/app/src:/app/flux2:/app/facefusion:${PYTHONPATH}" \
+    PYTHONPATH="/app/facefusion:${PYTHONPATH}" \
     GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     MODEL_NAME="flux.2-dev" \
-    FLUX2_MODEL_PATH="/workspace/models/flux.2-dev/flux2-dev-fp8_scaled.safetensors" \
-    AE_MODEL_PATH="/workspace/models/flux.2-dev/ae.safetensors" \
+    FLUX2_MODEL_PATH="/workspace/models/flux.2-dev" \
     HF_HOME="/workspace/models" \
     FACEFUSION_DIR="/app/facefusion" \
-    FACEFUSION_MODELS_DIR="/workspace/models/facefusion" \
+    TORCHINDUCTOR_CACHE_DIR="/workspace/models/torch_compile_cache" \
     LOG_LEVEL="INFO"
 
-RUN apt-get update && apt-get install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12 \
-    libgl1-mesa-glx \
+    python3.12-dev \
+    libgl1 \
     libglib2.0-0 \
     ffmpeg \
     curl \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
-ENV CPATH="/usr/include/python3.12"
-ENV CC=gcc
+ENV CC=gcc \
+    CXX=g++ \
+    CPATH="/usr/include/python3.12"
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/facefusion /app/facefusion
@@ -80,9 +75,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 ENV TF_USE_LEGACY_KERAS=1
 
 WORKDIR /app
-COPY gen_text_image_to_image_service ./gen_text_image_to_image_service
-
-EXPOSE 8888
+COPY gen_ti2i_controlnet ./gen_ti2i_controlnet
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
