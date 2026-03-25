@@ -29,6 +29,14 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir --force-reinstall onnxruntime-gpu==1.20.1 \
     --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
+RUN pip install --no-cache-dir \
+    tensorrt==10.9.0.34 \
+    tensorrt-cu12-bindings==10.9.0.34 \
+    tensorrt-cu12-libs==10.9.0.34
+
+RUN pip install --no-cache-dir packaging ninja && \
+    TORCH_CUDA_ARCH_LIST="9.0 10.0" MAX_JOBS=4 pip install --no-cache-dir flash-attn==2.8.3 --no-build-isolation
+
 RUN find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null; \
     find /opt/venv -type d -name "__pycache__" -exec rm -rf {} +; \
     find /opt/venv -name "*.pyc" -delete; \
@@ -70,6 +78,10 @@ ENV CC=gcc \
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/facefusion /app/facefusion
 COPY --from=builder /usr/local/bin/runpodctl /usr/local/bin/runpodctl
+
+# Register TRT shared libs so onnxruntime can find libnvinfer.so.10
+RUN find /opt/venv -name "libnvinfer.so*" | head -1 | xargs -I{} dirname {} \
+    | xargs -I{} sh -c 'echo "{}" > /etc/ld.so.conf.d/tensorrt.conf' && ldconfig
 
 ENV PATH="/opt/venv/bin:$PATH"
 ENV TF_USE_LEGACY_KERAS=1

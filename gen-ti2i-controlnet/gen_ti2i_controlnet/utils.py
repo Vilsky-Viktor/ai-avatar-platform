@@ -23,6 +23,22 @@ def image_to_base64(image: Image.Image) -> str:
     return img_str
 
 
+def resize_image_with_padding(img: Image.Image, width: int, height: int) -> Image.Image:
+    """Resize preserving aspect ratio, pad to exact (width, height) with gray fill."""
+    img_ratio = img.width / img.height
+    target_ratio = width / height
+    if img_ratio > target_ratio:
+        new_w = width
+        new_h = round(width / img_ratio)
+    else:
+        new_h = height
+        new_w = round(height * img_ratio)
+    resized = img.resize((new_w, new_h), Image.LANCZOS)
+    padded = Image.new("RGB", (width, height), (128, 128, 128))
+    padded.paste(resized, ((width - new_w) // 2, (height - new_h) // 2))
+    return padded
+
+
 def timeit(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

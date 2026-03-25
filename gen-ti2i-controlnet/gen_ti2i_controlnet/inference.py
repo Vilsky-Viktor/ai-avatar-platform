@@ -1,11 +1,13 @@
 import os
 import sys
+import random
+from functools import partial
 
 import torch
-import random
 from diffusers import FlowMatchEulerDiscreteScheduler
 from omegaconf import OmegaConf
 from PIL import Image
+from safetensors.torch import load_file
 from gen_ti2i_controlnet.logger import get_logger
 
 current_file_path = os.path.abspath(__file__)
@@ -19,25 +21,28 @@ from gen_ti2i_controlnet.pipeline.models import (AutoencoderKLFlux2,
                                PixtralProcessor, Flux2ControlTransformer2DModel)
 from gen_ti2i_controlnet.pipeline.utils.utils import (get_image, get_image_latent)
 from gen_ti2i_controlnet.pipeline.pipeline import Flux2ControlPipeline
+from gen_ti2i_controlnet.pipeline.utils.fm_solvers import FlowDPMSolverMultistepScheduler
+from gen_ti2i_controlnet.pipeline.utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 
 FLUX2_MODEL_PATH = os.getenv("FLUX2_MODEL_PATH", "/workspace/models/flux.2-dev")
-
+WARMUP_RESOLUTIONS = [(1024, 1024)]
+WARMUP_STEPS = int(os.getenv("WARMUP_STEPS", "35"))
 
 logger = get_logger(__name__)
 
-GPU_memory_mode     = "model_full_load"
 ulysses_degree      = 1
 ring_degree         = 1
 fsdp_dit            = False
 fsdp_text_encoder   = False
 compile_dit         = True
 config_path         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
-model_name          = FLUX2_MODEL_PATH
-sampler_name        = "Flow"
 transformer_path    = f"{FLUX2_MODEL_PATH}/FLUX.2-dev-Fun-Controlnet-Union-2602.safetensors"
 vae_path            = None
 weight_dtype        = torch.bfloat16
+
+# Choose the sampler in "euler", "unipc", "dpm++"
+sampler_name        = "euler"
 
 pipeline = None
 device   = None
@@ -52,7 +57,7 @@ def load_pipeline():
     config = OmegaConf.load(config_path)
 
     transformer = Flux2ControlTransformer2DModel.from_pretrained(
-        model_name,
+        FLUX2_MODEL_PATH,
         subfolder="transformer",
         low_cpu_mem_usage=True,
         torch_dtype=weight_dtype,
@@ -62,7 +67,6 @@ def load_pipeline():
     if transformer_path is not None:
         logger.info(f"From checkpoint: {transformer_path}")
         if transformer_path.endswith("safetensors"):
-            from safetensors.torch import load_file
             state_dict = load_file(transformer_path)
         else:
             state_dict = torch.load(transformer_path, map_location="cpu")
@@ -72,14 +76,13 @@ def load_pipeline():
         logger.warning(f"missing keys: {len(m)}, unexpected keys: {len(u)}")
 
     vae = AutoencoderKLFlux2.from_pretrained(
-        model_name,
+        FLUX2_MODEL_PATH,
         subfolder="vae"
     ).to(weight_dtype)
 
     if vae_path is not None:
         logger.info(f"From checkpoint: {vae_path}")
         if vae_path.endswith("safetensors"):
-            from safetensors.torch import load_file
             state_dict = load_file(vae_path)
         else:
             state_dict = torch.load(vae_path, map_location="cpu")
@@ -89,15 +92,20 @@ def load_pipeline():
         logger.warning(f"missing keys: {len(m)}, unexpected keys: {len(u)}")
 
     tokenizer = PixtralProcessor.from_pretrained(
-        model_name, subfolder="tokenizer"
+        FLUX2_MODEL_PATH, subfolder="tokenizer"
     )
     text_encoder = Mistral3ForConditionalGeneration.from_pretrained(
-        model_name, subfolder="text_encoder", torch_dtype=weight_dtype,
+        FLUX2_MODEL_PATH, subfolder="text_encoder", torch_dtype=weight_dtype,
         low_cpu_mem_usage=True,
     )
 
-    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
-        model_name,
+    Chosen_Scheduler = {
+        "euler": FlowMatchEulerDiscreteScheduler,
+        "unipc": FlowUniPCMultistepScheduler,
+        "dpm++": FlowDPMSolverMultistepScheduler,
+    }[sampler_name]
+    scheduler = Chosen_Scheduler.from_pretrained(
+        FLUX2_MODEL_PATH, 
         subfolder="scheduler"
     )
 
@@ -110,7 +118,6 @@ def load_pipeline():
     )
 
     if ulysses_degree > 1 or ring_degree > 1:
-        from functools import partial
         transformer.enable_multi_gpus_inference()
         if fsdp_dit:
             shard_fn = partial(shard_model, device_id=device, param_dtype=weight_dtype, module_to_wrapper=list(transformer.transformer_blocks) + list(transformer.single_transformer_blocks))
@@ -122,51 +129,54 @@ def load_pipeline():
             logger.info("Add FSDP TEXT ENCODER")
 
     if compile_dit:
-        logger.info("Add Compile")
-        torch._dynamo.config.recompile_limit = len(pipeline.transformer.transformer_blocks) + 10
+        logger.info("Add dynamic max autotune compilation with no cuda graphs")
+        total_blocks = len(pipeline.transformer.transformer_blocks) + len(pipeline.transformer.single_transformer_blocks)
+        torch._dynamo.config.recompile_limit = total_blocks + 10
+        compile_kwargs = dict(
+            dynamic=True,
+            options={
+                "max_autotune": True,
+                "max_autotune_gemm": True,
+                "triton.cudagraphs": False,
+                "epilogue_fusion": True,
+                "shape_padding": True,
+            },
+        )
         for i in range(len(pipeline.transformer.transformer_blocks)):
-            pipeline.transformer.transformer_blocks[i] = torch.compile(pipeline.transformer.transformer_blocks[i])
+            pipeline.transformer.transformer_blocks[i] = torch.compile(pipeline.transformer.transformer_blocks[i], **compile_kwargs)
+        for i in range(len(pipeline.transformer.single_transformer_blocks)):
+            pipeline.transformer.single_transformer_blocks[i] = torch.compile(pipeline.transformer.single_transformer_blocks[i], **compile_kwargs)
         
     logger.info("Loading model into VRAM ...")
-    if GPU_memory_mode == "model_cpu_offload":
-        pipeline.enable_model_cpu_offload(device=device)
-    else:
-        pipeline.to(device=device)
+    pipeline.to(device=device)
 
-
-WARMUP_RESOLUTIONS = [(1024, 1024)]
-
-def _warmup_single(height: int, width: int, control_image):
-    dummy_image = Image.new("RGB", (width, height), color=(128, 128, 128))
+def _warmup_single(height: int, width: int, control_image, images: list):
     pipeline(
         prompt                = "a person",
         height                = height,
         width                 = width,
         generator             = torch.Generator(device=device).manual_seed(0),
         guidance_scale        = 4.0,
-        image                 = [dummy_image],
+        image                 = [get_image(img) for img in images],
         inpaint_image         = torch.zeros([1, 3, height, width]),
         mask_image            = torch.ones([1, 1, height, width]) * 255,
         control_image         = control_image,
-        num_inference_steps   = 1,
+        num_inference_steps   = WARMUP_STEPS,
         control_context_scale = 0.75,
     )
 
-def warmup():
+def warmup(images: list, pose_images: list | None = None):
     logger.info("Warming up pipeline (compiling kernels) ...")
     with torch.no_grad():
-        for height, width in WARMUP_RESOLUTIONS:
+        for i, (height, width) in enumerate(WARMUP_RESOLUTIONS):
             logger.info(f"Warming up {width}x{height} without control image ...")
-            _warmup_single(height, width, control_image=None)
+            _warmup_single(height, width, control_image=None, images=images)
 
             logger.info(f"Warming up {width}x{height} with control image ...")
-            dummy_control = get_image_latent(
-                Image.new("RGB", (width, height), color=(128, 128, 128)),
-                sample_size=[height, width]
-            )[:, :, 0]
-            _warmup_single(height, width, control_image=dummy_control)
+            pose_img = pose_images[i] if pose_images and i < len(pose_images) else Image.new("RGB", (width, height), (128, 128, 128))
+            dummy_control = get_image_latent(pose_img, sample_size=[height, width])[:, :, 0]
+            _warmup_single(height, width, control_image=dummy_control, images=images)
 
-    torch.cuda.empty_cache()
     logger.info("Warmup complete")
 
 

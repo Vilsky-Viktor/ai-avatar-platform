@@ -111,10 +111,6 @@ def complete_result(result: dict, media_path: str, similarity: float | None, sim
     result["numRuns"] = num_runs
     return result
 
-def publish_completed_result(result: dict, job_id: str):
-    logger.info(f"Publishing completed status for job {job_id}")
-    mq.publish_status(result)
-
 def publish_error_result(result: dict, error: Exception, job_id: str, num_runs: int):
     result["status"] = "error"
     result["error"] = str(error)
@@ -159,7 +155,8 @@ def finalize_completed_result(media_path, result, max_similarity, similarities, 
     storage.cleanup_tmp_files(media_path, total_runs)
 
     complete_result(result, media_path, max_similarity, similarities, num_runs)
-    publish_completed_result(result, job_id)
+    mq.publish_status(result)
+    logger.info("Completed status has been published")
 
 # ---------------------------------------------------------------------------
 # Outcome handlers
@@ -307,10 +304,19 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 
 if __name__ == "__main__":
     storage.download_models(MODEL_NAME)
+    storage.download_dummy_images()
+    dummy_images = storage.load_dummy_images(inference.WARMUP_RESOLUTIONS)
+    dummy_pose_images = storage.load_dummy_pose_images(inference.WARMUP_RESOLUTIONS)
+
     face_swap.download_models()
+    face_swap.load_processors()
+    face_swap.warmup(dummy_images)
+
     face_recognition.get_app()
+    face_recognition.warmup(dummy_images)
+
     inference.load_pipeline()
-    inference.warmup()
+    inference.warmup(dummy_images, dummy_pose_images)
 
     subscriber = mq.get_subscriber_client()
     sub_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)

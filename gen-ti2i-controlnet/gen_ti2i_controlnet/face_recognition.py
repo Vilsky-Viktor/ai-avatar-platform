@@ -1,4 +1,6 @@
 import os
+import glob
+import shutil
 import time
 import cv2
 import numpy as np
@@ -21,8 +23,6 @@ _id_embedding_cache: OrderedDict[int, tuple[np.ndarray | None, float]] = Ordered
 
 def get_app():
     global _face_app
-    import glob
-    import shutil
 
     # InsightFace stores models at {root}/models/{name}/.
     # If a previous run created the directory but failed mid-download,
@@ -37,10 +37,20 @@ def get_app():
     _face_app = FaceAnalysis(
         name=INSIGHTFACE_MODEL,
         root="/workspace/models",
+        # TODO: try TensorrtExecutionProvider
         providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
     )
     _face_app.prepare(ctx_id=0, det_size=INSIGHTFACE_DET_SIZE)
     logger.info("InsightFace model loaded successfully")
+
+
+def warmup(images: list):
+    logger.info("Warming up InsightFace ...")
+    for img in images:
+        image_bytes = utils_module.to_image_bytes(img)
+        embedding = get_face_embedding(image_bytes)
+        logger.debug(f"InsightFace warmup embedding: {embedding is not None}")
+    logger.info("InsightFace warmup complete")
 
 
 def _ensure_loaded():

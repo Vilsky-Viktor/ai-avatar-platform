@@ -7,6 +7,7 @@ from google.cloud import storage
 from PIL import Image, ExifTags
 from filelock import FileLock, Timeout
 from gen_ti2i_controlnet.logger import get_logger
+import gen_ti2i_controlnet.utils as utils
 
 logger = get_logger(__name__)
 storage_client = storage.Client()
@@ -105,6 +106,61 @@ def _load_image_from_disk(local_path: Path, label: str) -> Image.Image | None:
         logger.warning(f"Corrupted cache file {local_path}: {e} — will re-download")
         local_path.unlink(missing_ok=True)
         return None
+
+
+DUMMY_IMAGES_LOCAL_DIR = Path("/workspace/dummy")
+DUMMY_IMAGE_PATH = "dummy/person.jpg"
+DUMMY_POSE_PATH = "dummy/pose.png"
+
+
+def download_dummy_images():
+    DUMMY_IMAGES_LOCAL_DIR.mkdir(parents=True, exist_ok=True)
+    bucket = storage_client.bucket(BUCKET_NAME)
+    for blob_path in (DUMMY_IMAGE_PATH, DUMMY_POSE_PATH):
+        local_path = DUMMY_IMAGES_LOCAL_DIR / Path(blob_path).name
+        if not local_path.exists():
+            logger.info(f"Downloading dummy image: {blob_path}")
+            bucket.blob(blob_path).download_to_filename(str(local_path))
+    logger.info("Dummy images ready")
+
+
+def load_dummy_images(resolutions: list[tuple[int, int]] | None = None) -> list:
+    """Load the dummy image resized (with padding) to each resolution.
+
+    ``resolutions`` is a list of (height, width) tuples matching WARMUP_RESOLUTIONS.
+    Returns at least 2 images so face-swap warmup always has a source and a target.
+    """
+    local_path = DUMMY_IMAGES_LOCAL_DIR / Path(DUMMY_IMAGE_PATH).name
+    img = _load_image_from_disk(local_path, DUMMY_IMAGE_PATH)
+    if img is None:
+        return []
+
+    if not resolutions:
+        resolutions = [(1024, 1024)]
+
+    images = [utils.resize_image_with_padding(img, w, h) for h, w in resolutions]
+
+    # face_swap warmup requires at least 2 images (source + target)
+    if len(images) == 1:
+        images = images * 2
+
+    return images
+
+
+def load_dummy_pose_images(resolutions: list[tuple[int, int]] | None = None) -> list:
+    """Load the dummy pose image resized (with padding) to each resolution.
+
+    ``resolutions`` is a list of (height, width) tuples matching WARMUP_RESOLUTIONS.
+    """
+    local_path = DUMMY_IMAGES_LOCAL_DIR / Path(DUMMY_POSE_PATH).name
+    img = _load_image_from_disk(local_path, DUMMY_POSE_PATH)
+    if img is None:
+        return []
+
+    if not resolutions:
+        resolutions = [(1024, 1024)]
+
+    return [utils.resize_image_with_padding(img, w, h) for h, w in resolutions]
 
 
 def download_models(model_name):
