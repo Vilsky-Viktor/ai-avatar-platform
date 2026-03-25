@@ -4,6 +4,7 @@ import random
 from functools import partial
 
 import torch
+from torchao.quantization import quantize_, Float8DynamicActivationFloat8WeightConfig, PerRow
 from diffusers import FlowMatchEulerDiscreteScheduler
 from omegaconf import OmegaConf
 from PIL import Image
@@ -28,6 +29,10 @@ from gen_ti2i_controlnet.pipeline.utils.fm_solvers_unipc import FlowUniPCMultist
 FLUX2_MODEL_PATH = os.getenv("FLUX2_MODEL_PATH", "/workspace/models/flux.2-dev")
 WARMUP_RESOLUTIONS = [(1024, 1024)]
 WARMUP_STEPS = int(os.getenv("WARMUP_STEPS", "35"))
+# Choose precision in "bf16", "fp8"
+MODEL_PRECISION = os.getenv("MODEL_PRECISION", "bf16")
+# Choose the sampler in "euler", "unipc", "dpm++"
+MODEL_SAMPLER_NAME = os.getenv("MODEL_SAMPLER_NAME", "euler")
 
 logger = get_logger(__name__)
 
@@ -40,9 +45,6 @@ config_path         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 transformer_path    = f"{FLUX2_MODEL_PATH}/FLUX.2-dev-Fun-Controlnet-Union-2602.safetensors"
 vae_path            = None
 weight_dtype        = torch.bfloat16
-
-# Choose the sampler in "euler", "unipc", "dpm++"
-sampler_name        = "euler"
 
 pipeline = None
 device   = None
@@ -103,7 +105,7 @@ def load_pipeline():
         "euler": FlowMatchEulerDiscreteScheduler,
         "unipc": FlowUniPCMultistepScheduler,
         "dpm++": FlowDPMSolverMultistepScheduler,
-    }[sampler_name]
+    }[MODEL_SAMPLER_NAME]
     scheduler = Chosen_Scheduler.from_pretrained(
         FLUX2_MODEL_PATH, 
         subfolder="scheduler"
@@ -128,6 +130,14 @@ def load_pipeline():
             text_encoder = shard_fn(text_encoder)
             logger.info("Add FSDP TEXT ENCODER")
 
+    logger.info("Loading model into VRAM ...")
+    pipeline.to(device=device)
+
+    if MODEL_PRECISION == "fp8":
+        logger.info("Applying FP8 quantization to transformer ...")
+        quantize_(pipeline.transformer, Float8DynamicActivationFloat8WeightConfig(granularity=PerRow()))
+        logger.info("FP8 quantization applied")
+
     if compile_dit:
         logger.info("Add dynamic max autotune compilation with no cuda graphs")
         total_blocks = len(pipeline.transformer.transformer_blocks) + len(pipeline.transformer.single_transformer_blocks)
@@ -146,13 +156,10 @@ def load_pipeline():
             pipeline.transformer.transformer_blocks[i] = torch.compile(pipeline.transformer.transformer_blocks[i], **compile_kwargs)
         for i in range(len(pipeline.transformer.single_transformer_blocks)):
             pipeline.transformer.single_transformer_blocks[i] = torch.compile(pipeline.transformer.single_transformer_blocks[i], **compile_kwargs)
-        
-    logger.info("Loading model into VRAM ...")
-    pipeline.to(device=device)
 
 def _warmup_single(height: int, width: int, control_image, images: list):
     pipeline(
-        prompt                = "a person",
+        prompt                = "Keep exact facial identity and proportions from reference image. Front close-up headshot ID photo. Wearing white t-shirt. Soft diffused studio lighting. Plain light gray background. No color grading, natural skin tones, no filters. 85mm portrait lens, no lens distortion. Hyperrealistic photograph, 8K detail, skin details, hair details. Sharp focus on face",
         height                = height,
         width                 = width,
         generator             = torch.Generator(device=device).manual_seed(0),

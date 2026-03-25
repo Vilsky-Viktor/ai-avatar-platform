@@ -75,29 +75,29 @@ export const generatePhotoSetInputs = (
     // =================================================================
 
     // Extreme close-up (skin/eye/lip texture lock)
-    // {
-    //   prompt: `Keep exact facial identity, proportions and skin color from reference image. Extreme close-up portrait, face only, cropped tightly at the chin and forehead edges. Face fills 95% of the frame. No shoulders, no neck visible. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-      // faceSwap: { enabled: true, model: 'hyperswap_1b_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-      // faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
-    //   controlImage: "poses/avatar-training-photoset/1-1024x1024.png",
-    //   controlnetScale: 0.2,
-    //   order: 1,
-    // },
-    // // Front facing ID headshot
     {
-      prompt: `Keep exact facial identity and proportions from reference image. Front close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+      prompt: `Keep exact facial identity, proportions and skin color from reference image. Extreme close-up portrait, face only, cropped tightly at the chin and forehead edges. Face fills 95% of the frame. No shoulders, no neck visible. ${idPhotoEnv}. ${qualityAddition}`,
       similarityThreshold: 0.9,
       imagePaths: [idPhotoSet.front],
       idPhotoPaths: [idPhotoSet.front],
       faceSwap: { enabled: true, model: 'hyperswap_1b_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
       faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
-      controlImage: "poses/avatar-training-photoset/2-1024x1024.png",
+      controlImage: "poses/avatar-training-photoset/1-1024x1024.png",
       controlnetScale: 0.2,
-      order: 2,
+      order: 1,
     },
+    // // Front facing ID headshot
+    // {
+    //   prompt: `Keep exact facial identity and proportions from reference image. Front close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   similarityThreshold: 0.9,
+    //   imagePaths: [idPhotoSet.front],
+    //   idPhotoPaths: [idPhotoSet.front],
+    //   faceSwap: { enabled: true, model: 'hyperswap_1b_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
+    //   controlImage: "poses/avatar-training-photoset/2-1024x1024.png",
+    //   controlnetScale: 0.2,
+    //   order: 2,
+    // },
     // // Front facing ID headshot (smile variation)
     // {
     //   prompt: `Keep exact facial identity and proportions from reference image. Front close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,

@@ -34,11 +34,21 @@ def get_app():
         shutil.rmtree(model_dir)
 
     logger.info(f"Loading InsightFace model: {INSIGHTFACE_MODEL}")
+    trt_cache_path = "/workspace/models/trt_cache"
+    os.makedirs(trt_cache_path, exist_ok=True)
+
     _face_app = FaceAnalysis(
         name=INSIGHTFACE_MODEL,
         root="/workspace/models",
-        # TODO: try TensorrtExecutionProvider
-        providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        providers=[
+            ("TensorrtExecutionProvider", {
+                "trt_engine_cache_enable": "1",
+                "trt_engine_cache_path": trt_cache_path,
+                "trt_fp16_enable": "1",
+            }),
+            "CUDAExecutionProvider",
+            "CPUExecutionProvider",
+        ]
     )
     _face_app.prepare(ctx_id=0, det_size=INSIGHTFACE_DET_SIZE)
     logger.info("InsightFace model loaded successfully")

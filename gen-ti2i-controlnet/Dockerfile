@@ -58,7 +58,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HOME="/workspace/models" \
     FACEFUSION_DIR="/app/facefusion" \
     TORCHINDUCTOR_CACHE_DIR="/workspace/models/torch_compile_cache" \
-    LOG_LEVEL="INFO"
+    LOG_LEVEL="INFO" \
+    MODEL_PRECISION="bf16" \
+    TORCHAO_FORCE_SKIP_LOADING_SO_FILES="1"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12 \
