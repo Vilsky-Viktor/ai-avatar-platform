@@ -12,7 +12,7 @@ from gen_ti2i_controlnet.logger import get_logger
 
 FACEFUSION_DIR = os.getenv("FACEFUSION_DIR")
 TRT_CACHE_DIR = os.getenv("TRT_CACHE_DIR", "/workspace/models/trt_cache")
-DEVICE = "cuda"
+USE_FACE_SWAP_TRT_EXECUTOR = os.getenv("USE_FACE_SWAP_TRT_EXECUTOR", "true").lower() == "true"
 
 if FACEFUSION_DIR and FACEFUSION_DIR not in sys.path:
     sys.path.insert(0, FACEFUSION_DIR)
@@ -61,7 +61,7 @@ def _init_state(swapper_model: str = None, swapper_pixel_boost: str = "1024x1024
                 swapper_weight: float = 1.0, enhancer_model: str = None,
                 enhancer_blend: float = 80, enhancer_weight: float = 1.0):
     state_manager.set_item("download_providers", download_providers)
-    state_manager.set_item("execution_providers", ["tensorrt", "cuda"])
+    state_manager.set_item("execution_providers", ["tensorrt", "cuda"] if USE_FACE_SWAP_TRT_EXECUTOR else ["cuda"])
     state_manager.set_item("execution_device_ids", [0])
     state_manager.set_item("video_memory_strategy", "tolerant")
 

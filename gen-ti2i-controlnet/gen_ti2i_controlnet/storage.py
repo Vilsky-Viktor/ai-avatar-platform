@@ -28,6 +28,9 @@ TMP_TTL_SECONDS = int(os.getenv("TMP_TTL_SECONDS", str(7 * 24 * 3600)))
 LOCAL_MEDIA_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 LOCAL_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
+EVICTION_INTERVAL_SECONDS = 60
+_last_eviction_time: float = 0.0
+
 
 def _get_media_cache_path(blob_path: str) -> Path:
     """Map GCS blob path → local media cache path (preserving folder structure)"""
@@ -190,8 +193,12 @@ def download_models(model_name):
 
 
 def load_input_images(image_paths: list[str], safety_checker=None) -> list[Image.Image]:
-    _evict_expired_media()
-    _evict_expired_tmp()
+    global _last_eviction_time
+    now = time.time()
+    if now - _last_eviction_time >= EVICTION_INTERVAL_SECONDS:
+        _evict_expired_media()
+        _evict_expired_tmp()
+        _last_eviction_time = now
 
     bucket = storage_client.bucket(BUCKET_NAME)
     valid_images = []

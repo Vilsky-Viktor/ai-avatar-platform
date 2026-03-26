@@ -60,7 +60,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TORCHINDUCTOR_CACHE_DIR="/workspace/models/torch_compile_cache" \
     LOG_LEVEL="INFO" \
     MODEL_PRECISION="bf16" \
-    TORCHAO_FORCE_SKIP_LOADING_SO_FILES="1"
+    TORCHAO_FORCE_SKIP_LOADING_SO_FILES="1" \
+    USE_MODEL_COMPILATION="true" \
+    USE_FACE_SWAP_TRT_EXECUTOR="true" \
+    USE_FACE_RECOGNITION_TRT_EXECUTOR="true"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12 \

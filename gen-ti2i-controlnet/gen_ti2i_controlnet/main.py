@@ -58,7 +58,7 @@ def is_first_run(num_runs: int) -> bool:
 
 def job_canceled(job_id: str):
     db_job = db.get_job_by_id(job_id)
-    if not db_job or (db_job and db_job["status"] == "canceled"):
+    if not db_job or db_job["status"] == "canceled":
         logger.info(f"Job {job_id} was removed or canceled")
         return True
 
@@ -154,7 +154,7 @@ def finalize_completed_result(media_path, result, max_similarity, similarities, 
     storage.move_tmp_to_media_cache(media_path, best_run)
     storage.cleanup_tmp_files(media_path, total_runs)
 
-    complete_result(result, media_path, max_similarity, similarities, num_runs)
+    complete_result(result, media_path, max_similarity, similarities, total_runs)
     mq.publish_status(result)
     logger.info("Completed status has been published")
 
@@ -163,9 +163,9 @@ def finalize_completed_result(media_path, result, max_similarity, similarities, 
 # ---------------------------------------------------------------------------
 
 @utils.timeit
-def handle_no_face_detected(result: dict, job: dict, img, similarity: float, previous: dict,
+def handle_no_face_match(result: dict, job: dict, img, similarity: float, previous: dict,
                              user_id: str, avatar_id: str, num_runs: int, id_photos, reference_images):
-    logger.info("No faces detected")
+    logger.info("No face match")
 
     media_path = get_media_path(job, user_id, avatar_id)
     img_payload = storage.prepare_image_payload(img)
@@ -243,7 +243,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
     user_id = job.get("userId", "")
     avatar_id = job.get("avatarId", "")
     job_input = job.get("input", {})
-    check_dependency_image_existence = job_input.get("checkDependencyImageExistance", False)
+    check_dependency_image_existence = job_input.get("checkDependencyImageExistence", False)
     max_runs = job_input.get("maxRuns")
     similarity_threshold = job_input.get("similarityThreshold")
     num_runs = job.get("numRuns", 0)
@@ -286,7 +286,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         logger.info(f"Face match {similarity or 0} / threshold {similarity_threshold}. Job {job_id}")
 
         if similarity < 0.4 or not id_photo_paths:
-            handle_no_face_detected(result, job, img, similarity, previous, user_id, avatar_id, num_runs, id_photos, reference_images)
+            handle_no_face_match(result, job, img, similarity, previous, user_id, avatar_id, num_runs, id_photos, reference_images)
         elif similarity > previous["max_similarity"]:
             handle_improved_face_match(result, job, img, user_id, avatar_id, similarity, previous, num_runs, job_id, id_photos, reference_images)
         else:
@@ -303,20 +303,37 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    storage.download_models(MODEL_NAME)
-    storage.download_dummy_images()
+    try:
+        storage.download_models(MODEL_NAME)
+        storage.download_dummy_images()
+    except Exception as e:
+        logger.error(f"Failed to download models or dummy images: {e}", exc_info=True)
+        raise
+
     dummy_images = storage.load_dummy_images(inference.WARMUP_RESOLUTIONS)
     dummy_pose_images = storage.load_dummy_pose_images(inference.WARMUP_RESOLUTIONS)
 
-    face_swap.download_models()
-    face_swap.load_processors()
-    face_swap.warmup(dummy_images)
+    try:
+        face_swap.download_models()
+        face_swap.load_processors()
+        face_swap.warmup(dummy_images)
+    except Exception as e:
+        logger.error(f"Failed to initialize face swap: {e}", exc_info=True)
+        raise
 
-    face_recognition.get_app()
-    face_recognition.warmup(dummy_images)
+    try:
+        face_recognition.get_app()
+        face_recognition.warmup(dummy_images)
+    except Exception as e:
+        logger.error(f"Failed to initialize face recognition: {e}", exc_info=True)
+        raise
 
-    inference.load_pipeline()
-    inference.warmup(dummy_images, dummy_pose_images)
+    try:
+        inference.load_pipeline()
+        inference.warmup(dummy_images, dummy_pose_images)
+    except Exception as e:
+        logger.error(f"Failed to load inference pipeline: {e}", exc_info=True)
+        raise
 
     subscriber = mq.get_subscriber_client()
     sub_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)

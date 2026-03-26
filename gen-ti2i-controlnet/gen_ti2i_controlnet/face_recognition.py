@@ -16,6 +16,7 @@ INSIGHTFACE_DET_SIZE     = (640, 640)
 EMBEDDING_CACHE_TTL      = int(os.getenv("EMBEDDING_CACHE_TTL", "3600"))
 EMBEDDING_CACHE_MAX_SIZE = int(os.getenv("EMBEDDING_CACHE_MAX_SIZE", "500"))
 TRT_CACHE_DIR = os.getenv("TRT_CACHE_DIR", "/workspace/models/trt_cache")
+USE_FACE_RECOGNITION_TRT_EXECUTOR = os.getenv("USE_FACE_RECOGNITION_TRT_EXECUTOR", "true").lower() == "true"
 
 logger = log_module.get_logger(__name__)
 _face_app = None
@@ -35,12 +36,10 @@ def get_app():
         shutil.rmtree(model_dir)
 
     logger.info(f"Loading InsightFace model: {INSIGHTFACE_MODEL}")
-    os.makedirs(TRT_CACHE_DIR, exist_ok=True)
 
-    _face_app = FaceAnalysis(
-        name=INSIGHTFACE_MODEL,
-        root="/workspace/models",
-        providers=[
+    if USE_FACE_RECOGNITION_TRT_EXECUTOR:
+        os.makedirs(TRT_CACHE_DIR, exist_ok=True)
+        providers = [
             ("TensorrtExecutionProvider", {
                 "trt_engine_cache_enable": "True",
                 "trt_engine_cache_path": TRT_CACHE_DIR,
@@ -49,6 +48,13 @@ def get_app():
             "CUDAExecutionProvider",
             "CPUExecutionProvider",
         ]
+    else:
+        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+
+    _face_app = FaceAnalysis(
+        name=INSIGHTFACE_MODEL,
+        root="/workspace/models",
+        providers=providers,
     )
     _face_app.prepare(ctx_id=0, det_size=INSIGHTFACE_DET_SIZE)
     logger.info("InsightFace model loaded successfully")

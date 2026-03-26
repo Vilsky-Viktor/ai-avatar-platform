@@ -33,6 +33,7 @@ WARMUP_STEPS = int(os.getenv("WARMUP_STEPS", "35"))
 MODEL_PRECISION = os.getenv("MODEL_PRECISION", "bf16")
 # Choose the sampler in "euler", "unipc", "dpm++"
 MODEL_SAMPLER_NAME = os.getenv("MODEL_SAMPLER_NAME", "euler")
+USE_MODEL_COMPILATION = os.getenv("USE_MODEL_COMPILATION", "true").lower() == "true"
 
 logger = get_logger(__name__)
 
@@ -40,7 +41,6 @@ ulysses_degree      = 1
 ring_degree         = 1
 fsdp_dit            = False
 fsdp_text_encoder   = False
-compile_dit         = True
 config_path         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
 transformer_path    = f"{FLUX2_MODEL_PATH}/FLUX.2-dev-Fun-Controlnet-Union-2602.safetensors"
 vae_path            = None
@@ -138,7 +138,7 @@ def load_pipeline():
         quantize_(pipeline.transformer, Float8DynamicActivationFloat8WeightConfig(granularity=PerRow()))
         logger.info("FP8 quantization applied")
 
-    if compile_dit:
+    if USE_MODEL_COMPILATION:
         logger.info("Add dynamic max autotune compilation with no cuda graphs")
         total_blocks = len(pipeline.transformer.transformer_blocks) + len(pipeline.transformer.single_transformer_blocks)
         torch._dynamo.config.recompile_limit = total_blocks + 10
