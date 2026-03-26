@@ -42,9 +42,9 @@ def get_app():
         root="/workspace/models",
         providers=[
             ("TensorrtExecutionProvider", {
-                "trt_engine_cache_enable": "1",
+                "trt_engine_cache_enable": "True",
                 "trt_engine_cache_path": trt_cache_path,
-                "trt_fp16_enable": "1",
+                "trt_fp16_enable": "True",
             }),
             "CUDAExecutionProvider",
             "CPUExecutionProvider",
