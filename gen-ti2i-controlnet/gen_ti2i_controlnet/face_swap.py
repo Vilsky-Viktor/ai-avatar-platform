@@ -11,6 +11,7 @@ from gen_ti2i_controlnet.logger import get_logger
 
 
 FACEFUSION_DIR = os.getenv("FACEFUSION_DIR")
+TRT_CACHE_DIR = os.getenv("TRT_CACHE_DIR", "/workspace/models/trt_cache")
 DEVICE = "cuda"
 
 if FACEFUSION_DIR and FACEFUSION_DIR not in sys.path:
@@ -25,7 +26,9 @@ from facefusion.processors.modules.face_swapper import core as face_swapper_core
 from facefusion.processors.modules.face_enhancer import core as face_enhancer_core
 
 # Redirect TRT engine cache to persistent storage so engines survive pod restarts
-ff_execution.resolve_cache_path = lambda: f"/workspace/.caches/{_ort.get_version_string()}"
+_trt_cache_path = os.path.join(TRT_CACHE_DIR, _ort.get_version_string())
+os.makedirs(_trt_cache_path, exist_ok=True)
+ff_execution.resolve_cache_path = lambda: _trt_cache_path
 
 # Processor models (face swapper + enhancer)
 FACEFUSION_PROCESSOR_MODELS = [
