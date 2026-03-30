@@ -28,27 +28,39 @@ export type FaceEnhancementParams = {
   model?: string;
   weight?: number;
   blend?: number;
+  referenceIdx?: number;
+}
+
+export type InferenceLevel = {
+  numRuns: number;
+  numInferenceSteps: number;
+  width: number;
+  height: number;
+}
+
+export type Inference = {
+  imagePaths: string[];
+  idPhotoPaths: string[];
+  inferenceLevels: InferenceLevel[];
+  guidance?: number;
+  seed?: number;
+}
+
+export type ControlNet = {
+  enabled: boolean;
+  imagePath?: string;
+  scale?: number;
 }
 
 export type JobInput = {
   prompt?: string;
-  idPhotoPaths?: string[];
-  imagePaths?: string[];
   videoPath?: string;
-  width: number;
-  height: number;
-  guidance: number;
-  numSteps: number;
-  maxRuns: number;
-  similarityThreshold?: number;
-  checkDependencyImageExistance: boolean;
-  resultFileName?: string;
-  upsamplePromptMode: string;
-  seed?: number;
+  checkDependencyImageExistence: boolean;
   faceSwap?: FaceSwapParams;
   faceEnhancement?: FaceEnhancementParams;
-  controlImage?: string;
-  controlnetScale?: number;
+  controlnet?: ControlNet;
+  inference?: Inference;
+  resultFileName?: string;
 }
 
 export type JobRequestInput = {

@@ -12,7 +12,7 @@ admin.initializeApp({
     storageBucket: process.env.BUCKET_NAME
 });
 
-import upsamplerRoutes from './routes/upsampler';
+import llmRoutes from './routes/llm';
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -20,7 +20,7 @@ const app = express();
 app.use(pinoHttp({ logger, autoLogging: false }));
 app.use(express.json());
 
-app.use('/', upsamplerRoutes);
+app.use('/', llmRoutes);
 
 app.use(errorHandler);
 

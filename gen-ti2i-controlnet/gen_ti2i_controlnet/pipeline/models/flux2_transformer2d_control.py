@@ -90,7 +90,7 @@ class BaseFlux2TransformerBlock(Flux2TransformerBlock):
 
     def forward(self, hidden_states, hints=None, context_scale=1.0, **kwargs):
         encoder_hidden_states, hidden_states = super().forward(hidden_states, **kwargs)
-        if self.block_id is not None:
+        if self.block_id is not None and hints is not None:
             if VIDEOX_OFFLOAD_VACE_LATENTS:
                 hidden_states = hidden_states + hints[self.block_id].to(hidden_states.device) * context_scale
             else:
@@ -273,9 +273,12 @@ class Flux2ControlTransformer2DModel(Flux2Transformer2DModel):
             image_rotary_emb=concat_rotary_emb,
             joint_attention_kwargs=joint_attention_kwargs,
         )
-        hints = self.forward_control(
-            hidden_states, control_context, kwargs
-        )
+        if control_context_scale != 0:
+            hints = self.forward_control(
+                hidden_states, control_context, kwargs
+            )
+        else:
+            hints = None
 
         for index_block, block in enumerate(self.transformer_blocks):
             # Arguments

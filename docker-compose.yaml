@@ -105,7 +105,7 @@ services:
       - JOBS_COLLECTION_NAME=jobs
       - GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC=generate-text-image-to-image
       - RUNPOD_SERVICE_URL=http://runpod-service:3500
-      - PROMPT_UPSAMPLER_SERVICE_URL=http://prompt-upsampler-service:3700
+      - LLM_REQUEST_SERVICE_URL=http://llm-request-service:3700
 
   ai-model-result-service:
     <<: *default-dns
@@ -191,16 +191,16 @@ services:
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - MEDIA_COLLECTION_NAME=voices
 
-  prompt-upsampler-service:
+  llm-request-service:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./prompt-upsampler-service
+      context: ./llm-request-service
     ports:
       - "3700:3700"
     volumes:
-      - ./prompt-upsampler-service:/app
+      - ./llm-request-service:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:

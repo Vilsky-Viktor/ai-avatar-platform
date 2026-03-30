@@ -63,11 +63,12 @@ export const generatePhotoSetInputs = (
   parameters: AvatarParameters & { gender: string },
   idPhotoSet: IdPhotoSetPaths
 ): TrainingPhotoSetInput[] => {
-  const { gender, height, body, bodyHair, bustSize } = parameters;
+  const { gender, height, body, bodyHair, bustSize, skinColor, ethnicity } = parameters;
 
   const isFemale = gender === 'female';
-  const qualityAddition = 'Hyperrealistic photograph, 8K detail, skin details, hair details. Sharp focus on face';
-  const idPhotoEnv = 'Soft diffused studio lighting. Plain light gray background. No color grading, natural skin tones, no filters. 85mm portrait lens, no lens distortion';
+  const qualityAddition = `Hyperrealistic photograph, 8K detail, skin details, hair details. Sharp focus on face`;
+  const idPhotoEnv = 'Soft diffused studio lighting. Plain light gray background';
+  const identityAddition = `Keep exact facial identity, proportions and skin color from reference image`;
 
   return [
     // =================================================================
@@ -75,155 +76,208 @@ export const generatePhotoSetInputs = (
     // =================================================================
 
     // Extreme close-up (skin/eye/lip texture lock)
-    // {
-    //   prompt: `Keep exact facial identity, proportions and skin color from reference image. Extreme close-up portrait, face only, cropped tightly at the chin and forehead edges. Face fills 95% of the frame. No shoulders, no neck visible. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1b_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
-    //   controlImage: "poses/avatar-training-photoset/1-1024x1024.png",
-    //   controlnetScale: 0.2,
-    //   order: 1,
-    // },
-    // // Front facing ID headshot
     {
-      prompt: `Keep exact facial identity and proportions from reference image. Front close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-      similarityThreshold: 0.9,
-      imagePaths: [idPhotoSet.front],
-      idPhotoPaths: [idPhotoSet.front],
-      faceSwap: { enabled: true, model: 'hyperswap_1b_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
-      controlImage: "poses/avatar-training-photoset/2-1024x1024.png",
-      controlnetScale: 0.2,
-      numSteps: 20,
+      prompt: `${identityAddition}. Extreme close-up portrait, face only, cropped tightly at the chin and forehead edges. Face fills 95% of the frame. No shoulders, no neck visible. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        inferenceLevels: [
+          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
+          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+      order: 1,
+    },
+    // Front facing ID headshot
+    {
+      prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing coal t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        inferenceLevels: [
+          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
+          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
       order: 2,
     },
-    // // Front facing ID headshot (smile variation)
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference image. Front close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.95,
-    //   imagePaths: [idPhotoSet.frontSmile],
-    //   idPhotoPaths: [idPhotoSet.frontSmile],
-    //   // faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   // faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   controlImage: "poses/avatar-training-photoset/3-1024x1024.png",
-    //   controlnetScale: 0.75,
-    //   order: 3,
-    // },
-    // // Right quarter ID headshot
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference image. Three-quarter 45 degree view close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //   // faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   // faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   controlImage: "poses/avatar-training-photoset/4-1024x1024.png",
-    //   controlnetScale: 0.75,
-    //   order: 4,
-    // },
-    // // Left quarter ID headshot
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference image. Three-quarter 45 degree view close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //   // faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   // faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   controlImage: "poses/avatar-training-photoset/5-1024x1024.png",
-    //   controlnetScale: 0.75,
-    //   order: 5,
-    // },
-    // // Right side profile ID headshot
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference image. Rotate subject to get 90-degree side profile view close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.8,
-    //   imagePaths: [idPhotoSet.rightQuarter],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //   numSteps: 40,
-    //   maxRuns: 3,
-    //   // faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   // faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   controlImage: "poses/avatar-training-photoset/6-1024x1024.png",
-    //   controlnetScale: 0.75,
-    //   order: 6,
-    // },
-    // // Left side profile ID headshot
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference image. Rotate subject to get 90-degree side profile view close-up headshot ID photo. Wearing white t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.8,
-    //   imagePaths: [idPhotoSet.leftQuarter],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //   numSteps: 40,
-    //   maxRuns: 3,
-    //   // faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   // faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   controlImage: "poses/avatar-training-photoset/6-1024x1024.png",
-    //   controlnetScale: 0.75,
-    //   order: 7,
-    // },
-    // // Full-body front ID
-    // {
-    //   prompt: `Keep exact facial identity, eyes and proportions from reference images. Front full body ID photo of the ${gender} from the reference image. Shoulders width naturally proportional to head size. Head occupies roughly one-seventh of total body height. ${isFemale ? 'She' : 'He'} has ${body} body type, ${bustSize} chest, and ${height} height. ${bodyHair !== 'none' ? `Visible ${bodyHair} body hair covers his chest, abdomen, arms and legs` : 'No body hair'}. Wearing ${isFemale ? 'bikini bottom and top' : 'boxer trunks and topless'}, barefoot. ${idPhotoEnv}. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   numSteps: 40,
-    //   // faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   // faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   controlImage: "poses/avatar-training-photoset/6-1024x1024.png",
-    //   controlnetScale: 0.75,
-    //   order: 8,
-    // },
+    // Front facing ID headshot (smile variation)
+    {
+      prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing dark red t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.frontSmile],
+        idPhotoPaths: [idPhotoSet.frontSmile],
+        inferenceLevels: [
+          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
+          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+      order: 3,
+    },
+    // Right quarter ID headshot
+    {
+      prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Sharp focus on face. Wearing dark blue t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.rightQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+        inferenceLevels: [
+          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
+          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+      order: 4,
+    },
+    // Left quarter ID headshot
+    {
+      prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Wearing dark green t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.leftQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+        inferenceLevels: [
+          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
+          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+      order: 5,
+    },
+    // Right side profile ID headshot
+    {
+      prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing gray t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.rightQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+        inferenceLevels: [
+          { numRuns: 8, numInferenceSteps: 4, width: 1024, height: 1024 },
+          { numRuns: 4, numInferenceSteps: 10, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+      order: 6,
+    },
+    // Left side profile ID headshot
+    {
+      prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing dark brown t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.leftQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+        inferenceLevels: [
+          { numRuns: 8, numInferenceSteps: 4, width: 1024, height: 1024 },
+          { numRuns: 4, numInferenceSteps: 10, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+      order: 7,
+    },
+    // Full-body front ID
+    {
+      prompt: `${identityAddition}. Front full body ID photo of the ${gender} from the reference image. Shoulders width naturally proportional to head size. Head occupies roughly one-seventh of total body height. ${isFemale ? 'She' : 'He'} has ${body} body type, ${bustSize} chest, and ${height} height. ${bodyHair !== 'none' ? `Visible ${bodyHair} body hair covers his chest, abdomen, arms and legs` : 'No body hair'}. Wearing white ${isFemale ? 'bikini bottom and top' : 'boxer trunks and topless'}, barefoot. ${idPhotoEnv}. ${qualityAddition}`,
+      inference: {
+        imagePaths: [idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        inferenceLevels: [
+          { numRuns: 10, numInferenceSteps: 4, width: 1024, height: 1024 },
+          { numRuns: 5, numInferenceSteps: 10, width: 1024, height: 1024 },
+          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+        ],
+      },
+      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 50 },
+      order: 8,
+    },
     
-    // // =================================================================
-    // // BEST CHEST-UP PORTRAITS (most diverse lighting/outfit combos)
-    // // =================================================================
+    // =================================================================
+    // BEST chest-up PORTRAITS (most diverse lighting/outfit combos)
+    // =================================================================
 
     // {
     //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'a slim-fit olive green henley shirt'}. Indoor cozy living room, softly blurred. Warm natural window light from the front-right, soft shadows on right side. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.microPortrait],
+    //   imagePaths: [idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   controlnetScale: 0.2,
+    //   numSteps: 30,
+    //   cascadeSampling: {
+    //     enabled: true,
+    //     maxRuns: 12,
+    //     numSteps: 15,
+    //     maxBestCandidates: 2,
+    //     width: 512,
+    //     height: 512,
+    //   },
     //   order: 9,
     // },
     // {
     //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'flowy sage green midi dress with subtle puff sleeves' : 'khaki light jaket with white tee'}. Out-of-focus green trees, bokeh background. No sun daylight, soft diffused natural light. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.microPortrait],
+    //   imagePaths: [idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   controlnetScale: 0.2,
+    //   numSteps: 30,
+    //   cascadeSampling: {
+    //     enabled: true,
+    //     maxRuns: 15,
+    //     numSteps: 15,
+    //     maxBestCandidates: 2,
+    //     width: 512,
+    //     height: 512,
+    //   },
     //   order: 10,
     // },
     // {
     //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}. Blurred rooftop city night background. Evening warm tungsten light. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.microPortrait],
+    //   imagePaths: [idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   controlnetScale: 0.2,
+    //   numSteps: 30,
+    //   cascadeSampling: {
+    //     enabled: true,
+    //     maxRuns: 15,
+    //     numSteps: 15,
+    //     maxBestCandidates: 2,
+    //     width: 512,
+    //     height: 512,
+    //   },
     //   order: 11,
     // },
     // {
     //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. Cozy living room setting. Soft warm candlelight. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.microPortrait],
+    //   imagePaths: [idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   controlnetScale: 0.2,
+    //   numSteps: 30,
+    //   cascadeSampling: {
+    //     enabled: true,
+    //     maxRuns: 12,
+    //     numSteps: 15,
+    //     maxBestCandidates: 2,
+    //     width: 512,
+    //     height: 512,
+    //   },
     //   order: 12,
     // },
     // {
     //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern'}. Modern indoor environment. White bright office lighting. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.microPortrait],
+    //   imagePaths: [idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   controlnetScale: 0.2,
+    //   numSteps: 30,
+    //   cascadeSampling: {
+    //     enabled: true,
+    //     maxRuns: 12,
+    //     numSteps: 15,
+    //     maxBestCandidates: 2,
+    //     width: 512,
+    //     height: 512,
+    //   },
     //   order: 13,
     // },
 
@@ -233,38 +287,42 @@ export const generatePhotoSetInputs = (
 
     // {
     //   prompt: `Keep exact facial identity and proportions from reference images. Three-quarter 45 degree view chest-up portrait. Wearing ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. Indoor cafe. Soft natural daylight from ceiling to floor windows on the right. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
+    //   similarityThreshold: 0.9,
     //   imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
     //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
+    //   controlnetScale: 0.3,
+    //   numSteps: 25,
     //   order: 14,  
     // },
     // {
     //   prompt: `Keep exact facial identity and proportions from reference images. Three-quarter 45 degree view chest-up portrait. Wearing ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. Home interior blurred. Soft indoor lamp light. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
+    //   similarityThreshold: 0.9,
     //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
     //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
+    //   controlnetScale: 0.3,
+    //   numSteps: 25,
     //   order: 15,  
     // },
     // {
-    //   prompt: `Keep exact facial identity and proportions from reference image.Rotate subject to get 90-degree side profile view chest-up portrait. Wearing ${isFemale ? 'a flowy white peasant blouse with embroidered neckline' : 'a relaxed linen chambray shirt'}. Airport terminal. Natural daylight + terminal bright lighting. ${qualityAddition}`,
-    //   similarityThreshold: 0.75,
-    //   imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.rightSide],
+    //   prompt: `Keep exact facial identity and proportions from reference image.Rotate subject to get 80-degree side profile view chest-up portrait. Wearing ${isFemale ? 'a flowy white peasant blouse with embroidered neckline' : 'a relaxed linen chambray shirt'}. Airport terminal. Natural daylight + terminal bright lighting. ${qualityAddition}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   controlnetScale: 0.3,
+    //   numSteps: 30,
     //   order: 16,
     // },
     // {
-    //   prompt: `Keep exact facial identity and proportions from reference image. Rotate subject to get 90-degree side profile view chest-up portrait. Wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. Street covered with snow. Very early evening, distant city light. ${qualityAddition}`,
-    //   similarityThreshold: 0.75,
-    //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.leftSide],
+    //   prompt: `Keep exact facial identity and proportions from reference image. Rotate subject to get 80-degree side profile view chest-up portrait. Wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. Street covered with snow. Very early evening, distant city light. ${qualityAddition}`,
+    //   similarityThreshold: 0.8,
+    //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   controlnetScale: 0.3,
+    //   numSteps: 30,
     //   order: 17,  
     // },
 

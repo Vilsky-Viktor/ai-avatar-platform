@@ -12,6 +12,7 @@ import {
 import { publishToTopic } from '../services/messageQueue';
 import { createPod } from '../services/runpodService';
 import uuid from 'uuid';
+import { getPersonCharacteristics } from '../services/llmRequestService';
 
 
 const GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC = process.env.GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC || 'generate-text-image-to-image';
@@ -36,17 +37,17 @@ export const createIdPhotoView0 = async (req: Request, res: Response, next: Next
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
     numRuns: 0,
-    input: { 
-      prompt: generateIdPhotoView0Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
-      imagePaths: [],
-      idPhotoPaths: [],
-      width: ID_PHOTO_WIDTH, 
-      height: ID_PHOTO_HEIGHT, 
-      guidance: ID_PHOTO_GUIDANCE, 
-      numSteps: ID_PHOTO_NUM_STEPS,
-      maxRuns: 5,
-      checkDependencyImageExistance: false,
-      upsamplePromptMode: "local"
+    input: {
+      prompt: generateIdPhotoView0Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}),
+      checkDependencyImageExistence: false,
+      inference: {
+        imagePaths: [],
+        idPhotoPaths: [],
+        guidance: ID_PHOTO_GUIDANCE,
+        inferenceLevels: [
+          { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
+        ],
+      },
     }
   }
 
@@ -78,18 +79,17 @@ export const createIdPhotoView45 = async (req: Request, res: Response, next: Nex
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
     numRuns: 0,
-    input: { 
-      prompt: generateIdPhotoView45Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
-      imagePaths: jobRequest.input.idPhotoPaths,
-      idPhotoPaths: jobRequest.input.idPhotoPaths,
-      width: ID_PHOTO_WIDTH, 
-      height: ID_PHOTO_HEIGHT, 
-      guidance: ID_PHOTO_GUIDANCE, 
-      numSteps: ID_PHOTO_NUM_STEPS,
-      maxRuns: 5,
-      similarityThreshold: 0.8,
-      checkDependencyImageExistance: true,
-      upsamplePromptMode: "local"
+    input: {
+      prompt: generateIdPhotoView45Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}),
+      checkDependencyImageExistence: true,
+      inference: {
+        imagePaths: jobRequest.input.idPhotoPaths ?? [],
+        idPhotoPaths: jobRequest.input.idPhotoPaths ?? [],
+        guidance: ID_PHOTO_GUIDANCE,
+        inferenceLevels: [
+          { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
+        ],
+      },
     }
   }
 
@@ -121,18 +121,17 @@ export const createIdPhotoView90 = async (req: Request, res: Response, next: Nex
     type: JobTypes.idPhoto,
     status: JobStatuses.pending,
     numRuns: 0,
-    input: { 
-      prompt: generateIdPhotoView90Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}), 
-      imagePaths: jobRequest.input.idPhotoPaths,
-      idPhotoPaths: jobRequest.input.idPhotoPaths,
-      width: ID_PHOTO_WIDTH, 
-      height: ID_PHOTO_HEIGHT, 
-      guidance: ID_PHOTO_GUIDANCE, 
-      numSteps: ID_PHOTO_NUM_STEPS,
-      maxRuns: 5,
-      similarityThreshold: 0.8,
-      checkDependencyImageExistance: true,
-      upsamplePromptMode: "local"
+    input: {
+      prompt: generateIdPhotoView90Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}),
+      checkDependencyImageExistence: true,
+      inference: {
+        imagePaths: jobRequest.input.idPhotoPaths ?? [],
+        idPhotoPaths: jobRequest.input.idPhotoPaths ?? [],
+        guidance: ID_PHOTO_GUIDANCE,
+        inferenceLevels: [
+          { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
+        ],
+      },
     }
   }
 
@@ -190,19 +189,10 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       numRuns: 0,
       input: {
-        width: imageWidth, 
-        height: imageHeight, 
-        guidance: 4.0, 
-        numSteps: 35,
-        maxRuns: 3,
-        similarityThreshold: 0.99,
-        checkDependencyImageExistance: true,
-        upsamplePromptMode: 'none',
-        idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile, idPhotoSet.rightQuarter, idPhotoSet.leftQuarter],
+        checkDependencyImageExistence: true,
         faceSwap: { enabled: false },
         faceEnhancement: { enabled: false },
-        controlImage: "",
-        controlnetScale: 0.75,
+        controlnet: { enabled: false }
       }
     }
 
@@ -215,21 +205,8 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       newJob.order = input.order;
       newJob.input = {
         ...baseJob.input,
-        prompt: input.prompt,
-        imagePaths: input.imagePaths,
-        idPhotoPaths: input.idPhotoPaths ?? baseJob.input.idPhotoPaths,
-        numSteps: input.numSteps ?? baseJob.input.numSteps,
-        guidance: input.guidance ?? baseJob.input.guidance,
-        maxRuns: input.maxRuns ?? baseJob.input.maxRuns,
-        upsamplePromptMode: input.upsamplePromptMode ?? baseJob.input.upsamplePromptMode,
-        similarityThreshold: input.similarityThreshold ?? baseJob.input.similarityThreshold,
-        width: baseJob.input.width,
-        height: baseJob.input.height,
-        faceSwap: input.faceSwap ?? baseJob.input.faceSwap,
-        faceEnhancement: input.faceEnhancement ?? baseJob.input.faceEnhancement,
+        ...input,
         resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}-${groupId}.png`,
-        controlImage: input.controlImage ?? baseJob.input.controlImage,
-        controlnetScale: input.controlnetScale ?? baseJob.input.controlnetScale,
       }
 
       jobs.push(newJob);

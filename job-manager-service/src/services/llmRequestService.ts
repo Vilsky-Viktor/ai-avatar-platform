@@ -1,17 +1,17 @@
 import axios from 'axios';
 import retry from 'async-retry';
 import logger from '../logger';
-import { UpsampledPrompt } from '../types/prompt';
+import { LlmResponse } from '../types/llmResponse';
 
-const PROMPT_UPSAMPLER_SERVICE_URL = process.env.PROMPT_UPSAMPLER_SERVICE_URL;
+const LLM_REQUEST_SERVICE_URL = process.env.LLM_REQUEST_SERVICE_URL;
 
-export const upsample = async (prompt: string, imagePaths: string[], promptModel: string, targetModel: string, action: string): Promise<UpsampledPrompt> => {
+export const getPersonCharacteristics = async (imagePaths: string[]): Promise<LlmResponse> => {
     return retry(async (bail: Function) => {
         try {
-            const url = `${PROMPT_UPSAMPLER_SERVICE_URL}/upsample`;
-            const request = { prompt, imagePaths, promptModel, targetModel, action };
+            const url = `${LLM_REQUEST_SERVICE_URL}/get-person-characteristics`;
+            const request = { imagePaths };
             const response = await axios.post(url, request);
-            return response.data as UpsampledPrompt;
+            return response.data as LlmResponse;
         } catch (error: any) {
             if (error.response?.status >= 400 && error.response?.status < 500) {
                 bail(error);

@@ -33,4 +33,6 @@ export type IdPhotoStepData = {
 export type PhotoSetStepData = {
   jobs: (Partial<Job> | null)[];
   finished: boolean;
+  timerStartedAt: number | null;
+  timerStoppedAt: number | null;
 };

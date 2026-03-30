@@ -13,9 +13,9 @@ from insightface.utils import face_align
 from scipy.spatial.distance import cosine
 
 from .adaface import net as adaface_net
-from gen_ti2i_controlnet.utils import bytes_to_cv2, enhance_image
-import gen_ti2i_controlnet.utils as utils_module
-import gen_ti2i_controlnet.logger as log_module
+from gen_qwen_2511.utils import bytes_to_cv2, enhance_image
+import gen_qwen_2511.utils as utils_module
+import gen_qwen_2511.logger as log_module
 
 # ---------------------------------------------------------------------------
 # Config
@@ -56,7 +56,6 @@ def _find_checkpoint() -> str:
 def get_app():
     global _face_app, _adaface_model
 
-    # Guard against a partially-downloaded buffalo_l dir (no detection model)
     model_dir = f"/workspace/models/models/{INSIGHTFACE_MODEL}"
     det_prefixes = ["det_", "scrfd_", "retinaface_"]
     has_onnx = bool(glob.glob(os.path.join(model_dir, "*.onnx")))
@@ -79,7 +78,6 @@ def get_app():
     else:
         providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
-    # SCRFD detector — detection only, recognition model intentionally skipped
     logger.info(f"Loading SCRFD detector ({INSIGHTFACE_MODEL})")
     _face_app = FaceAnalysis(
         name=INSIGHTFACE_MODEL,
@@ -90,7 +88,6 @@ def get_app():
     _face_app.prepare(ctx_id=0, det_size=INSIGHTFACE_DET_SIZE)
     logger.info("SCRFD detector loaded")
 
-    # AdaFace recognition model
     ckpt_path = _find_checkpoint()
     logger.info(f"Loading AdaFace {ADAFACE_ARCHITECTURE} from {ckpt_path}")
     model = adaface_net.build_model(ADAFACE_ARCHITECTURE)
@@ -125,7 +122,6 @@ def _ensure_loaded():
 # ---------------------------------------------------------------------------
 
 def _detect_and_align(img: np.ndarray) -> np.ndarray | None:
-    """Detect largest face with SCRFD and return a 112×112 BGR aligned crop, or None."""
     faces = _face_app.get(img)
 
     if not faces:
@@ -150,8 +146,6 @@ def _detect_and_align(img: np.ndarray) -> np.ndarray | None:
 # ---------------------------------------------------------------------------
 
 def _adaface_embedding(aligned_bgr: np.ndarray) -> np.ndarray:
-    """Run AdaFace on a 112×112 BGR aligned face and return L2-normalized embedding."""
-    # AdaFace model was trained with BGR input: ((bgr/255) - 0.5) / 0.5
     bgr = aligned_bgr.astype(np.float32)
     normalized = ((bgr / 255.0) - 0.5) / 0.5
     tensor = torch.tensor(normalized.transpose(2, 0, 1)[np.newaxis]).float()
@@ -159,7 +153,7 @@ def _adaface_embedding(aligned_bgr: np.ndarray) -> np.ndarray:
         tensor = tensor.cuda()
 
     with torch.no_grad():
-        embedding, _ = _adaface_model(tensor)  # (1, 512), already L2-normalized
+        embedding, _ = _adaface_model(tensor)
 
     return embedding[0].cpu().numpy()
 
@@ -198,18 +192,14 @@ def get_face_embedding_cached(image_bytes: bytes) -> np.ndarray | None:
     now = time.monotonic()
 
     cached = _id_embedding_cache.get(key)
-
     if cached is not None and now <= cached[1]:
         _id_embedding_cache.move_to_end(key)
         return cached[0]
 
     _evict_embedding_cache(now)
-
     logger.debug("Cache miss for embedding — computing face embedding")
     embedding = get_face_embedding(image_bytes)
-
     _id_embedding_cache[key] = (embedding, now + EMBEDDING_CACHE_TTL)
-
     return embedding
 
 

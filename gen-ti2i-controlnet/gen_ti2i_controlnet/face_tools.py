@@ -6,7 +6,7 @@ import numpy as np
 import onnxruntime as _ort
 import torch
 from PIL import Image
-import gen_ti2i_controlnet.utils as utils_module
+import gen_ti2i_controlnet.utils as utils
 from gen_ti2i_controlnet.logger import get_logger
 
 
@@ -163,9 +163,11 @@ def load_processors():
 
 def warmup(images: list):
     """Run a real face swap + enhance to pre-compile ONNX CUDA kernels."""
-    if len(images) < 2:
-        logger.warning("FaceFusion warmup skipped — need at least 2 dummy images")
+    if not images:
+        logger.warning("FaceFusion warmup skipped — no dummy images provided")
         return
+    if len(images) < 2:
+        images = images * 2
     logger.info("Warming up FaceFusion models ...")
     try:
         swapper_params = {
@@ -181,21 +183,22 @@ def warmup(images: list):
             "blend": 80,
             "weight": 1.0,
         }
-        swap_face([images[0]], images[1], swapper_params, enhancer_params)
+        refine_face([images[0]], images[1], swapper_params, enhancer_params)
         logger.info("FaceFusion warmup complete")
     except Exception as e:
         logger.error(f"FaceFusion warmup failed: {e}", exc_info=True)
 
 
-@utils_module.timeit
-def swap_face(source_images: list[Image.Image], target_image: Image.Image,
+@utils.timeit
+def refine_face(source_images: list[Image.Image], target_image: Image.Image,
               swapper_params: dict, enhancer_params: dict) -> Image.Image:
     if not swapper_params["enabled"] and not enhancer_params["enabled"]:
         return target_image
 
-    logger.info(f"Swapping faces ... Face swap: {swapper_params}. Face enhancement: {enhancer_params}")
+    logger.info(f"Refining face ... Face swap: {swapper_params["enabled"]}. Face enhancement: {enhancer_params["enabled"]}")
 
-    source_image = source_images[swapper_params["referenceIdx"]]
+    reference_id = swapper_params.get("referenceIdx", 0) if swapper_params["enabled"] else enhancer_params.get("referenceIdx", 0)
+    source_image = source_images[reference_id]
 
     # Update state for this call's specific params
     if swapper_params["enabled"]:

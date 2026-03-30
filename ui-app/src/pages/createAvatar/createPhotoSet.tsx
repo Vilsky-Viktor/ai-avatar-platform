@@ -4,10 +4,10 @@ import { Sparkles, User, Clock, Loader2, CircleAlert } from 'lucide-react';
 import { useState, useEffect, useRef } from "react";
 import { JobStatuses, type Job, type JobRequest } from "../../types/job";
 import { createPhotoSetJobs } from "../../services/apiGateway";
-import { 
-    ID_PHOTO_STORAGE_KEY, 
-    GENERAL_STORAGE_KEY,  
-    PHOTO_SET_STORAGE_KEY, 
+import {
+    ID_PHOTO_STORAGE_KEY,
+    GENERAL_STORAGE_KEY,
+    PHOTO_SET_STORAGE_KEY,
     getLocalStorageData,
     saveLocalStorageData
 } from '../../utils/avatarCreation';
@@ -22,6 +22,138 @@ import { createMedia, updateAvatar } from '../../services/apiGateway';
 import { type Avatar, AvatarStatus } from "../../types/avatar";
 
 
+const loadingPhrases = [
+    // Technical-poetic
+    "Creating a new life...",
+    "Teaching pixels to recognize the person...",
+    "Extracting digital DNA...",
+    "Training neural networks on best angles...",
+    "Crafting a virtual life...",
+    "Mapping the geometry of the face...",
+    "Building an AI identity...",
+    "Assembling a digital avatar...",
+    "Running facial archaeology...",
+    "The AI is studying closely...",
+    "Photons becoming parameters...",
+    "A face is becoming a model...",
+    "Sculpting identity from light...",
+    "Translating appearance into math...",
+    "Weaving a soul into the machine...",
+    "Decoding the language of the face...",
+    "Every pixel tells a story...",
+    "Breathing life into neural networks...",
+    "Turning light into a legend...",
+    "A new digital being is emerging...",
+    "The machine is learning to see...",
+    "Imprinting a face into silicon...",
+    "Distilling a person into data...",
+    "A portrait is becoming a presence...",
+    "The algorithm is finding its muse...",
+
+    // Philosophical / existential
+    "What makes a face unforgettable?...",
+    "Teaching the machine what the eye already knows...",
+    "Identity is being encoded, one layer at a time...",
+    "The boundary between real and digital is blurring...",
+    "A thousand calculations to capture one moment...",
+    "Light, shadow, and a little bit of magic...",
+    "The universe took years to shape face. AI needs a moment...",
+    "Somewhere between data and dreams...",
+    "A human is being translated into a new language...",
+    "The most complex thing in the universe is a human face...",
+
+    // Playful / witty
+    "It may take a while and a bit...",
+    "It's worth waiting a little while...",
+    "Would you like coffee or tea?",
+    "What about cookies meanwhile?",
+    "The AI is giving it 110%...",
+    "No shortcuts when crafting perfection...",
+    "Even Michelangelo needed time...",
+    "Good things take time. Great avatars take a little longer...",
+    "The AI is double-checking its work...",
+    "Almost there. Probably. Maybe. Definitely...",
+    "Patience is a virtue. So is a great avatar...",
+    "AI has never seen a face it didn't find fascinating...",
+    "The neural network is having a euphoria moment...",
+    "Loading awesomeness at full speed...",
+    "Your digital life is almost ready to meet you...",
+
+    // Cinematic / dramatic
+    "A legend is being born...",
+    "This is the moment everything changes...",
+    "The digital world is making room for someone new...",
+    "An icon in the making...",
+    "History is being written in pixels...",
+    "The algorithm is holding its breath...",
+    "Something extraordinary is about to appear...",
+    "The wait makes the reveal worth it...",
+]
+
+function TypewriterPhrases({ phrases, done }: { phrases: string[]; done: boolean }) {
+    const [typedText, setTypedText] = useState("");
+    const [fading, setFading] = useState(false);
+    const phraseIdxRef = useRef(0);
+
+    useEffect(() => {
+        let cancelled = false;
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        const typePhrase = (phraseIndex: number, charIndex: number) => {
+            if (cancelled) return;
+            const phrase = phrases[phraseIndex];
+
+            if (charIndex <= phrase.length) {
+                setTypedText(phrase.slice(0, charIndex));
+                timeoutId = setTimeout(() => typePhrase(phraseIndex, charIndex + 1), 55);
+            } else {
+                timeoutId = setTimeout(() => {
+                    if (cancelled) return;
+                    setFading(true);
+                    timeoutId = setTimeout(() => {
+                        if (cancelled) return;
+                        let nextIdx = Math.floor(Math.random() * phrases.length);
+                        if (nextIdx === phraseIndex) nextIdx = (nextIdx + 1) % phrases.length;
+                        phraseIdxRef.current = nextIdx;
+                        setTypedText("");
+                        setFading(false);
+                        timeoutId = setTimeout(() => typePhrase(nextIdx, 0), 45);
+                    }, 400);
+                }, 3000);
+            }
+        };
+
+        timeoutId = setTimeout(() => typePhrase(0, 1), 55);
+        return () => {
+            cancelled = true;
+            clearTimeout(timeoutId);
+        };
+    }, []);
+
+    return (
+        <span
+            className="text-base font-light tracking-[0.03em] text-base-content/60 transition-opacity duration-[600ms]"
+            style={{ opacity: fading ? 0 : 1 }}
+        >
+            {done ? "We are done, enjoy your new life..." : typedText}
+            <span
+                className="inline-block text-primary"
+                style={{
+                    width: '1.5px',
+                    height: '0.88em',
+                    background: 'currentColor',
+                    marginLeft: '4px',
+                    verticalAlign: 'text-bottom',
+                    position: 'relative',
+                    bottom: '0.20em',
+                    borderRadius: '1px',
+                    animation: 'tw-cursor-blink 1s step-end infinite',
+                }}
+            />
+        </span>
+    );
+}
+
 function CreatePhotoSetPage() {
     const navigate = useNavigate();
     const { user } = useApp();
@@ -31,6 +163,7 @@ function CreatePhotoSetPage() {
 
     const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
     const [avgSimilarity, setAvgSimilarity] = useState(0);
+    const [, setTick] = useState(0);
     
     // ── New: state for fullscreen modal ────────────────────────────────
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
@@ -78,6 +211,10 @@ function CreatePhotoSetPage() {
         const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
         })
+
+        if (canProceed() && stepData.timerStartedAt && !stepData.timerStoppedAt) {
+            setStepData((prev) => ({ ...prev, timerStoppedAt: Date.now() }));
+        }
 
         const sumSimilarities = stepData.jobs.reduce((acc, job) => {
             return acc + (job?.result?.maxSimilarity && job?.result?.maxSimilarity > 0 ? job?.result?.maxSimilarity : 0);
@@ -171,6 +308,18 @@ function CreatePhotoSetPage() {
         setStepData((prev: PhotoSetStepData) => ({...prev, finished: true}));
     }
 
+
+    // ── Timer tick ────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!stepData.timerStartedAt || stepData.timerStoppedAt) return;
+
+        const interval = setInterval(() => {
+            setTick((t) => t + 1);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [stepData.timerStartedAt, stepData.timerStoppedAt]);
+
     const createJobs = async () => {
         const job: JobRequest = {
             avatarId: generalData.avatarId,
@@ -183,6 +332,7 @@ function CreatePhotoSetPage() {
 
         try {
             const jobs = await createPhotoSetJobs(job);
+            setStepData((prev) => ({ ...prev, timerStartedAt: Date.now(), timerStoppedAt: null }));
             setJobs(jobs);
         } catch (error) {
             console.log('Failed to create jobs for photo set')
@@ -240,6 +390,13 @@ function CreatePhotoSetPage() {
     const previousStep = () => {
         navigate('/avatar/create/id-photo');
     }
+
+    const formatElapsed = (seconds: number) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
 
     const FullscreenModal = () => {
         if (!fullscreenSrc) return null;
@@ -425,27 +582,38 @@ function CreatePhotoSetPage() {
 
             <div className="max-w-6xl mx-auto px-4 pt-12 mb-30">
 
-                <div className="flex justify-center w-full mb-8 items-center gap-8">
-                    <div className="mt-8">
-                        <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-[1em] bg-base-200/40 backdrop-blur-md border border-base-content/8 shadow-sm">
-                            <span className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/60">
-                                AVG Match
-                            </span>
-                            <span className="text-2xl font-semibold text-primary tabular-nums">
-                                {(avgSimilarity * 100).toFixed(0)}%
-                            </span>
-                            <div
-                                className={`w-2 h-2 rounded-full ${
-                                    avgSimilarity >= 0.7
-                                    ? 'bg-green-400'
-                                    : avgSimilarity >= 0.6
-                                    ? 'bg-yellow-400'
-                                    : avgSimilarity >= 0.5
-                                    ? 'bg-orange-400'
-                                    : 'bg-red-400'
-                                }`}
-                            />
-                        </div>
+                <div className="flex justify-between w-full mt-8 mb-8 items-stretch">
+                    <div className="flex items-center gap-2.5 px-5 py-3 rounded-[1em] bg-base-200/40 backdrop-blur-md border border-base-content/8 shadow-sm">
+                        <span className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/60">
+                            Match
+                        </span>
+                        <span className="text-2xl font-semibold text-primary tabular-nums">
+                            {(avgSimilarity * 100).toFixed(0)}%
+                        </span>
+                        <div
+                            className={`w-2 h-2 rounded-full ${
+                                avgSimilarity >= 0.7
+                                ? 'bg-green-400'
+                                : avgSimilarity >= 0.6
+                                ? 'bg-yellow-400'
+                                : avgSimilarity >= 0.5
+                                ? 'bg-orange-400'
+                                : 'bg-red-400'
+                            }`}
+                        />
+                    </div>
+
+                    <div className="flex flex-1 items-center justify-center px-5 py-3">
+                        <TypewriterPhrases phrases={loadingPhrases} done={!!stepData.timerStoppedAt} />
+                    </div>
+
+                    <div className="flex items-center gap-2.5 px-5 py-3 rounded-[1em] bg-base-200/40 backdrop-blur-md border border-base-content/8 shadow-sm">
+                        <span className="text-2xl font-semibold text-primary tabular-nums">
+                            {formatElapsed(stepData.timerStartedAt ? Math.floor(((stepData.timerStoppedAt ?? Date.now()) - stepData.timerStartedAt) / 1000) : 0)}
+                        </span>
+                        <span className="text-xs font-medium uppercase tracking-[0.14em] text-base-content/60">
+                            Time
+                        </span>
                     </div>
                 </div>
 
@@ -466,7 +634,6 @@ function CreatePhotoSetPage() {
                 finish={false}
             />
 
-            {/* ── Fullscreen modal ──────────────────────────────────────── */}
             <FullscreenModal />
         </>
     );

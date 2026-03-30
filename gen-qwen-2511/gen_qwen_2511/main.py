@@ -3,20 +3,20 @@ import json
 
 from google.cloud import pubsub_v1
 
-import gen_ti2i_controlnet.logger as log
-import gen_ti2i_controlnet.storage as storage
-import gen_ti2i_controlnet.message_queue as mq
-import gen_ti2i_controlnet.inference as inference
-import gen_ti2i_controlnet.face_recognition as face_recognition
-import gen_ti2i_controlnet.face_tools as face_tools
-import gen_ti2i_controlnet.utils as utils
-import gen_ti2i_controlnet.db as db
+import gen_qwen_2511.logger as log
+import gen_qwen_2511.storage as storage
+import gen_qwen_2511.message_queue as mq
+import gen_qwen_2511.inference as inference
+import gen_qwen_2511.face_recognition as face_recognition
+import gen_qwen_2511.face_tools as face_tools
+import gen_qwen_2511.utils as utils
+import gen_qwen_2511.db as db
 
 logger = log.get_logger(__name__)
 
-PROJECT_ID          = os.getenv("PROJECT_ID", "loom24-mvp")
-SUBSCRIPTION_ID     = os.getenv("SUBSCRIPTION_ID", "generate-text-image-to-image-sub")
-MODEL_NAME          = os.getenv("MODEL_NAME", "flux.2-dev")
+PROJECT_ID      = os.getenv("PROJECT_ID", "loom24-mvp")
+SUBSCRIPTION_ID = os.getenv("SUBSCRIPTION_ID", "generate-qwen-edit-sub")
+MODEL_NAME      = os.getenv("MODEL_NAME", "qwen-edit-2511")
 
 # ---------------------------------------------------------------------------
 # Job parsing helpers
@@ -27,13 +27,13 @@ def parse_job(message: pubsub_v1.subscriber.message.Message) -> dict:
 
 def build_initial_result(job: dict) -> dict:
     return {
-        "userId": job.get("userId", ""),
+        "userId":   job.get("userId", ""),
         "avatarId": job.get("avatarId", ""),
-        "jobId": job.get("id", "unknown"),
-        "type": job.get("type", ""),
+        "jobId":    job.get("id", "unknown"),
+        "type":     job.get("type", ""),
         "mediaPath": None,
-        "status": "generating",
-        "error": None,
+        "status":   "generating",
+        "error":    None,
     }
 
 def job_canceled(job_id: str):
@@ -41,7 +41,6 @@ def job_canceled(job_id: str):
     if not db_job or db_job["status"] == "canceled":
         logger.info(f"Job {job_id} was removed or canceled")
         return True
-
     return False
 
 # ---------------------------------------------------------------------------
@@ -53,12 +52,10 @@ def load_images(job: dict) -> tuple:
     logger.info("Loading dependency images ...")
     input_data = job.get("input", {})
     inference_config = input_data.get("inference", {})
-    controlnet_params = input_data.get("controlnet", {})
 
     id_photos = storage.load_input_images(inference_config.get("idPhotoPaths", []))
     reference_images = storage.load_input_images(inference_config.get("imagePaths", []))
-    control_image = storage.load_input_images([controlnet_params.get("imagePath")])[0] if controlnet_params.get("enabled", False) else None
-    return id_photos, reference_images, control_image
+    return id_photos, reference_images
 
 @utils.timeit
 def check_face_matches(imgs: list, id_photos) -> list[float]:
@@ -69,9 +66,7 @@ def check_face_matches(imgs: list, id_photos) -> list[float]:
 def get_media_path(job, user_id, avatar_id):
     job_input = job.get("input", {})
     result_file_name = job_input.get("resultFileName", None)
-    media_path = f"media/{user_id}-user/avatars/{avatar_id}-avatar/images/{result_file_name}"
-
-    return media_path
+    return f"media/{user_id}-user/avatars/{avatar_id}-avatar/images/{result_file_name}"
 
 # ---------------------------------------------------------------------------
 # Result publishing
@@ -102,9 +97,12 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
     id_photo_paths = inference_config.get("idPhotoPaths", [])
     inference_levels = inference_config.get("inferenceLevels", [])
     job_order = job.get("order", None)
+    loras = job_input.get("loras", [])
     total_runs = 0
 
     result = build_initial_result(job)
+    
+    loras_loaded = False
 
     logger.info(f"========= Processing job {job_id}, order {job_order or 'none'} =========")
 
@@ -115,7 +113,13 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
     mq.publish_status(result)
 
     try:
-        id_photos, reference_images, control_image = load_images(job)
+        id_photos, reference_images = load_images(job)
+
+        if loras:
+            for lora in loras:
+                storage.ensure_lora_downloaded(lora["path"])
+            inference.load_loras(loras)
+            loras_loaded = True
 
         if check_dependency_image_existence:
             if len(id_photos) != len(id_photo_paths) or len(reference_images) != len(image_paths):
@@ -126,7 +130,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         similarities = []
 
         if not inference_levels:
-            inference_levels = [{"numRuns": 1, "numInferenceSteps": 20, "width": 1024, "height": 1024}]
+            inference_levels = [{"numRuns": 1, "numInferenceSteps": 40, "width": 1024, "height": 1024}]
 
         top_seeds = None  # None = generate randomly on first level
 
@@ -146,7 +150,9 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             level_seeds = []
             for run_idx, seed in enumerate(seeds):
                 logger.info(f"---------- Level {level_idx + 1}/{len(inference_levels)} run #{run_idx + 1} ----------")
-                img, actual_seed = inference.run_inference(job_input, level_reference_images, control_image, num_steps, seed, level_w, level_h, run_num=total_runs)
+                img, actual_seed = inference.run_inference(
+                    job_input, level_reference_images, num_steps, seed, level_w, level_h, run_num=total_runs
+                )
                 level_imgs.append(img)
                 level_seeds.append(actual_seed)
                 total_runs += 1
@@ -199,6 +205,8 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         message.ack()
 
     finally:
+        if loras_loaded:
+            inference.unload_loras()
         inference.clear_cache()
 
 # ---------------------------------------------------------------------------
@@ -221,7 +229,6 @@ if __name__ == "__main__":
         raise
 
     dummy_images = storage.load_dummy_images(inference.WARMUP_RESOLUTIONS)
-    dummy_pose_images = storage.load_dummy_pose_images(inference.WARMUP_RESOLUTIONS)
 
     try:
         face_recognition.get_app()
@@ -239,7 +246,7 @@ if __name__ == "__main__":
 
     try:
         inference.load_pipeline()
-        inference.warmup(dummy_images, dummy_pose_images)
+        inference.warmup(dummy_images)
     except Exception as e:
         logger.error(f"Failed to load inference pipeline: {e}", exc_info=True)
         raise

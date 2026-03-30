@@ -1,5 +1,5 @@
-import { I2I_FLUX2_DEV_COPY_IDENTITY_SYSTEM_MESSAGE, I2I_FLUX2_DEV_DESC_PERSON_SYSTEM_MESSAGE } from "../utils/systemMessages";
-import { ModelsSettings, ModelActions, SupportedModels, SupportedTargetModels, SystemMessages } from "../types/models";
+import { PERSON_CHARACTERISTICS_SYSTEM_MESSAGE } from "../utils/systemMessages";
+import { ModelsSettings, ModelActions, SupportedModels, SystemMessages } from "../types/models";
 import { getSecretValue } from "./secrets";
 import { ImageData } from "../types/images";
 
@@ -10,15 +10,12 @@ const modelsSettings: ModelsSettings = {
 }
 
 const systemMessages: SystemMessages = {
-    'flux.2-dev': {
-        copyIdentity: I2I_FLUX2_DEV_COPY_IDENTITY_SYSTEM_MESSAGE,
-        descPerson: I2I_FLUX2_DEV_DESC_PERSON_SYSTEM_MESSAGE
-    }
+    personCharacteristics: PERSON_CHARACTERISTICS_SYSTEM_MESSAGE
 }
 
-export const upsample = async (prompt: string, images: ImageData[], promptModel: SupportedModels, targetModel: SupportedTargetModels, action: keyof ModelActions): Promise<string> => {
-    const settings = modelsSettings[promptModel];
-    const systemContent = systemMessages[targetModel][action];
+export const sendLlmRequest = async (prompt: string, images: ImageData[], model: SupportedModels, action: keyof ModelActions): Promise<string> => {
+    const settings = modelsSettings[model];
+    const systemContent = systemMessages[action];
     const secretKey = await getSecretValue('OPENROUTER_API_KEY');
     const userContent: any = []
 
@@ -37,7 +34,7 @@ export const upsample = async (prompt: string, images: ImageData[], promptModel:
     });
 
     const  requestBody = {
-        model: promptModel,
+        model: model,
         messages: [
             { role: "system", content: systemContent},
             { role: "user", content: userContent },
@@ -67,5 +64,5 @@ export const upsample = async (prompt: string, images: ImageData[], promptModel:
         throw new Error("Empty response from model");
     }
 
-    return answer;
+    return answer
 }

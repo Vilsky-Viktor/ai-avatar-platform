@@ -4,12 +4,12 @@ import functools
 import base64
 import cv2
 import numpy as np
-from gen_ti2i_controlnet.logger import get_logger
+from gen_qwen_2511.logger import get_logger
 from PIL import Image
 
 logger = get_logger("utils")
 
-def to_image_bytes(obj, format = "PNG") -> bytes:
+def to_image_bytes(obj, format="PNG") -> bytes:
     if isinstance(obj, bytes):
         return obj
     if hasattr(obj, 'save'):

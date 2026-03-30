@@ -105,8 +105,9 @@ export const AVATAR_PARAMETER_OPTIONS = {
 
 export const initialPhotoSetData = {
   jobs: Array(40).fill(null),
-  generatedImages: [],
-  finished: false
+  finished: false,
+  timerStartedAt: null,
+  timerStoppedAt: null,
 } as PhotoSetStepData;
 
 type StepData = GeneralStepData | IdPhotoStepData | PhotoSetStepData;

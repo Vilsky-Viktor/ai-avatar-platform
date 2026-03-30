@@ -6,8 +6,8 @@ from uuid import uuid4
 from google.cloud import storage
 from PIL import Image, ExifTags
 from filelock import FileLock, Timeout
-from gen_ti2i_controlnet.logger import get_logger
-import gen_ti2i_controlnet.utils as utils
+from gen_qwen_2511.logger import get_logger
+import gen_qwen_2511.utils as utils
 
 logger = get_logger(__name__)
 storage_client = storage.Client()
@@ -33,19 +33,16 @@ _last_eviction_time: float = 0.0
 
 
 def _get_media_cache_path(blob_path: str) -> Path:
-    """Map GCS blob path → local media cache path (preserving folder structure)"""
     return LOCAL_MEDIA_CACHE_DIR / blob_path.lstrip("/")
 
 
 def _get_tmp_path(blob_path: str, num_runs: int) -> Path:
-    """Map GCS blob path → per-run tmp file: {num_runs}-{stem}-tmp.{ext}"""
     path = Path(blob_path.lstrip("/"))
     name = f"{num_runs}-{path.stem}-tmp{path.suffix}"
     return LOCAL_TMP_DIR / path.parent / name
 
 
 def _is_file_fresh_enough(path: Path) -> bool:
-    """Check if file exists and is younger than TTL"""
     if not path.exists():
         return False
     age = time.time() - path.stat().st_mtime
@@ -53,10 +50,8 @@ def _is_file_fresh_enough(path: Path) -> bool:
 
 
 def _evict_expired_media() -> None:
-    """Opportunistic cleanup — remove files older than TTL from media cache only"""
     now = time.time()
     removed = 0
-
     for file_path in LOCAL_MEDIA_CACHE_DIR.rglob("*"):
         if not file_path.is_file():
             continue
@@ -69,16 +64,13 @@ def _evict_expired_media() -> None:
                 removed += 1
             except Exception as e:
                 logger.warning(f"Failed to evict expired file {file_path}: {e}")
-
     if removed > 0:
         logger.debug(f"Evicted {removed} expired files from media cache")
 
 
 def _evict_expired_tmp() -> None:
-    """Safety-net cleanup — remove orphaned tmp files older than TMP_TTL (default 1 week)"""
     now = time.time()
     removed = 0
-
     for file_path in LOCAL_TMP_DIR.rglob("*"):
         if not file_path.is_file():
             continue
@@ -89,17 +81,11 @@ def _evict_expired_tmp() -> None:
                 removed += 1
             except Exception as e:
                 logger.warning(f"Failed to evict expired tmp file {file_path}: {e}")
-
     if removed > 0:
         logger.debug(f"Evicted {removed} orphaned tmp files")
 
 
 def _load_image_from_disk(local_path: Path, label: str) -> Image.Image | None:
-    """
-    Open and return a PIL image from disk.
-    Returns None on any read failure (corrupted file, evicted between check and open, etc.).
-    Callers should delete the file and fall through to re-download on None.
-    """
     try:
         return Image.open(local_path).convert("RGB")
     except FileNotFoundError:
@@ -113,17 +99,15 @@ def _load_image_from_disk(local_path: Path, label: str) -> Image.Image | None:
 
 DUMMY_IMAGES_LOCAL_DIR = Path("/workspace/dummy")
 DUMMY_IMAGE_PATH = "dummy/person.jpg"
-DUMMY_POSE_PATH = "dummy/pose.png"
 
 
 def download_dummy_images():
     DUMMY_IMAGES_LOCAL_DIR.mkdir(parents=True, exist_ok=True)
     bucket = storage_client.bucket(BUCKET_NAME)
-    for blob_path in (DUMMY_IMAGE_PATH, DUMMY_POSE_PATH):
-        local_path = DUMMY_IMAGES_LOCAL_DIR / Path(blob_path).name
-        if not local_path.exists():
-            logger.info(f"Downloading dummy image: {blob_path}")
-            bucket.blob(blob_path).download_to_filename(str(local_path))
+    local_path = DUMMY_IMAGES_LOCAL_DIR / Path(DUMMY_IMAGE_PATH).name
+    if not local_path.exists():
+        logger.info(f"Downloading dummy image: {DUMMY_IMAGE_PATH}")
+        bucket.blob(DUMMY_IMAGE_PATH).download_to_filename(str(local_path))
     logger.info("Dummy images ready")
 
 
@@ -143,20 +127,38 @@ def load_dummy_images(resolutions: list[tuple[int, int]] | None = None) -> list:
     return [utils.resize_image_with_padding(img, w, h) for h, w in resolutions]
 
 
-def load_dummy_pose_images(resolutions: list[tuple[int, int]] | None = None) -> list:
-    """Load the dummy pose image resized (with padding) to each resolution.
+def ensure_lora_downloaded(lora_path: str) -> str:
+    """Ensure a LoRA directory is present locally. Downloads from GCS if missing or incomplete.
 
-    ``resolutions`` is a list of (height, width) tuples matching WARMUP_RESOLUTIONS.
+    ``lora_path`` is the GCS path as given in the job, e.g.
+    ``"models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject"``.
+    Returns the absolute local path.
     """
-    local_path = DUMMY_IMAGES_LOCAL_DIR / Path(DUMMY_POSE_PATH).name
-    img = _load_image_from_disk(local_path, DUMMY_POSE_PATH)
-    if img is None:
-        return []
+    local_path = Path("/workspace") / lora_path
 
-    if not resolutions:
-        resolutions = [(1024, 1024)]
+    if local_path.is_dir() and any(local_path.iterdir()):
+        logger.info(f"LoRA already cached: {lora_path}")
+        return str(local_path)
 
-    return [utils.resize_image_with_padding(img, w, h) for h, w in resolutions]
+    logger.info(f"Downloading LoRA from bucket: {lora_path}")
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blobs = list(bucket.list_blobs(prefix=lora_path.rstrip("/") + "/"))
+
+    if not blobs:
+        raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
+
+    for blob in blobs:
+        if blob.name.endswith("/"):
+            continue
+        relative = os.path.relpath(blob.name, lora_path)
+        dest = local_path / relative
+        if dest.exists() and dest.stat().st_size == blob.size:
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(dest))
+
+    logger.info(f"LoRA download complete: {lora_path}")
+    return str(local_path)
 
 
 def download_models(model_name):
@@ -185,7 +187,7 @@ def download_models(model_name):
     logger.info(f"Sync for {model_name} complete")
 
 
-def load_input_images(image_paths: list[str], safety_checker=None) -> list[Image.Image]:
+def load_input_images(image_paths: list[str]) -> list[Image.Image]:
     global _last_eviction_time
     now = time.time()
     if now - _last_eviction_time >= EVICTION_INTERVAL_SECONDS:
@@ -200,28 +202,23 @@ def load_input_images(image_paths: list[str], safety_checker=None) -> list[Image
         local_path = _get_media_cache_path(blob_path)
         lock_path = local_path.with_suffix(local_path.suffix + ".lock")
 
-        # ── Fast path: file looks fresh, try to load without acquiring the lock ──
         if _is_file_fresh_enough(local_path):
             img = _load_image_from_disk(local_path, blob_path)
             if img is not None:
                 valid_images.append(img)
                 logger.debug(f"Loaded from cache: {blob_path}")
                 continue
-            # img is None → file was corrupted or evicted; fall through to locked download
 
-        # ── Slow path: acquire lock, re-check, then download ──
         lock = FileLock(str(lock_path), timeout=45)
 
         try:
             with lock.acquire(timeout=45):
-                # Re-check under lock — another pod may have downloaded while we waited
                 if _is_file_fresh_enough(local_path):
                     img = _load_image_from_disk(local_path, blob_path)
                     if img is not None:
                         valid_images.append(img)
                         logger.debug(f"Another pod already cached {blob_path}")
                         continue
-                    # File appeared but is broken — delete and re-download below
                     local_path.unlink(missing_ok=True)
 
                 blob = bucket.blob(blob_path)
@@ -242,7 +239,6 @@ def load_input_images(image_paths: list[str], safety_checker=None) -> list[Image
                         tmp_path.unlink(missing_ok=True)
                         continue
 
-                    # Atomic on local fs; atomic on NFSv4, not guaranteed on NFSv3
                     tmp_path.replace(local_path)
                     logger.debug(f"Cached fresh image: {blob_path}")
 
@@ -256,7 +252,7 @@ def load_input_images(image_paths: list[str], safety_checker=None) -> list[Image
                         tmp_path.unlink(missing_ok=True)
 
         except Timeout:
-            logger.warning(f"Lock timeout for {blob_path} — skipping (another pod is probably handling it)")
+            logger.warning(f"Lock timeout for {blob_path} — skipping")
         except Exception as e:
             logger.error(f"Unexpected error in locked section for {blob_path}: {e}", exc_info=True)
 
@@ -283,38 +279,8 @@ def upload_result_image(dest_path: str, img_byte_arr):
 
 
 def save_result_image_locally(blob_path: str, img_byte_arr) -> str:
-    """Save generated image as a per-run tmp file. Never evicted automatically."""
     cache_path = _get_media_cache_path(blob_path)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-
     with open(cache_path, "wb") as file:
         file.write(img_byte_arr.getvalue())
-
     return str(cache_path)
-
-
-def load_tmp_image_from_local_disk(blob_path: str, num_runs: int) -> Image.Image:
-    """Load a specific run's tmp file."""
-    tmp_path = _get_tmp_path(blob_path, num_runs)
-    return Image.open(tmp_path).convert("RGB")
-
-
-def upload_result_image_from_local_disk(blob_path: str, num_runs: int):
-    """Upload a specific run's tmp file to GCS."""
-    tmp_path = _get_tmp_path(blob_path, num_runs)
-    with open(tmp_path, "rb") as file:
-        upload_result_image(blob_path, file)
-
-
-def move_tmp_to_media_cache(blob_path: str, num_runs: int):
-    """Move a specific run's tmp file to the media cache after upload."""
-    tmp_path = _get_tmp_path(blob_path, num_runs)
-    cache_path = _get_media_cache_path(blob_path)
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path.replace(cache_path)
-
-
-def cleanup_tmp_files(blob_path: str, total_runs: int):
-    """Remove all per-run tmp files for a job after finalization."""
-    for run in range(1, total_runs + 1):
-        _get_tmp_path(blob_path, run).unlink(missing_ok=True)

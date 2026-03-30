@@ -1,6 +1,6 @@
 import os
 import sys
-import random
+import secrets
 from functools import partial
 
 import torch
@@ -10,6 +10,7 @@ from omegaconf import OmegaConf
 from PIL import Image
 from safetensors.torch import load_file
 from gen_ti2i_controlnet.logger import get_logger
+import gen_ti2i_controlnet.utils as utils
 
 current_file_path = os.path.abspath(__file__)
 project_roots = [os.path.dirname(current_file_path), os.path.dirname(os.path.dirname(current_file_path)), os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))]
@@ -28,11 +29,11 @@ from gen_ti2i_controlnet.pipeline.utils.fm_solvers_unipc import FlowUniPCMultist
 
 FLUX2_MODEL_PATH = os.getenv("FLUX2_MODEL_PATH", "/workspace/models/flux.2-dev")
 WARMUP_RESOLUTIONS = [(1024, 1024)]
-WARMUP_STEPS = int(os.getenv("WARMUP_STEPS", "35"))
+WARMUP_STEPS = int(os.getenv("WARMUP_STEPS", "25"))
 # Choose precision in "bf16", "fp8"
-MODEL_PRECISION = os.getenv("MODEL_PRECISION", "bf16")
+MODEL_PRECISION = os.getenv("MODEL_PRECISION", "fp8")
 # Choose the sampler in "euler", "unipc", "dpm++"
-MODEL_SAMPLER_NAME = os.getenv("MODEL_SAMPLER_NAME", "euler")
+MODEL_SAMPLER_NAME = os.getenv("MODEL_SAMPLER_NAME", "dpm++")
 USE_MODEL_COMPILATION = os.getenv("USE_MODEL_COMPILATION", "true").lower() == "true"
 
 logger = get_logger(__name__)
@@ -101,12 +102,13 @@ def load_pipeline():
         low_cpu_mem_usage=True,
     )
 
-    Chosen_Scheduler = {
+    chosen_scheduler = {
         "euler": FlowMatchEulerDiscreteScheduler,
         "unipc": FlowUniPCMultistepScheduler,
         "dpm++": FlowDPMSolverMultistepScheduler,
     }[MODEL_SAMPLER_NAME]
-    scheduler = Chosen_Scheduler.from_pretrained(
+
+    scheduler = chosen_scheduler.from_pretrained(
         FLUX2_MODEL_PATH, 
         subfolder="scheduler"
     )
@@ -157,7 +159,12 @@ def load_pipeline():
         for i in range(len(pipeline.transformer.single_transformer_blocks)):
             pipeline.transformer.single_transformer_blocks[i] = torch.compile(pipeline.transformer.single_transformer_blocks[i], **compile_kwargs)
 
-def _warmup_single(height: int, width: int, control_image, images: list):
+    pipeline.set_progress_bar_config(disable=True)
+
+def clear_cache():
+    torch.cuda.empty_cache()
+
+def _warmup_single(height: int, width: int, control_image, images: list, control_context_scale: float = 0.75):
     pipeline(
         prompt                = "Keep exact facial identity and proportions from reference image. Front close-up headshot ID photo. Wearing white t-shirt. Soft diffused studio lighting. Plain light gray background. No color grading, natural skin tones, no filters. 85mm portrait lens, no lens distortion. Hyperrealistic photograph, 8K detail, skin details, hair details. Sharp focus on face",
         height                = height,
@@ -169,35 +176,35 @@ def _warmup_single(height: int, width: int, control_image, images: list):
         mask_image            = torch.ones([1, 1, height, width]) * 255,
         control_image         = control_image,
         num_inference_steps   = WARMUP_STEPS,
-        control_context_scale = 0.75,
+        control_context_scale = control_context_scale,
     )
 
 def warmup(images: list, pose_images: list | None = None):
     logger.info("Warming up pipeline (compiling kernels) ...")
     with torch.no_grad():
         for i, (height, width) in enumerate(WARMUP_RESOLUTIONS):
-            logger.info(f"Warming up {width}x{height} without control image ...")
-            _warmup_single(height, width, control_image=None, images=images)
+            logger.info(f"Warming up {width}x{height} without controlnet (scale=0) ...")
+            _warmup_single(height, width, control_image=None, images=images, control_context_scale=0)
 
             logger.info(f"Warming up {width}x{height} with control image ...")
             pose_img = pose_images[i] if pose_images and i < len(pose_images) else Image.new("RGB", (width, height), (128, 128, 128))
             dummy_control = get_image_latent(pose_img, sample_size=[height, width])[:, :, 0]
-            _warmup_single(height, width, control_image=dummy_control, images=images)
+            _warmup_single(height, width, control_image=dummy_control, images=images, control_context_scale=0.5)
 
     logger.info("Warmup complete")
 
 
-def _generate_random_seed():
-    return random.randint(0, 2**32 - 1)
+BUCKET_SIZE = 1_000_000
 
-def run_inference(params: dict, images: list[Image.Image], control_image: Image.Image):
+def _generate_bucketed_seed(run_num: int) -> int:
+    return secrets.randbelow(BUCKET_SIZE) + (run_num * BUCKET_SIZE)
+
+@utils.timeit
+def run_inference(params: dict, images: list[Image.Image], control_image: Image.Image, num_inference_steps, seed, width, height, run_num: int = 0, inpaint_image: Image.Image = None, inpaint_mask: torch.Tensor = None):
     prompt = params.get("prompt")
-    width = params.get("width", 1024)
-    height = params.get("height", 1024)
-    guidance_scale = params.get("guidance", 4.0)
-    num_inference_steps = params.get("numSteps", 35)
-    control_context_scale = params.get("controlnetScale", 0.75)
-    seed = params["seed"] if "seed" in params else _generate_random_seed()
+    guidance_scale = params.get("inference", {}).get("guidance", 4.0)
+    controlnet_params = params.get("controlnet", {})
+    seed = seed if seed is not None else _generate_bucketed_seed(run_num)
 
     generator = torch.Generator(device=device).manual_seed(seed)
     sample_size = [height, width]
@@ -205,22 +212,28 @@ def run_inference(params: dict, images: list[Image.Image], control_image: Image.
     with torch.no_grad():
         image = [get_image(_image) for _image in images]
 
-        inpaint_image = torch.zeros([1, 3, sample_size[0], sample_size[1]])
-        mask_image = torch.ones([1, 1, sample_size[0], sample_size[1]]) * 255
+        if inpaint_image is not None:
+            pipeline_inpaint = inpaint_image
+            pipeline_mask = inpaint_mask if inpaint_mask is not None else torch.zeros([1, 1, sample_size[0], sample_size[1]])
+        else:
+            pipeline_inpaint = torch.zeros([1, 3, sample_size[0], sample_size[1]])
+            pipeline_mask = torch.ones([1, 1, sample_size[0], sample_size[1]]) * 255
 
         if control_image is not None:
             control_image = get_image_latent(control_image, sample_size=sample_size)[:, :, 0]
 
-        return pipeline(
+        img = pipeline(
             prompt              = prompt,
             height              = sample_size[0],
             width               = sample_size[1],
             generator           = generator,
             guidance_scale      = guidance_scale,
             image               = image,
-            inpaint_image       = inpaint_image,
-            mask_image          = mask_image,
-            control_image       = control_image,
+            inpaint_image       = pipeline_inpaint,
+            mask_image          = pipeline_mask,
+            control_image       = control_image if controlnet_params.get("enabled", False) else None,
             num_inference_steps = num_inference_steps,
-            control_context_scale  = control_context_scale,
+            control_context_scale  = controlnet_params.get("scale", 0.2) if controlnet_params.get("enabled", False) else 0,
         ).images[0]
+
+        return img, seed
