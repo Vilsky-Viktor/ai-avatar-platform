@@ -42,7 +42,7 @@ export type Inference = {
   imagePaths: string[];
   idPhotoPaths: string[];
   inferenceLevels: InferenceLevel[];
-  guidance?: number;
+  trueCfgScale: number;
   seed?: number;
 }
 
@@ -50,6 +50,12 @@ export type ControlNet = {
   enabled: boolean;
   imagePath?: string;
   scale?: number;
+}
+
+export type LoraData = {
+  path: string;
+  scale?: number;
+  filename?: string;
 }
 
 export type JobInput = {
@@ -61,6 +67,7 @@ export type JobInput = {
   controlnet?: ControlNet;
   inference?: Inference;
   resultFileName?: string;
+  loras?: LoraData[];
 }
 
 export type JobRequestInput = {

@@ -4,7 +4,7 @@ import functools
 import base64
 import cv2
 import numpy as np
-from gen_ti2i_controlnet.logger import get_logger
+from gen_flux2_dev.logger import get_logger
 from PIL import Image
 
 logger = get_logger("utils")

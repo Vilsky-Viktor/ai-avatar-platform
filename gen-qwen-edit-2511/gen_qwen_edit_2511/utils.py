@@ -4,7 +4,7 @@ import functools
 import base64
 import cv2
 import numpy as np
-from gen_qwen_2511.logger import get_logger
+from gen_qwen_edit_2511.logger import get_logger
 from PIL import Image
 
 logger = get_logger("utils")

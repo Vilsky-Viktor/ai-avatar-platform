@@ -53,8 +53,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app/facefusion:${PYTHONPATH}" \
     GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
-    MODEL_NAME="qwen-edit-2511" \
-    QWEN_MODEL_PATH="/workspace/models/qwen-edit-2511" \
+    MODEL_NAME="flux.2-dev" \
+    FLUX2_MODEL_PATH="/workspace/models/flux.2-dev" \
     HF_HOME="/workspace/models" \
     FACEFUSION_DIR="/app/facefusion" \
     TORCHINDUCTOR_CACHE_DIR="/workspace/models/torch_compile_cache" \
@@ -94,7 +94,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 ENV TF_USE_LEGACY_KERAS=1
 
 WORKDIR /app
-COPY gen_qwen_2511 ./gen_qwen_2511
+COPY gen_flux2_dev ./gen_flux2_dev
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

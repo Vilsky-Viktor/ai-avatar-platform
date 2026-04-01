@@ -8,6 +8,6 @@ rm -rf /app/facefusion/.assets/models
 mkdir -p /app/facefusion/.assets
 ln -sf /workspace/models/facefusion /app/facefusion/.assets/models
 
-exec python3.12 -m gen_ti2i_controlnet.main
+exec python3.12 -m gen_flux2_dev.main
 
 # exec tail -f /dev/null

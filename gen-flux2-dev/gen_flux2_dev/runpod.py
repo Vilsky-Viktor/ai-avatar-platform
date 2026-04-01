@@ -3,7 +3,7 @@
 import threading
 import subprocess
 import os
-import gen_ti2i_controlnet.logger as log_module
+import gen_flux2_dev.logger as log_module
 
 RUNPOD_POD_ID = os.getenv("RUNPOD_POD_ID")
 INACTIVITY_TIMEOUT = int(os.getenv("INACTIVITY_TIMEOUT", "300"))

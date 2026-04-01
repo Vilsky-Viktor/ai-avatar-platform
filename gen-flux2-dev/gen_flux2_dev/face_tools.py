@@ -6,8 +6,8 @@ import numpy as np
 import onnxruntime as _ort
 import torch
 from PIL import Image
-import gen_ti2i_controlnet.utils as utils
-from gen_ti2i_controlnet.logger import get_logger
+import gen_flux2_dev.utils as utils
+from gen_flux2_dev.logger import get_logger
 
 
 FACEFUSION_DIR = os.getenv("FACEFUSION_DIR")

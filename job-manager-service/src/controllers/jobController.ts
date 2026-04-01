@@ -12,13 +12,13 @@ import {
 import { publishToTopic } from '../services/messageQueue';
 import { createPod } from '../services/runpodService';
 import uuid from 'uuid';
-import { getPersonCharacteristics } from '../services/llmRequestService';
+import imageRatios from '../types/imageRatios';
 
 
-const GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC = process.env.GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC || 'generate-text-image-to-image';
-const ID_PHOTO_WIDTH = 1024;
-const ID_PHOTO_HEIGHT = 1024;
-const ID_PHOTO_GUIDANCE = 1.0;
+const GEN_FLUX2_DEV_TOPIC = process.env.GEN_FLUX2_DEV_TOPIC || 'gen-flux2-dev';
+const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511'
+const ID_PHOTO_WIDTH = 1328;
+const ID_PHOTO_HEIGHT = 1328;
 const ID_PHOTO_NUM_STEPS = 15
 
 
@@ -43,7 +43,7 @@ export const createIdPhotoView0 = async (req: Request, res: Response, next: Next
       inference: {
         imagePaths: [],
         idPhotoPaths: [],
-        guidance: ID_PHOTO_GUIDANCE,
+        trueCfgScale: 1.0,
         inferenceLevels: [
           { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
         ],
@@ -56,7 +56,7 @@ export const createIdPhotoView0 = async (req: Request, res: Response, next: Next
 
     createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
 
-    await publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob);
+    await publishToTopic(GEN_FLUX2_DEV_TOPIC, dbJob);
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -85,7 +85,7 @@ export const createIdPhotoView45 = async (req: Request, res: Response, next: Nex
       inference: {
         imagePaths: jobRequest.input.idPhotoPaths ?? [],
         idPhotoPaths: jobRequest.input.idPhotoPaths ?? [],
-        guidance: ID_PHOTO_GUIDANCE,
+        trueCfgScale: 1.0,
         inferenceLevels: [
           { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
         ],
@@ -98,7 +98,7 @@ export const createIdPhotoView45 = async (req: Request, res: Response, next: Nex
 
     createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
 
-    await publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob);
+    await publishToTopic(GEN_FLUX2_DEV_TOPIC, dbJob);
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -127,7 +127,7 @@ export const createIdPhotoView90 = async (req: Request, res: Response, next: Nex
       inference: {
         imagePaths: jobRequest.input.idPhotoPaths ?? [],
         idPhotoPaths: jobRequest.input.idPhotoPaths ?? [],
-        guidance: ID_PHOTO_GUIDANCE,
+        trueCfgScale: 1.0,
         inferenceLevels: [
           { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
         ],
@@ -140,7 +140,7 @@ export const createIdPhotoView90 = async (req: Request, res: Response, next: Nex
 
     createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
 
-    await publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob);
+    await publishToTopic(GEN_FLUX2_DEV_TOPIC, dbJob);
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -153,24 +153,27 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
   const headerUserId = req.headers['x-user-id'];
   const jobRequest: JobRequest = req.body;
   const groupId = uuid.v4();
-  const imageWidth = 1024;
-  const imageHeight = 1024;
+
+  const sqareRatio = imageRatios.qwenEdit2511['1:1'];
+  const portraitRatio = imageRatios.qwenEdit2511['3:4'];
+
+  const squareDimensions = `${sqareRatio[0]}x${sqareRatio[1]}`;
+  const portraitDimensions = `${portraitRatio[0]}x${portraitRatio[1]}`;
 
   req.log.info(`Create Photo Set jobs for user ${headerUserId} with group ID ${groupId}`);
 
   try {
-    const dimensionSuffix = `${imageWidth}x${imageHeight}`;
     const avatarMediaPath = `media/${headerUserId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
 
     const idPhotoSet: IdPhotoSetPaths = {
-      microPortrait: `${avatarMediaPath}/001-training-photo-set-${dimensionSuffix}-${groupId}.png`,
-      front: `${avatarMediaPath}/000-uploaded-front-${dimensionSuffix}.png`,
-      frontSmile: `${avatarMediaPath}/000-uploaded-front-smile-${dimensionSuffix}.png`,
-      rightQuarter: `${avatarMediaPath}/000-uploaded-right-quarter-${dimensionSuffix}.png`,
-      leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${dimensionSuffix}.png`,
-      rightSide: `${avatarMediaPath}/006-training-photo-set-${dimensionSuffix}-${groupId}.png`,
-      leftSide: `${avatarMediaPath}/007-training-photo-set-${dimensionSuffix}-${groupId}.png`,
-      body: `${avatarMediaPath}/008-training-photo-set-${dimensionSuffix}-${groupId}.png`,
+      microPortrait: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}-${groupId}.png`,
+      front: `${avatarMediaPath}/000-uploaded-front-${squareDimensions}.png`,
+      frontSmile: `${avatarMediaPath}/000-uploaded-front-smile-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/000-uploaded-right-quarter-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${squareDimensions}.png`,
+      rightSide: `${avatarMediaPath}/006-training-photo-set-${squareDimensions}-${groupId}.png`,
+      leftSide: `${avatarMediaPath}/007-training-photo-set-${squareDimensions}-${groupId}.png`,
+      body: `${avatarMediaPath}/008-training-photo-set-${portraitDimensions}-${groupId}.png`,
     }
 
     const inputs = generatePhotoSetInputs(
@@ -199,14 +202,15 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
     for (const [idx, input] of inputs.entries()) {
       const newJob = {...baseJob};
 
-      // const upsampled = await upsample(input.prompt, input.imagePaths, 'qwen/qwen3.5-plus-02-15', 'flux.2-dev', 'descPerson')
-      // req.log.info(`Upsampled prompt: ${JSON.stringify(upsampled)}`);
+      const lastInferenceLevel = (input.inference?.inferenceLevels.length || 1) - 1;
+      const width = input.inference?.inferenceLevels[lastInferenceLevel].width;
+      const height = input.inference?.inferenceLevels[lastInferenceLevel].height;
 
       newJob.order = input.order;
       newJob.input = {
         ...baseJob.input,
         ...input,
-        resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${dimensionSuffix}-${groupId}.png`,
+        resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${width}x${height}-${groupId}.png`,
       }
 
       jobs.push(newJob);
@@ -216,7 +220,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
 
     // createPod(dbJobs[0]).catch(err => req.log.error("Pod creation failed:", err));
 
-    await Promise.all(dbJobs.map((dbJob: Job) => publishToTopic(GENERAGE_TEXT_IMAGE_TO_IMAGE_TOPIC, dbJob)));
+    await Promise.all(dbJobs.map((dbJob: Job) => publishToTopic(GEN_QWEN_EDIT_2511_TOPIC, dbJob)));
 
     return res.status(201).json(dbJobs);
   } catch (error) {

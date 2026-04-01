@@ -3,19 +3,19 @@ import json
 
 from google.cloud import pubsub_v1
 
-import gen_ti2i_controlnet.logger as log
-import gen_ti2i_controlnet.storage as storage
-import gen_ti2i_controlnet.message_queue as mq
-import gen_ti2i_controlnet.inference as inference
-import gen_ti2i_controlnet.face_recognition as face_recognition
-import gen_ti2i_controlnet.face_tools as face_tools
-import gen_ti2i_controlnet.utils as utils
-import gen_ti2i_controlnet.db as db
+import gen_flux2_dev.logger as log
+import gen_flux2_dev.storage as storage
+import gen_flux2_dev.message_queue as mq
+import gen_flux2_dev.inference as inference
+import gen_flux2_dev.face_recognition as face_recognition
+import gen_flux2_dev.face_tools as face_tools
+import gen_flux2_dev.utils as utils
+import gen_flux2_dev.db as db
 
 logger = log.get_logger(__name__)
 
 PROJECT_ID          = os.getenv("PROJECT_ID", "loom24-mvp")
-SUBSCRIPTION_ID     = os.getenv("SUBSCRIPTION_ID", "generate-text-image-to-image-sub")
+SUBSCRIPTION_ID     = os.getenv("SUBSCRIPTION_ID", "gen-flux2-dev-sub")
 MODEL_NAME          = os.getenv("MODEL_NAME", "flux.2-dev")
 
 # ---------------------------------------------------------------------------

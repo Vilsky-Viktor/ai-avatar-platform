@@ -102,7 +102,7 @@ function CreateIdPhotoPage() {
                     isIdPhoto: true,
                     isPhotoSet: false,
                     path: '',
-                    dimensions: '1024x1024',
+                    dimensions: '1328x1328',
                     upscaled: false,
                     order: 0,
                 }
@@ -122,7 +122,7 @@ function CreateIdPhotoPage() {
                         })
                     }
                 } else {
-                    const dimensions = '1024x1024';
+                    const dimensions = '1328x1328';
 
                     for (const [idx, item] of uploadedPhotos.entries()) {
                         if (idx === 0) {

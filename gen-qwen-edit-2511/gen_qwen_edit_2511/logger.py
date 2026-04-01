@@ -13,6 +13,7 @@ LOG_LEVEL_MAP = {
     'FATAL': logging.CRITICAL,
 }
 
+
 def configure_logging() -> None:
     level = LOG_LEVEL_MAP.get(LOG_LEVEL, logging.INFO)
 
@@ -20,13 +21,17 @@ def configure_logging() -> None:
         logging.warning(f"Invalid LOG_LEVEL '{LOG_LEVEL}' → using INFO")
 
     logging.basicConfig(
-        level=level,
+        level=logging.ERROR,  # silence all third-party loggers by default
         format='%(asctime)s [%(levelname)s] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
-# Call once at application startup
+    # Only our namespace logs at the configured level
+    logging.getLogger("gen_qwen_edit_2511").setLevel(level)
+
+
 configure_logging()
+
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
     return logging.getLogger(name)

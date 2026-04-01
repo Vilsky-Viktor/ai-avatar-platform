@@ -9,22 +9,22 @@ from diffusers import FlowMatchEulerDiscreteScheduler
 from omegaconf import OmegaConf
 from PIL import Image
 from safetensors.torch import load_file
-from gen_ti2i_controlnet.logger import get_logger
-import gen_ti2i_controlnet.utils as utils
+from gen_flux2_dev.logger import get_logger
+import gen_flux2_dev.utils as utils
 
 current_file_path = os.path.abspath(__file__)
 project_roots = [os.path.dirname(current_file_path), os.path.dirname(os.path.dirname(current_file_path)), os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))]
 for project_root in project_roots:
     sys.path.insert(0, project_root) if project_root not in sys.path else None
 
-from gen_ti2i_controlnet.pipeline.dist import set_multi_gpus_devices, shard_model
-from gen_ti2i_controlnet.pipeline.models import (AutoencoderKLFlux2,
+from gen_flux2_dev.pipeline.dist import set_multi_gpus_devices, shard_model
+from gen_flux2_dev.pipeline.models import (AutoencoderKLFlux2,
                                Mistral3ForConditionalGeneration,
                                PixtralProcessor, Flux2ControlTransformer2DModel)
-from gen_ti2i_controlnet.pipeline.utils.utils import (get_image, get_image_latent)
-from gen_ti2i_controlnet.pipeline.pipeline import Flux2ControlPipeline
-from gen_ti2i_controlnet.pipeline.utils.fm_solvers import FlowDPMSolverMultistepScheduler
-from gen_ti2i_controlnet.pipeline.utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
+from gen_flux2_dev.pipeline.utils.utils import (get_image, get_image_latent)
+from gen_flux2_dev.pipeline.pipeline import Flux2ControlPipeline
+from gen_flux2_dev.pipeline.utils.fm_solvers import FlowDPMSolverMultistepScheduler
+from gen_flux2_dev.pipeline.utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 
 FLUX2_MODEL_PATH = os.getenv("FLUX2_MODEL_PATH", "/workspace/models/flux.2-dev")

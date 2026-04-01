@@ -8,6 +8,6 @@ rm -rf /app/facefusion/.assets/models
 mkdir -p /app/facefusion/.assets
 ln -sf /workspace/models/facefusion /app/facefusion/.assets/models
 
-exec python3.12 -m gen_qwen_2511.main
+exec python3.12 -m gen_qwen_edit_2511.main
 
 # exec tail -f /dev/null

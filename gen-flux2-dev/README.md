@@ -1,6 +1,6 @@
 # Build image
 ```
-gcloud builds submit --tag gcr.io/loom24-mvp/gen-qwen-2511
+gcloud builds submit --tag gcr.io/loom24-mvp/gen-flux2-dev
 ```
 
 

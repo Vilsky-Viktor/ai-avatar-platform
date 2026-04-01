@@ -1,7 +1,7 @@
 import threading
 import subprocess
 import os
-import gen_qwen_2511.logger as log_module
+import gen_qwen_edit_2511.logger as log_module
 
 RUNPOD_POD_ID = os.getenv("RUNPOD_POD_ID")
 INACTIVITY_TIMEOUT = int(os.getenv("INACTIVITY_TIMEOUT", "300"))

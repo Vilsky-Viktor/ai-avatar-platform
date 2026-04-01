@@ -20,8 +20,8 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string>
     await new Promise((resolve) => (image.onload = resolve));
 
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
+    canvas.width = 1328;
+    canvas.height = 1328;
     const ctx = canvas.getContext('2d');
 
     if (!ctx) return "";
@@ -34,8 +34,8 @@ const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string>
         pixelCrop.height,
         0,
         0,
-        1024,
-        1024
+        1328,
+        1328
     );
 
     return canvas.toDataURL('image/jpeg', 0.9);
@@ -254,7 +254,7 @@ function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos
                             onDragLeave={(e) => handleDragLeave(index, e)}
                             onDrop={(e) => handleDrop(index, e)}
                             onClick={() => !hasPhoto && view.ref.current?.click()}
-                            className={`relative rounded-[2.5rem] border border-dashed flex flex-col items-center justify-center min-h-[265px] group transition-all duration-700 overflow-hidden 
+                            className={`relative rounded-[2.5rem] border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-700 overflow-hidden
                                 ${hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'} 
                                 ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
                         >

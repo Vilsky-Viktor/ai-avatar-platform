@@ -1,5 +1,6 @@
 import { AvatarParameters, AvatarGender } from '../types/avatar';
 import { TrainingPhotoSetInput, IdPhotoSetPaths } from '../types/trainingPhotoSet';
+import imageRatios from '../types/imageRatios';
 
 export const AVATAR_REFERENCE_NAME = 'AVATARLIFE';
 
@@ -65,6 +66,9 @@ export const generatePhotoSetInputs = (
 ): TrainingPhotoSetInput[] => {
   const { gender, height, body, bodyHair, bustSize, skinColor, ethnicity } = parameters;
 
+  const sqareRatio = imageRatios.qwenEdit2511['1:1'];
+  const portraitRatio = imageRatios.qwenEdit2511['3:4'];
+
   const isFemale = gender === 'female';
   const qualityAddition = `Hyperrealistic photograph, 8K detail, skin details, hair details. Sharp focus on face`;
   const idPhotoEnv = 'Soft diffused studio lighting. Plain light gray background';
@@ -81,120 +85,123 @@ export const generatePhotoSetInputs = (
       inference: {
         imagePaths: [idPhotoSet.front],
         idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
         inferenceLevels: [
-          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
-          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
+          { numRuns: 3, numInferenceSteps: 8, width: sqareRatio[0], height: sqareRatio[1] },
         ],
       },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        // { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        // { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }
+      ],
       order: 1,
     },
-    // Front facing ID headshot
-    {
-      prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing coal t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-      inference: {
-        imagePaths: [idPhotoSet.front],
-        idPhotoPaths: [idPhotoSet.front],
-        inferenceLevels: [
-          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
-          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
-        ],
-      },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-      order: 2,
-    },
-    // Front facing ID headshot (smile variation)
-    {
-      prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing dark red t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-      inference: {
-        imagePaths: [idPhotoSet.frontSmile],
-        idPhotoPaths: [idPhotoSet.frontSmile],
-        inferenceLevels: [
-          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
-          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
-        ],
-      },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-      order: 3,
-    },
-    // Right quarter ID headshot
-    {
-      prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Sharp focus on face. Wearing dark blue t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-      inference: {
-        imagePaths: [idPhotoSet.rightQuarter],
-        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-        inferenceLevels: [
-          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
-          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
-        ],
-      },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-      order: 4,
-    },
-    // Left quarter ID headshot
-    {
-      prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Wearing dark green t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-      inference: {
-        imagePaths: [idPhotoSet.leftQuarter],
-        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-        inferenceLevels: [
-          { numRuns: 8, numInferenceSteps: 2, width: 1024, height: 1024 },
-          { numRuns: 4, numInferenceSteps: 8, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
-        ],
-      },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-      order: 5,
-    },
-    // Right side profile ID headshot
-    {
-      prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing gray t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-      inference: {
-        imagePaths: [idPhotoSet.rightQuarter],
-        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-        inferenceLevels: [
-          { numRuns: 8, numInferenceSteps: 4, width: 1024, height: 1024 },
-          { numRuns: 4, numInferenceSteps: 10, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
-        ],
-      },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-      order: 6,
-    },
-    // Left side profile ID headshot
-    {
-      prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing dark brown t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-      inference: {
-        imagePaths: [idPhotoSet.leftQuarter],
-        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-        inferenceLevels: [
-          { numRuns: 8, numInferenceSteps: 4, width: 1024, height: 1024 },
-          { numRuns: 4, numInferenceSteps: 10, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
-        ],
-      },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-      order: 7,
-    },
-    // Full-body front ID
-    {
-      prompt: `${identityAddition}. Front full body ID photo of the ${gender} from the reference image. Shoulders width naturally proportional to head size. Head occupies roughly one-seventh of total body height. ${isFemale ? 'She' : 'He'} has ${body} body type, ${bustSize} chest, and ${height} height. ${bodyHair !== 'none' ? `Visible ${bodyHair} body hair covers his chest, abdomen, arms and legs` : 'No body hair'}. Wearing white ${isFemale ? 'bikini bottom and top' : 'boxer trunks and topless'}, barefoot. ${idPhotoEnv}. ${qualityAddition}`,
-      inference: {
-        imagePaths: [idPhotoSet.front],
-        idPhotoPaths: [idPhotoSet.front],
-        inferenceLevels: [
-          { numRuns: 10, numInferenceSteps: 4, width: 1024, height: 1024 },
-          { numRuns: 5, numInferenceSteps: 10, width: 1024, height: 1024 },
-          { numRuns: 2, numInferenceSteps: 25, width: 1024, height: 1024 },
-        ],
-      },
-      faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 50 },
-      order: 8,
-    },
+    // // Front facing ID headshot
+    // {
+    //   prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing coal t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     inferenceLevels: [
+    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
+    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
+    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
+    //     ],
+    //   },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+    //   order: 2,
+    // },
+    // // Front facing ID headshot (smile variation)
+    // {
+    //   prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing dark red t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.frontSmile],
+    //     idPhotoPaths: [idPhotoSet.frontSmile],
+    //     inferenceLevels: [
+    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
+    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
+    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
+    //     ],
+    //   },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+    //   order: 3,
+    // },
+    // // Right quarter ID headshot
+    // {
+    //   prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Sharp focus on face. Wearing dark blue t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.rightQuarter],
+    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+    //     inferenceLevels: [
+    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
+    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
+    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
+    //     ],
+    //   },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+    //   order: 4,
+    // },
+    // // Left quarter ID headshot
+    // {
+    //   prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Wearing dark green t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.leftQuarter],
+    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+    //     inferenceLevels: [
+    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
+    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
+    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
+    //     ],
+    //   },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+    //   order: 5,
+    // },
+    // // Right side profile ID headshot
+    // {
+    //   prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing gray t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.rightQuarter],
+    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+    //     inferenceLevels: [
+    //       { numRuns: 8, numInferenceSteps: 4, width: 1328, height: 1328 },
+    //       { numRuns: 4, numInferenceSteps: 10, width: 1328, height: 1328 },
+    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
+    //     ],
+    //   },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+    //   order: 6,
+    // },
+    // // Left side profile ID headshot
+    // {
+    //   prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing dark brown t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.leftQuarter],
+    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+    //     inferenceLevels: [
+    //       { numRuns: 8, numInferenceSteps: 4, width: 1328, height: 1328 },
+    //       { numRuns: 4, numInferenceSteps: 10, width: 1328, height: 1328 },
+    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
+    //     ],
+    //   },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
+    //   order: 7,
+    // },
+    // // Full-body front ID
+    // {
+    //   prompt: `${identityAddition}. Front full body ID photo of the ${gender} from the reference image. Shoulders width naturally proportional to head size. Head occupies roughly one-seventh of total body height. ${isFemale ? 'She' : 'He'} has ${body} body type, ${bustSize} chest, and ${height} height. ${bodyHair !== 'none' ? `Visible ${bodyHair} body hair covers his chest, abdomen, arms and legs` : 'No body hair'}. Wearing white ${isFemale ? 'bikini bottom and top' : 'boxer trunks and topless'}, barefoot. ${idPhotoEnv}. ${qualityAddition}`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 4, width: 1328, height: 1328 },
+    //       { numRuns: 5, numInferenceSteps: 10, width: 1328, height: 1328 },
+    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
+    //     ],
+    //   },
+    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 50 },
+    //   order: 8,
+    // },
     
     // =================================================================
     // BEST chest-up PORTRAITS (most diverse lighting/outfit combos)
@@ -290,7 +297,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.9,
     //   imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
     //   controlnetScale: 0.3,
     //   numSteps: 25,
@@ -301,7 +308,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.9,
     //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
     //   controlnetScale: 0.3,
     //   numSteps: 25,
@@ -335,7 +342,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 18,
     // },
@@ -344,7 +351,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 19,
     // },
@@ -353,7 +360,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 20,
     // },
@@ -362,7 +369,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 21,
     // },
@@ -371,7 +378,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 22,
     // },
@@ -380,7 +387,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.8,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter, idPhotoSet.rightQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 23,
     // },
@@ -389,7 +396,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.8,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 24,
     // },
@@ -398,7 +405,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 25,
     // },
@@ -407,7 +414,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 26,
     // },
@@ -416,7 +423,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 27,
     // },
@@ -425,7 +432,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 28,
     // },
@@ -434,7 +441,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.75,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 29,
     // },
@@ -443,7 +450,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.8,
     //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 30,
     // },
@@ -452,7 +459,7 @@ export const generatePhotoSetInputs = (
     //   similarityThreshold: 0.85,
     //   imagePaths: [idPhotoSet.front],
     //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1024x1024', referenceIdx: 0 },
+    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
     //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
     //   order: 31,  
     // },

@@ -1,13 +1,13 @@
 import os
 import json
 from google.cloud import pubsub_v1
-from gen_ti2i_controlnet.logger import get_logger
+from gen_qwen_edit_2511.logger import get_logger
 
 logger = get_logger(__name__)
 
 PROJECT_ID = os.getenv("PROJECT_ID", "loom24-mvp")
 RESULT_TOPIC_ID = os.getenv("RESULT_TOPIC_ID", "ai-model-result")
-JOB_TOPIC_ID = os.getenv("JOB_TOPIC_ID", "generate-text-image-to-image")
+JOB_TOPIC_ID = os.getenv("JOB_TOPIC_ID", "gen-qwen-edit-2511")
 
 publisher = pubsub_v1.PublisherClient()
 result_topic_path = publisher.topic_path(PROJECT_ID, RESULT_TOPIC_ID)

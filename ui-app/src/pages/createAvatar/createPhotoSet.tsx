@@ -354,7 +354,7 @@ function CreatePhotoSetPage() {
                     isIdPhoto: false,
                     isPhotoSet: true,
                     path: '',
-                    dimensions: '1024x1024',
+                    dimensions: '1328x1328',
                     upscaled: false,
                     order: 0,
                 }
@@ -427,7 +427,7 @@ function CreatePhotoSetPage() {
     const renderPhotoArea = (job: Partial<Job> | null, idx: number) => {
         if (job === null) {
             return (
-                <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center min-h-[200px] py-8">
+                <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-15 h-15 rounded-2xl border border-base-content/5 bg-base-content/[0.01] flex items-center justify-center">
                             <User size={27} strokeWidth={0.5} className="text-base-content/10" />
@@ -452,7 +452,7 @@ function CreatePhotoSetPage() {
 
         if (job.status === JobStatuses.pending) {
             return (
-                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center min-h-[200px] py-8">
+                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
                     <div className="flex flex-col items-center gap-6">
                         <div className="relative">
                             <div className="w-15 h-15 rounded-2xl border border-base-content/5 flex items-center justify-center animate-pulse">
@@ -475,7 +475,7 @@ function CreatePhotoSetPage() {
 
         if (job.status === JobStatuses.generating) {
             return (
-                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center min-h-[200px] py-8">
+                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
                     <div className="flex flex-col items-center gap-6">
                         <div className="relative">
                             <>
@@ -499,7 +499,7 @@ function CreatePhotoSetPage() {
 
         if (job.status === JobStatuses.error) {
             return (
-                <div className="flex relative rounded-[1rem] border border-error/20 bg-error/[0.02] flex flex-col items-center justify-center min-h-[200px] py-8">
+                <div className="flex relative rounded-[1rem] border border-error/20 bg-error/[0.02] flex flex-col items-center justify-center aspect-square">
                     <div className="flex flex-col items-center gap-6">
                         <div className="relative">
                             <div className="w-15 h-15 rounded-full border border-base-content/5 flex items-center justify-center animate-pulse">
@@ -527,13 +527,13 @@ function CreatePhotoSetPage() {
 
             if (!url) {
                 return (
-                    <div className="relative rounded-[1rem] border border-base-content/10 bg-base-200/30 min-h-[200px]" />
+                    <div className="relative rounded-[1rem] border border-base-content/10 bg-base-200/30 aspect-square" />
                 );
             }
 
             return (
                 <div
-                    className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer min-h-[200px]"
+                    className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
                     onClick={() => setFullscreenSrc(url)}
                     >
                     <img
