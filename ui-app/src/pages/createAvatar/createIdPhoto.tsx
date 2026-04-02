@@ -144,7 +144,7 @@ function CreateIdPhotoPage() {
                                 order: idx
                             })
                         }else if (idx === 2) {
-                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-right-quarter-${dimensions}.png`;
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-left-quarter-${dimensions}.png`;
                             await uploadMediaToBucket(mediaPath, item.photo!);
                             allMedia.push({
                                 ...media,
@@ -153,7 +153,7 @@ function CreateIdPhotoPage() {
                                 order: idx
                             })
                         } else if (idx === 3) {
-                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-left-quarter-${dimensions}.png`;
+                            const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/000-uploaded-right-quarter-${dimensions}.png`;
                             await uploadMediaToBucket(mediaPath, item.photo!);
                             allMedia.push({
                                 ...media,

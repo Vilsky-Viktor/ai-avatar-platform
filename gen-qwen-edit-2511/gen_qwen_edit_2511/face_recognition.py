@@ -80,7 +80,7 @@ def get_app():
     model.load_state_dict(model_statedict)
     model.eval()
     if torch.cuda.is_available():
-        model = model.cuda()
+        model = model.cuda().half()
     _adaface_model = model
     logger.info("AdaFace model loaded successfully")
 
@@ -125,9 +125,11 @@ def _detect_and_align(img: np.ndarray) -> np.ndarray | None:
 def _adaface_embedding(aligned_bgr: np.ndarray) -> np.ndarray:
     bgr = aligned_bgr.astype(np.float32)
     normalized = ((bgr / 255.0) - 0.5) / 0.5
-    tensor = torch.tensor(normalized.transpose(2, 0, 1)[np.newaxis]).float()
+    tensor = torch.tensor(normalized.transpose(2, 0, 1)[np.newaxis])
     if torch.cuda.is_available():
-        tensor = tensor.cuda()
+        tensor = tensor.cuda().half()
+    else:
+        tensor = tensor.float()
 
     with torch.no_grad():
         embedding, _ = _adaface_model(tensor)

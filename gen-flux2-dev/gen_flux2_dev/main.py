@@ -8,7 +8,6 @@ import gen_flux2_dev.storage as storage
 import gen_flux2_dev.message_queue as mq
 import gen_flux2_dev.inference as inference
 import gen_flux2_dev.face_recognition as face_recognition
-import gen_flux2_dev.face_tools as face_tools
 import gen_flux2_dev.utils as utils
 import gen_flux2_dev.db as db
 
@@ -17,6 +16,7 @@ logger = log.get_logger(__name__)
 PROJECT_ID          = os.getenv("PROJECT_ID", "loom24-mvp")
 SUBSCRIPTION_ID     = os.getenv("SUBSCRIPTION_ID", "gen-flux2-dev-sub")
 MODEL_NAME          = os.getenv("MODEL_NAME", "flux.2-dev")
+DIFFUSERS_ATTN_BACKEND = os.getenv("DIFFUSERS_ATTN_BACKEND", "native")
 
 # ---------------------------------------------------------------------------
 # Job parsing helpers
@@ -169,19 +169,6 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 
         logger.info(f"Best face match {best_face_match}")
 
-        face_swap_params = {"enabled": False, **job_input.get("faceSwap", {})}
-        face_enhancement_params = {"enabled": False, **job_input.get("faceEnhancement", {})}
-        if face_swap_params.get("enabled") or face_enhancement_params.get("enabled"):
-            refined_img = face_tools.refine_face(id_photos, img, face_swap_params, face_enhancement_params)
-            refined_matches = check_face_matches([refined_img], id_photos)
-            refined_match = refined_matches[0] if refined_matches else 0.0
-            logger.info(f"Face match after refinement: {refined_match} (before: {best_face_match})")
-            if refined_match >= best_face_match:
-                img = refined_img
-                best_face_match = refined_match
-            else:
-                logger.info("Refinement did not improve face match — keeping original")
-
         media_path = get_media_path(job, user_id, avatar_id)
         img_payload = storage.prepare_image_payload(img)
 
@@ -206,18 +193,15 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    _attn_backend_names = {"flash": "Flash Attention 2", "_flash_3": "Flash Attention 3", "native": "PyTorch SDPA"}
+    logger.info(f"Attention backend: {_attn_backend_names.get(DIFFUSERS_ATTN_BACKEND, DIFFUSERS_ATTN_BACKEND)}")
+
     try:
         storage.download_models(MODEL_NAME)
         storage.download_models("adaface")
         storage.download_dummy_images()
     except Exception as e:
         logger.error(f"Failed to download models or dummy images: {e}", exc_info=True)
-        raise
-
-    try:
-        face_tools.download_models()
-    except Exception as e:
-        logger.error(f"Failed to download FaceFusion models: {e}", exc_info=True)
         raise
 
     dummy_images = storage.load_dummy_images(inference.WARMUP_RESOLUTIONS)
@@ -228,13 +212,6 @@ if __name__ == "__main__":
         face_recognition.warmup(dummy_images)
     except Exception as e:
         logger.error(f"Failed to initialize face recognition: {e}", exc_info=True)
-        raise
-
-    try:
-        face_tools.load_processors()
-        face_tools.warmup(dummy_images)
-    except Exception as e:
-        logger.error(f"Failed to load FaceFusion processors: {e}", exc_info=True)
         raise
 
     try:

@@ -14,3 +14,4 @@ insightface
 onnxruntime-gpu
 scipy
 filelock
+peft

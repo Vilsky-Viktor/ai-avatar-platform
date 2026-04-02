@@ -6,19 +6,29 @@ from google.cloud import pubsub_v1
 import gen_qwen_edit_2511.logger as log
 import gen_qwen_edit_2511.storage as storage
 import gen_qwen_edit_2511.message_queue as mq
-import gen_qwen_edit_2511.inference as inference
 import gen_qwen_edit_2511.face_recognition as face_recognition
 import gen_qwen_edit_2511.utils as utils
 import gen_qwen_edit_2511.db as db
 from gen_qwen_edit_2511.models import Job, InferenceLevel
+
+import gen_qwen_edit_2511.inference as inference
 
 logger = log.get_logger(__name__)
 
 PROJECT_ID      = os.getenv("PROJECT_ID", "loom24-mvp")
 SUBSCRIPTION_ID = os.getenv("SUBSCRIPTION_ID", "gen-qwen-edit-2511-sub")
 MODEL_NAME      = os.getenv("MODEL_NAME", "qwen-edit-2511")
+DIFFUSERS_ATTN_BACKEND = os.getenv("DIFFUSERS_ATTN_BACKEND", "native")
 
 DEFAULT_INFERENCE_LEVEL = InferenceLevel(numRuns=1, numInferenceSteps=40, width=1328, height=1328)
+
+ATTN_BACKEND_NAMES = {
+    "flash": "Flash Attention 2", 
+    "_flash_3": "Flash Attention 3", 
+    "native": "PyTorch SDPA", 
+    "sage": "SageAttention", 
+    "_sage_qk_int8_pv_fp8_cuda_sm90": "SageAttention INT8/FP8 SM90"
+}
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -155,6 +165,9 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    
+    logger.info(f"Attention backend: {ATTN_BACKEND_NAMES.get(DIFFUSERS_ATTN_BACKEND, DIFFUSERS_ATTN_BACKEND)}")
+
     try:
         storage.download_models(MODEL_NAME)
         storage.download_models("adaface")

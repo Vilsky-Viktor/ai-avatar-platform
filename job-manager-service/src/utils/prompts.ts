@@ -99,7 +99,7 @@ export const generatePhotoSetInputs = (
     },
     // // Front facing ID headshot
     // {
-    //   prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing coal t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   prompt: `${identityAddition}. Front close-up headshot. Wearing charcoal t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
     //   inference: {
     //     imagePaths: [idPhotoSet.front],
     //     idPhotoPaths: [idPhotoSet.front],
@@ -114,7 +114,7 @@ export const generatePhotoSetInputs = (
     // },
     // // Front facing ID headshot (smile variation)
     // {
-    //   prompt: `${identityAddition}. Front close-up headshot ID photo. Wearing dark red t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   prompt: `${identityAddition}. Front close-up headshot. Wearing dark red t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
     //   inference: {
     //     imagePaths: [idPhotoSet.frontSmile],
     //     idPhotoPaths: [idPhotoSet.frontSmile],
@@ -129,7 +129,7 @@ export const generatePhotoSetInputs = (
     // },
     // // Right quarter ID headshot
     // {
-    //   prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Sharp focus on face. Wearing dark blue t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   prompt: `${identityAddition}. Front-right quarter view headshot. Sharp focus on face. Wearing dark blue t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
     //   inference: {
     //     imagePaths: [idPhotoSet.rightQuarter],
     //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
@@ -144,7 +144,7 @@ export const generatePhotoSetInputs = (
     // },
     // // Left quarter ID headshot
     // {
-    //   prompt: `${identityAddition}. Strictly 45 degree three-quarter view chest-up portrait. Wearing dark green t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   prompt: `${identityAddition}. Front-left quarter view headshot. Wearing dark green t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
     //   inference: {
     //     imagePaths: [idPhotoSet.leftQuarter],
     //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
@@ -159,7 +159,7 @@ export const generatePhotoSetInputs = (
     // },
     // // Right side profile ID headshot
     // {
-    //   prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing gray t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   prompt: `${identityAddition}. Right side view headshot. Wearing gray t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
     //   inference: {
     //     imagePaths: [idPhotoSet.rightQuarter],
     //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
@@ -174,7 +174,7 @@ export const generatePhotoSetInputs = (
     // },
     // // Left side profile ID headshot
     // {
-    //   prompt: `${identityAddition}. Rotate subject to get strictly 80 degree side profile view headshot. Wearing dark brown t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
+    //   prompt: `${identityAddition}. Left side view headshot. Wearing dark brown t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
     //   inference: {
     //     imagePaths: [idPhotoSet.leftQuarter],
     //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],

@@ -33,8 +33,10 @@ def load_pipeline():
 
     logger.info("Loading model into VRAM ...")
     pipeline.to(device=device)
+    logger.info("Model loaded into VRAM")
 
     pipeline.set_progress_bar_config(disable=True)
+    logger.info("Pipeline ready")
 
 
 def clear_cache():

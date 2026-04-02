@@ -46,8 +46,8 @@ function UploadPhotos({ stepData, generalData, setUploadedPhotos, uploadedPhotos
     const VIEW_CONFIG = [
         { label: 'Front', ref: useRef<HTMLInputElement>(null) },
         { label: 'Front smile', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Right quarter', ref: useRef<HTMLInputElement>(null) },
         { label: 'Left quarter', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Right quarter', ref: useRef<HTMLInputElement>(null) },
     ];
 
     // Cropper State

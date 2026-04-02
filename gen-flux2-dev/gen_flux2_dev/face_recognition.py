@@ -24,8 +24,6 @@ INSIGHTFACE_MODEL    = os.getenv("INSIGHTFACE_MODEL", "buffalo_l")
 INSIGHTFACE_DET_SIZE = (640, 640)
 ADAFACE_MODEL_DIR    = os.getenv("ADAFACE_MODEL_DIR", "/workspace/models/adaface")
 ADAFACE_ARCHITECTURE = os.getenv("ADAFACE_ARCHITECTURE", "ir_101")
-TRT_CACHE_DIR        = os.getenv("TRT_CACHE_DIR", "/workspace/models/trt_cache")
-USE_FACE_RECOGNITION_TRT_EXECUTOR = os.getenv("USE_FACE_RECOGNITION_TRT_EXECUTOR", "true").lower() == "true"
 
 EMBEDDING_CACHE_TTL      = int(os.getenv("EMBEDDING_CACHE_TTL", "3600"))
 EMBEDDING_CACHE_MAX_SIZE = int(os.getenv("EMBEDDING_CACHE_MAX_SIZE", "500"))
@@ -65,27 +63,13 @@ def get_app():
         logger.warning(f"InsightFace model dir incomplete — clearing for re-download: {model_dir}")
         shutil.rmtree(model_dir)
 
-    if USE_FACE_RECOGNITION_TRT_EXECUTOR:
-        os.makedirs(TRT_CACHE_DIR, exist_ok=True)
-        providers = [
-            ("TensorrtExecutionProvider", {
-                "trt_engine_cache_enable": "True",
-                "trt_engine_cache_path": TRT_CACHE_DIR,
-                "trt_fp16_enable": "True",
-            }),
-            "CUDAExecutionProvider",
-            "CPUExecutionProvider",
-        ]
-    else:
-        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-
     # SCRFD detector — detection only, recognition model intentionally skipped
     logger.info(f"Loading SCRFD detector ({INSIGHTFACE_MODEL})")
     _face_app = FaceAnalysis(
         name=INSIGHTFACE_MODEL,
         root="/workspace/models",
         allowed_modules=["detection"],
-        providers=providers,
+        providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
     )
     _face_app.prepare(ctx_id=0, det_size=INSIGHTFACE_DET_SIZE)
     logger.info("SCRFD detector loaded")
