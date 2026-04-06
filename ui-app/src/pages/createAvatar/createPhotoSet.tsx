@@ -75,7 +75,7 @@ const loadingPhrases = [
     "Almost there. Probably. Maybe. Definitely...",
     "Patience is a virtue. So is a great avatar...",
     "AI has never seen a face it didn't find fascinating...",
-    "The neural network is having a euphoria moment...",
+    "The neural network is having an euphoria moment...",
     "Loading awesomeness at full speed...",
     "Your digital life is almost ready to meet you...",
 
@@ -539,7 +539,7 @@ function CreatePhotoSetPage() {
                     <img
                         src={url}
                         alt={`Generated avatar photo ${idx + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                        className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
                     />
 
                     <div className="absolute top-1 left-1 z-10">

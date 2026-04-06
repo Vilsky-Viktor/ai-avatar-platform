@@ -109,13 +109,28 @@ def _detect_and_align(img: np.ndarray) -> np.ndarray | None:
             return None
         img = padded
 
-    best_face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+    best_face = max(faces, key=lambda f: f.det_score * (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+
+    if best_face.det_score < 0.3:
+        logger.warning(f"Best face detection score too low ({best_face.det_score:.2f}) — skipping")
+        return None
 
     if best_face.kps is None:
         logger.warning("Face detected but keypoints unavailable — cannot align")
         return None
 
-    return face_align.norm_crop(img, landmark=best_face.kps, image_size=112)
+    x1, y1, x2, y2 = [int(v) for v in best_face.bbox]
+    face_size = max(x2 - x1, y2 - y1)
+    min_face_size = 256
+    if face_size < min_face_size:
+        scale = min_face_size / face_size
+        new_h, new_w = int(img.shape[0] * scale), int(img.shape[1] * scale)
+        img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
+        kps = best_face.kps * scale
+    else:
+        kps = best_face.kps
+
+    return face_align.norm_crop(img, landmark=kps, image_size=112)
 
 
 # ---------------------------------------------------------------------------
@@ -145,12 +160,12 @@ def get_face_embedding(image_bytes: bytes) -> np.ndarray | None:
     _ensure_loaded()
 
     img = bytes_to_cv2(image_bytes)
-    img = enhance_image(img)
     aligned = _detect_and_align(img)
 
     if aligned is None:
         return None
 
+    aligned = enhance_image(aligned)
     return _adaface_embedding(aligned)
 
 

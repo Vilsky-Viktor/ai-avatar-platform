@@ -60,6 +60,7 @@ export type LoraData = {
 
 export type JobInput = {
   prompt?: string;
+  negativePrompt?: string;
   videoPath?: string;
   checkDependencyImageExistence: boolean;
   faceSwap?: FaceSwapParams;

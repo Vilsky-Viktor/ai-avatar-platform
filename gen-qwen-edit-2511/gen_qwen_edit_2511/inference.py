@@ -1,5 +1,4 @@
 import os
-import secrets
 from pathlib import Path
 
 import torch
@@ -48,7 +47,7 @@ def load_loras(loras: list[LoraConfig]):
     for i, lora in enumerate(loras):
         adapter_name = f"lora_{i}"
         local_path = str(Path("/workspace") / lora.path)
-        logger.info(f"  [{adapter_name}] {lora.path} filename={lora.filename} scale={lora.scale}")
+        logger.info(f"  [{adapter_name}] {Path(lora.path).name} filename={lora.filename} scale={lora.scale}")
         pipeline.load_lora_weights(local_path, adapter_name=adapter_name, weight_name=lora.filename)
 
     adapter_names = [f"lora_{i}" for i in range(len(loras))]
@@ -58,27 +57,24 @@ def load_loras(loras: list[LoraConfig]):
 
 
 def unload_loras():
-    pipeline.unload_lora_weights()
-    logger.info("LoRAs unloaded")
+    try:
+        pipeline.unload_lora_weights()
+        logger.info("LoRAs unloaded")
+    except Exception as e:
+        logger.warning(f"Failed to unload LoRAs cleanly: {e}")
 
-
-
-BUCKET_SIZE = 1_000_000
-
-def _generate_bucketed_seed(run_num: int) -> int:
-    return secrets.randbelow(BUCKET_SIZE) + (run_num * BUCKET_SIZE)
 
 
 @utils.timeit
-def run_inference(job_input: JobInput, images: list[Image.Image], num_inference_steps: int, seed, width: int, height: int, run_num: int = 0):
-    seed = seed if seed is not None else _generate_bucketed_seed(run_num)
+def run_inference(job_input: JobInput, images: list[Image.Image], num_inference_steps: int, seed, width: int, height: int):
+    seed = seed if seed is not None else torch.randint(0, 2**32 - 1, (1,)).item()
     generator = torch.Generator(device=device).manual_seed(seed)
 
     with torch.no_grad():
         img = pipeline(
             image=images,
             prompt=job_input.prompt,
-            negative_prompt=job_input.negativePrompt if job_input.negativePrompt else " ",
+            negative_prompt=job_input.negativePrompt if job_input.negativePrompt or job_input.inference.trueCfgScale > 1 else None,
             height=height,
             width=width,
             generator=generator,

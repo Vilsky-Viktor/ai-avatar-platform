@@ -154,11 +154,13 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
   const jobRequest: JobRequest = req.body;
   const groupId = uuid.v4();
 
-  const sqareRatio = imageRatios.qwenEdit2511['1:1'];
+  const squareRatio = imageRatios.qwenEdit2511['1:1'];
   const portraitRatio = imageRatios.qwenEdit2511['3:4'];
+  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
 
-  const squareDimensions = `${sqareRatio[0]}x${sqareRatio[1]}`;
+  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
   const portraitDimensions = `${portraitRatio[0]}x${portraitRatio[1]}`;
+  const verticalDimensions = `${verticalRatio[0]}x${verticalRatio[1]}`;
 
   req.log.info(`Create Photo Set jobs for user ${headerUserId} with group ID ${groupId}`);
 
@@ -173,7 +175,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${squareDimensions}.png`,
       rightSide: `${avatarMediaPath}/006-training-photo-set-${squareDimensions}-${groupId}.png`,
       leftSide: `${avatarMediaPath}/007-training-photo-set-${squareDimensions}-${groupId}.png`,
-      body: `${avatarMediaPath}/008-training-photo-set-${portraitDimensions}-${groupId}.png`,
+      body: `${avatarMediaPath}/008-training-photo-set-${verticalDimensions}-${groupId}.png`,
     }
 
     const inputs = generatePhotoSetInputs(

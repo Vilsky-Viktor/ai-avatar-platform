@@ -78,8 +78,6 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         message.ack()
         return
 
-    mq.publish_status(result)
-
     try:
         logger.info("Loading dependency images ...")
         id_photos = storage.load_input_images(inf.idPhotoPaths)
@@ -90,12 +88,19 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
                 logger.warning(f"Missing dependency images, skipping job {job.id}")
                 message.nack()
                 return
+            
+        mq.publish_status(result)
 
         if job_input.loras:
             for lora in job_input.loras:
                 storage.ensure_lora_downloaded(lora.path)
-            inference.load_loras(job_input.loras)
-            loras_loaded = True
+            try:
+                inference.load_loras(job_input.loras)
+                loras_loaded = True
+            except Exception as lora_error:
+                logger.error(f"Failed to load LoRAs: {lora_error}", exc_info=True)
+                inference.unload_loras()
+                raise
 
         similarities = []
         top_seeds = None
@@ -111,7 +116,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
                 logger.info(f"---------- Level {level_idx + 1}/{len(inference_levels)} run #{run_idx + 1} ----------")
                 img, actual_seed = inference.run_inference(
                     job_input, reference_images, level.numInferenceSteps, seed,
-                    level.width, level.height, run_num=total_runs,
+                    level.width, level.height,
                 )
                 level_imgs.append(img)
                 level_seeds.append(actual_seed)

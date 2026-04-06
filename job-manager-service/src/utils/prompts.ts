@@ -66,8 +66,9 @@ export const generatePhotoSetInputs = (
 ): TrainingPhotoSetInput[] => {
   const { gender, height, body, bodyHair, bustSize, skinColor, ethnicity } = parameters;
 
-  const sqareRatio = imageRatios.qwenEdit2511['1:1'];
+  const squareRatio = imageRatios.qwenEdit2511['1:1'];
   const portraitRatio = imageRatios.qwenEdit2511['3:4'];
+  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
 
   const isFemale = gender === 'female';
   const qualityAddition = `Hyperrealistic photograph, 8K detail, skin details, hair details. Sharp focus on face`;
@@ -75,262 +76,394 @@ export const generatePhotoSetInputs = (
   const identityAddition = `Keep exact facial identity, proportions and skin color from reference image`;
 
   return [
-    // =================================================================
-    // CORE IDENTITY LOCK (non-negotiable for perfect face fidelity)
-    // =================================================================
+    // // =================================================================
+    // // CORE IDENTITY LOCK (non-negotiable for perfect face fidelity)
+    // // =================================================================
 
-    // Extreme close-up (skin/eye/lip texture lock)
     {
-      prompt: `${identityAddition}. Extreme close-up portrait, face only, cropped tightly at the chin and forehead edges. Face fills 95% of the frame. No shoulders, no neck visible. ${idPhotoEnv}. ${qualityAddition}`,
+      prompt: `The exact person from the image 1. Extreme close up, micro portrait. Tightly cut on edges of the head. Face takes 100% of the frame. Neutral expression, looking at camera. Soft diffused studio lighting. Plain light gray background, remove objects`,
       inference: {
         imagePaths: [idPhotoSet.front],
         idPhotoPaths: [idPhotoSet.front],
         trueCfgScale: 1.0,
         inferenceLevels: [
-          { numRuns: 3, numInferenceSteps: 8, width: sqareRatio[0], height: sqareRatio[1] },
+          { numRuns: 3, numInferenceSteps: 8, width: squareRatio[0], height: squareRatio[1] },
         ],
       },
       loras: [
         { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-        // { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-        // { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
       ],
       order: 1,
     },
-    // // Front facing ID headshot
-    // {
-    //   prompt: `${identityAddition}. Front close-up headshot. Wearing charcoal t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   inference: {
-    //     imagePaths: [idPhotoSet.front],
-    //     idPhotoPaths: [idPhotoSet.front],
-    //     inferenceLevels: [
-    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
-    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
-    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
-    //     ],
-    //   },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-    //   order: 2,
-    // },
-    // // Front facing ID headshot (smile variation)
-    // {
-    //   prompt: `${identityAddition}. Front close-up headshot. Wearing dark red t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   inference: {
-    //     imagePaths: [idPhotoSet.frontSmile],
-    //     idPhotoPaths: [idPhotoSet.frontSmile],
-    //     inferenceLevels: [
-    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
-    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
-    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
-    //     ],
-    //   },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-    //   order: 3,
-    // },
-    // // Right quarter ID headshot
-    // {
-    //   prompt: `${identityAddition}. Front-right quarter view headshot. Sharp focus on face. Wearing dark blue t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   inference: {
-    //     imagePaths: [idPhotoSet.rightQuarter],
-    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //     inferenceLevels: [
-    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
-    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
-    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
-    //     ],
-    //   },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-    //   order: 4,
-    // },
-    // // Left quarter ID headshot
-    // {
-    //   prompt: `${identityAddition}. Front-left quarter view headshot. Wearing dark green t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   inference: {
-    //     imagePaths: [idPhotoSet.leftQuarter],
-    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //     inferenceLevels: [
-    //       { numRuns: 8, numInferenceSteps: 2, width: 1328, height: 1328 },
-    //       { numRuns: 4, numInferenceSteps: 8, width: 1328, height: 1328 },
-    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
-    //     ],
-    //   },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-    //   order: 5,
-    // },
-    // // Right side profile ID headshot
-    // {
-    //   prompt: `${identityAddition}. Right side view headshot. Wearing gray t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   inference: {
-    //     imagePaths: [idPhotoSet.rightQuarter],
-    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //     inferenceLevels: [
-    //       { numRuns: 8, numInferenceSteps: 4, width: 1328, height: 1328 },
-    //       { numRuns: 4, numInferenceSteps: 10, width: 1328, height: 1328 },
-    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
-    //     ],
-    //   },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-    //   order: 6,
-    // },
-    // // Left side profile ID headshot
-    // {
-    //   prompt: `${identityAddition}. Left side view headshot. Wearing dark brown t-shirt. ${idPhotoEnv}. ${qualityAddition}`,
-    //   inference: {
-    //     imagePaths: [idPhotoSet.leftQuarter],
-    //     idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //     inferenceLevels: [
-    //       { numRuns: 8, numInferenceSteps: 4, width: 1328, height: 1328 },
-    //       { numRuns: 4, numInferenceSteps: 10, width: 1328, height: 1328 },
-    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
-    //     ],
-    //   },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 80, referenceIdx: 0 },
-    //   order: 7,
-    // },
-    // // Full-body front ID
-    // {
-    //   prompt: `${identityAddition}. Front full body ID photo of the ${gender} from the reference image. Shoulders width naturally proportional to head size. Head occupies roughly one-seventh of total body height. ${isFemale ? 'She' : 'He'} has ${body} body type, ${bustSize} chest, and ${height} height. ${bodyHair !== 'none' ? `Visible ${bodyHair} body hair covers his chest, abdomen, arms and legs` : 'No body hair'}. Wearing white ${isFemale ? 'bikini bottom and top' : 'boxer trunks and topless'}, barefoot. ${idPhotoEnv}. ${qualityAddition}`,
-    //   inference: {
-    //     imagePaths: [idPhotoSet.front],
-    //     idPhotoPaths: [idPhotoSet.front],
-    //     inferenceLevels: [
-    //       { numRuns: 10, numInferenceSteps: 4, width: 1328, height: 1328 },
-    //       { numRuns: 5, numInferenceSteps: 10, width: 1328, height: 1328 },
-    //       { numRuns: 2, numInferenceSteps: 25, width: 1328, height: 1328 },
-    //     ],
-    //   },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 0.5, blend: 50 },
-    //   order: 8,
-    // },
+    {
+      prompt: `The exact person from the image 1. Front close-up headshot. Neutral expression, looking at camera. Wearing a gray t-shirt. Soft diffused studio lighting. Plain light gray background, remove objects`,
+      inference: {
+        imagePaths: [idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: squareRatio[0], height: squareRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 2,
+    },
+    {
+      prompt: `The exact person from the image 1. Front close-up headshot. Gentle smile showing teeth, looking at camera. Wearing a pastel red t-shirt. Soft diffused studio lighting. Plain light gray background, remove objects`,
+      inference: {
+        imagePaths: [idPhotoSet.frontSmile],
+        idPhotoPaths: [idPhotoSet.frontSmile],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: squareRatio[0], height: squareRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 3,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> front-right quarter view eye-level shot close-up. Neutral expression, looking towards head direction. Wearing a pastel blue t-shirt. Soft diffused studio lighting. Plain light gray background, remove objects`,
+      inference: {
+        imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.rightQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: squareRatio[0], height: squareRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 4,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> front-left quarter view eye-level shot close-up. Neutral expression, looking towards head direction. Wearing a pastel green t-shirt. Soft diffused studio lighting. Plain light gray background, remove objects`,
+      inference: {
+        imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.leftQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: squareRatio[0], height: squareRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 5,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> right side view eye-level shot close-up. Neutral expression, looking towards head direction. Wearing a pastel brown t-shirt. Soft diffused studio lighting. Plain light gray background, remove objects`,
+      inference: {
+        imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.rightQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: squareRatio[0], height: squareRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 6,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> left side view eye-level shot close-up. Neutral expression, looking towards head direction. Wearing a pastel purple t-shirt. Soft diffused studio lighting. Plain light gray background, remove objects`,
+      inference: {
+        imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.leftQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: squareRatio[0], height: squareRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 7,
+    },
+    {
+      prompt: `The exact person from the input images. Front full body standing view. Neutral expression, looking at camera. ${bodyHair !== 'none' ? `${bodyHair} body hair on chest, abdomen, arms and legs` : 'smooth with no body hair'}. ${body} body type, no tattoos. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white short-cut cotton boxers and white bikini top' : 'white short-cut cotton boxers, white shirt with short sleeves and all open undone buttons showing chest and abdomen'}, barefoot. Soft diffused studio lighting. Plain light gray background and light wooden floor, remove objects. Make the subjects skin details more prominent and natural`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 7, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.3, filename: "qwen-edit-skin_1.1_000002750.safetensors" },
+      ],
+      order: 8,
+    },
     
     // =================================================================
-    // BEST chest-up PORTRAITS (most diverse lighting/outfit combos)
+    // BEST chest-up PORTRAITS (most diverse lighting/outfit/emotions combos)
     // =================================================================
 
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'a slim-fit olive green henley shirt'}. Indoor cozy living room, softly blurred. Warm natural window light from the front-right, soft shadows on right side. ${qualityAddition}`,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   controlnetScale: 0.2,
-    //   numSteps: 30,
-    //   cascadeSampling: {
-    //     enabled: true,
-    //     maxRuns: 12,
-    //     numSteps: 15,
-    //     maxBestCandidates: 2,
-    //     width: 512,
-    //     height: 512,
-    //   },
-    //   order: 9,
-    // },
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'flowy sage green midi dress with subtle puff sleeves' : 'khaki light jaket with white tee'}. Out-of-focus green trees, bokeh background. No sun daylight, soft diffused natural light. ${qualityAddition}`,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   controlnetScale: 0.2,
-    //   numSteps: 30,
-    //   cascadeSampling: {
-    //     enabled: true,
-    //     maxRuns: 15,
-    //     numSteps: 15,
-    //     maxBestCandidates: 2,
-    //     width: 512,
-    //     height: 512,
-    //   },
-    //   order: 10,
-    // },
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}. Blurred rooftop city night background. Evening warm tungsten light. ${qualityAddition}`,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   controlnetScale: 0.2,
-    //   numSteps: 30,
-    //   cascadeSampling: {
-    //     enabled: true,
-    //     maxRuns: 15,
-    //     numSteps: 15,
-    //     maxBestCandidates: 2,
-    //     width: 512,
-    //     height: 512,
-    //   },
-    //   order: 11,
-    // },
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. Cozy living room setting. Soft warm candlelight. ${qualityAddition}`,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   controlnetScale: 0.2,
-    //   numSteps: 30,
-    //   cascadeSampling: {
-    //     enabled: true,
-    //     maxRuns: 12,
-    //     numSteps: 15,
-    //     maxBestCandidates: 2,
-    //     width: 512,
-    //     height: 512,
-    //   },
-    //   order: 12,
-    // },
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference images. Front chest-up portrait. Wearing ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern'}. Modern indoor environment. White bright office lighting. ${qualityAddition}`,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   controlnetScale: 0.2,
-    //   numSteps: 30,
-    //   cascadeSampling: {
-    //     enabled: true,
-    //     maxRuns: 12,
-    //     numSteps: 15,
-    //     maxBestCandidates: 2,
-    //     width: 512,
-    //     height: 512,
-    //   },
-    //   order: 13,
-    // },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. Soft and warm expression. Wearing ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'a slim-fit olive green henley shirt'}. Indoor cozy living room, softly blurred. Warm natural window light from the front-right, soft shadows on right side`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 9,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. Neutral expression. Wearing ${isFemale ? 'flowy sage green midi dress with subtle puff sleeves' : 'khaki light jaket with white tee'}. Outdoor park. Soft and warm golden hour lighting`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 10,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. Relaxed expression. Wearing ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}. Blurred rooftop city night background. Evening warm tungsten light. Natural body to head proportions`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 11,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. Subtle curious expression. Wearing ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. Cozy living room setting. Soft warm candlelight`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 12,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. Thinking expression. Wearing ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern'}. Modern indoor environment. White bright office lighting. Natural body to head proportions`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 13,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. Serious and focused — direct eye contact, no smile, firm jaw. Arms crossed with hands tucked under armpits. Wearing a fitted dark charcoal ribbed turtleneck. Deep dark studio background. Soft low-key light from the front-left, gently illuminating the face with natural shadow falloff toward the right side and edges`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 3, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 14,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. A bare trace of laughing. Wearing a light gray minimalist hoodie. Theme park. Overcast daylight. Natural body to head proportions`,
+      inference: {
+        imagePaths: [idPhotoSet.frontSmile, idPhotoSet.frontSmile],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.frontSmile],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 15,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. Front chest-up portrait. Slight irritation, barely noticeable tension in the brow, lips pressed together. Wearing ${isFemale ? 'Brown top' : 'Brown sleeveless t-shirt'}. Crowded supermarket. Bright indoor light. Natural body to head proportions`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 16,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2 Chest-up selfie. Slight smile with completely closed mouth. Wearing fitted t-shirt. Aqua park. Morning light. Natural body to head proportions`,
+      inference: {
+        imagePaths: [idPhotoSet.front, idPhotoSet.front],
+        idPhotoPaths: [idPhotoSet.front],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+      ],
+      order: 17,
+    },
 
     // // =================================================================
-    // // ANGULAR & DYNAMIC HEAD COVERAGE
+    // // CHEST-UP ANGULAR & DYNAMIC HEAD COVERAGE
+    // // =================================================================
+
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> front-left quarter view eye-level shot chest-up. Neutral expression. Wearing ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. Indoor cafe. Soft natural daylight from ceiling to floor windows on the right`,
+      inference: {
+        imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.leftQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 18,  
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> front-right quarter view eye-level shot chest-up. Neutral expression. Wearing ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. Modern living room interior. Soft indoor lamp light`,
+      inference: {
+        imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.rightQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 19,  
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> right side view eye-level shot chest-up. Neutral expression. Wearing ${isFemale ? 'a flowy white peasant blouse with embroidered neckline' : 'a relaxed linen chambray shirt'}. Airport terminal. Natural daylight + terminal bright light`,
+      inference: {
+        imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.rightQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 20,
+    },
+    {
+      prompt: `The exact person from the image 1 and image 2. <sks> left side view eye-level shot chest-up. Neutral expression. Wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. Street covered with snow. Very early evening, distant city light`,
+      inference: {
+        imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.leftQuarter],
+        idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
+        trueCfgScale: 1.0,
+        inferenceLevels: [
+          { numRuns: 5, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+        ],
+      },
+      loras: [
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+      ],
+      order: 21,  
+    },
+
+    // // =================================================================
+    // // UPPER-BODY SHOTS
     // // =================================================================
 
     // {
-    //   prompt: `Keep exact facial identity and proportions from reference images. Three-quarter 45 degree view chest-up portrait. Wearing ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. Indoor cafe. Soft natural daylight from ceiling to floor windows on the right. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
-    //   controlnetScale: 0.3,
-    //   numSteps: 25,
-    //   order: 14,  
-    // },
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference images. Three-quarter 45 degree view chest-up portrait. Wearing ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. Home interior blurred. Soft indoor lamp light. ${qualityAddition}`,
-    //   similarityThreshold: 0.9,
-    //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 100 },
-    //   controlnetScale: 0.3,
-    //   numSteps: 25,
-    //   order: 15,  
-    // },
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference image.Rotate subject to get 80-degree side profile view chest-up portrait. Wearing ${isFemale ? 'a flowy white peasant blouse with embroidered neckline' : 'a relaxed linen chambray shirt'}. Airport terminal. Natural daylight + terminal bright lighting. ${qualityAddition}`,
-    //   similarityThreshold: 0.8,
-    //   imagePaths: [idPhotoSet.rightQuarter, idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.rightQuarter],
-    //   controlnetScale: 0.3,
-    //   numSteps: 30,
-    //   order: 16,
-    // },
-    // {
-    //   prompt: `Keep exact facial identity and proportions from reference image. Rotate subject to get 80-degree side profile view chest-up portrait. Wearing ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. Street covered with snow. Very early evening, distant city light. ${qualityAddition}`,
-    //   similarityThreshold: 0.8,
-    //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter],
-    //   controlnetScale: 0.3,
-    //   numSteps: 30,
-    //   order: 17,  
+    //   prompt: `Front waist-up portrait of the same person from the input image, preserving exact facial features, skin tone, eye color, and facial structure. One hand in the pocket. Wearing ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee and pants' : 'a modern slim-fit navy blazer with white dress shirt and navy pants'}. Co-working space background with people working, gray cement walls style, industrial aesthetic, wooden minimalist desk and Apple Mackbook on it on the left side. Office bright white light. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 7, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
+    //   order: 23,  
     // },
 
     // // =================================================================
@@ -338,145 +471,247 @@ export const generatePhotoSetInputs = (
     // // =================================================================
 
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body standing, subject has ${height} height, ${body} body type. ${isFemale ? 'high-waisted cream tailored trousers, silk blouse and white heels' : 'slim-fit dark gray chinos, white button-down and black oxford shoes'}. Urban street soft golden hour. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   order: 18,
-    // },
-    // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body walking, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'a fitted short cocktail dress with spaghetti straps, high heels, sleek and elegant' : 'a slim fit charcoal suit with white dress shirt, no tie, loafers, smart casual'}. City sidewalk background. Overcast daylight. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   order: 19,
-    // },
-    // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body deep squat, subject has ${height} height, ${body} body type. Wearing taupe linen trousers, olive green relaxed linen shirt and sandals. Outdoor nature. Soft forest diffused light. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Wearing ${isFemale ? 'high-waisted cream tailored trousers, silk blouse and white heels' : 'slim-fit dark gray chinos, beige shirt and black oxford shoes'}. Urban street, soft early morning with clear sky. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 20,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body sitting, feet are cut off the frame, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'pink fitted racerback crop tank top, light gray fleece sweat shorts with elastic waistband' : 'relaxed gray joggers, white t-shirt'}. On king size bed in the hotel room. Simple home interior soft light. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body walking. Wearing ${isFemale ? 'a fitted short cocktail dress with spaghetti straps, high heels, sleek and elegant' : 'a slim fit charcoal suit with white dress shirt, no tie, loafers, smart casual'}. City sidewalk background. Overcast daylight. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 21,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body standing, weight shifted on one leg, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'stylish black bikini' : 'black swim shorts'}, barefoot. On the beach sand, ocean background. Soft golden hour. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body deep squat, arms resting on knees. Wearing taupe linen trousers, olive green relaxed linen shirt and sandals. Outdoor nature. Soft forest diffused light. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 22,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body laying barefoot, three-quarter camera view slightly from above, looking straight into camera, head slightly lifted, hands clasped behind head, one knee bent upward, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'pastel yellow shorts and hawaiian shirt'}. On the lounge chair on the beach. Soft golden hour. ${qualityAddition}`,
-    //   similarityThreshold: 0.8,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front, idPhotoSet.leftQuarter, idPhotoSet.rightQuarter],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body sitting, hands on sides supporting body. Wearing ${isFemale ? 'pink fitted racerback crop tank top, light gray fleece sweat shorts with elastic waistband' : 'relaxed gray joggers, white t-shirt'}. On king size bed in the hotel room. Simple home interior soft light. Keep face and identity completely unchanged. Remove objects from input image`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 23,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body jogging barefoot towards camera, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and white shirt'}. Tropical path. Soft daylight. ${qualityAddition}`,
-    //   similarityThreshold: 0.8,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body standing. Wearing ${isFemale ? 'a breezy floral sundress' : 'red shorts and sleeveless black t-shirt'}, barefoot. On the beach sand, ocean background. Soft golden hour. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 24,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body sitting barefoot cross-legged, relaxed pose, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit cargo shorts and tee'}. On ground, park grass. Soft daylight. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body laying barefoot, front camera view slightly from above, head slightly lifted, direct stare to camera, knees bent upwards. Wearing ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'pastel yellow shorts and hawaiian shirt'}. On the lounge chair on the beach. Soft golden hour. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 25,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Front full body leaning against wall standing, confident pose, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines'} and sport shoes. Gym changing room. Studio even lighting. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body jogging barefoot towards camera. Wearing ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and white shirt'}. Tropical path. Soft daylight. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 26,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body lying on abdomen, upper body slightly lifted and supported by both elbows, legs stretched and feet visible in the background, hands are laying palms down, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'a stylish soft sleep pink pajama' : 'gray modal lounge shorts, t-shirt'}. On the bed in the bedroom. Morning light. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body sitting barefoot cross-legged, relaxed pose. Wearing ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit cargo shorts and tee'}, flip flops. On ground, park grass. Soft daylight. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 27,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body subtly dancing, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'a fitted black micro mini skirt, sleeveless white bodysuit, black pointed-toe heels' : 'a black fitted crew-neck tee, slim black trousers, white leather minimalist sneakers'}. Night street. Light from night club signs and city lights. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Leaning against wall standing, confident pose, looking towards camera. Wearing ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines, t-shirt'} and black Nike sport shoes. Gym changing room. Gym even bright lighting. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 28,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body standing, extreme low angle shot camera at ground level, hands on hips, looking forward, subject has ${height} height, ${body} body type. Wearing blue jeans, light gray polo and navy/white Converse-style canvas sneakers. White clouds background, pebbles ground. Daylight. ${qualityAddition}`,
-    //   similarityThreshold: 0.75,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body lying on abdomen, upper body slightly lifted and supported by both elbows, legs are visible on the background, hands are resting palms down, looking towards camera. Wearing ${isFemale ? 'a stylish soft sleep pink pajama' : 'gray modal lounge shorts, t-shirt'}. On the bed in the bedroom. Morning light. Keep face and identity completely unchanged. Remove objects from input image`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: portraitRatio[0], height: portraitRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 29,
     // },
     // {
-    //   prompt: `Keep exact facial identity from image 1 only. Keep body size and proportions from image 2. Ignore face from image 2. Full body standing, extreme overhead shot, looking up towards camera. Wearing white shorts, white t-shirt and orange flip flops, subject has ${height} height, ${body} body type. Sahara desert. Sunny and hot. ${qualityAddition}`,
-    //   similarityThreshold: 0.8,
-    //   imagePaths: [idPhotoSet.front, idPhotoSet.body],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
+    //   prompt: `Full body front view of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Slightly dancing. Wearing ${isFemale ? 'a fitted black micro mini skirt, sleeveless white bodysuit, black pointed-toe heels' : 'a black fitted crew-neck tee, slim black trousers, white leather minimalist sneakers'}. Night street. Light from night club signs and city lights. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }
+    //   ],
     //   order: 30,
     // },
     // {
-    //   prompt: `Keep exact facial identity from reference images. Upper body sitting at desk, both hands flat on desk surface in front. Wearing ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee and pants' : 'a modern slim-fit navy blazer with white dress shirt and navy pants'}. Co-working space background with people working, gray cement walls style, industrial aesthetic, wooden minimalist desk and Apple Mackbook on it on the left side. Office bright white light. ${qualityAddition}`,
-    //   similarityThreshold: 0.85,
-    //   imagePaths: [idPhotoSet.front],
-    //   idPhotoPaths: [idPhotoSet.front],
-    //   faceSwap: { enabled: true, model: 'hyperswap_1a_256', weight: 1.0, pixelBoost: '1328x1328', referenceIdx: 0 },
-    //   faceEnhancement: { enabled: true, model: 'gpen_bfr_2048', weight: 1.0, blend: 80 },
-    //   order: 31,  
+    //   prompt: `Full body front view extreme low-angle shot of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body standing upright, extreme low-angle shot with camera at ground level, hands on hips, looking directly into the camera, body completely straight and vertical. Wearing blue jeans, light gray polo and navy/white Converse-style canvas sneakers. White clouds background, pebbles ground. Daylight. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+    //   ],
+    //   order: 31,
     // },
-    // // Back view (essential for rear silhouette & hair learning)
     // {
-    //   prompt: `Keep haircut from image 1. Keep exact body proportions and size from image 2. Full body rear view walking, subject has ${height} height, ${body} body type. ${bodyHair !== 'none' ? `Keep body hair intensity from image 1` : 'No body hair'}. Wearing ${isFemale ? 'stylish red bikini with white pareo' : 'Red swim shorts with a white towel on shoulder'}. On the beach sand towards beach bar. Soft golden hour. ${qualityAddition}`,
-    //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.body],
-    //   idPhotoPaths: [],
-    //   maxRuns: 1,
+    //   prompt: `Full body front view extreme high-angle shot of the person from the input images, preserving exact facial features, skin tone, eye color, and facial structure from input image 1 and preserving exact body from input image 2. Full body standing, extreme angle overhead shot, looking up towards camera. Wearing white shorts, white t-shirt and orange flip flops. Sahara desert. Sunny weather. Keep face and identity completely unchanged`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.front, idPhotoSet.body],
+    //     idPhotoPaths: [idPhotoSet.front],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 10, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+    //   ],
     //   order: 32,
     // },
+    
+    // // =================================================================
+    // // FULL-BODY BACK VIEW
+    // // =================================================================
+
     // {
-    //   prompt: `Keep haircut from image 1. Keep exact body proportions and size from image 2. Full body back view standing, head fully visible only from behind, hands resting on balcony rails, subject has ${height} height, ${body} body type. Wearing ${isFemale ? 'high-waisted black tailored trousers, fitted white crop top, white sneakers' : 'slim dark navy chinos, white oxford shirt, chelsea boots '}. City skyline balcony view. Early morning. ${qualityAddition}`,
-    //   maxRuns: 1,
-    //   imagePaths: [idPhotoSet.leftQuarter, idPhotoSet.body],
-    //   idPhotoPaths: [],
-    //   order: 33,  
+    //   prompt: `Full body rear view walking, preserving exact body, head and haircut from input image. Looking forward. Wearing ${isFemale ? 'stylish red bikini with white half transparent pareo' : 'Pastel green swim shorts with sleeveless t-shirt'}. On the beach sand walking towards beach bar. Soft golden hour`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.body],
+    //     idPhotoPaths: [],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 1, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //   ],
+    //   order: 33,
+    // },
+    // {
+    //   prompt: `Full body rear view standing, preserving exact body, head and haircut from input image. Hands resting on balcony rails. Looking forward. Wearing ${isFemale ? 'high-waisted black tailored trousers, fitted white crop top, white sneakers' : 'slim dark navy chinos, white oxford shirt, chelsea boots '}. City skyline balcony view. Early morning`,
+    //   inference: {
+    //     imagePaths: [idPhotoSet.body],
+    //     idPhotoPaths: [],
+    //     trueCfgScale: 1.0,
+    //     inferenceLevels: [
+    //       { numRuns: 1, numInferenceSteps: 8, width: verticalRatio[0], height: verticalRatio[1] },
+    //     ],
+    //   },
+    //   loras: [
+    //     { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+    //   ],
+    //   order: 34,  
     // },
   ];
 };

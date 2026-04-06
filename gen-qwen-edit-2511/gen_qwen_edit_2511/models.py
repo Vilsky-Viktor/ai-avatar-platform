@@ -25,7 +25,7 @@ class LoraConfig(BaseModel):
 
 class JobInput(BaseModel):
     prompt: str = ""
-    negativePrompt: str = " "
+    negativePrompt: str | None = None
     resultFileName: str | None = None
     checkDependencyImageExistence: bool = False
     inference: InferenceConfig = Field(default_factory=InferenceConfig)

@@ -51,7 +51,7 @@ FROM gcr.io/loom24-mvp/cuda128-py512-fa2-fa3-sage
 ```
 
 FA2, FA3 and Sage binaries are pre-installed into site-packages. No runtime download or install is needed — just set `DIFFUSERS_ATTN_BACKEND` to:
-- `flash` for FA2
-- `_flash_3` for FA3
-- `sage` for default Sage
-- `_sage_qk_int8_pv_fp8_cuda_sm90` for int8 fp8 Sage optimized for hopper
+- `flash` - for FA2
+- `_flash_3` - for FA3
+- `sage` - for default Sage
+- `_sage_qk_int8_pv_fp8_cuda_sm90` - for int8 fp8 Sage optimized for hopper
