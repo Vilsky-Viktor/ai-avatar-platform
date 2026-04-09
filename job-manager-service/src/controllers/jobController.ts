@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, JobTypes, JobStatuses, JobRequest } from '../types/job';
+import { Job, MediaTypes, JobTargets, JobStatuses, JobRequest } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateIdPhotoView0Prompt, generateIdPhotoView45Prompt, generateIdPhotoView90Prompt, generatePhotoSetInputs } from '../utils/prompts';
+import { generateTrainingPhotoSetData } from '../utils/prompts';
 import { 
   create as createDb, 
   update as updateDb,
@@ -17,137 +17,7 @@ import imageRatios from '../types/imageRatios';
 
 const GEN_FLUX2_DEV_TOPIC = process.env.GEN_FLUX2_DEV_TOPIC || 'gen-flux2-dev';
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511'
-const ID_PHOTO_WIDTH = 1328;
-const ID_PHOTO_HEIGHT = 1328;
-const ID_PHOTO_NUM_STEPS = 15
 
-
-export const createIdPhotoView0 = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const jobRequest: JobRequest = req.body;
-  const groupId = uuid.v4();
-
-  req.log.info(`Create ID Photo view 0 job for ${headerUserId}`);
-
-  const job: Job = {
-    groupId,
-    order: 0,
-    userId: headerUserId as string,
-    avatarId: jobRequest.avatarId,
-    type: JobTypes.idPhoto,
-    status: JobStatuses.pending,
-    numRuns: 0,
-    input: {
-      prompt: generateIdPhotoView0Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}),
-      checkDependencyImageExistence: false,
-      inference: {
-        imagePaths: [],
-        idPhotoPaths: [],
-        trueCfgScale: 1.0,
-        inferenceLevels: [
-          { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
-        ],
-      },
-    }
-  }
-
-  try {
-    const dbJob = await createDb(headerUserId as string, job);
-
-    createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
-
-    await publishToTopic(GEN_FLUX2_DEV_TOPIC, dbJob);
-
-    return res.status(201).json(dbJob);
-  } catch (error) {
-    req.log.info(`Failed to create ID photo view 0 job for ${headerUserId}: ${error}`);
-    next(error);
-  }
-};
-
-export const createIdPhotoView45 = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const jobRequest: JobRequest = req.body;
-
-  req.log.info(`Create ID Photo view 45 job for ${headerUserId}`);
-
-  const job: Job = {
-    groupId: jobRequest.groupId,
-    order: 1,
-    userId: headerUserId as string,
-    avatarId: jobRequest.avatarId,
-    type: JobTypes.idPhoto,
-    status: JobStatuses.pending,
-    numRuns: 0,
-    input: {
-      prompt: generateIdPhotoView45Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}),
-      checkDependencyImageExistence: true,
-      inference: {
-        imagePaths: jobRequest.input.idPhotoPaths ?? [],
-        idPhotoPaths: jobRequest.input.idPhotoPaths ?? [],
-        trueCfgScale: 1.0,
-        inferenceLevels: [
-          { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
-        ],
-      },
-    }
-  }
-
-  try {
-    const dbJob = await createDb(headerUserId as string, job);
-
-    createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
-
-    await publishToTopic(GEN_FLUX2_DEV_TOPIC, dbJob);
-
-    return res.status(201).json(dbJob);
-  } catch (error) {
-    req.log.info(`Failed to create ID photo view 45 job for ${headerUserId}: ${error}`);
-    next(error);
-  }
-};
-
-export const createIdPhotoView90 = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const jobRequest: JobRequest = req.body;
-
-  req.log.info(`Create ID Photo view 90 job for ${headerUserId}`);
-
-  const job: Job = {
-    groupId: jobRequest.groupId,
-    order: 2,
-    userId: headerUserId as string,
-    avatarId: jobRequest.avatarId,
-    type: JobTypes.idPhoto,
-    status: JobStatuses.pending,
-    numRuns: 0,
-    input: {
-      prompt: generateIdPhotoView90Prompt({...jobRequest.input.parameters, gender: jobRequest.input.gender}),
-      checkDependencyImageExistence: true,
-      inference: {
-        imagePaths: jobRequest.input.idPhotoPaths ?? [],
-        idPhotoPaths: jobRequest.input.idPhotoPaths ?? [],
-        trueCfgScale: 1.0,
-        inferenceLevels: [
-          { numRuns: 1, numInferenceSteps: ID_PHOTO_NUM_STEPS, width: ID_PHOTO_WIDTH, height: ID_PHOTO_HEIGHT },
-        ],
-      },
-    }
-  }
-
-  try {
-    const dbJob = await createDb(headerUserId as string, job);
-
-    createPod(dbJob).catch(err => req.log.error("Pod creation failed:", err));
-
-    await publishToTopic(GEN_FLUX2_DEV_TOPIC, dbJob);
-
-    return res.status(201).json(dbJob);
-  } catch (error) {
-    req.log.info(`Failed to create ID photo view 90 job for ${headerUserId}: ${error}`);
-    next(error);
-  }
-};
 
 export const createPhotoSet = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'];
@@ -178,7 +48,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       body: `${avatarMediaPath}/008-training-photo-set-${verticalDimensions}-${groupId}.png`,
     }
 
-    const inputs = generatePhotoSetInputs(
+    const inputs = generateTrainingPhotoSetData(
       headerUserId as string, 
       jobRequest.avatarId, 
       {...jobRequest.input.parameters, gender: jobRequest.input.gender},
@@ -186,36 +56,31 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
     );
     const jobs: Job[] = [];
 
-    const baseJob: Job = {
+    const baseJob: Partial<Job> = {
       groupId,
       userId: headerUserId as string,
       avatarId: jobRequest.avatarId,
-      type: JobTypes.photoSet,
+      mediaType: MediaTypes.image,
+      target: JobTargets.trainingPhotoSet,
       status: JobStatuses.pending,
-      numRuns: 0,
-      input: {
-        checkDependencyImageExistence: true,
-        faceSwap: { enabled: false },
-        faceEnhancement: { enabled: false },
-        controlnet: { enabled: false }
-      }
+      maxRuns: 3,
     }
 
-    for (const [idx, input] of inputs.entries()) {
+    for (const [idx, customItem] of inputs.entries()) {
       const newJob = {...baseJob};
 
-      const lastInferenceLevel = (input.inference?.inferenceLevels.length || 1) - 1;
-      const width = input.inference?.inferenceLevels[lastInferenceLevel].width;
-      const height = input.inference?.inferenceLevels[lastInferenceLevel].height;
+      const inference = customItem.input?.inference;
 
-      newJob.order = input.order;
-      newJob.input = {
-        ...baseJob.input,
-        ...input,
-        resultFileName: `${String(input.order).padStart(3, '0')}-training-photo-set-${width}x${height}-${groupId}.png`,
+      newJob.order = customItem.order;
+      newJob.maxRuns = customItem.maxRuns ?? baseJob.maxRuns;
+      newJob.input = customItem.input
+      newJob.metadata = customItem.metadata;
+
+      newJob.result = {
+        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}-${groupId}.png`,
       }
 
-      jobs.push(newJob);
+      jobs.push(newJob as Job);
     }
 
     const dbJobs = await Promise.all(jobs.map((job: Job) => createDb(headerUserId as string, job)));

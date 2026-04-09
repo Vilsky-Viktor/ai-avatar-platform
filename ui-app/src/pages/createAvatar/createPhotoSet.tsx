@@ -162,7 +162,7 @@ function CreatePhotoSetPage() {
     const idPhotoData = getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY)
 
     const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
-    const [avgSimilarity, setAvgSimilarity] = useState(0);
+    const [avgFaceMatch, setAvgFaceMatch] = useState(0);
     const [, setTick] = useState(0);
     
     // ── New: state for fullscreen modal ────────────────────────────────
@@ -177,7 +177,7 @@ function CreatePhotoSetPage() {
             if (initialized.current) return;
             initialized.current = true;
 
-            if (stepData.jobs.every((job: Partial<Job> | null) => job === null)) {
+            if (stepData.jobs.every((job: Job | null) => job === null)) {
                 console.log("create jobs")
                 createJobs();
             } else {
@@ -216,12 +216,17 @@ function CreatePhotoSetPage() {
             setStepData((prev) => ({ ...prev, timerStoppedAt: Date.now() }));
         }
 
-        const sumSimilarities = stepData.jobs.reduce((acc, job) => {
-            return acc + (job?.result?.maxSimilarity && job?.result?.maxSimilarity > 0 ? job?.result?.maxSimilarity : 0);
+        const sumFaceMatches = stepData.jobs.reduce((acc, job) => {
+            const matches = job?.result?.faceMatches;
+            if (!matches?.length) return acc;
+            return acc + Math.max(...matches);
         }, 0);
-        const countSimilarities = stepData.jobs.filter(job => job?.result?.maxSimilarity && job?.result?.maxSimilarity > 0).length;
+        const countFaceMatches = stepData.jobs.filter(job => {
+            const matches = job?.result?.faceMatches;
+            return matches?.length && Math.max(...matches) > 0;
+        }).length;
 
-        setAvgSimilarity(countSimilarities > 0 ? sumSimilarities / countSimilarities : 0);
+        setAvgFaceMatch(countFaceMatches > 0 ? sumFaceMatches / countFaceMatches : 0);
 
         return () => unsubscribe();
     }, [stepData.jobs]);
@@ -273,34 +278,14 @@ function CreatePhotoSetPage() {
         return stepData.jobs.every((job: Partial<Job> | null) => job && job.status === JobStatuses.completed);
     };
 
-    const filterJobData = (job: Job | (Partial<Job> | null)): Partial<Job> | null  => {
-        if (!job) return null;
-
-        const { id, status, groupId, order, input, result } = job;
-
-        return {
-            id,
-            status,
-            groupId,
-            order,
-            input: input ? { height: input.height, width: input.width } : undefined,
-            result: result ? { mediaPath: result.mediaPath, mediaUrl: result.mediaUrl, maxSimilarity: result.maxSimilarity } : undefined
-        };
+    const setJobs = (jobs: (Job | null)[]) => {
+        setStepData((prev: PhotoSetStepData) => ({...prev, jobs}));
     }
 
-    const setJobs = (jobs: Job[] | (Partial<Job> | null)[]) => {
-        const neededJobData = jobs.map((job: Job | (Partial<Job> | null)) => {
-            return job ? filterJobData(job) : null;
-        })
-        setStepData((prev: PhotoSetStepData) => ({...prev, jobs: neededJobData}));
-    }
-
-    const setJob = (jobIndex: number, job: Partial<Job>) => {
-        const filteredJob = filterJobData(job);
-
+    const setJob = (jobIndex: number, job: Job | null) => {
         setStepData((prev) => ({
             ...prev,
-            jobs: prev.jobs.map((oldJob, idx) => idx === jobIndex ? filteredJob : oldJob)
+            jobs: prev.jobs.map((oldJob, idx) => idx === jobIndex ? job : oldJob)
         }));
     };
 
@@ -366,7 +351,7 @@ function CreatePhotoSetPage() {
                         ...media, 
                         jobId: job?.id!, 
                         path: job?.result?.mediaPath!,
-                        dimensions: `${job?.input?.height}x${job?.input?.width}`,
+                        dimensions: `${job?.input?.inference.height}x${job?.input?.inference.width}`,
                         order: idx
                     })
                 }
@@ -523,7 +508,7 @@ function CreatePhotoSetPage() {
 
         if (job.status === JobStatuses.completed) {
             const url = job.result?.mediaUrl;
-            const maxSimilarity = job.result?.maxSimilarity || 0;
+            const maxFaceMatch = Math.max(...(job.result?.faceMatches || [0]));
 
             if (!url) {
                 return (
@@ -548,20 +533,20 @@ function CreatePhotoSetPage() {
                         </div>
                     </div>
 
-                    {maxSimilarity > 0 && (
+                    {maxFaceMatch > 0 && (
                         <div className="absolute bottom-1 right-1 z-10">
                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
                                 <span className="font-bold">
-                                    {(maxSimilarity * 100).toFixed(0)}%
+                                    {(maxFaceMatch * 100).toFixed(0)}%
                                 </span>
 
                                 <div
                                     className={`w-2 h-2 rounded-full ${
-                                        maxSimilarity >= 0.7
+                                        maxFaceMatch >= 0.7
                                         ? 'bg-green-400'
-                                        : maxSimilarity >= 0.6
+                                        : maxFaceMatch >= 0.6
                                         ? 'bg-yellow-400'
-                                        : maxSimilarity >= 0.55
+                                        : maxFaceMatch >= 0.55
                                         ? 'bg-orange-400'
                                         : 'bg-red-400'
                                     }`}
@@ -588,15 +573,15 @@ function CreatePhotoSetPage() {
                             Match
                         </span>
                         <span className="text-2xl font-semibold text-primary tabular-nums">
-                            {(avgSimilarity * 100).toFixed(0)}%
+                            {(avgFaceMatch * 100).toFixed(0)}%
                         </span>
                         <div
                             className={`w-2 h-2 rounded-full ${
-                                avgSimilarity >= 0.7
+                                avgFaceMatch >= 0.7
                                 ? 'bg-green-400'
-                                : avgSimilarity >= 0.6
+                                : avgFaceMatch >= 0.6
                                 ? 'bg-yellow-400'
-                                : avgSimilarity >= 0.5
+                                : avgFaceMatch >= 0.5
                                 ? 'bg-orange-400'
                                 : 'bg-red-400'
                             }`}

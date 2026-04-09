@@ -1,41 +1,59 @@
 from __future__ import annotations
-
 from pydantic import BaseModel, Field
 
-
-class InferenceLevel(BaseModel):
-    numRuns: int
-    numInferenceSteps: int
-    width: int
-    height: int
-
+class FaceExpression(BaseModel):
+    enabled: bool = False
+    type: str = ""
+    scale: float = 1.0
 
 class InferenceConfig(BaseModel):
-    imagePaths: list[str] = []
-    idPhotoPaths: list[str] = []
-    inferenceLevels: list[InferenceLevel] = []
-    trueCfgScale: float = 4.0
-
+    prompt: str = ""
+    negativePrompt: str | None = None
+    seed: int | None = None
+    mediaPaths: list[str] = []
+    guidanceScale: float = 4.0
+    numSteps: int
+    width: int
+    height: int
 
 class LoraConfig(BaseModel):
     path: str
     scale: float = 1.0
     filename: str | None = None
 
+class FaceRecognition(BaseModel):
+    enabled: bool = False
+    mediaPaths: list[str] = []
+    threshold: float = 0.95
 
 class JobInput(BaseModel):
-    prompt: str = ""
-    negativePrompt: str | None = None
-    resultFileName: str | None = None
-    checkDependencyImageExistence: bool = False
+    checkDependencies: bool = False
     inference: InferenceConfig = Field(default_factory=InferenceConfig)
+    faceRecognition: FaceRecognition = Field(default_factory=FaceRecognition)
+    faceExpression: FaceExpression = Field(default_factory=FaceExpression)
     loras: list[LoraConfig] = []
 
+class JobResult(BaseModel):
+    mediaPath: str = ""
+    faceMatches: list[float] = []
+    errorMessage: str = ""
+    fileName: str | None = None
+
+class Metadata(BaseModel):
+    dimensions: str = ""
+    ratio: str = ""
+    angle: str = ""
+    shotType: str = ""
 
 class Job(BaseModel):
     id: str = "unknown"
     userId: str = ""
     avatarId: str = ""
-    type: str = ""
-    order: int | None = None
+    mediaType: str = ""
+    target: str = ""
+    status: str = "generating"
+    maxRuns: int
     input: JobInput = Field(default_factory=JobInput)
+    result: JobResult = Field(default_factory=JobResult)
+    metadata: Metadata = Field(default_factory=Metadata)
+    order: int | None = None

@@ -1,16 +1,16 @@
 import axios from 'axios';
 import logger from '../logger';
-import { JobResult, JobStatuses } from '../types/job';
+import { Job } from '../types/job';
 
 const JOB_MANAGER_SERVICE_URL = process.env.JOB_MANAGER_SERVICE_URL;
 
-export const updateJob = async (userId: string, jobId: string, status: JobStatuses, numRuns: number, result: JobResult): Promise<void> => {
+export const updateJob = async (job: Job): Promise<void> => {
     try {
-        const url = `${JOB_MANAGER_SERVICE_URL}/update/${jobId}`;
+        const url = `${JOB_MANAGER_SERVICE_URL}/update/${job.id}`;
 
-        await axios.patch(url, {status, numRuns, result}, {
+        await axios.patch(url, {status: job.status, result: job.result}, {
             headers: {
-                'x-user-id': userId
+                'x-user-id': job.userId
             }
         });
     } catch (error: any) {

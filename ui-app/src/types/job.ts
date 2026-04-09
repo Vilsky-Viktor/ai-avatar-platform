@@ -1,11 +1,13 @@
 import type { FirestoreTimestamp } from "./firestore";
 import type { AvatarParameters } from "./avatar";
 
-export enum JobTypes {
-  idPhoto = 'idPhoto',
-  photoSet = 'photoSet',
-  text2image = 'text2image',
-  textImage2image = 'textimage2image'
+export enum MediaTypes {
+  image = 'image',
+  video = 'video',
+}
+
+export enum JobTargets {
+  trainingPhotoSet = 'trainingPhotoSet',
 }
 
 export enum JobStatuses {
@@ -15,12 +17,56 @@ export enum JobStatuses {
   error = 'error',
 }
 
-export type JobInput = {
+export type FaceSwapParams = {
+  enabled: boolean;
+  model?: string;
+  weight?: number;
+  pixelBoost?: string;
+  referenceIdx?: number;
+}
+
+export type FaceEnhancementParams = {
+  enabled: boolean;
+  model?: string;
+  weight?: number;
+  blend?: number;
+  referenceIdx?: number;
+}
+
+export type InferenceConfig = {
   prompt?: string;
-  imagePaths?: string[];
-  videoPath?: string;
+  negativePrompt?: string;
+  mediaPaths?: string[];
+  guidanceScale?: number;
+  numSteps: number;
   width?: number;
   height?: number;
+  seed?: number;
+}
+
+export type FaceRecognition = {
+  enabled: boolean;
+  mediaPaths?: string[];
+  threshold?: number;
+}
+
+export type ControlNet = {
+  enabled: boolean;
+  imagePath?: string;
+  scale?: number;
+}
+
+export type LoraData = {
+  path: string;
+  scale?: number;
+  filename?: string;
+}
+
+export type JobInput = {
+  checkDependencies: boolean;
+  inference: InferenceConfig;
+  faceRecognition?: FaceRecognition;
+  loras?: LoraData[];
 }
 
 export type JobRequestInput = {
@@ -29,32 +75,36 @@ export type JobRequestInput = {
   idPhotoPaths?: string[]
 };
 
-export type PhotoSetJobInput = {
-  idPhotoPaths: string[];
-  gender: string;
-  parameters: AvatarParameters;
+export type JobResult = {
+  mediaPath?: string;
+  mediaUrl?: string;
+  faceMatches?: number[];
+  errorMessage?: string;
+  fileName: string;
 }
 
-export type JobResult = {
-  mediaPath: string;
-  mediaUrl?: string;
-  minSimilarity?: number;
-  maxSimilarity?: number;
-  error?: string;
+export type Metadata = {
+  dimensions: string;
+  ratio: string;
+  angle: string;
+  shotType: string;
 }
 
 export type Job = {
-  id: string;
+  id?: string;
   groupId?: string;
   order?: number;
   userId: string;
   avatarId: string;
-  type: JobTypes;
-  status: JobStatuses;
-  input: JobInput
+  mediaType: MediaTypes;
+  target: JobTargets;
+  status?: JobStatuses;
+  maxRuns: number;
+  input: JobInput;
   result?: JobResult;
-  createdAt: FirestoreTimestamp;
-  updatedAt: FirestoreTimestamp;
+  metadata?: Metadata;
+  createdAt?: FirestoreTimestamp;
+  updatedAt?: FirestoreTimestamp;
 }
 
 export type JobRequest = {
@@ -62,3 +112,4 @@ export type JobRequest = {
   avatarId: string;
   input: JobRequestInput;
 }
+

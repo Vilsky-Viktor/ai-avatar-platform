@@ -9,7 +9,7 @@ import gen_qwen_edit_2511.message_queue as mq
 import gen_qwen_edit_2511.face_recognition as face_recognition
 import gen_qwen_edit_2511.utils as utils
 import gen_qwen_edit_2511.db as db
-from gen_qwen_edit_2511.models import Job, InferenceLevel
+from gen_qwen_edit_2511.models import Job
 
 import gen_qwen_edit_2511.inference as inference
 
@@ -20,13 +20,11 @@ SUBSCRIPTION_ID = os.getenv("SUBSCRIPTION_ID", "gen-qwen-edit-2511-sub")
 MODEL_NAME      = os.getenv("MODEL_NAME", "qwen-edit-2511")
 DIFFUSERS_ATTN_BACKEND = os.getenv("DIFFUSERS_ATTN_BACKEND", "native")
 
-DEFAULT_INFERENCE_LEVEL = InferenceLevel(numRuns=1, numInferenceSteps=40, width=1328, height=1328)
-
 ATTN_BACKEND_NAMES = {
-    "flash": "Flash Attention 2", 
-    "_flash_3": "Flash Attention 3", 
-    "native": "PyTorch SDPA", 
-    "sage": "SageAttention", 
+    "flash": "Flash Attention 2",
+    "_flash_3": "Flash Attention 3",
+    "native": "PyTorch SDPA",
+    "sage": "SageAttention",
     "_sage_qk_int8_pv_fp8_cuda_sm90": "SageAttention INT8/FP8 SM90"
 }
 
@@ -41,14 +39,6 @@ def job_canceled(job_id: str) -> bool:
         return True
     return False
 
-
-@utils.timeit
-def check_face_matches(imgs: list, id_photos: list) -> list[float]:
-    logger.info("Checking face match ...")
-    similarities = face_recognition.run_face_match_check(imgs, id_photos)
-    return [round(s, 4) for s in similarities]
-
-
 # ---------------------------------------------------------------------------
 # Main job processor — runs on Pub/Sub callback thread
 # ---------------------------------------------------------------------------
@@ -57,20 +47,7 @@ def check_face_matches(imgs: list, id_photos: list) -> list[float]:
 def process_job(message: pubsub_v1.subscriber.message.Message):
     job = Job.model_validate(json.loads(message.data.decode("utf-8")))
     job_input = job.input
-    inf = job_input.inference
-    inference_levels = inf.inferenceLevels or [DEFAULT_INFERENCE_LEVEL]
-    total_runs = 0
     loras_loaded = False
-
-    result = {
-        "userId":    job.userId,
-        "avatarId":  job.avatarId,
-        "jobId":     job.id,
-        "type":      job.type,
-        "mediaPath": None,
-        "status":    "generating",
-        "error":     None,
-    }
 
     logger.info(f"========= Processing job {job.id}, order {job.order or 'none'} =========")
 
@@ -80,16 +57,21 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 
     try:
         logger.info("Loading dependency images ...")
-        id_photos = storage.load_input_images(inf.idPhotoPaths)
-        reference_images = storage.load_input_images(inf.imagePaths)
+        reference_images = storage.load_input_images(job_input.inference.mediaPaths)
+        id_photos = storage.load_input_images(job_input.faceRecognition.mediaPaths) if job_input.faceRecognition.enabled else []
 
-        if job_input.checkDependencyImageExistence:
-            if len(id_photos) != len(inf.idPhotoPaths) or len(reference_images) != len(inf.imagePaths):
-                logger.warning(f"Missing dependency images, skipping job {job.id}")
+        if job_input.checkDependencies:
+            if len(reference_images) != len(job_input.inference.mediaPaths):
+                logger.warning(f"Missing reference images, skipping job {job.id}")
                 message.nack()
                 return
-            
-        mq.publish_status(result)
+            if job_input.faceRecognition.enabled and len(id_photos) != len(job_input.faceRecognition.mediaPaths):
+                logger.warning(f"Missing ID photos, skipping job {job.id}")
+                message.nack()
+                return
+
+        job.status = "generating"
+        mq.publish_status(job.model_dump())
 
         if job_input.loras:
             for lora in job_input.loras:
@@ -102,62 +84,51 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
                 inference.unload_loras()
                 raise
 
-        similarities = []
-        top_seeds = None
+        if job_input.faceExpression.enabled:
+            logger.info(f"Expression mode: '{job_input.faceExpression.type}' scale={job_input.faceExpression.scale}")
 
-        for level_idx, level in enumerate(inference_levels):
-            is_last = level_idx == len(inference_levels) - 1
+        max_runs = job.maxRuns if job_input.faceRecognition.enabled else 1
+        best_img = None
+        best_match = 0.0
 
-            seeds = top_seeds if top_seeds is not None else [None] * level.numRuns
+        for run_idx in range(max_runs):
+            logger.info(f"---------- Run #{run_idx + 1}/{max_runs} ----------")
 
-            level_imgs = []
-            level_seeds = []
-            for run_idx, seed in enumerate(seeds):
-                logger.info(f"---------- Level {level_idx + 1}/{len(inference_levels)} run #{run_idx + 1} ----------")
-                img, actual_seed = inference.run_inference(
-                    job_input, reference_images, level.numInferenceSteps, seed,
-                    level.width, level.height,
-                )
-                level_imgs.append(img)
-                level_seeds.append(actual_seed)
-                total_runs += 1
+            img, _ = inference.run_inference(job_input, reference_images)
 
-            face_matches = check_face_matches(level_imgs, id_photos)
-            ranked = sorted(zip(face_matches, level_seeds, level_imgs), key=lambda x: x[0], reverse=True)
+            if job_input.faceRecognition.enabled:
+                face_match = face_recognition.check_face_match(img, id_photos)
+                job.result.faceMatches.append(face_match)
 
-            for fm, s, _ in ranked:
-                logger.info(f"Level {level_idx + 1} seed {s} - face match {fm}")
-                similarities.append(fm)
+                if face_match > best_match:
+                    best_match = face_match
+                    best_img = img
 
-            if is_last:
-                best_face_match, _, best_img = ranked[0]
+                if face_match >= job_input.faceRecognition.threshold:
+                    logger.info(f"Face match threshold reached ({face_match} >= {job_input.faceRecognition.threshold}), stopping early")
+                    break
             else:
-                next_runs = inference_levels[level_idx + 1].numRuns
-                top_seeds = [s for _, s, _ in ranked[:next_runs]]
-
-        logger.info(f"Best face match {best_face_match}")
+                best_img = img
 
         img = best_img
-        media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/images/{job_input.resultFileName}"
+        media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/images/{job.result.fileName}"
         img_payload = storage.prepare_image_payload(img)
 
         storage.upload_result_image(media_path, img_payload)
         storage.save_result_image_locally(media_path, img_payload)
 
-        result.update({
-            "status":        "completed",
-            "mediaPath":     media_path,
-            "maxSimilarity": best_face_match,
-            "similarities":  similarities,
-            "numRuns":       total_runs,
-        })
+        job.status = "completed"
+        job.result.mediaPath = media_path
 
-        mq.publish_status(result)
+        mq.publish_status(job.model_dump())
         logger.info("Completed status has been published")
         message.ack()
 
     except Exception as error:
         logger.error(f"Error processing job {job.id}: {error}", exc_info=True)
+        job.status = "error"
+        job.result.errorMessage = str(error)
+        mq.publish_status(job.model_dump())
         message.ack()
 
     finally:
@@ -170,7 +141,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    
+
     logger.info(f"Attention backend: {ATTN_BACKEND_NAMES.get(DIFFUSERS_ATTN_BACKEND, DIFFUSERS_ATTN_BACKEND)}")
 
     try:

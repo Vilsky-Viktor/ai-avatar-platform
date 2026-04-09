@@ -88,7 +88,7 @@ function GeneratePhotos({ stepData, setStepData, generalData, generatingStarted,
             id: job.id, 
             status: job.status, 
             groupId: job.groupId,
-            input: { height: job.input?.height, width: job.input?.width },
+            input: { height: job.input?.inference.height, width: job.input?.inference.width },
             result: { mediaPath: job.result?.mediaPath, mediaUrl: job.result?.mediaUrl }
         }
 

@@ -1,25 +1,12 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
-import { AIModelResult } from './types/modelResult';
 import logger from './logger';
-import {updateJob} from './services/jobManagerService'
+import { updateJob } from './services/jobManagerService'
+import { Job } from './types/job';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'ai-model-result-sub';
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
-
-async function handleModelResult(result: AIModelResult) {
-  if (result.error) {
-    const { jobId, userId, status, error, numRuns } = result;
-    logger.error({ jobId, userId, error }, 'Updating job status');
-    await updateJob(userId, jobId, status, numRuns, {error});
-    return;
-  }
-
-  const { jobId, userId, status, mediaPath, similarities, maxSimilarity, numRuns } = result;
-  logger.info({ jobId, userId, mediaPath }, 'Updating job status');
-  await updateJob(userId, jobId, status, numRuns, {mediaPath: mediaPath!, similarities, maxSimilarity});
-}
 
 function listenForResults() {
   const subscription = pubsub.subscription(SUBSCRIPTION_ID);
@@ -28,11 +15,11 @@ function listenForResults() {
 
   const messageHandler = async (message: Message) => {
     try {
-      const result: AIModelResult = JSON.parse(message.data.toString());
+      const job: Job = JSON.parse(message.data.toString());
 
-      logger.info({ jobId: result.jobId, status: result.status, msgId: message.id }, 'Received message');
+      logger.info({ jobId: job.id, status: job.status, msgId: message.id }, 'Received message');
 
-      await handleModelResult(result);
+      await updateJob(job);
       message.ack();
     } catch (err) {
       logger.error({ err }, 'Error parsing message or handling result');

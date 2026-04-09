@@ -1,7 +1,3 @@
-import { JobInput } from '../types/job';
-
-export type TrainingPhotoSetInput = Partial<JobInput> & { order: number };
-
 export type IdPhotoSetPaths = {
     microPortrait: string;
     front: string;

@@ -1,11 +1,13 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { AvatarParameters } from './avatar';
 
-export enum JobTypes {
-  idPhoto = 'idPhoto',
-  photoSet = 'photoSet',
-  text2image = 'text2image',
-  textImage2image = 'textimage2image'
+export enum MediaTypes {
+  image = 'image',
+  video = 'video',
+}
+
+export enum JobTargets {
+  trainingPhotoSet = 'trainingPhotoSet',
 }
 
 export enum JobStatuses {
@@ -31,19 +33,42 @@ export type FaceEnhancementParams = {
   referenceIdx?: number;
 }
 
-export type InferenceLevel = {
-  numRuns: number;
-  numInferenceSteps: number;
-  width: number;
-  height: number;
+export enum FaceExpressionTypes {
+  sad = 'sad',
+  angry = 'angry',
+  confused = 'confused',
+  contempt = 'contempt',
+  confident = 'confident',
+  disgust = 'disgust',
+  fear = 'fear',
+  happy = 'happy',
+  shy = 'shy',
+  sleepy = 'sleepy',
+  surprised = 'surprised',
+  anxious = 'anxious'
 }
 
-export type Inference = {
-  imagePaths: string[];
-  idPhotoPaths: string[];
-  inferenceLevels: InferenceLevel[];
-  trueCfgScale: number;
+export type FaceExpression = {
+  enabled: boolean;
+  type: FaceExpressionTypes;
+  scale?: number;
+}
+
+export type InferenceConfig = {
+  prompt?: string;
+  negativePrompt?: string;
+  mediaPaths?: string[];
+  guidanceScale?: number;
+  numSteps: number;
+  width?: number;
+  height?: number;
   seed?: number;
+}
+
+export type FaceRecognition = {
+  enabled: boolean;
+  mediaPaths?: string[];
+  threshold?: number;
 }
 
 export type ControlNet = {
@@ -59,15 +84,10 @@ export type LoraData = {
 }
 
 export type JobInput = {
-  prompt?: string;
-  negativePrompt?: string;
-  videoPath?: string;
-  checkDependencyImageExistence: boolean;
-  faceSwap?: FaceSwapParams;
-  faceEnhancement?: FaceEnhancementParams;
-  controlnet?: ControlNet;
-  inference?: Inference;
-  resultFileName?: string;
+  checkDependencies: boolean;
+  inference: InferenceConfig;
+  faceRecognition?: FaceRecognition;
+  faceExpression?: FaceExpression;
   loras?: LoraData[];
 }
 
@@ -78,11 +98,17 @@ export type JobRequestInput = {
 };
 
 export type JobResult = {
-  mediaPath: string;
-  similarities?: number[];
-  maxSimilarity?: number;
-  bestRunNum?: number;
-  error?: string;
+  mediaPath?: string;
+  faceMatches?: number[];
+  errorMessage?: string;
+  fileName: string;
+}
+
+export type Metadata = {
+  dimensions: string;
+  ratio: string;
+  angle: string;
+  shotType: string;
 }
 
 export type Job = {
@@ -91,11 +117,13 @@ export type Job = {
   order?: number;
   userId: string;
   avatarId: string;
-  type: JobTypes;
-  status: JobStatuses;
-  numRuns: number;
-  input: JobInput
+  mediaType: MediaTypes;
+  target: JobTargets;
+  status?: JobStatuses;
+  maxRuns: number;
+  input: JobInput;
   result?: JobResult;
+  metadata?: Metadata;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

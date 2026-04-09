@@ -117,7 +117,7 @@ function CreateIdPhotoPage() {
                             ...media, 
                             jobId: job?.id!, 
                             path: job?.result?.mediaPath!,
-                            dimensions: `${job?.input?.height}x${job?.input?.width}`,
+                            dimensions: `${job?.input?.inference.height}x${job?.input?.inference.width}`,
                             order: idx
                         })
                     }

@@ -6,15 +6,14 @@ import cv2
 import numpy as np
 import torch
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
 from typing import List
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from scipy.spatial.distance import cosine
+import gen_qwen_edit_2511.utils as utils
 
 from .adaface import net as adaface_net
 from gen_qwen_edit_2511.utils import bytes_to_cv2, enhance_image
-import gen_qwen_edit_2511.utils as utils_module
 import gen_qwen_edit_2511.logger as log_module
 
 # ---------------------------------------------------------------------------
@@ -27,14 +26,11 @@ ADAFACE_ARCHITECTURE = os.getenv("ADAFACE_ARCHITECTURE", "ir_101")
 
 EMBEDDING_CACHE_TTL      = int(os.getenv("EMBEDDING_CACHE_TTL", "3600"))
 EMBEDDING_CACHE_MAX_SIZE = int(os.getenv("EMBEDDING_CACHE_MAX_SIZE", "500"))
-FACE_CHECK_WORKERS       = int(os.getenv("FACE_CHECK_WORKERS", "10"))
-
 logger = log_module.get_logger(__name__)
 
 _face_app: FaceAnalysis | None = None
 _adaface_model: adaface_net.Backbone | None = None
 _id_embedding_cache: OrderedDict[int, tuple[np.ndarray | None, float]] = OrderedDict()
-_executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=FACE_CHECK_WORKERS)
 
 
 # ---------------------------------------------------------------------------
@@ -224,22 +220,12 @@ def calc_face_similarity(
 
     return max_similarity if found_any else None
 
-
-def _check_single(img, id_images_bytes: List[bytes]) -> float:
-    image_bytes = utils_module.to_image_bytes(img)
+@utils.timeit
+def check_face_match(img, id_photos: list) -> float:
+    logger.info("Checking face match ...")
+    image_bytes = utils.to_image_bytes(img)
+    id_images_bytes = [utils.to_image_bytes(p) for p in id_photos]
     similarity = calc_face_similarity(id_images_bytes, image_bytes)
-    if similarity is None:
-        logger.info("Face not found to check similarity")
-        return 0.0
-    return float(similarity)
-
-
-def run_face_match_check(imgs: list, id_photos) -> List[float]:
-    if not id_photos:
-        logger.info("ID photos not provided for similarity check")
-        return [0.0] * len(imgs)
-
-    id_images_bytes = [utils_module.to_image_bytes(id_photo) for id_photo in id_photos]
-
-    futures = [_executor.submit(_check_single, img, id_images_bytes) for img in imgs]
-    return [f.result() for f in futures]
+    result = round(float(similarity), 4) if similarity is not None else 0.0
+    logger.info(f"Face match: {result}")
+    return result
