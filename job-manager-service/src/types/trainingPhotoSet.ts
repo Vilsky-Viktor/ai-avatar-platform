@@ -1,10 +1,16 @@
+export type ImagePaths = {
+    microPortrait?: string;
+    front?: string;
+    frontSmile?: string;
+    rightQuarter?: string;
+    leftQuarter?: string;
+    rightSide?: string;
+    leftSide?: string;
+    back?: string;
+    body?: string;
+}
+
 export type IdPhotoSetPaths = {
-    microPortrait: string;
-    front: string;
-    frontSmile: string;
-    rightQuarter: string;
-    leftQuarter: string;
-    rightSide: string;
-    leftSide: string;
-    body: string;
+    generated: ImagePaths;
+    uploaded: ImagePaths;
 }

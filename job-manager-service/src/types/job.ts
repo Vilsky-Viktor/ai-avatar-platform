@@ -68,7 +68,10 @@ export type InferenceConfig = {
 export type FaceRecognition = {
   enabled: boolean;
   mediaPaths?: string[];
-  threshold?: number;
+  threshold?: {
+    min: number;
+    max?: number;
+  };
 }
 
 export type ControlNet = {
@@ -100,6 +103,7 @@ export type JobRequestInput = {
 export type JobResult = {
   mediaPath?: string;
   faceMatches?: number[];
+  bestFaceMatch?: number;
   errorMessage?: string;
   fileName: string;
 }
@@ -109,6 +113,7 @@ export type Metadata = {
   ratio: string;
   angle: string;
   shotType: string;
+  queueTopic?: string;
 }
 
 export type Job = {

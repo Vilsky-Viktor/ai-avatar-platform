@@ -3,13 +3,15 @@ import { Job, MediaTypes, JobTargets, JobStatuses, JobRequest } from '../types/j
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
 import { generateTrainingPhotoSetData } from '../utils/prompts';
 import { 
+  getById as getByIdDb,
   create as createDb, 
+  createMany as createManyDb, 
   update as updateDb,
   deleteById as deleteByIdDb, 
   deleteByAvatarId as deleteByAvatarIdDb, 
   deleteByUserId as deleteByUserIdDb
 } from '../repositories/job';
-import { publishToTopic } from '../services/messageQueue';
+import { publishJob, publishJobs } from '../services/messageQueue';
 import { createPod } from '../services/runpodService';
 import uuid from 'uuid';
 import imageRatios from '../types/imageRatios';
@@ -20,7 +22,7 @@ const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qw
 
 
 export const createPhotoSet = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
+  const headerUserId = req.headers['x-user-id'] as string;
   const jobRequest: JobRequest = req.body;
   const groupId = uuid.v4();
 
@@ -38,19 +40,26 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
     const avatarMediaPath = `media/${headerUserId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
 
     const idPhotoSet: IdPhotoSetPaths = {
-      microPortrait: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}-${groupId}.png`,
-      front: `${avatarMediaPath}/000-uploaded-front-${squareDimensions}.png`,
-      frontSmile: `${avatarMediaPath}/000-uploaded-front-smile-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/000-uploaded-right-quarter-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${squareDimensions}.png`,
-      rightSide: `${avatarMediaPath}/006-training-photo-set-${squareDimensions}-${groupId}.png`,
-      leftSide: `${avatarMediaPath}/007-training-photo-set-${squareDimensions}-${groupId}.png`,
-      body: `${avatarMediaPath}/008-training-photo-set-${verticalDimensions}-${groupId}.png`,
+      uploaded: {
+        front: `${avatarMediaPath}/000-uploaded-front-${squareDimensions}.png`,
+        frontSmile: `${avatarMediaPath}/000-uploaded-front-smile-${squareDimensions}.png`,
+        rightQuarter: `${avatarMediaPath}/000-uploaded-right-quarter-${squareDimensions}.png`,
+        leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${squareDimensions}.png`,
+      },
+      generated: {
+        front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
+        frontSmile: `${avatarMediaPath}/002-training-photo-set-${squareDimensions}.png`,
+        rightQuarter: `${avatarMediaPath}/003-training-photo-set-${squareDimensions}.png`,
+        leftQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
+        rightSide: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
+        leftSide: `${avatarMediaPath}/006-training-photo-set-${squareDimensions}.png`,
+        back: `${avatarMediaPath}/007-training-photo-set-${squareDimensions}.png`,
+        microPortrait: `${avatarMediaPath}/008-training-photo-set-${squareDimensions}.png`,
+        body: `${avatarMediaPath}/009-training-photo-set-${verticalDimensions}.png`,
+      }
     }
 
     const inputs = generateTrainingPhotoSetData(
-      headerUserId as string, 
-      jobRequest.avatarId, 
       {...jobRequest.input.parameters, gender: jobRequest.input.gender},
       idPhotoSet
     );
@@ -58,7 +67,7 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
 
     const baseJob: Partial<Job> = {
       groupId,
-      userId: headerUserId as string,
+      userId: headerUserId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
       target: JobTargets.trainingPhotoSet,
@@ -76,18 +85,22 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       newJob.input = customItem.input
       newJob.metadata = customItem.metadata;
 
+      if (newJob.metadata) {
+        newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
+      }
+
       newJob.result = {
-        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}-${groupId}.png`,
+        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}.png`,
       }
 
       jobs.push(newJob as Job);
     }
 
-    const dbJobs = await Promise.all(jobs.map((job: Job) => createDb(headerUserId as string, job)));
+    const dbJobs = await createManyDb(headerUserId, jobs);
 
     // createPod(dbJobs[0]).catch(err => req.log.error("Pod creation failed:", err));
 
-    await Promise.all(dbJobs.map((dbJob: Job) => publishToTopic(GEN_QWEN_EDIT_2511_TOPIC, dbJob)));
+    await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
 
     return res.status(201).json(dbJobs);
   } catch (error) {
@@ -95,6 +108,43 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 
+}
+
+export const restart = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const id = req.params.id as string;
+
+  req.log.info(`Restart job ${id}`);
+
+  try {
+    const job: Job | null = await getByIdDb(userId, id);
+
+    if (!job) {
+      const errorMessage = `Job ${id} does not exist`;
+      req.log.error(errorMessage)
+      throw Error(errorMessage)
+    }
+
+    if (!job.metadata?.queueTopic) {
+      const errorMessage = `Job ${id} queue topic is undefined`;
+      req.log.error(errorMessage)
+      throw Error(errorMessage)
+    }
+
+    job.result = {
+      fileName: job.result?.fileName!
+    };
+
+    job.status = JobStatuses.pending;
+
+    await updateDb(userId, id, job);
+    await publishJob(job.metadata.queueTopic, job);
+
+    return res.status(200).json(job);
+  } catch (error) {
+    req.log.info(`Failed to restart job ${id} for user ${userId}: ${error}`);
+    next(error);
+  }
 }
 
 export const update = async (req: Request, res: Response, next: NextFunction) => {

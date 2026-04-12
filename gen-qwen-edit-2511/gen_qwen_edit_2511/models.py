@@ -21,10 +21,14 @@ class LoraConfig(BaseModel):
     scale: float = 1.0
     filename: str | None = None
 
+class FaceRecognitionThreshold(BaseModel):
+    min: float = 0.95
+    max: float | None = None
+
 class FaceRecognition(BaseModel):
     enabled: bool = False
     mediaPaths: list[str] = []
-    threshold: float = 0.95
+    threshold: FaceRecognitionThreshold = Field(default_factory=FaceRecognitionThreshold)
 
 class JobInput(BaseModel):
     checkDependencies: bool = False
@@ -36,6 +40,7 @@ class JobInput(BaseModel):
 class JobResult(BaseModel):
     mediaPath: str = ""
     faceMatches: list[float] = []
+    bestFaceMatch: float | None = None
     errorMessage: str = ""
     fileName: str | None = None
 

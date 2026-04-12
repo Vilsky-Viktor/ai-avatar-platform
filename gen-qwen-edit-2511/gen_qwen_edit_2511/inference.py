@@ -1,5 +1,7 @@
+import logging
 import math
 import os
+import secrets
 import warnings
 from pathlib import Path
 
@@ -14,6 +16,8 @@ import gen_qwen_edit_2511.utils as utils
 
 QWEN_MODEL_PATH      = os.getenv("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")
 CONDITION_IMAGE_SIZE = 384 * 384
+
+logging.getLogger("diffusers").setLevel(logging.ERROR)
 
 logger = get_logger(__name__)
 
@@ -53,6 +57,7 @@ def load_loras(loras: list[LoraConfig]):
         logger.info(f"  [{adapter_name}] {Path(lora.path).name} filename={lora.filename} scale={lora.scale}")
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning, module="peft")
+            warnings.filterwarnings("ignore", category=UserWarning, module="peft")
             pipeline.load_lora_weights(local_path, adapter_name=adapter_name, weight_name=lora.filename)
 
     adapter_names = [f"lora_{i}" for i in range(len(loras))]
@@ -121,7 +126,7 @@ def _build_expression_embeds(job_input: JobInput, images: list[Image.Image]):
 
 @utils.timeit
 def run_inference(job_input: JobInput, images: list[Image.Image]):
-    seed = job_input.inference.seed or torch.randint(0, 2**32 - 1, (1,)).item()
+    seed = job_input.inference.seed or secrets.randbelow(2**32)
     generator = torch.Generator(device=device).manual_seed(seed)
 
     logger.info(f"Using seed {seed}")

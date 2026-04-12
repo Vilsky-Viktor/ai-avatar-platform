@@ -15,7 +15,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
-  const [theme, setTheme] = useState<Theme>((localStorage.getItem('theme') as Theme) || ThemeColor.Light);
+  const [theme, setTheme] = useState<Theme>((localStorage.getItem('theme') as Theme) || ThemeColor.Dark);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {

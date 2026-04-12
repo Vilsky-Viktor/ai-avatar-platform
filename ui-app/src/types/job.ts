@@ -44,10 +44,34 @@ export type InferenceConfig = {
   seed?: number;
 }
 
+export enum FaceExpressionTypes {
+  sad = 'sad',
+  angry = 'angry',
+  confused = 'confused',
+  contempt = 'contempt',
+  confident = 'confident',
+  disgust = 'disgust',
+  fear = 'fear',
+  happy = 'happy',
+  shy = 'shy',
+  sleepy = 'sleepy',
+  surprised = 'surprised',
+  anxious = 'anxious'
+}
+
+export type FaceExpression = {
+  enabled: boolean;
+  type: FaceExpressionTypes;
+  scale?: number;
+}
+
 export type FaceRecognition = {
   enabled: boolean;
   mediaPaths?: string[];
-  threshold?: number;
+  threshold?: {
+    min: number;
+    max?: number;
+  };
 }
 
 export type ControlNet = {
@@ -66,6 +90,7 @@ export type JobInput = {
   checkDependencies: boolean;
   inference: InferenceConfig;
   faceRecognition?: FaceRecognition;
+  faceExpression?: FaceExpression;
   loras?: LoraData[];
 }
 
@@ -79,6 +104,7 @@ export type JobResult = {
   mediaPath?: string;
   mediaUrl?: string;
   faceMatches?: number[];
+  bestFaceMatch?: number;
   errorMessage?: string;
   fileName: string;
 }

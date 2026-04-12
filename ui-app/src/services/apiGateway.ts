@@ -123,6 +123,17 @@ export const createPhotoSetJobs = async (job: JobRequest): Promise<Job[]> => {
   }
 }
 
+export const restartJobById = async (jobId: string): Promise<Job> => {
+  try {
+    const res = await apiClient.post(`/jobs/restart/${jobId}`, {});
+
+    return res.data as Job;
+  } catch (error) {
+    console.error("Error restarting job:", error);
+    throw error;
+  }
+}
+
 export const createMedia = async (media: Media): Promise<Media> => {
   try {
     const res = await apiClient.post('/media/create', media);

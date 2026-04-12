@@ -1,9 +1,9 @@
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, User, Clock, Loader2, CircleAlert } from 'lucide-react';
+import { Sparkles, User, Clock, Loader2, CircleAlert, RefreshCcw } from 'lucide-react';
 import { useState, useEffect, useRef } from "react";
 import { JobStatuses, type Job, type JobRequest } from "../../types/job";
-import { createPhotoSetJobs } from "../../services/apiGateway";
+import { createPhotoSetJobs, restartJobById } from "../../services/apiGateway";
 import {
     ID_PHOTO_STORAGE_KEY,
     GENERAL_STORAGE_KEY,
@@ -217,13 +217,12 @@ function CreatePhotoSetPage() {
         }
 
         const sumFaceMatches = stepData.jobs.reduce((acc, job) => {
-            const matches = job?.result?.faceMatches;
-            if (!matches?.length) return acc;
-            return acc + Math.max(...matches);
+            const best = job?.result?.bestFaceMatch;
+            if (!best) return acc;
+            return acc + best;
         }, 0);
         const countFaceMatches = stepData.jobs.filter(job => {
-            const matches = job?.result?.faceMatches;
-            return matches?.length && Math.max(...matches) > 0;
+            return (job?.result?.bestFaceMatch ?? 0) > 0;
         }).length;
 
         setAvgFaceMatch(countFaceMatches > 0 ? sumFaceMatches / countFaceMatches : 0);
@@ -282,10 +281,10 @@ function CreatePhotoSetPage() {
         setStepData((prev: PhotoSetStepData) => ({...prev, jobs}));
     }
 
-    const setJob = (jobIndex: number, job: Job | null) => {
+    const setJob = (listIdx: number, job: Job | null) => {
         setStepData((prev) => ({
             ...prev,
-            jobs: prev.jobs.map((oldJob, idx) => idx === jobIndex ? job : oldJob)
+            jobs: prev.jobs.map((oldJob, idx) => idx === listIdx ? job : oldJob)
         }));
     };
 
@@ -322,6 +321,12 @@ function CreatePhotoSetPage() {
         } catch (error) {
             console.log('Failed to create jobs for photo set')
         }
+    }
+
+    const restartJob = async (jobId: string, listIdx: number) => {
+        setJob(listIdx, null);
+        const restartedJob = await restartJobById(jobId);
+        setJob(listIdx, restartedJob);
     }
 
     const nextStep = async () => {
@@ -502,13 +507,20 @@ function CreatePhotoSetPage() {
                             </p>
                         </div>
                     </div>
+
+                    <button
+                        className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors"
+                        onClick={() => restartJob(job.id!, idx)}
+                    >
+                        <RefreshCcw size={15} className="text-white" />
+                    </button>
                 </div>
             );
         }
 
         if (job.status === JobStatuses.completed) {
             const url = job.result?.mediaUrl;
-            const maxFaceMatch = Math.max(...(job.result?.faceMatches || [0]));
+            const bestFaceMatch = job.result?.bestFaceMatch ?? 0;
 
             if (!url) {
                 return (
@@ -533,20 +545,27 @@ function CreatePhotoSetPage() {
                         </div>
                     </div>
 
-                    {maxFaceMatch > 0 && (
+                    <button
+                        className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-primary transition-all"
+                        onClick={(e) => { e.stopPropagation(); restartJob(job.id!, idx); }}
+                    >
+                        <RefreshCcw size={15} className="text-white" />
+                    </button>
+
+                    {bestFaceMatch > 0 && (
                         <div className="absolute bottom-1 right-1 z-10">
                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
                                 <span className="font-bold">
-                                    {(maxFaceMatch * 100).toFixed(0)}%
+                                    {(bestFaceMatch * 100).toFixed(0)}%
                                 </span>
 
                                 <div
                                     className={`w-2 h-2 rounded-full ${
-                                        maxFaceMatch >= 0.7
+                                        bestFaceMatch >= 0.7
                                         ? 'bg-green-400'
-                                        : maxFaceMatch >= 0.6
+                                        : bestFaceMatch >= 0.6
                                         ? 'bg-yellow-400'
-                                        : maxFaceMatch >= 0.55
+                                        : bestFaceMatch >= 0.55
                                         ? 'bg-orange-400'
                                         : 'bg-red-400'
                                     }`}

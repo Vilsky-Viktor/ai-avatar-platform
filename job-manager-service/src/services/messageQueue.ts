@@ -6,7 +6,11 @@ const pubsub = new PubSub({
   projectId: process.env.PROJECT_ID
 });
 
-export const publishToTopic = async (topicName: string, job: Job) => {
+export const publishJobs = async (topicName: string, jobs: Job[]): Promise<void> => {
+    await Promise.all(jobs.map(job => publishJob(topicName, job)));
+};
+
+export const publishJob = async (topicName: string, job: Job) => {
     try {
         const topic = pubsub.topic(topicName);
 

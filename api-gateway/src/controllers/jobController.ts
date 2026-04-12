@@ -98,3 +98,27 @@ export const createPhotoSetJob = async (req: Request, res: Response, next: NextF
     }
   }
 };
+
+export const restartJob = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'];
+
+  try {
+    req.log.info(`Restart job`)
+
+    const serviceResponse = await axios.post(
+      `${JOB_MANAGER_SERVICE_URL}/restart/${req.params.id}`, req.body,
+      { headers: {'x-user-id': userId} }
+    );
+
+    return res.status(serviceResponse.status).json(serviceResponse.data);
+  } catch (error: any) {
+    if (error.response) {
+      req.log.error(`Failed to restart job with status ${error.response.status}`)
+      return res.status(error.response.status).json(error.response.data);
+    } else {
+      req.log.error(`Failed to restart job: ${error}`)
+      console.log(error);
+      return res.status(500).json(error);
+    }
+  }
+};
