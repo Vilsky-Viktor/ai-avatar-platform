@@ -18,8 +18,8 @@ function Header() {
     }
 
     return (
-        <header className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-[100] border-b border-base-200 px-6">
-            <div className="flex-1">
+        <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between px-6 pt-4 pointer-events-none">
+            <div className="pointer-events-auto">
                 <Link to="/" className="flex items-center gap-2 cursor-pointer group">
                     <div className="p-2 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors duration-500">
                         <ScanFace size={24} className="text-primary" strokeWidth={2} />
@@ -30,7 +30,7 @@ function Header() {
                 </Link>
             </div>
 
-            <div className="flex-none flex items-center gap-6">
+            <div className="pointer-events-auto flex items-center gap-6">
                 <div className="group relative flex items-center cursor-pointer gap-3 px-4 py-2 rounded-full border border-primary/10 bg-gradient-to-b from-base-200/50 to-base-200/80 backdrop-blur-md hover:border-primary/30 hover:shadow-[0_0_20px_-12px_rgba(var(--p),0.4)] transition-all duration-500 cursor-default">
                     <div className="absolute inset-0 rounded-full bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -98,5 +98,6 @@ function Header() {
         </header>
     );
 }
+
 
 export default Header;

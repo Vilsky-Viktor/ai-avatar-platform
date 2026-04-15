@@ -138,3 +138,9 @@ export type JobRequest = {
   avatarId: string;
   input: JobRequestInput;
 }
+
+export type TrainingJobRequest = {
+  groupId?: string;
+  avatarId: string;
+  parameters: AvatarParameters;
+}

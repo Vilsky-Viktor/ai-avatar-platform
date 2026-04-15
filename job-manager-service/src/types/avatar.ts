@@ -1,4 +1,5 @@
 export type AvatarParameters = {
+  gender: string;
   ethnicity: string;
   skinColor: string;
   age: string;

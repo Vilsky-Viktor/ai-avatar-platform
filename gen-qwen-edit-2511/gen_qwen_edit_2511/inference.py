@@ -21,10 +21,14 @@ logging.getLogger("diffusers").setLevel(logging.ERROR)
 
 logger = get_logger(__name__)
 
-pipeline = None
-device   = None
+pipeline    = None
+device      = None
+# Maps adapter_name -> scale for currently loaded adapters.
+# adapter_name is the LoRA path relative to /workspace (lora.path), used as stable identity.
+_lora_cache: dict[str, float] = {}
 
 
+@utils.timeit
 def load_pipeline():
     global pipeline, device
 
@@ -49,29 +53,67 @@ def clear_cache():
     torch.cuda.empty_cache()
 
 
-def load_loras(loras: list[LoraConfig]):
-    logger.info(f"Loading {len(loras)} LoRA(s) ...")
-    for i, lora in enumerate(loras):
-        adapter_name = f"lora_{i}"
+def _adapter_name(path: str) -> str:
+    """Sanitize a LoRA path into a valid PEFT/PyTorch module name (no dots or slashes)."""
+    return path.replace("/", "__").replace(".", "_")
+
+
+@utils.timeit
+def sync_loras(loras: list[LoraConfig]):
+    """Diff incoming LoRAs against the cache: unload stale, update scales, load new."""
+    global _lora_cache
+
+    incoming: dict[str, float] = {lora.path: lora.scale for lora in loras}
+
+    to_remove  = [path for path in _lora_cache if path not in incoming]
+    to_update  = [path for path in _lora_cache if path in incoming and incoming[path] != _lora_cache[path]]
+    to_load    = [lora for lora in loras if lora.path not in _lora_cache]
+
+    if not to_remove and not to_update and not to_load:
+        logger.info("LoRA cache hit — all adapters already loaded with correct scales")
+        return
+
+    if to_remove:
+        logger.info(f"Removing {len(to_remove)} stale LoRA(s): {[Path(n).name for n in to_remove]}")
+        pipeline.delete_adapters([_adapter_name(p) for p in to_remove])
+        for path in to_remove:
+            del _lora_cache[path]
+
+    for lora in to_load:
         local_path = str(Path("/workspace") / lora.path)
-        logger.info(f"  [{adapter_name}] {Path(lora.path).name} filename={lora.filename} scale={lora.scale}")
+        adapter_name = _adapter_name(lora.path)
+        logger.info(f"  [load] {Path(lora.path).name} scale={lora.scale}")
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning, module="peft")
             warnings.filterwarnings("ignore", category=UserWarning, module="peft")
             pipeline.load_lora_weights(local_path, adapter_name=adapter_name, weight_name=lora.filename)
+        _lora_cache[lora.path] = lora.scale
 
-    adapter_names = [f"lora_{i}" for i in range(len(loras))]
-    scales = [lora.scale for lora in loras]
-    pipeline.set_adapters(adapter_names, adapter_weights=scales)
-    logger.info("LoRAs loaded and activated")
+    if to_update:
+        logger.info(f"Updating scale for {len(to_update)} LoRA(s): {[Path(n).name for n in to_update]}")
+        for path in to_update:
+            _lora_cache[path] = incoming[path]
+
+    # Apply all current adapter names and their scales in job-defined order
+    active_names  = [_adapter_name(lora.path) for lora in loras]
+    active_scales = [lora.scale for lora in loras]
+    pipeline.set_adapters(active_names, adapter_weights=active_scales)
+    logger.info(f"LoRAs synced — {len(active_names)} active: {[Path(lora.path).name for lora in loras]}")
 
 
-def unload_loras():
+@utils.timeit
+def clear_loras():
+    """Full LoRA teardown — used on error to ensure clean state for next job."""
+    global _lora_cache
+    if not _lora_cache:
+        return
     try:
+        pipeline.delete_adapters([_adapter_name(p) for p in _lora_cache])
         pipeline.unload_lora_weights()
-        logger.info("LoRAs unloaded")
+        _lora_cache = {}
+        logger.info("LoRAs fully cleared")
     except Exception as e:
-        logger.warning(f"Failed to unload LoRAs cleanly: {e}")
+        logger.warning(f"Failed to clear LoRAs: {e}")
 
 
 
@@ -126,6 +168,9 @@ def _build_expression_embeds(job_input: JobInput, images: list[Image.Image]):
 
 @utils.timeit
 def run_inference(job_input: JobInput, images: list[Image.Image]):
+    if not images:
+        images = [Image.new("RGB", (job_input.inference.width, job_input.inference.height), (255, 255, 255))]
+
     seed = job_input.inference.seed or secrets.randbelow(2**32)
     generator = torch.Generator(device=device).manual_seed(seed)
 

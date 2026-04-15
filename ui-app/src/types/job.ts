@@ -94,12 +94,6 @@ export type JobInput = {
   loras?: LoraData[];
 }
 
-export type JobRequestInput = {
-  gender: string;
-  parameters: AvatarParameters;
-  idPhotoPaths?: string[]
-};
-
 export type JobResult = {
   mediaPath?: string;
   mediaUrl?: string;
@@ -133,9 +127,9 @@ export type Job = {
   updatedAt?: FirestoreTimestamp;
 }
 
-export type JobRequest = {
+export type TrainingJobRequest = {
   groupId?: string;
   avatarId: string;
-  input: JobRequestInput;
+  parameters: AvatarParameters;
 }
 

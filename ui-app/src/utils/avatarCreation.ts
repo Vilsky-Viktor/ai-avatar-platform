@@ -1,5 +1,5 @@
 import { deleteAvatarById } from "../services/apiGateway";
-import { AvatarGender } from "../types/avatar";
+import { AvatarGender, AvatarTypes } from "../types/avatar";
 import { IdPhotoModes, type IdPhotoStepData, type PhotoSetStepData, type GeneralStepData } from "../types/avatarCreation";
 
 
@@ -38,27 +38,21 @@ export const handleCancel = async (avatarId: string, setCancelLoading: Function,
 };
 
 export const initialAvatarParameters = {
-    ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
+    gender: AvatarGender.male, ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
     face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '', 
     skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '', height: ''
 };
 
-export const initialIdPhotoVariantSet = [null, null, null]
-
 export const initialIdPhotoData = {
-    mode: IdPhotoModes.generate,
-    parameters: initialAvatarParameters,
-    variantSets: [initialIdPhotoVariantSet],
-    carouselIndex: 0,
-    selectedVariant: null,
-    idPhotoPaths: [],
+    jobs: [],
     finished: false
 } as IdPhotoStepData;
 
 export const initialGeneralData = {
     name: '',
     slug: '',
-    gender: AvatarGender.female,
+    type: AvatarTypes.digitalTwin,
+    parameters: initialAvatarParameters,
     avatarId: '',
     finished: false
 };
@@ -73,8 +67,8 @@ export const initialUploadedIdPhotoSet = [
 export const AVATAR_PARAMETER_OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
     skinColor: ["porcelain", "fair", "ivory", "beige", "olive", "tan", "caramel", "brown", "dark-brown", "ebony"],
-    age: ["child", "teenager", "20s", "30s", "40s", "50s", "60s", "70s", "80s+"],
-    height: ["petite", "average", "tall"],
+    age: ["teenager", "20s", "30s", "40s", "50s", "60s", "70s", "80s"],
+    height: ["petite", "below average", "average", "above average", "tall", "very tall"],
     eyes: ["dark brown", "light brown", "amber", "hazel", "green", "blue", "gray", "violet", "two-toned"],
     eyeLashes: ["none", "short sparse", "short dense", "medium natural", "medium curled", "long wispy", "long dramatic", "tapered"],
     eyeBrows: ["thin straight", "thin arched", "medium natural", "medium rounded", "thick bushy", "thick groomed", "monobrow", "faded tail"],

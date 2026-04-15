@@ -1,5 +1,4 @@
 export type ImagePaths = {
-    microPortrait?: string;
     front?: string;
     frontSmile?: string;
     rightQuarter?: string;

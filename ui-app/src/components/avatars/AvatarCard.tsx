@@ -18,7 +18,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
 
   const getAvatarDefaultImage = () => {
     const isDark = theme === ThemeColor.Dark;
-    if (avatar.gender === AvatarGender.male) {
+    if (avatar.parameters.gender === AvatarGender.male) {
       return isDark ? '/avatar-male-2.png' : '/avatar-male.png';
     }
     return isDark ? '/avatar-female-2.png' : '/avatar-female.png';
@@ -31,10 +31,9 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
   }, [])
 
   const getAvatarImage = async () => {
-    if (!avatar.idPhotoPaths) return;
+    if (!avatar.mainImagePath) return;
 
-    const frontPicturePath = avatar.idPhotoPaths[0];
-    const frontPictureUrl = await getMediaUrlFromPath(frontPicturePath);
+    const frontPictureUrl = await getMediaUrlFromPath(avatar.mainImagePath);
     setImageSrc(frontPictureUrl);
   }
 
@@ -57,17 +56,6 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
     if (avatar.status === AvatarStatus.trained) return 'status-success';
     return 'status-warning';
   }
-
-  const getRelativeAge = (dateInput: FirestoreTimestamp): string => {
-    if (!dateInput) return 'n/a';
-    const date = new Date(dateInput._seconds * 1000);
-    const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
-
-    if (diffInDays < 30) return `${Math.max(0, diffInDays)}d`;
-    if (diffInDays < 365) return `${Math.floor(diffInDays / 30.44)}m`;
-    return `${Math.floor(diffInDays / 365.25)}y`;
-  };
 
   const deleteAvatar = async () => {
     setLoadingDelete(true);
@@ -141,7 +129,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
         <div className="absolute inset-0 z-10 opacity-[0.02] pointer-events-none" 
             style={{ backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
 
-        <figure className="h-[88%] w-full overflow-hidden bg-base-300 relative">
+        <figure className="h-full w-full overflow-hidden bg-base-300 relative">
           <img 
             src={imageSrc}
             alt={avatar.name} 
@@ -158,25 +146,6 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
             </h2>
           </div>
         </figure>
-
-        <div className="h-[12%] flex items-center px-8 relative z-20">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2.5">
-              <Image size={18} strokeWidth={2} className="text-primary/70" />
-              <span className="text-sm font-bold tracking-tight">{avatar.imageCount || 0}</span>
-            </div>
-            
-            <div className="flex items-center gap-2.5">
-              <Video size={18} strokeWidth={2} className="text-primary/70" />
-              <span className="text-sm font-bold tracking-tight">{avatar.videoCount || 0}</span>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <Calendar size={18} strokeWidth={2} className="text-primary/70" />
-              <span className="text-sm font-bold tracking-tight">{getRelativeAge(avatar.createdAt!)}</span>
-            </div>
-          </div>
-        </div>
         
         {/* Animated Bottom Border Loading-style accent */}
         <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out z-50" />

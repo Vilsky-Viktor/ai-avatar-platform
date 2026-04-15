@@ -1,4 +1,7 @@
 
+export const ratios = {
+    'square': '1:1',
+}
 
 export const flux2Dev = {
     "1:1": [1024, 1024],

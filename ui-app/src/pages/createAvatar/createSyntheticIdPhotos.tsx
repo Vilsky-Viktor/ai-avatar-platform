@@ -1,69 +1,62 @@
-import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw } from 'lucide-react';
-import { useState, useEffect, useRef } from "react";
-import { JobStatuses, type Job, type TrainingJobRequest } from "../../types/job";
-import { genTrainingPhotoSet, restartJobById, updateAvatar } from "../../services/apiGateway";
-import {
-    ID_PHOTO_STORAGE_KEY,
-    GENERAL_STORAGE_KEY,
-    PHOTO_SET_STORAGE_KEY,
+import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
+import { Sparkles, User, Trash2, X, Check, Minus, Plus, Clock, Loader2, CircleAlert, RefreshCcw, ChevronDown, CircleOff } from 'lucide-react';
+import { AvatarStatus, type Avatar } from '../../types/avatar';
+import { updateAvatar, restartJobById, genTrainingIdPhotos } from '../../services/apiGateway';
+import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
+import { useApp } from '../../providers/ContextProvider';
+import { 
+    GENERAL_STORAGE_KEY,  
+    ID_PHOTO_STORAGE_KEY, 
     getLocalStorageData,
     saveLocalStorageData,
+    initialUploadedIdPhotoSet,
+    AVATAR_PARAMETER_OPTIONS
 } from '../../utils/avatarCreation';
-import BottomDock from "../../components/createAvatar/BottomDock";
-import { listenToCollectionByGroupId } from '../../services/db';
+import BottomDock from '../../components/createAvatar/BottomDock';
+import { type IdPhotoStepData, type GeneralStepData, type UploadedIdPhoto } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { getMediaUrlFromPath } from '../../services/storage';
-import { useApp } from '../../providers/ContextProvider';
-import { type IdPhotoStepData, type GeneralStepData, type PhotoSetStepData  } from "../../types/avatarCreation";
-import { type Avatar, AvatarStatus, AvatarTypes } from "../../types/avatar";
+import { listenToCollectionByGroupId } from '../../services/db';
+import { type AvatarParameters } from "../../types/avatar";
 
 
-function CreatePhotoSetPage() {
+function CreateSyntheticIdPhotosPage() {
     const navigate = useNavigate();
     const { user } = useApp();
 
-    const generalData = getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY);
-    const idPhotoData = getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY)
-    const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
+    const [generalData, setGeneralData] = useState(() => getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY))
+    const [stepData, setStepData] = useState(() => getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY))
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
-
-    const initialized = useRef<boolean>(false);
     const jobsRef = useRef(stepData.jobs);
     useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);
     const restartingJobIds = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        const initialize = () => {
-            if (initialized.current) return;
-            initialized.current = true;
-
-            if (stepData.jobs.every((job: Job | null) => job === null)) {
-                console.log("create jobs")
-                createJobs();
-            } else {
-                console.log(stepData.jobs);
-                setJobs(stepData.jobs);
-                console.log("update jobs")
-            }
-        };
-
-        initialize();
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') initialize();
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
 
     useEffect(() => {
-        saveLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY, stepData);
+        saveLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY, stepData);
     }, [stepData]);
+
+    useEffect(() => {
+        saveLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY, generalData)
+    }, [generalData]);
+
+    useEffect(() => {
+        if (!fullscreenSrc) return;
+
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+            setFullscreenSrc(null);
+            }
+        };
+
+        window.addEventListener("keydown", handleEsc);
+        return () => window.removeEventListener("keydown", handleEsc);
+    }, [fullscreenSrc]);
 
     useEffect(() => {
         if (!jobsCreated()) return;
@@ -79,22 +72,7 @@ function CreatePhotoSetPage() {
         return () => unsubscribe();
     }, [stepData.jobs]);
 
-    useEffect(() => {
-        if (!fullscreenSrc) return;
-
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-            setFullscreenSrc(null);
-            }
-        };
-
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
-    }, [fullscreenSrc]);
-
     const listener = async (querySnap: QuerySnapshot) => {
-        console.log(`listener triggered`)
-
         for (const docSnap of querySnap.docs) {
             const job = docSnap.data() as Job;
 
@@ -118,27 +96,23 @@ function CreatePhotoSetPage() {
         }
     }
 
-    const generatingCompleted = () => {
-        return stepData.jobs.length > 0 && stepData.jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
-    }
-
-    const canProceed = () => {
-        return generatingCompleted();
-    };
-
     const setJobs = (jobs: (Job | null)[]) => {
-        setStepData((prev: PhotoSetStepData) => ({...prev, jobs}));
+        setStepData((prev: IdPhotoStepData) => ({...prev, jobs}));
     }
 
     const setJob = (listIdx: number, job: Job | null) => {
-        setStepData((prev) => ({
+        setStepData((prev: IdPhotoStepData) => ({
             ...prev,
             jobs: prev.jobs.map((oldJob, idx) => idx === listIdx ? job : oldJob)
         }));
     };
 
+    const setParameters = (parameters: AvatarParameters) => {
+        setGeneralData((prev: GeneralStepData) => ({...prev, parameters}));
+    }
+
     const setFinished = () => {
-        setStepData((prev: PhotoSetStepData) => ({...prev, finished: true}));
+        setStepData((prev: IdPhotoStepData) => ({...prev, finished: true}));
     }
 
     const jobsCreated = () => {
@@ -146,17 +120,16 @@ function CreatePhotoSetPage() {
     }
 
     const createJobs = async () => {
-        const emptyJobs = Array(36).fill(null);
+        const emptyJobs = Array(9).fill(null);
         setJobs(emptyJobs);
 
-        const job: TrainingJobRequest = {
-            groupId: idPhotoData.jobs[0]?.groupId,
+        const jobRequest: TrainingJobRequest = {
             avatarId: generalData.avatarId,
-            parameters: generalData.parameters,
+            parameters: generalData.parameters
         }
 
         try {
-            const jobs = await genTrainingPhotoSet(job);
+            const jobs = await genTrainingIdPhotos(jobRequest);
             setJobs(jobs);
         } catch (error) {
             console.log('Failed to create jobs for photo set')
@@ -170,32 +143,44 @@ function CreatePhotoSetPage() {
         setJob(listIdx, restartedJob);
     }
 
+    const generatingStarted = () => {
+        return stepData.jobs.length > 0;
+    }
+
+    const generatingCompleted = () => {
+        return stepData.jobs.length > 0 && stepData.jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
+    }
+
+    const parametersFilled = () => {
+        return Object.values(generalData.parameters).every((value) => value !== '');
+    }
+
+    const canProceed = () => {
+        return generatingCompleted();
+    };
+
     const nextStep = async () => {
-        if (!canProceed) return;
+        if (!canProceed) return
 
         try {
             if (!stepData.finished) {
                 const payload: Partial<Avatar> = {
-                    status: AvatarStatus.photosetCreated, 
+                    status: AvatarStatus.idCreated,
+                    mainImagePath: stepData.jobs[0]?.result?.mediaPath,
                 };
-
                 await updateAvatar(generalData.avatarId, payload);
 
-                setFinished()
+                setFinished();
             }
 
-            navigate('/avatar/create/assign-voice');
+            navigate('/avatar/create/photo-set');
         } catch (error) {
             console.log(`Did not manage to update avatar: ${error}`);
         }
     }
-
+        
     const previousStep = () => {
-        if (generalData.type === AvatarTypes.digitalTwin) {
-            navigate('/avatar/create/twin-id-photos');
-        } else {
-            navigate('/avatar/create/synthetic-id-photos');
-        }
+        navigate('/avatar/create/general');
     }
 
     const FullscreenModal = () => {
@@ -320,6 +305,7 @@ function CreatePhotoSetPage() {
                             <RefreshCcw size={18} className="text-white spin-once-on-hover" />
                         </button>
                     )}
+                    
                 </div>
             );
         }
@@ -388,11 +374,67 @@ function CreatePhotoSetPage() {
         return null;
     }
 
-    return ( 
+    return (
         <>
-            <CreateAvatarStepper step={2}/>
+            <CreateAvatarStepper step={1} />
 
-            <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
+            <div className="mx-auto px-4 pt-12 mb-50">
+                <div className="grid grid-cols-3 gap-8">
+                    {[
+                        { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
+                        { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
+                        { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
+                        { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].attractiveness },
+                        { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].face },
+                        { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].hairStyle },
+                        { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].hairColor },
+                        { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
+                        { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
+                        { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
+                        { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes }, // Fixed the typo here
+                        { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
+                        { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
+                        { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].skin },
+                        { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].facialHair },
+                    ].map((field) => (
+                        <div key={field.key} className={`group flex flex-col gap-0.5 ${stepData.finished ? 'opacity-50' : 'opacity-100'}`}>
+                            <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
+                                {field.label}
+                            </label>
+
+                            <div className="relative">
+                                <select
+                                    value={generalData.parameters[field.key as keyof typeof generalData.parameters]}
+                                    disabled={stepData.finished}
+                                    onChange={(e) => setParameters({...generalData.parameters, [field.key]: e.target.value})}
+                                    className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
+                                >
+                                    <option value="" disabled>Select</option>
+                                    {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
+
+                                </select>
+
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
+                                    <ChevronDown size={16} strokeWidth={2.5} />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {parametersFilled() && (
+                    <div className='text-center'>
+                        <button
+                            onClick={createJobs}
+                            disabled={generatingStarted() || stepData.finished}
+                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${stepData.finished || generatingStarted() ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                        >
+                            {((generatingStarted() && !generatingCompleted())) && <span className="loading loading-spinner mr-2"></span>}
+                            <span className="text-sm uppercase tracking-[0.4em]">Generate ID Photos</span>
+                        </button>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {stepData.jobs.map((job, idx) => (
                         <div key={idx}>
@@ -412,7 +454,7 @@ function CreatePhotoSetPage() {
 
             <FullscreenModal />
         </>
-    );
+    )
 }
 
-export default CreatePhotoSetPage;
+export default CreateSyntheticIdPhotosPage;

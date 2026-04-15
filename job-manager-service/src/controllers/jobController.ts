@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, MediaTypes, JobTargets, JobStatuses, JobRequest } from '../types/job';
+import { Job, MediaTypes, JobTargets, JobStatuses, JobRequest, TrainingJobRequest } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateTrainingPhotoSetData } from '../utils/prompts';
+import { generateTrainingPhotoSetData, genTrainingIdPhotoFromUploadedData, genTrainingIdPhotoData } from '../utils/prompts';
 import { 
   getById as getByIdDb,
   create as createDb, 
@@ -9,7 +9,6 @@ import {
   update as updateDb,
   deleteById as deleteByIdDb, 
   deleteByAvatarId as deleteByAvatarIdDb, 
-  deleteByUserId as deleteByUserIdDb
 } from '../repositories/job';
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { createPod } from '../services/runpodService';
@@ -21,53 +20,34 @@ const GEN_FLUX2_DEV_TOPIC = process.env.GEN_FLUX2_DEV_TOPIC || 'gen-flux2-dev';
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511'
 
 
-export const createPhotoSet = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'] as string;
-  const jobRequest: JobRequest = req.body;
+export const genTrainingIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const jobRequest: TrainingJobRequest = req.body;
   const groupId = uuid.v4();
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const portraitRatio = imageRatios.qwenEdit2511['3:4'];
-  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
-
   const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
-  const portraitDimensions = `${portraitRatio[0]}x${portraitRatio[1]}`;
-  const verticalDimensions = `${verticalRatio[0]}x${verticalRatio[1]}`;
 
-  req.log.info(`Create Photo Set jobs for user ${headerUserId} with group ID ${groupId}`);
+  req.log.info(`Create ID photo jobs for user ${userId} with group ID ${groupId}`);
+
+  const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
+
+  const idPhotoSet: IdPhotoSetPaths = {
+    uploaded: {},
+    generated: {
+      front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
+    }
+  }
 
   try {
-    const avatarMediaPath = `media/${headerUserId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
-
-    const idPhotoSet: IdPhotoSetPaths = {
-      uploaded: {
-        front: `${avatarMediaPath}/000-uploaded-front-${squareDimensions}.png`,
-        frontSmile: `${avatarMediaPath}/000-uploaded-front-smile-${squareDimensions}.png`,
-        rightQuarter: `${avatarMediaPath}/000-uploaded-right-quarter-${squareDimensions}.png`,
-        leftQuarter: `${avatarMediaPath}/000-uploaded-left-quarter-${squareDimensions}.png`,
-      },
-      generated: {
-        front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
-        frontSmile: `${avatarMediaPath}/002-training-photo-set-${squareDimensions}.png`,
-        rightQuarter: `${avatarMediaPath}/003-training-photo-set-${squareDimensions}.png`,
-        leftQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
-        rightSide: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
-        leftSide: `${avatarMediaPath}/006-training-photo-set-${squareDimensions}.png`,
-        back: `${avatarMediaPath}/007-training-photo-set-${squareDimensions}.png`,
-        microPortrait: `${avatarMediaPath}/008-training-photo-set-${squareDimensions}.png`,
-        body: `${avatarMediaPath}/009-training-photo-set-${verticalDimensions}.png`,
-      }
-    }
-
-    const inputs = generateTrainingPhotoSetData(
-      {...jobRequest.input.parameters, gender: jobRequest.input.gender},
-      idPhotoSet
-    );
+    const inputs = genTrainingIdPhotoData(jobRequest.parameters, idPhotoSet);
     const jobs: Job[] = [];
 
     const baseJob: Partial<Job> = {
       groupId,
-      userId: headerUserId,
+      userId: userId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
       target: JobTargets.trainingPhotoSet,
@@ -96,15 +76,160 @@ export const createPhotoSet = async (req: Request, res: Response, next: NextFunc
       jobs.push(newJob as Job);
     }
 
-    const dbJobs = await createManyDb(headerUserId, jobs);
-
-    // createPod(dbJobs[0]).catch(err => req.log.error("Pod creation failed:", err));
+    const dbJobs = await createManyDb(userId, jobs);
 
     await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
 
     return res.status(201).json(dbJobs);
   } catch (error) {
-    req.log.info(`Failed to create Photo Set jobs for ${headerUserId}: ${error}`);
+    req.log.info(`Failed to create ID photo jobs for ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const jobRequest: TrainingJobRequest = req.body;
+  const groupId = uuid.v4();
+
+  const squareRatio = imageRatios.qwenEdit2511['1:1'];
+  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
+
+  req.log.info(`Create ID photo jobs for user ${userId} with group ID ${groupId}`);
+
+  const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
+
+  const idPhotoSet: IdPhotoSetPaths = {
+    uploaded: {
+      front: `${avatarMediaPath}/uploaded/front-${squareDimensions}.png`,
+      frontSmile: `${avatarMediaPath}/uploaded/smile-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/uploaded/right-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/uploaded/left-${squareDimensions}.png`,
+    },
+    generated: {
+      front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
+    }
+  }
+
+  try {
+    const inputs = genTrainingIdPhotoFromUploadedData(jobRequest.parameters, idPhotoSet);
+    const jobs: Job[] = [];
+
+    const baseJob: Partial<Job> = {
+      groupId,
+      userId: userId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.image,
+      target: JobTargets.trainingPhotoSet,
+      status: JobStatuses.pending,
+      maxRuns: 3,
+    }
+
+    for (const [idx, customItem] of inputs.entries()) {
+      const newJob = {...baseJob};
+
+      const inference = customItem.input?.inference;
+
+      newJob.order = customItem.order;
+      newJob.maxRuns = customItem.maxRuns ?? baseJob.maxRuns;
+      newJob.input = customItem.input
+      newJob.metadata = customItem.metadata;
+
+      if (newJob.metadata) {
+        newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
+      }
+
+      newJob.result = {
+        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}.png`,
+      }
+
+      jobs.push(newJob as Job);
+    }
+
+    const dbJobs = await createManyDb(userId, jobs);
+
+    await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
+
+    return res.status(201).json(dbJobs);
+  } catch (error) {
+    req.log.info(`Failed to create ID photo jobs for ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+
+export const genTrainingPhotoSet = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const jobRequest: TrainingJobRequest = req.body;
+
+  const squareRatio = imageRatios.qwenEdit2511['1:1'];
+  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
+
+  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
+  const verticalDimensions = `${verticalRatio[0]}x${verticalRatio[1]}`;
+
+  req.log.info(`Create Photo Set jobs for user ${userId} with group ID ${jobRequest.groupId}`);
+
+  try {
+    const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
+
+    const idPhotoSet: IdPhotoSetPaths = {
+      uploaded: {},
+      generated: {
+        front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
+        frontSmile: `${avatarMediaPath}/002-training-photo-set-${squareDimensions}.png`,
+        rightQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
+        leftQuarter: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
+        rightSide: `${avatarMediaPath}/003-training-photo-set-${squareDimensions}.png`,
+        leftSide: `${avatarMediaPath}/006-training-photo-set-${squareDimensions}.png`,
+        back: `${avatarMediaPath}/007-training-photo-set-${squareDimensions}.png`,
+        body: `${avatarMediaPath}/009-training-photo-set-${verticalDimensions}.png`,
+      }
+    }
+
+    const inputs = generateTrainingPhotoSetData(jobRequest.parameters, idPhotoSet);
+    const jobs: Job[] = [];
+
+    const baseJob: Partial<Job> = {
+      groupId: jobRequest.groupId,
+      userId: userId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.image,
+      target: JobTargets.trainingPhotoSet,
+      status: JobStatuses.pending,
+      maxRuns: 3,
+    }
+
+    for (const [idx, customItem] of inputs.entries()) {
+      const newJob = {...baseJob};
+
+      const inference = customItem.input?.inference;
+
+      newJob.order = customItem.order;
+      newJob.maxRuns = customItem.maxRuns ?? baseJob.maxRuns;
+      newJob.input = customItem.input
+      newJob.metadata = customItem.metadata;
+
+      if (newJob.metadata) {
+        newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
+      }
+
+      newJob.result = {
+        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}.png`,
+      }
+
+      jobs.push(newJob as Job);
+    }
+
+    const dbJobs = await createManyDb(userId, jobs);
+
+    await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
+
+    return res.status(201).json(dbJobs);
+  } catch (error) {
+    req.log.info(`Failed to create Photo Set jobs for ${userId}: ${error}`);
     next(error);
   }
 
@@ -148,14 +273,14 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
 }
 
 export const update = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const { id } = req.params;
+  const userId = req.headers['x-user-id'] as string;
+  const id = req.params.id as string;
   const updateData: Partial<Job> = req.body;
 
-  req.log.info(`Update Job for ${id} for user ${headerUserId}`);
+  req.log.info(`Update Job for ${id} for user ${userId}`);
 
   try {
-    const dbJob = await updateDb(headerUserId as string, id as string, updateData);
+    const dbJob = await updateDb(userId, id, updateData);
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -165,48 +290,33 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 export const deleteById = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const { id } = req.params;
+  const userId = req.headers['x-user-id'] as string;
+  const id = req.params.id as string;
 
-  req.log.info(`Delete job ${id} for user ${headerUserId}`);
+  req.log.info(`Delete job ${id} for user ${userId}`);
 
   try {
-    await deleteByIdDb(headerUserId as string, id as string);
+    await deleteByIdDb(userId, id);
 
     return res.status(201).json({'result': 'ok'});
   } catch (error) {
-    req.log.info(`Failed to delete job ${id} for user ${headerUserId}: ${error}`);
+    req.log.info(`Failed to delete job ${id} for user ${userId}: ${error}`);
     next(error);
   }
 };
 
 export const deleteByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const { avatarId } = req.params;
+  const userId = req.headers['x-user-id'] as string;
+  const avatarId = req.params.avatarId as string;
 
-  req.log.info(`Delete jobs for avatar ${avatarId} and user ${headerUserId}`);
+  req.log.info(`Delete jobs for avatar ${avatarId} and user ${userId}`);
 
   try {
-    await deleteByAvatarIdDb(headerUserId as string, avatarId as string);
+    await deleteByAvatarIdDb(userId, avatarId);
 
     return res.status(201).json({'result': 'ok'});
   } catch (error) {
-    req.log.info(`Failed to delete jobs for ${avatarId} and user ${headerUserId}: ${error}`);
-    next(error);
-  }
-};
-
-export const deleteByUserId = async (req: Request, res: Response, next: NextFunction) => {
-  const { userId } = req.params;
-
-  req.log.info(`Delete jobs for user ${userId}`);
-
-  try {
-    await deleteByUserIdDb(userId as string);
-
-    return res.status(201).json({'result': 'ok'});
-  } catch (error) {
-    req.log.info(`Failed to delete jobs for ${userId}: ${error}`);
+    req.log.info(`Failed to delete jobs for ${avatarId} and user ${userId}: ${error}`);
     next(error);
   }
 };

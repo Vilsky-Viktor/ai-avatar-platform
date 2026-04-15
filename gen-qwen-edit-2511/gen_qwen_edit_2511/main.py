@@ -48,8 +48,6 @@ def job_canceled(job_id: str) -> bool:
 def process_job(message: pubsub_v1.subscriber.message.Message):
     job = Job.model_validate(json.loads(message.data.decode("utf-8")))
     job_input = job.input
-    loras_loaded = False
-
     logger.info(f"========= Processing job {job.id}, order {job.order or 'none'} =========")
 
     if job_canceled(job.id):
@@ -78,12 +76,13 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             for lora in job_input.loras:
                 storage.ensure_lora_downloaded(lora.path)
             try:
-                inference.load_loras(job_input.loras)
-                loras_loaded = True
+                inference.sync_loras(job_input.loras)
             except Exception as lora_error:
-                logger.error(f"Failed to load LoRAs: {lora_error}", exc_info=True)
-                inference.unload_loras()
+                logger.error(f"Failed to sync LoRAs: {lora_error}", exc_info=True)
+                inference.clear_loras()
                 raise
+        else:
+            inference.clear_loras()
 
         if job_input.faceExpression.enabled:
             logger.info(f"Expression mode: '{job_input.faceExpression.type}' scale={job_input.faceExpression.scale}")
@@ -164,8 +163,6 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
         message.ack()
 
     finally:
-        if loras_loaded:
-            inference.unload_loras()
         inference.clear_cache()
 
 # ---------------------------------------------------------------------------

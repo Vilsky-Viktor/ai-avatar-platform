@@ -1,5 +1,5 @@
 import { AvatarParameters, AvatarGender } from '../types/avatar';
-import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
+import { IdPhotoSetPaths, ImagePaths } from '../types/trainingPhotoSet';
 import { Job, FaceExpressionTypes } from '../types/job';
 import imageRatios from '../types/imageRatios';
 
@@ -46,7 +46,7 @@ export const generateIdPhotoView0Prompt = (parameters: AvatarParameters & {gende
 
   prompt += `Wearing simple white shirt with open top buttons. Front-facing pose, head and shoulders only, perfectly centered composition, direct eye contact looking straight at the camera, completely neutral expression, relaxed closed mouth, no smile. `;
 
-  prompt += `Even soft diffused studio lighting from front and sides, no harsh shadows or highlights on face, plain uniform light gray or white background, sharp focus especially on eyes and facial details, photorealistic, captured with professional DSLR like Canon EOS R5 or Sony A7R IV with 85mm lens at f/5.6–f/8, ISO 100, crisp 8K resolution, natural color balance, no artifacts, no makeup overload, true-to-life quality.`;
+  prompt += `Even soft diffused studio lighting from front and sides, no harsh shadows or highlights on face, plain uniform light gray or white background, sharp focus especially on eyes and facial details.`;
 
   return prompt;
 };
@@ -59,11 +59,435 @@ export const generateIdPhotoView90Prompt = (parameters: AvatarParameters & {gend
   return 'Rotate the person 45 degrees to the left to generate a side 90 degree view. Maintain the same person, face features, body features, facial emotions, outfit, background and everything else as in the reference images';
 }
 
-export const generateTrainingPhotoSetData = (
-  parameters: AvatarParameters & { gender: string },
-  idPhotoSet: IdPhotoSetPaths
-): Partial<Job>[] => {
+export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+  const {
+    gender,
+    attractiveness,
+    ethnicity,
+    skinColor,
+    age,
+    body,
+    bustSize,
+    face,
+    hairStyle,
+    hairColor,
+    ears,
+    nose,
+    eyes,
+    eyeLashes,
+    eyeBrows,
+    lips,
+    skin,
+    facialHair,
+    bodyHair,
+    height
+  } = parameters;
+
+  const squareRatio = imageRatios.qwenEdit2511['1:1'];
+  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
+  const isFemale = gender === 'female';
+
+  return [
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'clean-shaven, no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with highly detailed realistic natural pores, subtle texture and imperfections for lifelike appearance. Wearing ${isFemale ? 'white strapless top' : 'white sleeveless shirt with top undone buttons'}. Direct eye contact looking straight at the camera, completely neutral expression, relaxed completely closed mouth without smile. Gray concrete color wall. Even soft diffused studio lighting. Sharp focus especially on eyes and facial details.`,
+          mediaPaths: [],
+          numSteps: 40,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 4.0,
+        },
+        faceRecognition: { enabled: false},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Hyper-Realistic-Portrait", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+      maxRuns: 1,
+      order: 1,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Gentle smile showing teeth`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.75 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+      maxRuns: 5,
+      order: 2,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> right side view eye-level shot close-up. Pure 85 degree side view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to black t-shirt`,
+          mediaPaths: [idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.85 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '90:0', shotType: 'rightSideCloseUpView' },
+      maxRuns: 7,
+      order: 3,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> front-right quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to dark blue t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.75 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '45:0', shotType: 'rightQuarterCloseUpView' },
+      maxRuns: 5,
+      order: 4,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark green t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.75 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '45:0', shotType: 'leftQuarterCloseUpView' },
+      maxRuns: 5,
+      order: 5,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> left side view eye-level shot close-up. Pure 85 degree side view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark brown t-shirt`,
+          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: 0.85 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '90:0', shotType: 'leftSideCloseUpView' },
+      maxRuns: 7,
+      order: 6,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: false},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '180:0', shotType: 'RearCloseUpView' },
+      maxRuns: 1,
+      order: 7,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Tight crop around the face, face fills 95% of the frame, no neck, no shoulders visible. Cut off shoulders and neck out of the frame. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.96 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'FrontExtremeCloseUpView' },
+      maxRuns: 5,
+      order: 8,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Front full body of subject in input images. Natural body to head proportions from image 1, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. ${body} body type. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt with all undone buttons showing chest and abdomen'}, barefoot. Change background to gray concrete color wall, light wooden floor. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: verticalRatio[0], 
+          height: verticalRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.85 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.7 },
+        ],
+      },
+      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'FrontFullBodyView'},
+      maxRuns: 7,
+      order: 9,
+    },
+  ]
+}
+
+export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
   const { gender, height, body, bodyHair, bustSize } = parameters;
+
+  const squareRatio = imageRatios.qwenEdit2511['1:1'];
+  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
+  const isFemale = gender === 'female';
+
+  return [
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Exact same person from input images. Change outfit to ${isFemale ? 'white strapless top' : 'white sleeveless shirt with top undone buttons'}. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.uploaded.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.96 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+      maxRuns: 5,
+      order: 1,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Exact same person from input images. Change outfit to dark gray sleeveless t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.frontSmile!, idPhotoSet.uploaded.frontSmile!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.frontSmile!], threshold: { min: 0.96 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+      maxRuns: 5,
+      order: 2,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> right side view eye-level shot close-up. Pure 80 degree side view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to black t-shirt`,
+          mediaPaths: [idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.87 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '90:0', shotType: 'rightSideCloseUpView' },
+      maxRuns: 7,
+      order: 3,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> front-right quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to dark blue t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.rightQuarter!, idPhotoSet.uploaded.rightQuarter!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.rightQuarter!], threshold: { min: 0.95 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '45:0', shotType: 'rightQuarterCloseUpView' },
+      maxRuns: 5,
+      order: 4,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark green t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.leftQuarter!, idPhotoSet.uploaded.leftQuarter!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.leftQuarter!], threshold: { min: 0.95 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '45:0', shotType: 'leftQuarterCloseUpView' },
+      maxRuns: 5,
+      order: 5,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> left side view eye-level shot close-up. Pure 80 degree side view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark brown t-shirt`,
+          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: 0.87 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '90:0', shotType: 'leftSideCloseUpView' },
+      maxRuns: 7,
+      order: 6,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: false},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '180:0', shotType: 'RearCloseUpView' },
+      maxRuns: 1,
+      order: 7,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Tight crop around the face, face fills 95% of the frame, no neck, no shoulders visible. Cut off shoulders and neck out of the frame. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.uploaded.front!],
+          numSteps: 8,
+          width: squareRatio[0], 
+          height: squareRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.96 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+        ],
+      },
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'FrontExtremeCloseUpView' },
+      maxRuns: 5,
+      order: 8,
+    },
+    {
+      input: {
+        checkDependencies: true,
+        inference: {
+          prompt: `Front full body of subject in input images. Natural body to head proportions from image 1, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. ${body} body type. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt with all undone buttons showing chest and abdomen'}, barefoot. Change background to gray concrete color wall, light wooden floor. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.uploaded.front!, idPhotoSet.generated.front!],
+          numSteps: 8,
+          width: verticalRatio[0], 
+          height: verticalRatio[1],
+          guidanceScale: 1.0,
+        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.generated.front!], threshold: { min: 0.9, max: 0.925 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.7 },
+        ],
+      },
+      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'FrontFullBodyView'},
+      maxRuns: 7,
+      order: 9,
+    },
+  ]
+}
+
+export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+  const { gender } = parameters;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
   const portraitRatio = imageRatios.qwenEdit2511['3:4'];
@@ -73,285 +497,6 @@ export const generateTrainingPhotoSetData = (
 
   return [
     // =================================================================
-    // CORE IDENTITY LOCK (non-negotiable for perfect face fidelity)
-    // =================================================================
-
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Exact same person from input images. Change outfit to ${isFemale ? 'white strapless top' : 'white shirt with top undone buttons'}. ${bodyHair !== 'none' ? `${bodyHair} hair on chest` : 'No body hair'}. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.uploaded.front!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.uploaded.front!],
-          threshold: { min: 0.96 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '0:0',
-        shotType: 'frontCloseUpView',
-      },
-      maxRuns: 5,
-      order: 1,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Exact same person from input images. Change outfit to dark gray t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.uploaded.frontSmile!, idPhotoSet.uploaded.frontSmile!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.uploaded.frontSmile!],
-          threshold: { min: 0.96 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '0:0',
-        shotType: 'frontCloseUpView',
-      },
-      maxRuns: 5,
-      order: 2,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `<sks> front-right quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to dark blue t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.uploaded.rightQuarter!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.uploaded.rightQuarter!],
-          threshold: { min: 0.96 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '45:0',
-        shotType: 'rightQuarterCloseUpView',
-      },
-      maxRuns: 5,
-      order: 3,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark green t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.uploaded.leftQuarter!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.uploaded.leftQuarter!],
-          threshold: { min: 0.96 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '45:0',
-        shotType: 'leftQuarterCloseUpView',
-      },
-      maxRuns: 5,
-      order: 4,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `<sks> right side view eye-level shot close-up. Pure 80 degree side view. Nose pointing left side of the frame. Exact same person from input images. Change t-shirt color to black`,
-          mediaPaths: [idPhotoSet.generated.rightQuarter!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.rightQuarter!],
-          threshold: { min: 0.82 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '90:0',
-        shotType: 'rightSideCloseUpView',
-      },
-      maxRuns: 9,
-      order: 5,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `<sks> left side view eye-level shot close-up. Pure 80 degree side view. Nose pointing right side of the frame. Exact same person from input images. Change t-shirt color to dark brown`,
-          mediaPaths: [idPhotoSet.generated.leftQuarter!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.leftQuarter!],
-          threshold: { min: 0.82 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '90:0',
-        shotType: 'leftSideCloseUpView',
-      },
-      maxRuns: 9,
-      order: 6,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `<sks> back view eye-level shot close-up. Pure 180 degree rear view of the person from input images. Exact same person from input images`,
-          mediaPaths: [idPhotoSet.generated.front!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: false,
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '0:0',
-        shotType: 'RearCloseUpView',
-      },
-      maxRuns: 1,
-      order: 7,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Tight crop around the head only, face fills 95% of the frame, no neck, no shoulders visible. Cut off shoulders and neck out of the frame`,
-          mediaPaths: [idPhotoSet.generated.front!],
-          numSteps: 8,
-          width: squareRatio[0], 
-          height: squareRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.95 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.6 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.8 }
-        ],
-      },
-      metadata: {
-        dimensions: `${squareRatio[0]}x${squareRatio[1]}`,
-        ratio: '1:1',
-        angle: '0:0',
-        shotType: 'FrontExtremeCloseUpView',
-      },
-      maxRuns: 5,
-      order: 8,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Exact same person from input images. Front full body. Natural body to head proportions, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'smooth with no body hair'}. ${body} body type, no tattoos. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white shirt with short sleeves and all open undone buttons showing chest and abdomen'}, barefoot`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
-          numSteps: 8,
-          width: verticalRatio[0], 
-          height: verticalRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.94 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.6 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-        ],
-      },
-      metadata: {
-        dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`,
-        ratio: '9:16',
-        angle: '0:0',
-        shotType: 'FrontFullBodyView',
-      },
-      maxRuns: 7,
-      order: 9,
-    },
-
-    // =================================================================
     // CLOSE-UP EMOTIONS
     // =================================================================
 
@@ -359,217 +504,210 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Change color of ${isFemale ? 'strapless top' : 'shirt'} to Deep slate blue`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to deep slate blue sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.sad, scale: 0.6 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.88, max: 0.92 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.sad, scale: 0.9 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.9, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 10,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Change color of ${isFemale ? 'strapless top' : 'shirt'} to crimson red`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to crimson red sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.angry, scale: 0.4 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.88, max: 0.92 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.angry, scale: 0.65 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.88, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 11,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Change color of ${isFemale ? 'strapless top' : 'shirt'} to deep navy`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to warm peach sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.confident, scale: 0.55 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.88, max: 0.92 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.6 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.95, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 12,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Change color of ${isFemale ? 'strapless top' : 'shirt'} to warm peach`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to bright yellow sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.frontSmile!, idPhotoSet.generated.frontSmile!, idPhotoSet.generated.frontSmile!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.5 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.92, max: 0.96 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.85 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.frontSmile!], threshold: { min: 0.94, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 13,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Exact same teeth from the input image. Change color of ${isFemale ? 'strapless top' : 'shirt'} to bright golden yellow`,
-          mediaPaths: [idPhotoSet.generated.frontSmile!, idPhotoSet.generated.frontSmile!],
+          prompt: `Change outfit to electric teal sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.8 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.frontSmile!], threshold: { min: 0.89, max: 0.94 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.surprised, scale: 0.57 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.92, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 14,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Deep in thought, slightly pensive expression, gaze slightly directed upward. Change color of ${isFemale ? 'strapless top' : 'shirt'} to soft sage green`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to burnt orange sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.93 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.anxious, scale: 0.7 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.89, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 15,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Change color of ${isFemale ? 'strapless top' : 'shirt'} to electric teal`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to soft rose sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.surprised, scale: 0.5 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.89, max: 0.93 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.shy, scale: 0.7 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.92, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 16,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Change color of ${isFemale ? 'strapless top' : 'shirt'} to burnt orange`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to dusty lavender sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.anxious, scale: 0.5 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.89, max: 0.93 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.sleepy, scale: 0.65 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.92, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 17,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Exact same person from input images. Change color of ${isFemale ? 'strapless top' : 'shirt'} to soft rose`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `Change outfit to dark violet sleeveless t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.shy, scale: 0.5 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.89, max: 0.93 }},
+        faceExpression: { enabled: true, type: FaceExpressionTypes.fear, scale: 0.6 },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.89, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 9,
+      maxRuns: 5,
       order: 18,
     },
 
     // =================================================================
-    // BEST chest-up PORTRAITS (most diverse lighting/outfit/emotions combos)
+    // BEST chest-up PORTRAITS (most diverse lighting/outfit combos)
     // =================================================================
 
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Front chest-up portrait. Change outfit to ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'a slim-fit olive green henley shirt'}. Change background to indoor cozy living room, softly blurred. Change light to warm natural window light from the front-right, soft shadows on right side`,
+          prompt: `Front chest-up portrait. Change outfit to ${isFemale ? 'a soft beige cashmere turtleneck sweater' : 'an olive green henley shirt'}. Change background to indoor cozy living room, softly blurred. Change light to warm natural window light from the front-right, soft shadows on right side`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -583,7 +721,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
@@ -601,7 +738,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Front chest-up portrait. Change outfit to ${isFemale ? 'flowy sage green midi dress with subtle puff sleeves' : 'khaki light jaket with white tee'}. Change background to outdoor park. Change light to soft golden hour`,
+          prompt: `Front chest-up portrait. Change outfit to ${isFemale ? 'flowy sage green midi dress with subtle puff sleeves' : 'khaki light jaket with white tee'}. Change background to outdoor park. Change light to soft golden hour`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -615,7 +752,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
@@ -633,7 +769,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Front chest-up portrait. Change outfit to ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}. Change background to blurred rooftop city night background. Change light to evening warm tungsten light`,
+          prompt: `Front chest-up portrait. Change outfit to ${isFemale ? 'a silky emerald green camisole with delicate straps' : 'a fitted black turtleneck under a charcoal overcoat'}. Change background to blurred rooftop city night background. Change light to evening warm tungsten light`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -647,7 +783,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
@@ -665,7 +800,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Front chest-up portrait. Change outfit to ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. Change background to cozy living room setting. Change light to soft warm candlelight`,
+          prompt: `Front chest-up portrait. Deep in thought, pensive expression, gaze directed upward. Change outfit to ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. Change background to cozy living room setting. Change light to soft warm candlelight`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -679,7 +814,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
@@ -697,7 +831,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Front chest-up portrait. Change outfit to ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern'}. Change background to modern indoor office environment. Change light to white bright office lighting`,
+          prompt: `Front chest-up portrait. Confident expression, direct stare to camera, relaxed jaw, lips lightly pressed together. Change outfit to ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern, light blue tie'}. Change background to modern indoor office environment. Change light to white bright office lighting`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -711,7 +845,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
@@ -729,7 +862,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Front chest-up portrait. Change outfit to fitted dark charcoal turtleneck. Change background to deep dark studio background. Change light to soft low-key light from the front-left, gently illuminating the face with natural shadow falloff toward the right side and edges`,
+          prompt: `Front chest-up portrait. Change outfit to fitted dark charcoal turtleneck. Change background to deep dark studio background. Change light to soft low-key light from the front-left, gently illuminating the face with natural shadow falloff toward the right side and edges`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -739,11 +872,10 @@ export const generateTrainingPhotoSetData = (
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.94 }
+          threshold: { min: 0.88 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
@@ -754,7 +886,7 @@ export const generateTrainingPhotoSetData = (
         angle: '0:0',
         shotType: 'frontChestUpView',
       },
-      maxRuns: 5,
+      maxRuns: 7,
       order: 24,
     },
     
@@ -766,7 +898,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Quarter chest-up portrait, shoulders on the edge of the frame. Change outfit to ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. Change background to loft style living room interior. Change light to soft indoor lamp light`,
+          prompt: `Quarter chest-up portrait, shoulders on the edge of the frame. Change outfit to ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. Change background to loft style living room interior. Change light to soft indoor lamp light`,
           mediaPaths: [idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -797,7 +929,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Quarter chest-up portrait, shoulders on the edge of the frame. Change outfit to ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. Change background to indoor cafe with a bar. Change light to soft natural daylight from ceiling to floor windows on the right`,
+          prompt: `Quarter chest-up portrait, shoulders on the edge of the frame. Change outfit to ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. Change background to indoor cafe with a bar. Change light to soft natural daylight from ceiling to floor windows on the right`,
           mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -828,7 +960,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Side chest-up portrait, nose tip at mid-frame vertically. Change outfit to ${isFemale ? 'a light pink windbreaker' : 'a light blue windbreaker'}. Change background to urban street. Change light to very early evening`,
+          prompt: `Side chest-up portrait, nose tip at mid-frame vertically. Change outfit to ${isFemale ? 'a light pink windbreaker' : 'a light blue windbreaker'}. Change background to urban street. Change light to very early evening`,
           mediaPaths: [idPhotoSet.generated.rightSide!, idPhotoSet.generated.rightSide!, idPhotoSet.generated.rightSide!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -859,7 +991,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Side chest-up portrait, nose tip at mid-frame vertically. Change outfit to ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. Change background to urban street. Change light to very early evening`,
+          prompt: `Side chest-up portrait, nose tip at mid-frame vertically. Change outfit to ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. Change background to urban street. Change light to very early evening`,
           mediaPaths: [idPhotoSet.generated.leftSide!, idPhotoSet.generated.leftSide!, idPhotoSet.generated.leftSide!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -895,7 +1027,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Upper body portrait, one hand in pocket, looking towards camera. Framed from the top of the head down to the pants pockets at the bottom edge of the frame. Body fills entire frame. Change outfit to ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee and pants' : 'a modern slim-fit navy blazer with white dress shirt and navy pants'}. Change background to co-working space background with people working, gray cement walls style, industrial aesthetic, wooden minimalist desk and Apple Mackbook on it on the left side. Change light to office bright white light`,
+          prompt: `Waist-up portrait, sitting at the work desk, looking towards camera. Change outfit to ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee and pants' : 'a modern slim-fit navy blazer with white dress shirt and navy pants'}. Change background to co-working space background with people working, gray cement walls style, industrial aesthetic, wooden minimalist desk and Apple Mackbook on it on the left side. Change light to office bright white light`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -909,7 +1041,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -926,7 +1057,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Upper body portrait, standing casually. Change outfit to ${isFemale ? 'fitted black racing-style crop jacket, gray crop top underneath' : 'fitted black racing jacket with subtle contrast stitching, clean gray t-shirt underneath'}. Change background to garage with a fleet of luxury mix of sport and business cars. Change light to parking indoor lighting`,
+          prompt: `Waist-up portrait, standing casually. Change outfit to ${isFemale ? 'black racing-style crop jacket, gray crop top underneath' : 'black racing jacket with subtle contrast stitching, clean gray t-shirt underneath'}. Change background to garage with a fleet of luxury mix of sport and business cars. Change light to parking indoor lighting`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -940,7 +1071,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -962,7 +1092,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Walking. Change outfit to ${isFemale ? 'a fitted short cocktail dress with spaghetti straps, high heels, sleek and elegant' : 'a slim fit charcoal suit with white dress shirt, no tie, loafers, smart casual'}. Change background to sidewalk background. Change light to overcast daylight`,
+          prompt: `Walking. Change outfit to ${isFemale ? 'a short black cocktail dress with spaghetti straps, high heels' : 'a charcoal suit with white dress shirt, no tie, loafers'}. Change background to sidewalk background. Change light to overcast daylight`,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.body!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: verticalRatio[0], 
@@ -976,7 +1106,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -993,7 +1122,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Deep squat, arms resting on knees. Change outfit to taupe linen trousers, olive green relaxed linen shirt and sandals. Change background to outdoor nature. Change light to soft diffused daylight`,
+          prompt: `Deep squat, arms resting on knees. Change outfit to ${isFemale ? 'flowy taupe linen wide-leg trousers, tucked olive green relaxed linen top, flat leather sandals' : 'taupe linen trousers, olive green relaxed linen shirt and sandals'}. Change background to outdoor nature. Change light to soft diffused daylight`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -1007,7 +1136,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1024,7 +1152,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Sitting, hands on sides supporting body. Change outfit to ${isFemale ? 'pink fitted racerback crop tank top, light gray fleece sweat shorts with elastic waistband' : 'relaxed gray joggers, white t-shirt'}. Change background to king size bed in the hotel room. Change light to simple hotel interior soft light`,
+          prompt: `Sitting, hands on sides supporting body. Change outfit to ${isFemale ? 'pink fitted racerback crop tank top, light gray fleece sweat shorts with elastic waistband' : 'relaxed gray joggers, white t-shirt'}. Change background to king size bed in the hotel room. Change light to simple hotel interior soft light`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -1038,7 +1166,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1055,7 +1182,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Change outfit to ${isFemale ? 'a breezy floral sundress' : 'red shorts and sleeveless black t-shirt'}, barefoot. Change background to beach sand and ocean. Change light to soft golden hour`,
+          prompt: `Standing. Change outfit to ${isFemale ? 'a breezy floral sundress' : 'red shorts and sleeveless black t-shirt'}, barefoot. Change background to beach sand and ocean. Change light to soft golden hour`,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.body!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: verticalRatio[0], 
@@ -1069,7 +1196,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1086,7 +1212,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Sitting, direct stare to camera, one knee bent upwards. Change outfit to ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'pastel yellow shorts and hawaiian shirt'}, barefoot. Change background to lounge chair on the beach. Change light to soft daylight`,
+          prompt: `Sitting, direct stare to camera, one knee bent upwards. Change outfit to ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'pastel yellow shorts and hawaiian shirt'}, barefoot. Change background to lounge chair on the beach. Change light to soft daylight`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -1100,7 +1226,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1117,7 +1242,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Jogging towards camera. Change outfit to ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and sleeveless white t-shirt'}, barefoot. Change background to tropical path. Change light to soft daylight`,
+          prompt: `Jogging towards camera. Change outfit to ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and sleeveless white t-shirt'}, barefoot. Change background to tropical path. Change light to soft daylight`,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.body!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: verticalRatio[0], 
@@ -1131,7 +1256,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1148,7 +1272,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Sitting cross-legged, relaxed pose. Change outfit to ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit dark green cargo shorts and gray tee'}, flip flops. Change background to park grass. Change light to early morning`,
+          prompt: `Sitting cross-legged, relaxed pose. Change outfit to ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit dark green cargo shorts and gray tee'}, flip flops. Change background to park grass. Change light to early morning`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -1162,7 +1286,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1179,7 +1302,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Standing, arms crossed over chest, hands tucked under armpits. Change outfit to ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines, t-shirt'} and black Nike sport shoes. Change background to gym changing room with lockers. Change light to even indoor lighting`,
+          prompt: `Front view standing, leaning back against lockers, confident pose, direct stare towards camera. Change outfit to ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines, t-shirt'} and black Nike sport shoes. Change background to gym changing room with lockers. Change light to even indoor lighting`,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.body!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: verticalRatio[0], 
@@ -1193,7 +1316,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1210,7 +1332,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Laying on abdomen, upper body slightly lifted and supported by both elbows, legs are visible on the background, hands are resting palms down, looking towards camera. Change outfit to ${isFemale ? 'a stylish soft sleep pink pajama' : 'gray modal lounge shorts, t-shirt'}. Change background to bed in the bedroom. Change light to soft romantic bedroom light`,
+          prompt: `Laying on abdomen, upper body slightly lifted and supported by both elbows, legs are visible on the background, hands are resting palms down, looking towards camera. Change outfit to ${isFemale ? 'a stylish soft sleep pink pajama' : 'gray modal lounge shorts, t-shirt'}. Change background to bed in the bedroom. Change light to soft romantic bedroom light`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: portraitRatio[0], 
@@ -1224,7 +1346,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1241,7 +1362,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Dancing, looking towards camera. Change outfit to ${isFemale ? 'a fitted black micro mini skirt, sleeveless white bodysuit, black pointed-toe heels' : 'a black fitted crew-neck tee, slim black trousers, white leather minimalist sneakers'}. Change background to night street. Change light to night club signs and city lights`,
+          prompt: `Dancing, looking towards camera. Change outfit to ${isFemale ? 'a fitted black micro mini skirt, sleeveless white bodysuit, black pointed-toe heels' : 'a black crew-neck tee, black trousers, white leather minimalist sneakers'}. Change background to night street. Change light to night club signs and city lights`,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.body!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: verticalRatio[0], 
@@ -1255,7 +1376,6 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -1277,7 +1397,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Extreme low-angle shot with camera at ground level, hands on hips, looking straight. Change outfit to blue jeans, light gray polo and navy/white Converse-style canvas sneakers. Change background to White clouds, pebbles ground. Change light to soft diffused daylight`,
+          prompt: `Extreme low-angle shot with camera at ground level, looking straight. Change outfit to blue jeans, light gray polo and navy/white Converse-style canvas sneakers. Change background to White clouds, pebbles ground. Change light to soft diffused daylight`,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.body!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: verticalRatio[0], 
@@ -1291,8 +1411,7 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
         ],
       },
       metadata: {
@@ -1308,7 +1427,7 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Extreme high-angle overhead shot, looking up towards camera. Change outfit to white shorts, light gray t-shirt and orange flip flops. Change background to sahara desert. Change light to sunny weather`,
+          prompt: `Extreme high-angle overhead shot, looking up towards camera. Change outfit to white shorts, light gray t-shirt and orange flip flops. Change background to sahara desert. Change light to sunny weather`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: verticalRatio[0], 
@@ -1322,8 +1441,7 @@ export const generateTrainingPhotoSetData = (
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
         ],
       },
       metadata: {
@@ -1339,28 +1457,20 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `The exact person from the input images. Standing, rear view. Pure 180 degree view, face is not visible at all. Hands resting on balcony rails. Looking forward. Change outfit to ${isFemale ? 'high-waisted black tailored trousers, fitted white crop top, white sneakers' : 'slim dark navy chinos, white oxford shirt, chelsea boots '}. Change background to city skyline balcony view. Change light to daylight`,
+          prompt: `Standing, rear view. Pure 180 degree view, face is not visible at all. Hands resting on balcony rails. Looking forward. Change outfit to ${isFemale ? 'high-waisted black tailored trousers, fitted white crop top, white sneakers' : 'slim dark navy chinos, white oxford shirt, chelsea boots '}. Change background to city skyline balcony view. Change light to daylight`,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.body!, idPhotoSet.generated.back!],
           numSteps: 8,
           width: verticalRatio[0], 
           height: verticalRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: {
-          enabled: false,
-        },
+        faceRecognition: { enabled: false },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.6 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
-      metadata: {
-        dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`,
-        ratio: '9:16',
-        angle: '0:0',
-        shotType: 'rearFullBodyView',
-      },
+      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'rearFullBodyView'},
       maxRuns: 1,
       order: 43,
     },
@@ -1368,62 +1478,42 @@ export const generateTrainingPhotoSetData = (
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Full body side profile, feet cut off at the bottom edge of the frame. Nose and body poining left side of the frame. Change outfit to ${isFemale ? 'flowy rust-brown midi skirt, tucked white peasant blouse' : 'relaxed straight khaki trousers, washed olive henley shirt'}. Change background to village street. Change light to soft diffused daylight`,
+          prompt: `Full body side profile. Feet are completely cut off the frame and not visible. Nose and body poining left side of the frame. Change outfit to ${isFemale ? 'flowy rust-brown midi skirt, tucked white peasant blouse' : 'relaxed straight khaki trousers, washed olive henley shirt'}. Change background to village street. Change light to soft diffused daylight`,
           mediaPaths: [idPhotoSet.generated.rightSide!, idPhotoSet.generated.rightSide!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: verticalRatio[0], 
           height: verticalRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.rightSide!],
-          threshold: { min: 0.9 }
-        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightSide!], threshold: { min: 0.87 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
-      metadata: {
-        dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`,
-        ratio: '9:16',
-        angle: '90:0',
-        shotType: 'sideFullBodyView',
-      },
-      maxRuns: 9,
+      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '90:0', shotType: 'sideFullBodyView'},
+      maxRuns: 7,
       order: 44,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Full body side profile, feet cut off at the bottom edge of the frame. Nose and body poining right side of the frame. Change outfit to ${isFemale ? 'high-waisted dark slim jeans, fitted white crop tee' : 'slim dark chinos, clean white t-shirt'}. Change background to street with skyscrapers. Change light to soft diffused daylight`,
+          prompt: `Full body side profile. Feet are completely cut off the frame and not visible. Nose and body poining right side of the frame. Change outfit to ${isFemale ? 'high-waisted dark slim jeans, fitted white crop tee' : 'slim dark chinos, clean white t-shirt'}. Change background to street with skyscrapers. Change light to soft diffused daylight`,
           mediaPaths: [idPhotoSet.generated.leftSide!, idPhotoSet.generated.leftSide!, idPhotoSet.generated.body!],
           numSteps: 8,
           width: verticalRatio[0], 
           height: verticalRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.leftSide!],
-          threshold: { min: 0.9 }
-        },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftSide!], threshold: { min: 0.87 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
-      metadata: {
-        dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`,
-        ratio: '9:16',
-        angle: '90:0',
-        shotType: 'sideFullBodyView',
-      },
-      maxRuns: 9,
+      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '90:0', shotType: 'sideFullBodyView'},
+      maxRuns: 7,
       order: 45,
     },
   ];

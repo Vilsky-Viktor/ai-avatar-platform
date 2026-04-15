@@ -10,12 +10,18 @@ export enum AvatarStatus {
   error = 'error'
 }
 
+export enum AvatarTypes {
+  digitalTwin = 'twin',
+  synthetic = 'synthetic'
+}
+
 export enum AvatarGender {
   male = 'male',
   female = 'female'
 }
 
 export type AvatarParameters = {
+  gender: AvatarGender;
   ethnicity: string;
   skinColor: string;
   age: string;
@@ -42,11 +48,8 @@ export type Avatar = {
   userId?: string;
   name: string;
   slug: string;
-  gender: AvatarGender;
-  imageCount: number;
-  videoCount: number;
-  parameters?: AvatarParameters;
-  idPhotoPaths?: string[];
+  parameters: AvatarParameters;
+  mainImagePath?: string;
   status?: AvatarStatus;
   updatedAt?: FirestoreTimestamp;
   createdAt?: FirestoreTimestamp

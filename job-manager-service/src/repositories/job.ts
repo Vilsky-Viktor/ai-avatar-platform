@@ -101,22 +101,3 @@ export const deleteByAvatarId = async (userId: string, avatarId: string): Promis
     await batch.commit();
     return true;
 };
-
-export const deleteByUserId = async (userId: string): Promise<boolean> => {
-    const jobsQuery = db.collection(JOBS_COLLECTION_NAME)
-        .where("userId", "==", userId);
-
-    const snapshot = await jobsQuery.get();
-    
-    if (snapshot.empty) {
-        return false;
-    }
-
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-    return true;
-};

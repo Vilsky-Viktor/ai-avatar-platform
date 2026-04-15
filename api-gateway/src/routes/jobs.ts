@@ -1,17 +1,15 @@
 import { Router } from 'express';
 import {
-  createIdPhotoJobView0,
-  createIdPhotoJobView45,
-  createIdPhotoJobView90,
-  createPhotoSetJob,
+  genTrainingPhotoSet,
+  genTrainingIdPhotos,
+  genTrainingIdPhotosFromUploaded,
   restartJob
 } from '../controllers/jobController';
 
 const router = Router();
 
-router.post('/create-id-photo-view0', createIdPhotoJobView0);
-router.post('/create-id-photo-view45', createIdPhotoJobView45);
-router.post('/create-id-photo-view90', createIdPhotoJobView90);
-router.post('/create-photo-set', createPhotoSetJob);
+router.post('/gen-training-photo-set', genTrainingPhotoSet);
+router.post('/gen-training-id-photos', genTrainingIdPhotos);
+router.post('/gen-training-id-photos-from-uploaded', genTrainingIdPhotosFromUploaded);
 router.post('/restart/:id', restartJob);
 export default router;

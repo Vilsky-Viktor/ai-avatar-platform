@@ -61,20 +61,6 @@ export const update = async (userId: string, avatarId: string, avatarData: Parti
     return snapshot.data() as Avatar;
 }
 
-export const updateCounterByFieldName = async (userId: string, avatarId: string, fieldName: string, amount: number) => {
-    const avatarRef = db.collection(USERS_COLLECTION_NAME)
-        .doc(userId)
-        .collection(AVATARS_COLLECTION_NAME)
-        .doc(avatarId);
-
-    const now = Timestamp.now();
-
-    await avatarRef.update({
-      [fieldName]: FieldValue.increment(amount),
-      updatedAt: now
-    });
-}
-
 export const deleteByAvatarId = async (userId: string, avatarId: string): Promise<boolean> => {
     const avatarRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
@@ -91,25 +77,3 @@ export const deleteByAvatarId = async (userId: string, avatarId: string): Promis
 
     return true;
 }
-
-export const deleteByUserId = async (userId: string): Promise<boolean> => {
-    const avatarsCollectionRef = db.collection(USERS_COLLECTION_NAME)
-        .doc(userId)
-        .collection(AVATARS_COLLECTION_NAME);
-
-    const snapshot = await avatarsCollectionRef.get();
-
-    if (snapshot.empty) {
-        return false;
-    }
-
-    const batch = db.batch();
-
-    snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
-    return true;
-};

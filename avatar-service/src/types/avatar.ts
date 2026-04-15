@@ -16,6 +16,7 @@ export enum AvatarGender {
 }
 
 export type AvatarParameters = {
+  gender: AvatarGender;
   ethnicity: string;
   skinColor: string;
   age: string;
@@ -43,11 +44,8 @@ export type Avatar = {
   userId: string;
   name: string;
   slug: string;
-  gender: AvatarGender;
-  imageCount: number;
-  videoCount: number;
   parameters?: AvatarParameters;
-  idPhotoPaths?: string[];
+  mainImage?: string;
   status: AvatarStatus;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;

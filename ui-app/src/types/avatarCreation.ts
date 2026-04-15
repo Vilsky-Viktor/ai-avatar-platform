@@ -1,11 +1,12 @@
 import type { Job } from "../types/job";
-import { AvatarGender, type AvatarParameters } from "../types/avatar";
+import { type AvatarParameters, AvatarTypes } from "../types/avatar";
 
 
 export type GeneralStepData = {
     name: string;
     slug: string;
-    gender: AvatarGender;
+    type: AvatarTypes;
+    parameters: AvatarParameters;
     avatarId: string;
     finished: boolean;
 };
@@ -21,18 +22,11 @@ export type UploadedIdPhoto = {
 }
 
 export type IdPhotoStepData = {
-  mode: IdPhotoModes;
-  parameters: AvatarParameters;
-  variantSets: (Partial<Job> | null)[][],
-  carouselIndex: number;
-  selectedVariant: number | null;
-  idPhotoPaths: string[];
+  jobs: (Job | null)[],
   finished: boolean;
 };
 
 export type PhotoSetStepData = {
   jobs: (Job | null)[];
   finished: boolean;
-  timerStartedAt: number | null;
-  timerStoppedAt: number | null;
 };

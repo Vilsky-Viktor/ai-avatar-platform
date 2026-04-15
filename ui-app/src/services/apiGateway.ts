@@ -3,7 +3,7 @@ import { auth } from '../firebase';
 import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
 import type { Avatar } from '../types/avatar';
-import type { Job, JobRequest } from '../types/job';
+import type { Job, TrainingJobRequest } from '../types/job';
 import type { Media } from '../types/media';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
@@ -79,42 +79,31 @@ export const deleteAvatarById = async (avatarId: string): Promise<Avatar> => {
   }
 }
 
-export const createIdPhotoView0Job = async (job: JobRequest): Promise<Job> => {
+export const genTrainingPhotoSet = async (job: TrainingJobRequest): Promise<Job[]> => {
   try {
-    const res = await apiClient.post('/jobs/create-id-photo-view0', job);
+    const res = await apiClient.post('/jobs/gen-training-photo-set', job);
 
-    return res.data as Job;
+    return res.data as Job[];
   } catch (error) {
-    console.error("Error creating ID photo job:", error);
+    console.error("Error creating photo set job:", error);
     throw error;
   }
 }
 
-export const createIdPhotoView45Job = async (job: JobRequest): Promise<Job> => {
+export const genTrainingIdPhotos = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
   try {
-    const res = await apiClient.post('/jobs/create-id-photo-view45', job);
+    const res = await apiClient.post('/jobs/gen-training-id-photos', jobRequest);
 
-    return res.data as Job;
+    return res.data as Job[];
   } catch (error) {
-    console.error("Error creating ID photo job:", error);
+    console.error("Error creating photo set job:", error);
     throw error;
   }
 }
 
-export const createIdPhotoView90Job = async (job: JobRequest): Promise<Job> => {
+export const genTrainingIdPhotosFromUploaded = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
   try {
-    const res = await apiClient.post('/jobs/create-id-photo-view90', job);
-
-    return res.data as Job;
-  } catch (error) {
-    console.error("Error creating ID photo job:", error);
-    throw error;
-  }
-}
-
-export const createPhotoSetJobs = async (job: JobRequest): Promise<Job[]> => {
-  try {
-    const res = await apiClient.post('/jobs/create-photo-set', job);
+    const res = await apiClient.post('/jobs/gen-training-id-photos-from-uploaded', jobRequest);
 
     return res.data as Job[];
   } catch (error) {

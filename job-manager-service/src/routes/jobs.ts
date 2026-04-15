@@ -1,20 +1,22 @@
 import { Router } from 'express';
 import {
-  createPhotoSet,
+  genTrainingPhotoSet,
+  genTrainingIdPhotos,
+  genTrainingIdPhotosFromUploaded,
   restart,
   update,
   deleteById,
   deleteByAvatarId,
-  deleteByUserId,
 } from '../controllers/jobController';
 
 const router = Router();
 
-router.post('/create-photo-set', createPhotoSet);
+router.post('/gen-training-photo-set', genTrainingPhotoSet);
+router.post('/gen-training-id-photos', genTrainingIdPhotos);
+router.post('/gen-training-id-photos-from-uploaded', genTrainingIdPhotosFromUploaded);
 router.post('/restart/:id', restart);
 router.patch('/update/:id', update);
 router.delete('/delete-by-id/:id', deleteById);
 router.delete('/delete-by-avatar-id/:avatarId', deleteByAvatarId);
-router.delete('/delete-by-user-id/:userId', deleteByUserId);
 
 export default router;
