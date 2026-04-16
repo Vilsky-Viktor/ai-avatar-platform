@@ -72,9 +72,11 @@ function Header() {
                         <li>
                             <div className="flex flex-col items-start px-4 py-3">
                                 <div className="font-bold text-sm tracking-tight">{user?.name}</div>
-                                <div className="text-[11px] text-base-content/50 font-medium">
-                                    {user?.email}
-                                </div>
+                                {user?.email && (
+                                    <div className="text-[11px] text-base-content/50 font-medium">
+                                        {user?.email}
+                                    </div>
+                                )}
                             </div>
                         </li>
                         <div className="divider my-0 opacity-50"></div>

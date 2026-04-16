@@ -52,6 +52,7 @@ class Metadata(BaseModel):
 
 class Job(BaseModel):
     id: str = "unknown"
+    groupId: str = ""
     userId: str = ""
     avatarId: str = ""
     mediaType: str = ""

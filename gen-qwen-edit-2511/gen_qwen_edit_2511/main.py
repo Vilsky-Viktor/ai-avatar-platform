@@ -4,6 +4,7 @@ import json
 from google.cloud import pubsub_v1
 
 import gen_qwen_edit_2511.logger as log
+from gen_qwen_edit_2511.logger import set_job_id, unset_job_id
 import gen_qwen_edit_2511.storage as storage
 import gen_qwen_edit_2511.message_queue as mq
 import gen_qwen_edit_2511.face_recognition as face_recognition
@@ -15,11 +16,12 @@ import gen_qwen_edit_2511.inference as inference
 
 logger = log.get_logger(__name__)
 
-PROJECT_ID      = os.getenv("PROJECT_ID", "loom24-mvp")
-SUBSCRIPTION_ID = os.getenv("SUBSCRIPTION_ID", "gen-qwen-edit-2511-sub")
-MODEL_NAME      = os.getenv("MODEL_NAME", "qwen-edit-2511")
+PROJECT_ID             = os.getenv("PROJECT_ID", "loom24-mvp")
+SUBSCRIPTION_ID        = os.getenv("SUBSCRIPTION_ID", "gen-qwen-edit-2511-sub")
+MODEL_NAME             = os.getenv("MODEL_NAME", "qwen-edit-2511")
 DIFFUSERS_ATTN_BACKEND = os.getenv("DIFFUSERS_ATTN_BACKEND", "native")
-MIN_FACE_MATCH = float(os.getenv("MIN_FACE_MATCH", "0.4"))
+MIN_FACE_MATCH         = float(os.getenv("MIN_FACE_MATCH", "0.4"))
+MESSAGE_CONCURRENCY    = int(os.getenv("MESSAGE_CONCURRENCY", "1"))
 
 ATTN_BACKEND_NAMES = {
     "flash": "Flash Attention 2",
@@ -48,122 +50,126 @@ def job_canceled(job_id: str) -> bool:
 def process_job(message: pubsub_v1.subscriber.message.Message):
     job = Job.model_validate(json.loads(message.data.decode("utf-8")))
     job_input = job.input
-    logger.info(f"========= Processing job {job.id}, order {job.order or 'none'} =========")
+    logger.info(f"========= Processing job {job.id} -> group {job.groupId or 'none'} -> order {job.order or 'none'} =========")
 
     if job_canceled(job.id):
         message.ack()
         return
 
-    try:
-        logger.info("Loading dependency images ...")
-        reference_images = storage.load_input_images(job_input.inference.mediaPaths)
-        id_photos = storage.load_input_images(job_input.faceRecognition.mediaPaths) if job_input.faceRecognition.enabled else []
+    set_job_id(job.id)
+    
+    with inference.acquire_pipeline() as pipe, face_recognition.acquire_face_recognition() as fr:
+        try:
+            logger.info("Loading dependency images ...")
+            reference_images = storage.load_input_images(job_input.inference.mediaPaths)
+            id_photos = storage.load_input_images(job_input.faceRecognition.mediaPaths) if job_input.faceRecognition.enabled else []
 
-        if job_input.checkDependencies:
-            if len(reference_images) != len(job_input.inference.mediaPaths):
-                logger.warning(f"Missing reference images, skipping job {job.id}")
-                message.nack()
-                return
-            if job_input.faceRecognition.enabled and len(id_photos) != len(job_input.faceRecognition.mediaPaths):
-                logger.warning(f"Missing ID photos, skipping job {job.id}")
-                message.nack()
-                return
+            if job_input.checkDependencies:
+                if len(reference_images) != len(job_input.inference.mediaPaths):
+                    logger.warning(f"Missing reference images, skipping job {job.id}")
+                    message.nack()
+                    return
+                if job_input.faceRecognition.enabled and len(id_photos) != len(job_input.faceRecognition.mediaPaths):
+                    logger.warning(f"Missing ID photos, skipping job {job.id}")
+                    message.nack()
+                    return
 
-        job.status = "generating"
-        mq.publish_status(job.model_dump())
+            job.status = "generating"
+            mq.publish_status(job.model_dump())
 
-        if job_input.loras:
-            for lora in job_input.loras:
-                storage.ensure_lora_downloaded(lora.path)
-            try:
-                inference.sync_loras(job_input.loras)
-            except Exception as lora_error:
-                logger.error(f"Failed to sync LoRAs: {lora_error}", exc_info=True)
-                inference.clear_loras()
-                raise
-        else:
-            inference.clear_loras()
+            if job_input.loras:
+                for lora in job_input.loras:
+                    storage.ensure_lora_downloaded(lora.path)
+                try:
+                    pipe.sync_loras(job_input.loras)
+                except Exception as lora_error:
+                    logger.error(f"Failed to sync LoRAs: {lora_error}", exc_info=True)
+                    pipe.clear_loras()
+                    raise
+            else:
+                pipe.clear_loras()
 
-        if job_input.faceExpression.enabled:
-            logger.info(f"Expression mode: '{job_input.faceExpression.type}' scale={job_input.faceExpression.scale}")
+            if job_input.faceExpression.enabled:
+                logger.info(f"Expression mode: '{job_input.faceExpression.type}' scale={job_input.faceExpression.scale}")
 
-        max_runs = job.maxRuns if job_input.faceRecognition.enabled else 1
-        best_img = None
-        best_match = 0.0
-        in_range = False  # whether any image fell within [min, max]
-        all_imgs: list[tuple[float, object]] = []  # (face_match, img) for every run
+            max_runs = job.maxRuns if job_input.faceRecognition.enabled else 1
+            best_img = None
+            best_match = 0.0
+            in_range = False  # whether any image fell within [min, max]
+            all_imgs: list[tuple[float, object]] = []  # (face_match, img) for every run
 
-        for run_idx in range(max_runs):
-            logger.info(f"---------- Run #{run_idx + 1}/{max_runs} ----------")
+            for run_idx in range(max_runs):
+                logger.info(f"---------- Run #{run_idx + 1}/{max_runs} ----------")
 
-            img, _ = inference.run_inference(job_input, reference_images)
+                img, _ = pipe.run_inference(job_input, reference_images)
 
-            if job_input.faceRecognition.enabled:
-                face_match = face_recognition.check_face_match(img, id_photos)
-                job.result.faceMatches.append(face_match)
-                all_imgs.append((face_match, img))
+                if job_input.faceRecognition.enabled:
+                    face_match = fr.check_face_match(img, id_photos)
+                    job.result.faceMatches.append(face_match)
+                    all_imgs.append((face_match, img))
 
-                threshold = job_input.faceRecognition.threshold
-                ignored = threshold.max is not None and face_match > threshold.max
-                if ignored:
-                    logger.info(f"Face match too high ({face_match} > {threshold.max}), ignoring image")
+                    threshold = job_input.faceRecognition.threshold
+                    ignored = threshold.max is not None and face_match > threshold.max
+                    if ignored:
+                        logger.info(f"Face match too high ({face_match} > {threshold.max}), ignoring image")
+                    else:
+                        if face_match > best_match:
+                            best_match = face_match
+                            best_img = img
+
+                        if run_idx == 0 and face_match < MIN_FACE_MATCH:
+                            logger.info(f"First run face match too low ({face_match} < {MIN_FACE_MATCH}), stopping early")
+                            break
+
+                        if face_match >= threshold.min:
+                            in_range = True
+                            logger.info(f"Face match min threshold reached ({face_match} >= {threshold.min}), stopping early")
+                            break
                 else:
-                    if face_match > best_match:
-                        best_match = face_match
-                        best_img = img
+                    best_img = img
 
-                    if run_idx == 0 and face_match < MIN_FACE_MATCH:
-                        logger.info(f"First run face match too low ({face_match} < {MIN_FACE_MATCH}), stopping early")
-                        break
+            if not in_range and all_imgs:
+                threshold = job_input.faceRecognition.threshold
+                if threshold.max is not None:
+                    midpoint_threshold = (threshold.min + threshold.max) / 2.0
+                    best_match, best_img = min(all_imgs, key=lambda x: abs(x[0] - midpoint_threshold))
+                    logger.info(f"No image in range — using image closest to midpoint threshold {midpoint_threshold:.2f}: {best_match}")
+                else:
+                    best_match, best_img = min(all_imgs, key=lambda x: abs(x[0] - threshold.min))
+                    logger.info(f"No image reached min threshold — using image closest to min threshold {threshold.min}: {best_match}")
 
-                    if face_match >= threshold.min:
-                        in_range = True
-                        logger.info(f"Face match min threshold reached ({face_match} >= {threshold.min}), stopping early")
-                        break
-            else:
-                best_img = img
+            if best_img is None:
+                raise RuntimeError("No image was generated — maxRuns may be 0 or all inference runs failed")
 
-        if not in_range and all_imgs:
-            threshold = job_input.faceRecognition.threshold
-            if threshold.max is not None:
-                midpoint_threshold = (threshold.min + threshold.max) / 2.0
-                best_match, best_img = min(all_imgs, key=lambda x: abs(x[0] - midpoint_threshold))
-                logger.info(f"No image in range — using image closest to midpoint threshold {midpoint_threshold:.2f}: {best_match}")
-            else:
-                best_match, best_img = min(all_imgs, key=lambda x: abs(x[0] - threshold.min))
-                logger.info(f"No image reached min threshold — using image closest to min threshold {threshold.min}: {best_match}")
+            logger.info(f"Best face match {best_match}")
 
-        if best_img is None:
-            raise RuntimeError("No image was generated — maxRuns may be 0 or all inference runs failed")
+            img = best_img
+            if job_input.faceRecognition.enabled:
+                job.result.bestFaceMatch = best_match
 
-        logger.info(f"Best face match {best_match}")
+            media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/images/{job.result.fileName}"
+            img_payload = storage.prepare_image_payload(img)
 
-        img = best_img
-        if job_input.faceRecognition.enabled:
-            job.result.bestFaceMatch = best_match
+            storage.upload_result_image(media_path, img_payload)
+            storage.save_result_image_locally(media_path, img_payload)
 
-        media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/images/{job.result.fileName}"
-        img_payload = storage.prepare_image_payload(img)
+            job.status = "completed"
+            job.result.mediaPath = media_path
 
-        storage.upload_result_image(media_path, img_payload)
-        storage.save_result_image_locally(media_path, img_payload)
+            mq.publish_status(job.model_dump())
+            logger.info("Completed status has been published")
+            message.ack()
 
-        job.status = "completed"
-        job.result.mediaPath = media_path
+        except Exception as error:
+            logger.error(f"Error processing job {job.id}: {error}", exc_info=True)
+            job.status = "error"
+            job.result.errorMessage = str(error)
+            mq.publish_status(job.model_dump())
+            message.ack()
 
-        mq.publish_status(job.model_dump())
-        logger.info("Completed status has been published")
-        message.ack()
-
-    except Exception as error:
-        logger.error(f"Error processing job {job.id}: {error}", exc_info=True)
-        job.status = "error"
-        job.result.errorMessage = str(error)
-        mq.publish_status(job.model_dump())
-        message.ack()
-
-    finally:
-        inference.clear_cache()
+        finally:
+            pipe.clear_cache()
+            unset_job_id()
 
 # ---------------------------------------------------------------------------
 # Main entry point
@@ -172,6 +178,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
 if __name__ == "__main__":
 
     logger.info(f"Attention backend: {ATTN_BACKEND_NAMES.get(DIFFUSERS_ATTN_BACKEND, DIFFUSERS_ATTN_BACKEND)}")
+    logger.info(f"Message concurrency: {MESSAGE_CONCURRENCY}")
 
     try:
         storage.download_models(MODEL_NAME)
@@ -181,13 +188,13 @@ if __name__ == "__main__":
         raise
 
     try:
-        face_recognition.get_app()
+        face_recognition.get_app(MESSAGE_CONCURRENCY)
     except Exception as e:
         logger.error(f"Failed to initialize face recognition: {e}", exc_info=True)
         raise
 
     try:
-        inference.load_pipeline()
+        inference.load_pipeline(MESSAGE_CONCURRENCY)
     except Exception as e:
         logger.error(f"Failed to load inference pipeline: {e}", exc_info=True)
         raise
@@ -201,7 +208,7 @@ if __name__ == "__main__":
         streaming_pull = subscriber.subscribe(
             sub_path,
             callback=process_job,
-            flow_control=pubsub_v1.types.FlowControl(max_messages=1),
+            flow_control=pubsub_v1.types.FlowControl(max_messages=MESSAGE_CONCURRENCY),
         )
         try:
             streaming_pull.result()

@@ -67,7 +67,7 @@ export const initialUploadedIdPhotoSet = [
 export const AVATAR_PARAMETER_OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
     skinColor: ["porcelain", "fair", "ivory", "beige", "olive", "tan", "caramel", "brown", "dark-brown", "ebony"],
-    age: ["teenager", "20s", "30s", "40s", "50s", "60s", "70s", "80s"],
+    age: ["teenage", "20s", "30s", "40s", "50s", "60s", "70s", "80s"],
     height: ["petite", "below average", "average", "above average", "tall", "very tall"],
     eyes: ["dark brown", "light brown", "amber", "hazel", "green", "blue", "gray", "violet", "two-toned"],
     eyeLashes: ["none", "short sparse", "short dense", "medium natural", "medium curled", "long wispy", "long dramatic", "tapered"],

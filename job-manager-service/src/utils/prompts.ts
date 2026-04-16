@@ -172,7 +172,7 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images`,
+          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images. No hair accessories`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0], 
@@ -375,7 +375,7 @@ export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters,
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images`,
+          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images. No hair accessories`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0], 
