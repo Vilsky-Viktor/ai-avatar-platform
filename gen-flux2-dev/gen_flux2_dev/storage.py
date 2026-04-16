@@ -159,6 +159,40 @@ def load_dummy_pose_images(resolutions: list[tuple[int, int]] | None = None) -> 
     return [utils.resize_image_with_padding(img, w, h) for h, w in resolutions]
 
 
+def ensure_lora_downloaded(lora_path: str) -> str:
+    """Ensure a LoRA directory is present locally. Downloads from GCS if missing or incomplete.
+
+    ``lora_path`` is the GCS path as given in the job, e.g.
+    ``"models/flux.2-dev/loras/my-lora"``.
+    Returns the absolute local path.
+    """
+    local_path = Path("/workspace") / lora_path
+
+    if local_path.is_dir() and any(local_path.iterdir()):
+        logger.info(f"LoRA already cached: {lora_path}")
+        return str(local_path)
+
+    logger.info(f"Downloading LoRA from bucket: {lora_path}")
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blobs = list(bucket.list_blobs(prefix=lora_path.rstrip("/") + "/"))
+
+    if not blobs:
+        raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
+
+    for blob in blobs:
+        if blob.name.endswith("/"):
+            continue
+        relative = os.path.relpath(blob.name, lora_path)
+        dest = local_path / relative
+        if dest.exists() and dest.stat().st_size == blob.size:
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(dest))
+
+    logger.info(f"LoRA download complete: {lora_path}")
+    return str(local_path)
+
+
 def download_models(model_name):
     remote_prefix = f"{BUCKET_MODELS_PATH}/{model_name}/"
     local_base_dir = Path(LOCAL_MODELS_PATH)

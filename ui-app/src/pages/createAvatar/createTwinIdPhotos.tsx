@@ -245,10 +245,14 @@ function CreateTwinIdPhotosPage() {
     }
 
     const restartJob = async (jobId: string, listIdx: number) => {
-        restartingJobIds.current.add(jobId);
-        setJob(listIdx, null);
-        const restartedJob = await restartJobById(jobId);
-        setJob(listIdx, restartedJob);
+        if (listIdx === 0) {
+            await createJobs();
+        } else {
+            restartingJobIds.current.add(jobId);
+            setJob(listIdx, null);
+            const restartedJob = await restartJobById(jobId);
+            setJob(listIdx, restartedJob);
+        }
     }
 
     const photosUploaded = () => {
@@ -611,11 +615,11 @@ function CreateTwinIdPhotosPage() {
                     <div className='text-center'>
                         <button
                             onClick={createJobs}
-                            disabled={generatingStarted() || stepData.finished}
-                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${stepData.finished || generatingStarted() ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            disabled={(generatingStarted() && !generatingCompleted()) || stepData.finished}
+                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${(generatingStarted() && !generatingCompleted()) || stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
-                            {((generatingStarted() && !generatingCompleted())) && <span className="loading loading-spinner"></span>}
-                            <span className="text-sm uppercase tracking-[0.4em]">Generate ID Photos</span>
+                            {((generatingStarted() && !generatingCompleted())) && <span className="loading loading-spinner mr-2"></span>}
+                            <span className="text-sm uppercase tracking-[0.4em]">{jobsCreated() ? 'Re-generate Photos' : 'Generate Photos'}</span>
                         </button>
                     </div>
                 )}

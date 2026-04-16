@@ -1,7 +1,9 @@
 import os
 import sys
 import secrets
+import warnings
 from functools import partial
+from pathlib import Path
 
 import torch
 from torchao.quantization import quantize_, Float8DynamicActivationFloat8WeightConfig, PerRow
@@ -10,6 +12,7 @@ from omegaconf import OmegaConf
 from PIL import Image
 from safetensors.torch import load_file
 from gen_flux2_dev.logger import get_logger
+from gen_flux2_dev.models import JobInput, LoraConfig
 import gen_flux2_dev.utils as utils
 
 current_file_path = os.path.abspath(__file__)
@@ -47,10 +50,14 @@ transformer_path    = f"{FLUX2_MODEL_PATH}/FLUX.2-dev-Fun-Controlnet-Union-2602.
 vae_path            = None
 weight_dtype        = torch.bfloat16
 
-pipeline = None
-device   = None
+pipeline    = None
+device      = None
+# Maps adapter_name -> scale for currently loaded adapters.
+# adapter_name is the LoRA path relative to /workspace (lora.path), used as stable identity.
+_lora_cache: dict[str, float] = {}
 
 
+@utils.timeit
 def load_pipeline():
     global pipeline, device
 
@@ -109,7 +116,7 @@ def load_pipeline():
     }[MODEL_SAMPLER_NAME]
 
     scheduler = chosen_scheduler.from_pretrained(
-        FLUX2_MODEL_PATH, 
+        FLUX2_MODEL_PATH,
         subfolder="scheduler"
     )
 
@@ -160,9 +167,75 @@ def load_pipeline():
             pipeline.transformer.single_transformer_blocks[i] = torch.compile(pipeline.transformer.single_transformer_blocks[i], **compile_kwargs)
 
     pipeline.set_progress_bar_config(disable=True)
+    logger.info("Pipeline ready")
+
 
 def clear_cache():
     torch.cuda.empty_cache()
+
+
+def _adapter_name(path: str) -> str:
+    """Sanitize a LoRA path into a valid PEFT/PyTorch module name (no dots or slashes)."""
+    return path.replace("/", "__").replace(".", "_")
+
+
+@utils.timeit
+def sync_loras(loras: list[LoraConfig]):
+    """Diff incoming LoRAs against the cache: unload stale, update scales, load new."""
+    global _lora_cache
+
+    incoming: dict[str, float] = {lora.path: lora.scale for lora in loras}
+
+    to_remove  = [path for path in _lora_cache if path not in incoming]
+    to_update  = [path for path in _lora_cache if path in incoming and incoming[path] != _lora_cache[path]]
+    to_load    = [lora for lora in loras if lora.path not in _lora_cache]
+
+    if not to_remove and not to_update and not to_load:
+        logger.info("LoRA cache hit — all adapters already loaded with correct scales")
+        return
+
+    if to_remove:
+        logger.info(f"Removing {len(to_remove)} stale LoRA(s): {[Path(n).name for n in to_remove]}")
+        pipeline.delete_adapters([_adapter_name(p) for p in to_remove])
+        for path in to_remove:
+            del _lora_cache[path]
+
+    for lora in to_load:
+        local_path = str(Path("/workspace") / lora.path)
+        adapter_name = _adapter_name(lora.path)
+        logger.info(f"  [load] {Path(lora.path).name} scale={lora.scale}")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, module="peft")
+            warnings.filterwarnings("ignore", category=UserWarning, module="peft")
+            pipeline.load_lora_weights(local_path, adapter_name=adapter_name, weight_name=lora.filename)
+        _lora_cache[lora.path] = lora.scale
+
+    if to_update:
+        logger.info(f"Updating scale for {len(to_update)} LoRA(s): {[Path(n).name for n in to_update]}")
+        for path in to_update:
+            _lora_cache[path] = incoming[path]
+
+    # Apply all current adapter names and their scales in job-defined order
+    active_names  = [_adapter_name(lora.path) for lora in loras]
+    active_scales = [lora.scale for lora in loras]
+    pipeline.set_adapters(active_names, adapter_weights=active_scales)
+    logger.info(f"LoRAs synced — {len(active_names)} active: {[Path(lora.path).name for lora in loras]}")
+
+
+@utils.timeit
+def clear_loras():
+    """Full LoRA teardown — used on error to ensure clean state for next job."""
+    global _lora_cache
+    if not _lora_cache:
+        return
+    try:
+        pipeline.delete_adapters([_adapter_name(p) for p in _lora_cache])
+        pipeline.unload_lora_weights()
+        _lora_cache = {}
+        logger.info("LoRAs fully cleared")
+    except Exception as e:
+        logger.warning(f"Failed to clear LoRAs: {e}")
+
 
 def _warmup_single(height: int, width: int, control_image, images: list, control_context_scale: float = 0.75):
     pipeline(
@@ -199,28 +272,29 @@ BUCKET_SIZE = 1_000_000
 def _generate_bucketed_seed(run_num: int) -> int:
     return secrets.randbelow(BUCKET_SIZE) + (run_num * BUCKET_SIZE)
 
-@utils.timeit
-def run_inference(params: dict, images: list[Image.Image], control_image: Image.Image, num_inference_steps, seed, width, height, run_num: int = 0, inpaint_image: Image.Image = None, inpaint_mask: torch.Tensor = None):
-    prompt = params.get("prompt")
-    guidance_scale = params.get("inference", {}).get("guidance", 4.0)
-    controlnet_params = params.get("controlnet", {})
-    seed = seed if seed is not None else _generate_bucketed_seed(run_num)
 
+@utils.timeit
+def run_inference(job_input: JobInput, images: list[Image.Image]):
+    if not images:
+        images = [Image.new("RGB", (job_input.inference.width, job_input.inference.height), (255, 255, 255))]
+
+    seed = job_input.inference.seed or secrets.randbelow(2**32)
     generator = torch.Generator(device=device).manual_seed(seed)
+
+    logger.info(f"Using seed {seed}")
+
+    prompt = job_input.inference.prompt
+    guidance_scale = job_input.inference.guidanceScale
+    num_inference_steps = job_input.inference.numSteps
+    width = job_input.inference.width
+    height = job_input.inference.height
     sample_size = [height, width]
 
     with torch.no_grad():
         image = [get_image(_image) for _image in images]
 
-        if inpaint_image is not None:
-            pipeline_inpaint = inpaint_image
-            pipeline_mask = inpaint_mask if inpaint_mask is not None else torch.zeros([1, 1, sample_size[0], sample_size[1]])
-        else:
-            pipeline_inpaint = torch.zeros([1, 3, sample_size[0], sample_size[1]])
-            pipeline_mask = torch.ones([1, 1, sample_size[0], sample_size[1]]) * 255
-
-        if control_image is not None:
-            control_image = get_image_latent(control_image, sample_size=sample_size)[:, :, 0]
+        pipeline_inpaint = torch.zeros([1, 3, sample_size[0], sample_size[1]])
+        pipeline_mask = torch.ones([1, 1, sample_size[0], sample_size[1]]) * 255
 
         img = pipeline(
             prompt              = prompt,
@@ -231,9 +305,9 @@ def run_inference(params: dict, images: list[Image.Image], control_image: Image.
             image               = image,
             inpaint_image       = pipeline_inpaint,
             mask_image          = pipeline_mask,
-            control_image       = control_image if controlnet_params.get("enabled", False) else None,
+            control_image       = None,
             num_inference_steps = num_inference_steps,
-            control_context_scale  = controlnet_params.get("scale", 0.2) if controlnet_params.get("enabled", False) else 0,
+            control_context_scale = 0,
         ).images[0]
 
-        return img, seed
+    return img, seed

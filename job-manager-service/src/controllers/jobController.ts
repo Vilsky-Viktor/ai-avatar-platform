@@ -16,7 +16,6 @@ import uuid from 'uuid';
 import imageRatios from '../types/imageRatios';
 
 
-const GEN_FLUX2_DEV_TOPIC = process.env.GEN_FLUX2_DEV_TOPIC || 'gen-flux2-dev';
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511'
 
 
@@ -35,9 +34,9 @@ export const genTrainingIdPhotos = async (req: Request, res: Response, next: Nex
   const idPhotoSet: IdPhotoSetPaths = {
     uploaded: {},
     generated: {
-      front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
+      front: `${avatarMediaPath}/001-training-photo-set-${groupId}-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${groupId}-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${groupId}-${squareDimensions}.png`,
     }
   }
 
@@ -70,7 +69,7 @@ export const genTrainingIdPhotos = async (req: Request, res: Response, next: Nex
       }
 
       newJob.result = {
-        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}.png`,
+        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png`,
       }
 
       jobs.push(newJob as Job);
@@ -107,9 +106,9 @@ export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Respons
       leftQuarter: `${avatarMediaPath}/uploaded/left-${squareDimensions}.png`,
     },
     generated: {
-      front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
+      front: `${avatarMediaPath}/001-training-photo-set-${groupId}-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${groupId}-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${groupId}-${squareDimensions}.png`,
     }
   }
 
@@ -142,7 +141,7 @@ export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Respons
       }
 
       newJob.result = {
-        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}.png`,
+        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png`,
       }
 
       jobs.push(newJob as Job);
@@ -178,14 +177,14 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
     const idPhotoSet: IdPhotoSetPaths = {
       uploaded: {},
       generated: {
-        front: `${avatarMediaPath}/001-training-photo-set-${squareDimensions}.png`,
-        frontSmile: `${avatarMediaPath}/002-training-photo-set-${squareDimensions}.png`,
-        rightQuarter: `${avatarMediaPath}/004-training-photo-set-${squareDimensions}.png`,
-        leftQuarter: `${avatarMediaPath}/005-training-photo-set-${squareDimensions}.png`,
-        rightSide: `${avatarMediaPath}/003-training-photo-set-${squareDimensions}.png`,
-        leftSide: `${avatarMediaPath}/006-training-photo-set-${squareDimensions}.png`,
-        back: `${avatarMediaPath}/007-training-photo-set-${squareDimensions}.png`,
-        body: `${avatarMediaPath}/009-training-photo-set-${verticalDimensions}.png`,
+        front: `${avatarMediaPath}/001-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        frontSmile: `${avatarMediaPath}/002-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        rightQuarter: `${avatarMediaPath}/003-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        rightSide: `${avatarMediaPath}/005-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        leftSide: `${avatarMediaPath}/006-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        back: `${avatarMediaPath}/007-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        body: `${avatarMediaPath}/009-training-photo-set-${jobRequest.groupId}-${verticalDimensions}.png`,
       }
     }
 
@@ -217,7 +216,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
       }
 
       newJob.result = {
-        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${inference?.width}x${inference?.height}.png`,
+        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${jobRequest.groupId}-${inference?.width}x${inference?.height}.png`,
       }
 
       jobs.push(newJob as Job);

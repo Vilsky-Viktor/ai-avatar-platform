@@ -25,7 +25,7 @@ def configure_logging() -> None:
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
-# Call once at application startup
+
 configure_logging()
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:

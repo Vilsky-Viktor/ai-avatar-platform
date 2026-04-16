@@ -243,3 +243,14 @@ def run_face_match_check(imgs: list, id_photos) -> List[float]:
 
     futures = [_executor.submit(_check_single, img, id_images_bytes) for img in imgs]
     return [f.result() for f in futures]
+
+
+@utils_module.timeit
+def check_face_match(img, id_photos: list) -> float:
+    logger.info("Checking face match ...")
+    image_bytes = utils_module.to_image_bytes(img)
+    id_images_bytes = [utils_module.to_image_bytes(p) for p in id_photos]
+    similarity = calc_face_similarity(id_images_bytes, image_bytes)
+    result = round(float(similarity), 4) if similarity is not None else 0.0
+    logger.info(f"Face match: {result}")
+    return result
