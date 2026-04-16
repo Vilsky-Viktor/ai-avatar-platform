@@ -13,16 +13,22 @@ export const listenToDocChanges = (
 export const listenToCollectionByGroupId = (
     collectionId: string,
     userId: string,
-    groupId: string, 
+    groupId: string,
     callback: (snapshot: QuerySnapshot<DocumentData>) => void
 ) => {
     if (!userId) throw new Error("User must be authenticated");
 
     const q = query(
-        collection(db, collectionId), 
+        collection(db, collectionId),
         where("groupId", "==", groupId),
-        where("userId", "==", userId) 
+        where("userId", "==", userId)
     );
 
-    return onSnapshot(q, callback);
+    let unsubscribe = onSnapshot(q, callback, (error) => {
+        console.warn("Firestore listener error, resubscribing ...", error);
+        unsubscribe();
+        unsubscribe = onSnapshot(q, callback);
+    });
+
+    return () => unsubscribe();
 }
