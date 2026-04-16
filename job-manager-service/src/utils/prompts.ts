@@ -142,8 +142,8 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '90:0', shotType: 'rightSideCloseUpView' },
-      maxRuns: 5,
-      order: 7,
+      maxRuns: 7,
+      order: 5,
     },
     {
       input: {
@@ -1424,49 +1424,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
       metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'rearFullBodyView'},
       maxRuns: 1,
       order: 43,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Full body side profile. Feet are completely cut off the frame and not visible. Nose and body poining left side of the frame. Change outfit to ${isFemale ? 'flowy rust-brown midi skirt, tucked white peasant blouse' : 'relaxed straight khaki trousers, washed olive henley shirt'}. Change background to village street. Change light to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.generated.rightSide!, idPhotoSet.generated.rightSide!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: verticalRatio[0], 
-          height: verticalRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightSide!], threshold: { min: 0.87 }},
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
-        ],
-      },
-      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '90:0', shotType: 'sideFullBodyView'},
-      maxRuns: 7,
-      order: 44,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Full body side profile. Feet are completely cut off the frame and not visible. Nose and body poining right side of the frame. Change outfit to ${isFemale ? 'high-waisted dark slim jeans, fitted white crop tee' : 'slim dark chinos, clean white t-shirt'}. Change background to street with skyscrapers. Change light to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.generated.leftSide!, idPhotoSet.generated.leftSide!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: verticalRatio[0], 
-          height: verticalRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftSide!], threshold: { min: 0.87 }},
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
-        ],
-      },
-      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '90:0', shotType: 'sideFullBodyView'},
-      maxRuns: 7,
-      order: 45,
-    },
+    }
   ];
 };
 

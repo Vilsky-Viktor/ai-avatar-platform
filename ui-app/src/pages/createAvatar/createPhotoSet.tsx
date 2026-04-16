@@ -146,7 +146,7 @@ function CreatePhotoSetPage() {
     }
 
     const createJobs = async () => {
-        const emptyJobs = Array(36).fill(null);
+        const emptyJobs = Array(34).fill(null);
         setJobs(emptyJobs);
 
         const job: TrainingJobRequest = {
