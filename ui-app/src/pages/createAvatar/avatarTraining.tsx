@@ -6,7 +6,7 @@ function AvatarTrainingPage() {
 
     return ( 
         <>
-            <CreateAvatarStepper step={3}/>
+            <CreateAvatarStepper step={4}/>
 
             <div className="card bg-base-100 mt-4 p-10 shadow-md">
                 Avatar training

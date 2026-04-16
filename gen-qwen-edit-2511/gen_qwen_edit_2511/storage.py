@@ -1,5 +1,6 @@
 import os
 import io
+import threading
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -30,6 +31,7 @@ LOCAL_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
 EVICTION_INTERVAL_SECONDS = 60
 _last_eviction_time: float = 0.0
+_eviction_lock = threading.Lock()
 
 
 def _get_media_cache_path(blob_path: str) -> Path:
@@ -43,10 +45,11 @@ def _get_tmp_path(blob_path: str, num_runs: int) -> Path:
 
 
 def _is_file_fresh_enough(path: Path) -> bool:
-    if not path.exists():
+    try:
+        age = time.time() - path.stat().st_mtime
+        return age < MEDIA_CACHE_TTL_SECONDS
+    except FileNotFoundError:
         return False
-    age = time.time() - path.stat().st_mtime
-    return age < MEDIA_CACHE_TTL_SECONDS
 
 
 def _evict_expired_media() -> None:
@@ -57,11 +60,16 @@ def _evict_expired_media() -> None:
             continue
         if file_path.suffix == ".lock":
             continue
-        age = now - file_path.stat().st_mtime
+        try:
+            age = now - file_path.stat().st_mtime
+        except FileNotFoundError:
+            continue
         if age >= MEDIA_CACHE_TTL_SECONDS:
             try:
                 file_path.unlink()
                 removed += 1
+            except FileNotFoundError:
+                pass
             except Exception as e:
                 logger.warning(f"Failed to evict expired file {file_path}: {e}")
     if removed > 0:
@@ -74,11 +82,16 @@ def _evict_expired_tmp() -> None:
     for file_path in LOCAL_TMP_DIR.rglob("*"):
         if not file_path.is_file():
             continue
-        age = now - file_path.stat().st_mtime
+        try:
+            age = now - file_path.stat().st_mtime
+        except FileNotFoundError:
+            continue
         if age >= TMP_TTL_SECONDS:
             try:
                 file_path.unlink()
                 removed += 1
+            except FileNotFoundError:
+                pass
             except Exception as e:
                 logger.warning(f"Failed to evict expired tmp file {file_path}: {e}")
     if removed > 0:
@@ -110,24 +123,33 @@ def ensure_lora_downloaded(lora_path: str) -> str:
         logger.info(f"LoRA already cached: {lora_path}")
         return str(local_path)
 
-    logger.info(f"Downloading LoRA from bucket: {lora_path}")
-    bucket = storage_client.bucket(BUCKET_NAME)
-    blobs = list(bucket.list_blobs(prefix=lora_path.rstrip("/") + "/"))
+    lock_path = local_path.parent / f".{local_path.name}.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with FileLock(str(lock_path), timeout=300):
+        # Double-check after acquiring — another thread may have downloaded it
+        if local_path.is_dir() and any(local_path.iterdir()):
+            logger.info(f"LoRA already cached (downloaded by concurrent thread): {lora_path}")
+            return str(local_path)
 
-    if not blobs:
-        raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
+        logger.info(f"Downloading LoRA from bucket: {lora_path}")
+        bucket = storage_client.bucket(BUCKET_NAME)
+        blobs = list(bucket.list_blobs(prefix=lora_path.rstrip("/") + "/"))
 
-    for blob in blobs:
-        if blob.name.endswith("/"):
-            continue
-        relative = os.path.relpath(blob.name, lora_path)
-        dest = local_path / relative
-        if dest.exists() and dest.stat().st_size == blob.size:
-            continue
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        blob.download_to_filename(str(dest))
+        if not blobs:
+            raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
 
-    logger.info(f"LoRA download complete: {lora_path}")
+        for blob in blobs:
+            if blob.name.endswith("/"):
+                continue
+            relative = os.path.relpath(blob.name, lora_path)
+            dest = local_path / relative
+            if dest.exists() and dest.stat().st_size == blob.size:
+                continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(str(dest))
+
+        logger.info(f"LoRA download complete: {lora_path}")
+
     return str(local_path)
 
 
@@ -162,9 +184,11 @@ def load_input_images(image_paths: list[str]) -> list[Image.Image]:
     global _last_eviction_time
     now = time.time()
     if now - _last_eviction_time >= EVICTION_INTERVAL_SECONDS:
-        _evict_expired_media()
-        _evict_expired_tmp()
-        _last_eviction_time = now
+        with _eviction_lock:
+            if now - _last_eviction_time >= EVICTION_INTERVAL_SECONDS:
+                _evict_expired_media()
+                _evict_expired_tmp()
+                _last_eviction_time = now
 
     bucket = storage_client.bucket(BUCKET_NAME)
     valid_images = []

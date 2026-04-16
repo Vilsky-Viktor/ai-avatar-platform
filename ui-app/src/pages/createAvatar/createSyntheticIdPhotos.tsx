@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
-import { Sparkles, User, Trash2, X, Check, Minus, Plus, Clock, Loader2, CircleAlert, RefreshCcw, ChevronDown, CircleOff } from 'lucide-react';
+import { Sparkles, User, Clock, Loader2, RefreshCcw, ChevronDown, CircleOff } from 'lucide-react';
 import { AvatarStatus, type Avatar } from '../../types/avatar';
 import { updateAvatar, restartJobById, genTrainingIdPhotos } from '../../services/apiGateway';
 import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
@@ -11,11 +11,10 @@ import {
     ID_PHOTO_STORAGE_KEY, 
     getLocalStorageData,
     saveLocalStorageData,
-    initialUploadedIdPhotoSet,
     AVATAR_PARAMETER_OPTIONS
 } from '../../utils/avatarCreation';
 import BottomDock from '../../components/createAvatar/BottomDock';
-import { type IdPhotoStepData, type GeneralStepData, type UploadedIdPhoto } from "../../types/avatarCreation";
+import { type IdPhotoStepData, type GeneralStepData } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { listenToCollectionByGroupId } from '../../services/db';
@@ -26,8 +25,8 @@ function CreateSyntheticIdPhotosPage() {
     const navigate = useNavigate();
     const { user } = useApp();
 
-    const [generalData, setGeneralData] = useState(() => getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY))
-    const [stepData, setStepData] = useState(() => getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY))
+    const [generalData, setGeneralData] = useState(() => getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY));
+    const [stepData, setStepData] = useState(() => getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY));
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
     const jobsRef = useRef(stepData.jobs);
     useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);

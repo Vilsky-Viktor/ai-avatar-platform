@@ -39,7 +39,7 @@ services:
       - AVATAR_SERVICE_URL=http://avatar-service:3200
       - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
       - MEDIA_SERVICE_URL=http://media-service:3400
-      - VOICE_SERVICE_URL=http://media-service:3600
+      - VOICE_SERVICE_URL=http://voice-service:3600
 
   user-service:
     <<: *default-dns

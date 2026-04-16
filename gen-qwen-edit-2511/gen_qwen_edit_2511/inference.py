@@ -21,6 +21,10 @@ CONDITION_IMAGE_SIZE = 384 * 384
 
 logging.getLogger("diffusers").setLevel(logging.ERROR)
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="peft")
+warnings.filterwarnings("ignore", category=UserWarning,    module="peft")
+
 logger = get_logger(__name__)
 
 _pool: queue.Queue["_PipelineInstance"] = queue.Queue()
@@ -192,9 +196,9 @@ class _PipelineInstance:
 # Pool API
 # ---------------------------------------------------------------------------
 
-def load_pipeline(n: int = 1):
+def load_pipeline(n: int = 1, base_idx: int = 0):
     for i in range(n):
-        inst = _PipelineInstance(i)
+        inst = _PipelineInstance(base_idx + i)
         inst.load()
         _pool.put(inst)
 

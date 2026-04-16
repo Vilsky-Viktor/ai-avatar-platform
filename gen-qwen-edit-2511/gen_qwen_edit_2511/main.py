@@ -1,5 +1,6 @@
 import os
 import json
+import multiprocessing
 
 from google.cloud import pubsub_v1
 
@@ -50,14 +51,14 @@ def job_canceled(job_id: str) -> bool:
 def process_job(message: pubsub_v1.subscriber.message.Message):
     job = Job.model_validate(json.loads(message.data.decode("utf-8")))
     job_input = job.input
-    logger.info(f"========= Processing job {job.id} -> group {job.groupId or 'none'} -> order {job.order or 'none'} =========")
 
     if job_canceled(job.id):
         message.ack()
         return
 
     set_job_id(job.id)
-    
+    logger.info(f"========= Starting job {job.id} -> group {job.groupId or 'none'} -> order {job.order or 'none'} =========")
+
     with inference.acquire_pipeline() as pipe, face_recognition.acquire_face_recognition() as fr:
         try:
             logger.info("Loading dependency images ...")
@@ -172,6 +173,42 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             unset_job_id()
 
 # ---------------------------------------------------------------------------
+# Single-worker entry point — one process, one pipeline instance
+# ---------------------------------------------------------------------------
+
+def run_worker(worker_idx: int):
+    logger.info(f"[worker {worker_idx}] Starting")
+
+    try:
+        face_recognition.get_app(1, base_idx=worker_idx)
+    except Exception as e:
+        logger.error(f"[worker {worker_idx}] Failed to initialize face recognition: {e}", exc_info=True)
+        raise
+
+    try:
+        inference.load_pipeline(1, base_idx=worker_idx)
+    except Exception as e:
+        logger.error(f"[worker {worker_idx}] Failed to load inference pipeline: {e}", exc_info=True)
+        raise
+
+    subscriber = mq.get_subscriber_client()
+    sub_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
+
+    logger.info(f"[worker {worker_idx}] Subscribed to: {sub_path}")
+
+    with subscriber:
+        streaming_pull = subscriber.subscribe(
+            sub_path,
+            callback=process_job,
+            flow_control=pubsub_v1.types.FlowControl(max_messages=1),
+        )
+        try:
+            streaming_pull.result()
+        except KeyboardInterrupt:
+            logger.info(f"[worker {worker_idx}] Shutdown signal received.")
+            streaming_pull.cancel()
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -187,31 +224,22 @@ if __name__ == "__main__":
         logger.error(f"Failed to download models: {e}", exc_info=True)
         raise
 
-    try:
-        face_recognition.get_app(MESSAGE_CONCURRENCY)
-    except Exception as e:
-        logger.error(f"Failed to initialize face recognition: {e}", exc_info=True)
-        raise
-
-    try:
-        inference.load_pipeline(MESSAGE_CONCURRENCY)
-    except Exception as e:
-        logger.error(f"Failed to load inference pipeline: {e}", exc_info=True)
-        raise
-
-    subscriber = mq.get_subscriber_client()
-    sub_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
-
-    logger.info(f"Subscribed to: {sub_path}")
-
-    with subscriber:
-        streaming_pull = subscriber.subscribe(
-            sub_path,
-            callback=process_job,
-            flow_control=pubsub_v1.types.FlowControl(max_messages=MESSAGE_CONCURRENCY),
-        )
+    if MESSAGE_CONCURRENCY == 1:
+        run_worker(0)
+    else:
+        multiprocessing.set_start_method("spawn")
+        processes = [
+            multiprocessing.Process(target=run_worker, args=(i,), daemon=False)
+            for i in range(MESSAGE_CONCURRENCY)
+        ]
+        for p in processes:
+            p.start()
         try:
-            streaming_pull.result()
+            for p in processes:
+                p.join()
         except KeyboardInterrupt:
-            logger.info("Shutdown signal received.")
-            streaming_pull.cancel()
+            logger.info("Shutdown signal received, terminating workers.")
+            for p in processes:
+                p.terminate()
+            for p in processes:
+                p.join()

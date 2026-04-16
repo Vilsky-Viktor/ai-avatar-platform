@@ -218,9 +218,9 @@ def _find_checkpoint() -> str:
 # Pool API
 # ---------------------------------------------------------------------------
 
-def get_app(n: int = 1):
+def get_app(n: int = 1, base_idx: int = 0):
     for i in range(n):
-        inst = _FaceRecognitionInstance(i)
+        inst = _FaceRecognitionInstance(base_idx + i)
         inst.load()
         _pool.put(inst)
 

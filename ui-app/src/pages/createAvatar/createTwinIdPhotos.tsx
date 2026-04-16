@@ -6,7 +6,7 @@ import { AvatarStatus, type Avatar } from '../../types/avatar';
 import { updateAvatar, restartJobById, genTrainingIdPhotosFromUploaded } from '../../services/apiGateway';
 import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
-import { uploadMediaToBucket } from '../../services/storage';
+import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
 import Cropper, { type Point, type Area } from 'react-easy-crop';
 import { 
     GENERAL_STORAGE_KEY,  
@@ -18,7 +18,6 @@ import {
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { type IdPhotoStepData, type GeneralStepData, type UploadedIdPhoto } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
-import { getMediaUrlFromPath } from '../../services/storage';
 import { listenToCollectionByGroupId } from '../../services/db';
 
 

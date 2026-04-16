@@ -1,14 +1,12 @@
 import { deleteAvatarById } from "../services/apiGateway";
 import { AvatarGender, AvatarTypes } from "../types/avatar";
-import { IdPhotoModes, type IdPhotoStepData, type PhotoSetStepData, type GeneralStepData } from "../types/avatarCreation";
+import { IdPhotoModes, type IdPhotoStepData, type PhotoSetStepData, type GeneralStepData, type VoiceStepData } from "../types/avatarCreation";
 
 
 export const GENERAL_STORAGE_KEY = 'avatar_general_data';
 export const ID_PHOTO_STORAGE_KEY = 'avatar_id_photo_data';
 export const PHOTO_SET_STORAGE_KEY = 'avatar_photo_set_data';
-export const UPLOADED_ID_PHOTO_VIEW0 = 'uploaded_id_photo_view0';
-export const UPLOADED_ID_PHOTO_VIEW45 = 'uploaded_id_photo_view45';
-export const UPLOADED_ID_PHOTO_VIEW90 = 'uploaded_id_photo_view90';
+export const VOICE_STORAGE_KEY = 'avatar_voice_data';
 
 
 function encodeBase64(text: string): string {
@@ -64,6 +62,18 @@ export const initialUploadedIdPhotoSet = [
     { photo: null, isDragging: false },
 ]
 
+export const initialPhotoSetData = {
+  jobs: Array(36).fill(null),
+  finished: false,
+} as PhotoSetStepData;
+
+export const initialVoiceData = {
+    mediaPath: "",
+    uploaded: false,
+    selectedId: "",
+    finished: false,
+} as VoiceStepData;
+
 export const AVATAR_PARAMETER_OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
     skinColor: ["porcelain", "fair", "ivory", "beige", "olive", "tan", "caramel", "brown", "dark-brown", "ebony"],
@@ -97,14 +107,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     }
 };
 
-export const initialPhotoSetData = {
-  jobs: Array(40).fill(null),
-  finished: false,
-  timerStartedAt: null,
-  timerStoppedAt: null,
-} as PhotoSetStepData;
-
-type StepData = GeneralStepData | IdPhotoStepData | PhotoSetStepData;
+type StepData = GeneralStepData | IdPhotoStepData | PhotoSetStepData | VoiceStepData;
 
 export const getLocalStorageData = <T extends StepData>(key: string): T => {
     const encodedData = localStorage.getItem(key);
@@ -120,6 +123,8 @@ export const getLocalStorageData = <T extends StepData>(key: string): T => {
         return initialIdPhotoData as T;
     } else if (key === PHOTO_SET_STORAGE_KEY) {
         return initialPhotoSetData as T;
+    } else if (key === VOICE_STORAGE_KEY) {
+        return initialVoiceData as T;
     } else {
         return {} as T
     }

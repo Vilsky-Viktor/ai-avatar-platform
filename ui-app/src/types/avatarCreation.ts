@@ -30,3 +30,10 @@ export type PhotoSetStepData = {
   jobs: (Job | null)[];
   finished: boolean;
 };
+
+export type VoiceStepData = {
+  uploaded: boolean;
+  selectedId: string | null;
+  mediaPath: string;
+  finished: boolean;
+}

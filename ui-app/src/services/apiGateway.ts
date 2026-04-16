@@ -2,9 +2,10 @@ import axios from 'axios';
 import { auth } from '../firebase';
 import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
-import type { Avatar } from '../types/avatar';
+import type { Avatar, AvatarGender } from '../types/avatar';
 import type { Job, TrainingJobRequest } from '../types/job';
 import type { Media } from '../types/media';
+import type { Voice } from '../types/voice';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
 
@@ -130,6 +131,17 @@ export const createMedia = async (media: Media): Promise<Media> => {
     return res.data as Media;
   } catch (error) {
     console.error("Error creating media:", error);
+    throw error;
+  }
+}
+
+export const getVoicesByGender = async (gender: AvatarGender) => {
+  try {
+    const res = await apiClient.get(`/voices/get-by-gender/${gender}`);
+
+    return res.data as Voice[];
+  } catch (error) {
+    console.error("Error fetching voices:", error);
     throw error;
   }
 }

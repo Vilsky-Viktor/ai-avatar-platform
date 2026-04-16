@@ -38,8 +38,8 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'clean-shaven, no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with highly detailed realistic natural pores, subtle texture and imperfections for lifelike appearance. Wearing ${isFemale ? 'white strapless top' : 'white sleeveless shirt with top undone buttons'}. Direct eye contact looking straight at the camera, completely neutral expression, relaxed completely closed mouth without smile. Gray concrete color wall. Even soft diffused daylight. Sharp focus especially on eyes and facial details.`,
-          negativePrompt: 'cropped head, cut off haircut, cut off hair, cut off head, missing shoulders, blurry face, low quality, distorted face, wrong ethnicity, smile, open mouth, teeth visible, makeup, oversaturated, unrealistic skin, head tilt',
+          prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'clean-shaven, no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with highly detailed realistic skin. Wearing ${isFemale ? 'white strapless top' : 'white sleeveless shirt with top undone buttons'}. Direct eye contact looking straight at the camera, completely neutral expression, relaxed completely closed mouth without smile. Gray concrete color wall. Soft diffused daylight. Sharp focus especially on eyes and facial details.`,
+          negativePrompt: 'cut off shoulders, missing shoulders, cropped head, cut off haircut, cut off hair, cut off head, blurry face, low quality, distorted face, wrong ethnicity, smile, open mouth, teeth visible, makeup, oversaturated, unrealistic skin, plastic skin, head tilt',
           mediaPaths: [],
           numSteps: 40,
           width: squareRatio[0], 
@@ -49,6 +49,7 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         faceRecognition: { enabled: false},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Hyper-Realistic-Portrait", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -59,17 +60,17 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Gentle smile showing teeth. Change outfit to dark gray sleeveless t-shirt`,
+          prompt: `Exact same person from input images. Gentle smile showing teeth. Change outfit to dark gray sleeveless t-shirt`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.75 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.65 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Hyper-Realistic-Portrait", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -137,7 +138,6 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
@@ -160,7 +160,6 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
@@ -194,7 +193,7 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Tight crop around the head, face fills 90% of the frame, no neck, no shoulders visible. Cut off shoulders and neck out of the frame`,
+          prompt: `Tight crop around the head including haircut, face fills 90% of the frame, no neck, no shoulders visible. Cut off shoulders and neck out of the frame`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0], 
@@ -203,8 +202,9 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.9 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Hyper-Realistic-Portrait", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '0:0', shotType: 'FrontExtremeCloseUpView' },

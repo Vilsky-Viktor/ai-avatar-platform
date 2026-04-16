@@ -50,6 +50,7 @@ export type Avatar = {
   slug: string;
   parameters: AvatarParameters;
   mainImagePath?: string;
+  voicePath?: string;
   status?: AvatarStatus;
   updatedAt?: FirestoreTimestamp;
   createdAt?: FirestoreTimestamp
