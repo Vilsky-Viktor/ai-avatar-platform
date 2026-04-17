@@ -473,7 +473,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.sad, scale: 0.9 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.9, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.9 : 0.85, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -495,7 +498,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.angry, scale: 0.65 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.88, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.88 : 0.85, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -517,7 +523,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.6 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.95, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.95 : 0.9, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -539,7 +548,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.85 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.frontSmile!], threshold: { min: 0.94, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.frontSmile!], threshold: { 
+          min: AvatarTypes.twin ? 0.94 : 0.89, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -561,7 +573,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.surprised, scale: 0.57 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.92, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.92 : 0.87, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -583,7 +598,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.anxious, scale: 0.7 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.89, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.89 : 0.85, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -605,7 +623,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.shy, scale: 0.7 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.92, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.92 : 0.87, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -627,7 +648,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.sleepy, scale: 0.65 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.92, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.92 : 0.87, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -649,7 +673,10 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           height: squareRatio[1],
         },
         faceExpression: { enabled: true, type: FaceExpressionTypes.fear, scale: 0.6 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.89, max: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { 
+          min: AvatarTypes.twin ? 0.89 : 0.85, 
+          max: 0.96 
+        }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
@@ -679,7 +706,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.94 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -710,7 +737,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.94 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -741,7 +768,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.94 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -772,7 +799,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.94 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -803,7 +830,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.94 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -834,7 +861,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!],
-          threshold: { min: 0.88 }
+          threshold: { min: AvatarTypes.twin ? 0.88 : 0.85 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -871,7 +898,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.rightQuarter!],
-          threshold: { min: 0.94 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -904,7 +931,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.leftQuarter!],
-          threshold: { min: 0.94 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -937,7 +964,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.rightSide!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.89 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -970,7 +997,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.leftSide!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.89 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1007,7 +1034,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.93 }
+          threshold: { min: AvatarTypes.twin ? 0.93 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1038,7 +1065,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.93 }
+          threshold: { min: AvatarTypes.twin ? 0.93 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1074,7 +1101,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.front!],
-          threshold: { min: 0.9 }
+          threshold: { min: AvatarTypes.twin ? 0.9 : 0.87 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1105,7 +1132,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.front!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1136,7 +1163,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1167,7 +1194,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.91 }
+          threshold: { min: AvatarTypes.twin ? 0.91 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1198,7 +1225,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1229,7 +1256,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1260,7 +1287,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1291,7 +1318,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1322,7 +1349,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.91 }
+          threshold: { min: AvatarTypes.twin ? 0.91 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1353,7 +1380,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.92 }
+          threshold: { min: AvatarTypes.twin ? 0.92 : 0.9 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1389,7 +1416,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.9 }
+          threshold: { min: AvatarTypes.twin ? 0.9 : 0.85 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
@@ -1420,7 +1447,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: 0.9 }
+          threshold: { min: AvatarTypes.twin ? 0.9 : 0.85 }
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
