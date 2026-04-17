@@ -43,6 +43,7 @@ export const initialAvatarParameters = {
 
 export const initialIdPhotoData = {
     jobs: [],
+    uploadedPhotos: { front: '', frontSmile: '', rightQuarter: '', leftQuarter: '' },
     finished: false
 } as IdPhotoStepData;
 

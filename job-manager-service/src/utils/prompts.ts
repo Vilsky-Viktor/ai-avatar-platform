@@ -5,7 +5,10 @@ import imageRatios from '../types/imageRatios';
 
 export const AVATAR_REFERENCE_NAME = 'AVATARLIFE';
 
-export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+const LEFT_ARROW = 'arrows/left.png';
+const RIGHT_ARROW = 'arrows/right.png';
+
+export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
   const {
     gender,
     attractiveness,
@@ -48,7 +51,6 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         },
         faceRecognition: { enabled: false},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Hyper-Realistic-Portrait", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
@@ -67,9 +69,9 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
           height: squareRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.65 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.7 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
@@ -81,8 +83,8 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> front-right quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to dark blue t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `<sks> front-right quarter view eye-level shot close-up. Pure 45 degree quarter view. Facing left side of the frame. Exact same person from image 1. Nose pointing the exact direction shown in image 2. Change outfit to dark blue t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, LEFT_ARROW],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -90,10 +92,9 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.7 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '45:0', shotType: 'rightQuarterCloseUpView' },
@@ -104,8 +105,8 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark green t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Facing right side of the frame. Exact same person from image 1. Nose pointing the exact direction shown in image 2. Change outfit to dark green t-shirt`,
+          mediaPaths: [idPhotoSet.generated.front!, RIGHT_ARROW],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -113,10 +114,9 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.7 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '45:0', shotType: 'leftQuarterCloseUpView' },
@@ -127,18 +127,18 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> right side view eye-level shot close-up. Pure 85 degree side view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to dark red t-shirt`,
-          mediaPaths: [idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!],
+          prompt: `<sks> right side view eye-level shot close-up. Pure 85 degree side view. Facing left side of the frame. Exact same person from image 1. Nose pointing the exact direction shown in image 2. Change outfit to dark red t-shirt`,
+          mediaPaths: [idPhotoSet.generated.rightQuarter!, LEFT_ARROW],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.7 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.8 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '90:0', shotType: 'rightSideCloseUpView' },
@@ -149,8 +149,8 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> left side view eye-level shot close-up. Pure 85 degree side view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark brown t-shirt`,
-          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!],
+          prompt: `<sks> left side view eye-level shot close-up. Pure 85 degree side view. Facing right side of the frame. Exact same person from image 1. Nose pointing the exact direction shown in image 2. Change outfit to dark brown t-shirt`,
+          mediaPaths: [idPhotoSet.generated.leftQuarter!, RIGHT_ARROW],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -158,9 +158,9 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: 0.7 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '90:0', shotType: 'leftSideCloseUpView' },
@@ -171,7 +171,7 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images. No hair accessories`,
+          prompt: `<sks> back view eye-level shot close-up. Keep exact body and head shapes from image 1. Pure 180 degree rear view of the person from input images. Exact same person from input images. Without hair accessories`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: squareRatio[0], 
@@ -180,7 +180,7 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         },
         faceRecognition: { enabled: false},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.6 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
@@ -202,7 +202,7 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.9 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.6 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Hyper-Realistic-Portrait", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
@@ -235,7 +235,7 @@ export const genTrainingIdPhotoData = (parameters: AvatarParameters, idPhotoSet:
   ]
 }
 
-export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
   const { gender, height, body, bodyHair, bustSize } = parameters;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
@@ -287,8 +287,8 @@ export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters,
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> front-right quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to dark blue t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.uploaded.rightQuarter!, idPhotoSet.uploaded.rightQuarter!],
+          prompt: `<sks> front-right quarter view eye-level shot close-up. Pure 45 degree quarter view. Facing left side of the frame. Exact same person from input image 1 and image 2. Nose pointing the exact direction shown in image 3. Change outfit to dark blue t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.rightQuarter!, idPhotoSet.uploaded.rightQuarter!, LEFT_ARROW],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -309,8 +309,8 @@ export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters,
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark green t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.uploaded.leftQuarter!, idPhotoSet.uploaded.leftQuarter!],
+          prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Facing right side of the frame. Exact same person from input image 1 and image 2. Nose pointing the exact direction shown in image 3. Change outfit to dark green t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          mediaPaths: [idPhotoSet.uploaded.leftQuarter!, idPhotoSet.uploaded.leftQuarter!, RIGHT_ARROW],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -331,14 +331,14 @@ export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters,
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> right side view eye-level shot close-up. Pure 80 degree side view. Nose pointing left side of the frame. Exact same person from input images. Change outfit to dark red t-shirt`,
+          prompt: `<sks> right side view eye-level shot close-up. Pure 80 degree side view. Facing left side of the frame. Exact same person from input image 1 and image 2. Nose pointing the exact direction shown in image 3. Change outfit to dark red t-shirt`,
           mediaPaths: [idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.87 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!, LEFT_ARROW], threshold: { min: 0.87 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
@@ -353,8 +353,8 @@ export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters,
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `<sks> left side view eye-level shot close-up. Pure 80 degree side view. Nose pointing right side of the frame. Exact same person from input images. Change outfit to dark brown t-shirt`,
-          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!],
+          prompt: `<sks> left side view eye-level shot close-up. Pure 80 degree side view. Facing right side of the frame. Exact same person from input image 1 and image 2. Nose pointing the exact direction shown in image 3. Change outfit to dark brown t-shirt`,
+          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!, RIGHT_ARROW],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -384,9 +384,9 @@ export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters,
         },
         faceRecognition: { enabled: false},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.6 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '1:1', angle: '180:0', shotType: 'RearCloseUpView' },
@@ -397,7 +397,7 @@ export const genTrainingIdPhotoFromUploadedData = (parameters: AvatarParameters,
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Tight crop around the head, face fills 90% of the frame, no neck, no shoulders visible. Cut off shoulders and neck out of the frame. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
+          prompt: `Tight crop around the head including haircut, face fills 90% of the frame, no neck, no shoulders visible. Cut off shoulders and neck out of the frame. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
           mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.uploaded.front!],
           numSteps: 8,
           width: squareRatio[0], 

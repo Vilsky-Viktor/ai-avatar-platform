@@ -108,7 +108,7 @@ export type JobResult = {
   fileName: string;
 }
 
-export type Metadata = {
+export type JobMetadata = {
   dimensions: string;
   ratio: string;
   angle: string;
@@ -128,7 +128,7 @@ export type Job = {
   maxRuns: number;
   input: JobInput;
   result?: JobResult;
-  metadata?: Metadata;
+  metadata?: JobMetadata;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

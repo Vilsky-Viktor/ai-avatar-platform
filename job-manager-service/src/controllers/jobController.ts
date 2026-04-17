@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, MediaTypes, JobTargets, JobStatuses, JobRequest, TrainingJobRequest } from '../types/job';
+import { Job, MediaTypes, JobTargets, JobStatuses, JobRequest, TrainingJobRequest, JobMetadata } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateTrainingPhotoSetData, genTrainingIdPhotoFromUploadedData, genTrainingIdPhotoData } from '../utils/prompts';
+import { generateTrainingPhotoSetData, genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/prompts';
 import { 
   getById as getByIdDb,
   create as createDb, 
@@ -18,8 +18,7 @@ import imageRatios from '../types/imageRatios';
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511'
 
-
-export const genTrainingIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
+export const genTrainingSyntheticFrontIdPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: TrainingJobRequest = req.body;
   const groupId = uuid.v4();
@@ -27,25 +26,68 @@ export const genTrainingIdPhotos = async (req: Request, res: Response, next: Nex
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
   const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
 
-  req.log.info(`Create ID photo jobs for user ${userId} with group ID ${groupId}`);
+  req.log.info(`Create synthetic front ID photo job for user ${userId} with group ID ${groupId}`);
+
+  const idPhotoSet: IdPhotoSetPaths = { uploaded: {}, generated: {} };
+
+  try {
+    const inputs = genTrainingSyntheticIdPhotoData(jobRequest.parameters, idPhotoSet);
+    const frontInput = inputs[0];
+
+    const inference = frontInput.input?.inference;
+
+    const newJob: Job = {
+      groupId,
+      userId: userId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.image,
+      target: JobTargets.trainingPhotoSet,
+      status: JobStatuses.pending,
+      maxRuns: frontInput.maxRuns ?? 3,
+      order: frontInput.order,
+      input: frontInput.input!,
+      metadata: { ...frontInput.metadata, queueTopic: GEN_QWEN_EDIT_2511_TOPIC } as JobMetadata,
+      result: { fileName: `${String(frontInput.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png` }
+    }
+
+    const dbJob = await createDb(userId, newJob);
+
+    await publishJob(GEN_QWEN_EDIT_2511_TOPIC, dbJob);
+
+    return res.status(201).json(dbJob);
+  } catch (error) {
+    req.log.info(`Failed to create synthetic front ID photo job for ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const jobRequest: TrainingJobRequest = req.body;
+
+  const squareRatio = imageRatios.qwenEdit2511['1:1'];
+  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
+
+  req.log.info(`Create synthetic ID photo jobs for user ${userId} with group ID ${jobRequest.groupId}`);
 
   const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
 
   const idPhotoSet: IdPhotoSetPaths = {
     uploaded: {},
     generated: {
-      front: `${avatarMediaPath}/001-training-photo-set-${groupId}-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${groupId}-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${groupId}-${squareDimensions}.png`,
+      front: `${avatarMediaPath}/001-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
     }
   }
 
   try {
-    const inputs = genTrainingIdPhotoData(jobRequest.parameters, idPhotoSet);
+    const inputs = genTrainingSyntheticIdPhotoData(jobRequest.parameters, idPhotoSet);
+    const inputsWithoutFront = inputs.slice(1)
     const jobs: Job[] = [];
 
     const baseJob: Partial<Job> = {
-      groupId,
+      groupId: jobRequest.groupId,
       userId: userId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
@@ -54,22 +96,22 @@ export const genTrainingIdPhotos = async (req: Request, res: Response, next: Nex
       maxRuns: 3,
     }
 
-    for (const [idx, customItem] of inputs.entries()) {
+    for (const [idx, customInput] of inputsWithoutFront.entries()) {
       const newJob = {...baseJob};
 
-      const inference = customItem.input?.inference;
+      const inference = customInput.input?.inference;
 
-      newJob.order = customItem.order;
-      newJob.maxRuns = customItem.maxRuns ?? baseJob.maxRuns;
-      newJob.input = customItem.input
-      newJob.metadata = customItem.metadata;
+      newJob.order = customInput.order;
+      newJob.maxRuns = customInput.maxRuns ?? baseJob.maxRuns;
+      newJob.input = customInput.input
+      newJob.metadata = customInput.metadata;
 
       if (newJob.metadata) {
         newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
       }
 
       newJob.result = {
-        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png`,
+        fileName: `${String(customInput.order).padStart(3, '0')}-training-photo-set-${jobRequest.groupId}-${inference?.width}x${inference?.height}.png`,
       }
 
       jobs.push(newJob as Job);
@@ -81,12 +123,12 @@ export const genTrainingIdPhotos = async (req: Request, res: Response, next: Nex
 
     return res.status(201).json(dbJobs);
   } catch (error) {
-    req.log.info(`Failed to create ID photo jobs for ${userId}: ${error}`);
+    req.log.info(`Failed to create synthetic ID photo jobs for ${userId}: ${error}`);
     next(error);
   }
 }
 
-export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Response, next: NextFunction) => {
+export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: TrainingJobRequest = req.body;
   const groupId = uuid.v4();
@@ -94,7 +136,7 @@ export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Respons
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
   const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
 
-  req.log.info(`Create ID photo jobs for user ${userId} with group ID ${groupId}`);
+  req.log.info(`Create twin ID photo jobs for user ${userId} with group ID ${groupId}`);
 
   const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
 
@@ -113,7 +155,7 @@ export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Respons
   }
 
   try {
-    const inputs = genTrainingIdPhotoFromUploadedData(jobRequest.parameters, idPhotoSet);
+    const inputs = genTrainingTwinIdPhotoData(jobRequest.parameters, idPhotoSet);
     const jobs: Job[] = [];
 
     const baseJob: Partial<Job> = {
@@ -126,22 +168,22 @@ export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Respons
       maxRuns: 3,
     }
 
-    for (const [idx, customItem] of inputs.entries()) {
+    for (const [idx, customInput] of inputs.entries()) {
       const newJob = {...baseJob};
 
-      const inference = customItem.input?.inference;
+      const inference = customInput.input?.inference;
 
-      newJob.order = customItem.order;
-      newJob.maxRuns = customItem.maxRuns ?? baseJob.maxRuns;
-      newJob.input = customItem.input
-      newJob.metadata = customItem.metadata;
+      newJob.order = customInput.order;
+      newJob.maxRuns = customInput.maxRuns ?? baseJob.maxRuns;
+      newJob.input = customInput.input
+      newJob.metadata = customInput.metadata;
 
       if (newJob.metadata) {
         newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
       }
 
       newJob.result = {
-        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png`,
+        fileName: `${String(customInput.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png`,
       }
 
       jobs.push(newJob as Job);
@@ -153,7 +195,7 @@ export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Respons
 
     return res.status(201).json(dbJobs);
   } catch (error) {
-    req.log.info(`Failed to create ID photo jobs for ${userId}: ${error}`);
+    req.log.info(`Failed to create twin ID photo jobs for ${userId}: ${error}`);
     next(error);
   }
 }
@@ -201,22 +243,22 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
       maxRuns: 3,
     }
 
-    for (const [idx, customItem] of inputs.entries()) {
+    for (const [idx, customInput] of inputs.entries()) {
       const newJob = {...baseJob};
 
-      const inference = customItem.input?.inference;
+      const inference = customInput.input?.inference;
 
-      newJob.order = customItem.order;
-      newJob.maxRuns = customItem.maxRuns ?? baseJob.maxRuns;
-      newJob.input = customItem.input
-      newJob.metadata = customItem.metadata;
+      newJob.order = customInput.order;
+      newJob.maxRuns = customInput.maxRuns ?? baseJob.maxRuns;
+      newJob.input = customInput.input
+      newJob.metadata = customInput.metadata;
 
       if (newJob.metadata) {
         newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
       }
 
       newJob.result = {
-        fileName: `${String(customItem.order).padStart(3, '0')}-training-photo-set-${jobRequest.groupId}-${inference?.width}x${inference?.height}.png`,
+        fileName: `${String(customInput.order).padStart(3, '0')}-training-photo-set-${jobRequest.groupId}-${inference?.width}x${inference?.height}.png`,
       }
 
       jobs.push(newJob as Job);

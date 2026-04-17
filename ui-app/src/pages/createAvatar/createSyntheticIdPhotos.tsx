@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { Sparkles, User, Clock, Loader2, RefreshCcw, ChevronDown, CircleOff } from 'lucide-react';
 import { AvatarStatus, type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingIdPhotos } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genTrainingSyntheticIdPhotos, genTrainingSyntheticFrontIdPhoto } from '../../services/apiGateway';
 import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { 
@@ -19,6 +19,9 @@ import type { QuerySnapshot } from 'firebase/firestore';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { listenToCollectionByGroupId } from '../../services/db';
 import { type AvatarParameters } from "../../types/avatar";
+
+
+const NUM_ID_PHOTOS = 9
 
 
 function CreateSyntheticIdPhotosPage() {
@@ -118,9 +121,8 @@ function CreateSyntheticIdPhotosPage() {
         return stepData.jobs.length > 0 && stepData.jobs.every(job => job !== null);
     }
 
-    const createJobs = async () => {
-        const emptyJobs = Array(9).fill(null);
-        setJobs(emptyJobs);
+    const createFrontJob = async () => {
+        setJobs([null]);
 
         const jobRequest: TrainingJobRequest = {
             avatarId: generalData.avatarId,
@@ -128,22 +130,42 @@ function CreateSyntheticIdPhotosPage() {
         }
 
         try {
-            const jobs = await genTrainingIdPhotos(jobRequest);
-            setJobs(jobs);
+            const job = await genTrainingSyntheticFrontIdPhoto(jobRequest);
+            setJobs([job]);
         } catch (error) {
-            console.log('Failed to create jobs for photo set')
+            console.log('Failed to create front job for id photos')
+        }
+    }
+
+    const createJobs = async () => {
+        const emptyJobs = Array(NUM_ID_PHOTOS - 1).fill(null);
+        const jobs = stepData.jobs;
+
+        jobs.push(...emptyJobs);
+
+        setJobs(jobs);
+
+        const jobRequest: TrainingJobRequest = {
+            groupId: stepData.jobs[0]?.groupId,
+            avatarId: generalData.avatarId,
+            parameters: generalData.parameters
+        }
+
+        try {
+            const newJobs = await genTrainingSyntheticIdPhotos(jobRequest);
+            const frontJob = stepData.jobs[0];
+            
+            setJobs([frontJob, ...newJobs]);
+        } catch (error) {
+            console.log('Failed to create jobs for id photos')
         }
     }
 
     const restartJob = async (jobId: string, listIdx: number) => {
-        if (listIdx === 0) {
-            await createJobs();
-        } else {
-            restartingJobIds.current.add(jobId);
-            setJob(listIdx, null);
-            const restartedJob = await restartJobById(jobId);
-            setJob(listIdx, restartedJob);
-        }
+        restartingJobIds.current.add(jobId);
+        setJob(listIdx, null);
+        const restartedJob = await restartJobById(jobId);
+        setJob(listIdx, restartedJob);
     }
 
     const generatingStarted = () => {
@@ -152,6 +174,18 @@ function CreateSyntheticIdPhotosPage() {
 
     const generatingCompleted = () => {
         return stepData.jobs.length > 0 && stepData.jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
+    }
+
+    const isFrontJob = (idx: number) => {
+        return idx === 0;
+    }
+
+    const onlyFrontJobCompleted = () => {
+        return stepData.jobs.length === 1 && stepData.jobs[0]?.status === JobStatuses.completed;
+    }
+
+    const allJobsStarted = () => {
+        return stepData.jobs.length === NUM_ID_PHOTOS && stepData.jobs.every(job => job !== null);
     }
 
     const parametersFilled = () => {
@@ -340,7 +374,7 @@ function CreateSyntheticIdPhotosPage() {
                         </div>
                     </div>
 
-                    {!stepData.finished && (
+                    {!stepData.finished && (allJobsStarted() && !isFrontJob(idx)) && (
                         <button
                             className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-primary transition-all cursor-pointer"
                             onClick={(e) => { e.stopPropagation(); restartJob(job.id!, idx); }}
@@ -428,12 +462,12 @@ function CreateSyntheticIdPhotosPage() {
                 {parametersFilled() && (
                     <div className='text-center'>
                         <button
-                            onClick={createJobs}
-                            disabled={(generatingStarted() && !generatingCompleted()) || stepData.finished}
-                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${(generatingStarted() && !generatingCompleted()) || stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            onClick={createFrontJob}
+                            disabled={generatingStarted() || stepData.finished}
+                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${generatingStarted() || stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
                             {((generatingStarted() && !generatingCompleted())) && <span className="loading loading-spinner mr-2"></span>}
-                            <span className="text-sm uppercase tracking-[0.4em]">{jobsCreated() ? 'Re-generate Photos' : 'Generate Photos'}</span>
+                            <span className="text-sm uppercase tracking-[0.4em]">Generate Photos</span>
                         </button>
                     </div>
                 )}
@@ -444,6 +478,34 @@ function CreateSyntheticIdPhotosPage() {
                             {renderPhotoArea(job, idx)}
                         </div>
                     ))}
+                    {onlyFrontJobCompleted() && (
+                        <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="text-center">
+                                    <p className="text-[12px] font-medium uppercase tracking-widest mt-1">
+                                        Do you like it?
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-error/40 hover:text-error/70 cursor-pointer transition-all duration-200"
+                                        onClick={createFrontJob}
+                                    >
+                                        No
+                                    </button>
+                                    <button
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-primary/40 hover:text-primary/70 cursor-pointer transition-all duration-200"
+                                        onClick={createJobs}
+                                    >
+                                        Yes
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
+                            <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
+                        </div>
+                    )}
                 </div>
             </div>
 

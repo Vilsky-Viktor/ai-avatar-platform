@@ -91,24 +91,35 @@ export const genTrainingPhotoSet = async (job: TrainingJobRequest): Promise<Job[
   }
 }
 
-export const genTrainingIdPhotos = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
+export const genTrainingSyntheticFrontIdPhoto = async (jobRequest: TrainingJobRequest): Promise<Job> => {
   try {
-    const res = await apiClient.post('/jobs/gen-training-id-photos', jobRequest);
+    const res = await apiClient.post('/jobs/gen-training-synthetic-front-id-photo', jobRequest);
 
-    return res.data as Job[];
+    return res.data as Job;
   } catch (error) {
-    console.error("Error creating photo set job:", error);
+    console.error("Error creating training synthetic front photo job:", error);
     throw error;
   }
 }
 
-export const genTrainingIdPhotosFromUploaded = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
+export const genTrainingSyntheticIdPhotos = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
   try {
-    const res = await apiClient.post('/jobs/gen-training-id-photos-from-uploaded', jobRequest);
+    const res = await apiClient.post('/jobs/gen-training-synthetic-id-photos', jobRequest);
 
     return res.data as Job[];
   } catch (error) {
-    console.error("Error creating photo set job:", error);
+    console.error("Error creating training synthetic photo jobs:", error);
+    throw error;
+  }
+}
+
+export const genTrainingTwinIdPhotos = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
+  try {
+    const res = await apiClient.post('/jobs/gen-training-twin-id-photos', jobRequest);
+
+    return res.data as Job[];
+  } catch (error) {
+    console.error("Error creating training twin photo jobs job:", error);
     throw error;
   }
 }

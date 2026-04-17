@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { Sparkles, User, Trash2, X, Check, Minus, Plus, Clock, Loader2, CircleOff, RefreshCcw } from 'lucide-react';
 import { AvatarStatus, type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingIdPhotosFromUploaded } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genTrainingTwinIdPhotos } from '../../services/apiGateway';
 import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
@@ -16,12 +16,13 @@ import {
     initialUploadedIdPhotoSet
 } from '../../utils/avatarCreation';
 import BottomDock from '../../components/createAvatar/BottomDock';
-import { type IdPhotoStepData, type GeneralStepData, type UploadedIdPhoto } from "../../types/avatarCreation";
+import { type IdPhotoStepData, type GeneralStepData, type UploadedIdPhoto, type UploadedPhotoPaths } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { listenToCollectionByGroupId } from '../../services/db';
 
 
 const CROP_SIZE = [1328, 1328]
+
 
 const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string> => {
     const image = new Image();
@@ -64,9 +65,9 @@ function CreateTwinIdPhotosPage() {
 
     const VIEW_CONFIG = [
         { label: 'Front', name: 'front', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Front smile', name: 'smile', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Right quarter', name: 'right', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Left quarter', name: 'left', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Front smile', name: 'frontSmile', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Right quarter', name: 'rightQuarter', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Left quarter', name: 'leftQuarter', ref: useRef<HTMLInputElement>(null) },
     ];
 
     const [tempImage, setTempImage] = useState<string | null>(null);
@@ -77,6 +78,18 @@ function CreateTwinIdPhotosPage() {
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        const savedPaths = stepData.uploadedPhotos;
+        if (!savedPaths) return;
+
+        VIEW_CONFIG.forEach((view, index) => {
+            const mediaPath = savedPaths[view.name as keyof UploadedPhotoPaths];
+            if (mediaPath) {
+                getMediaUrlFromPath(mediaPath).then(url => {
+                    if (url) updatePhotoAtIndex(index, url);
+                });
+            }
+        });
     }, []);
 
     useEffect(() => {
@@ -220,6 +233,10 @@ function CreateTwinIdPhotosPage() {
     const uploadToBucket = async (name: string, image: string) => {
         const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/uploaded/${name}-${CROP_SIZE[0]}x${CROP_SIZE[1]}.png`;
         await uploadMediaToBucket(mediaPath, image);
+        setStepData(prev => ({
+            ...prev,
+            uploadedPhotos: { ...prev.uploadedPhotos, [name]: mediaPath } as UploadedPhotoPaths,
+        }));
     }
 
     const jobsCreated = () => {
@@ -236,7 +253,7 @@ function CreateTwinIdPhotosPage() {
         }
 
         try {
-            const jobs = await genTrainingIdPhotosFromUploaded(jobRequest);
+            const jobs = await genTrainingTwinIdPhotos(jobRequest);
             setJobs(jobs);
         } catch (error) {
             console.log('Failed to create jobs for photo set')
@@ -244,18 +261,17 @@ function CreateTwinIdPhotosPage() {
     }
 
     const restartJob = async (jobId: string, listIdx: number) => {
-        if (listIdx === 0) {
-            await createJobs();
-        } else {
-            restartingJobIds.current.add(jobId);
-            setJob(listIdx, null);
-            const restartedJob = await restartJobById(jobId);
-            setJob(listIdx, restartedJob);
-        }
+        restartingJobIds.current.add(jobId);
+        setJob(listIdx, null);
+        const restartedJob = await restartJobById(jobId);
+        setJob(listIdx, restartedJob);
     }
 
     const photosUploaded = () => {
-        return uploadedPhotos.every((item) => item.photo);
+        const allPathsSaved = !!stepData.uploadedPhotos &&
+            VIEW_CONFIG.every(v => !!stepData.uploadedPhotos![v.name as keyof UploadedPhotoPaths]);
+        const allPhotosInState = uploadedPhotos.every((item) => item.photo);
+        return allPathsSaved || allPhotosInState;
     }
 
     const generatingStarted = () => {
@@ -538,87 +554,86 @@ function CreateTwinIdPhotosPage() {
                     </div>
                 )}
 
-                {!stepData.finished && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full mt-8">
-                        {VIEW_CONFIG.map((view, index) => {
-                            const photoData = uploadedPhotos[index];
-                            const hasPhoto = !!photoData?.photo;
-        
-                            return (
-                                <div 
-                                    key={index}
-                                    onDragOver={(e) => handleDragOver(index, e)}
-                                    onDragLeave={(e) => handleDragLeave(index, e)}
-                                    onDrop={(e) => handleDrop(index, e)}
-                                    onClick={() => !hasPhoto && view.ref.current?.click()}
-                                    className={`relative rounded-[1.5rem] border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-700 overflow-hidden
-                                        ${hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'} 
-                                        ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
-                                >
-                                    <input 
-                                        type="file" 
-                                        ref={view.ref} 
-                                        className="hidden" 
-                                        accept="image/*" 
-                                        onChange={(e) => handleFileUpload(index, e)} 
-                                    />
-                                    
-                                    {hasPhoto ? (
-                                        <>
-                                            <img 
-                                                src={photoData.photo!} 
-                                                className="absolute inset-0 w-full h-full object-contain z-0 rounded-[1.5rem]" 
-                                                alt={view.label} 
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full mt-8">
+                    {VIEW_CONFIG.map((view, index) => {
+                        const photoData = uploadedPhotos[index];
+                        const hasPhoto = !!photoData?.photo;
+    
+                        return (
+                            <div 
+                                key={index}
+                                onDragOver={(e) => handleDragOver(index, e)}
+                                onDragLeave={(e) => handleDragLeave(index, e)}
+                                onDrop={(e) => handleDrop(index, e)}
+                                onClick={() => !hasPhoto && view.ref.current?.click()}
+                                className={`relative rounded-[1.5rem] border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-700 overflow-hidden
+                                    ${hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'} 
+                                    ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
+                            >
+                                <input 
+                                    type="file" 
+                                    ref={view.ref} 
+                                    className="hidden" 
+                                    accept="image/*" 
+                                    onChange={(e) => handleFileUpload(index, e)} 
+                                />
+                                
+                                {hasPhoto ? (
+                                    <>
+                                        <img 
+                                            src={photoData.photo!} 
+                                            className="absolute inset-0 w-full h-full object-contain z-0 rounded-[1.5rem]" 
+                                            alt={view.label} 
+                                        />
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                updatePhotoAtIndex(index, null); 
+                                            }} 
+                                            className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center group-hover:hover:bg-error transition-all cursor-pointer"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-4 pointer-events-none">
+                                        <div className="flex items-center justify-center group-hover:scale-105 transition-all duration-500">
+                                            <User 
+                                                size={50} 
+                                                strokeWidth={0.8} 
+                                                className={`transition-colors ${photoData?.isDragging ? 'text-primary' : 'text-base-content/30 group-hover:text-primary'}`} 
                                             />
-                                            <button 
-                                                onClick={(e) => { 
-                                                    e.stopPropagation(); 
-                                                    updatePhotoAtIndex(index, null); 
-                                                }} 
-                                                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center group-hover:hover:bg-error transition-all cursor-pointer"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-4 pointer-events-none">
-                                            <div className="flex items-center justify-center group-hover:scale-105 transition-all duration-500">
-                                                <User 
-                                                    size={50} 
-                                                    strokeWidth={0.8} 
-                                                    className={`transition-colors ${photoData?.isDragging ? 'text-primary' : 'text-base-content/30 group-hover:text-primary'}`} 
-                                                />
-                                            </div>
-                                            <div className="text-center">
-                                                <span className={`text-[13px] font-bold uppercase tracking-[0.3em] transition-colors ${photoData?.isDragging ? 'text-primary' : 'text-base-content/40 group-hover:text-primary'}`}>
-                                                    {photoData?.isDragging ? 'Drop Here' : view.label}
-                                                </span>
-                                                <p className="text-[10px] font-medium uppercase tracking-widest text-base-content/20 mt-2">Click or drag & drop</p>
-                                            </div>
                                         </div>
-                                    )}
-        
-                                    {!hasPhoto && (
-                                        <>
-                                            <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
-                                            <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
-                                        </>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+                                        <div className="text-center">
+                                            <span className={`text-[13px] font-bold uppercase tracking-[0.3em] transition-colors ${photoData?.isDragging ? 'text-primary' : 'text-base-content/40 group-hover:text-primary'}`}>
+                                                {photoData?.isDragging ? 'Drop Here' : view.label}
+                                            </span>
+                                            <p className="text-[10px] font-medium uppercase tracking-widest text-base-content/20 mt-2">Click or drag & drop</p>
+                                        </div>
+                                    </div>
+                                )}
+    
+                                {!hasPhoto && (
+                                    <>
+                                        <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
+                                        <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
 
-                {photosUploaded() && !stepData.finished && (
+
+                {photosUploaded() && (
                     <div className='text-center'>
                         <button
                             onClick={createJobs}
-                            disabled={(generatingStarted() && !generatingCompleted()) || stepData.finished}
-                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${(generatingStarted() && !generatingCompleted()) || stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            disabled={generatingStarted() || stepData.finished}
+                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${generatingStarted() || stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
                             {((generatingStarted() && !generatingCompleted())) && <span className="loading loading-spinner mr-2"></span>}
-                            <span className="text-sm uppercase tracking-[0.4em]">{jobsCreated() ? 'Re-generate Photos' : 'Generate Photos'}</span>
+                            <span className="text-sm uppercase tracking-[0.4em]">Generate Photos</span>
                         </button>
                     </div>
                 )}

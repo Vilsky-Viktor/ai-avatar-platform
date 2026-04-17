@@ -21,8 +21,16 @@ export type UploadedIdPhoto = {
   isDragging: boolean;
 }
 
+export type UploadedPhotoPaths = {
+  front: string,
+  frontSmile: string,
+  rightQuarter: string,
+  leftQuarter: string,
+}
+
 export type IdPhotoStepData = {
-  jobs: (Job | null)[],
+  jobs: (Job | null)[];
+  uploadedPhotos?: UploadedPhotoPaths;
   finished: boolean;
 };
 

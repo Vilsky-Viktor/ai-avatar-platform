@@ -27,14 +27,14 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
   }
 };
 
-export const genTrainingIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
+export const genTrainingSyntheticFrontIdPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'];
 
   try {
     req.log.info(`Create training id photos`)
 
     const serviceResponse = await axios.post(
-      `${JOB_MANAGER_SERVICE_URL}/gen-training-id-photos`, req.body,
+      `${JOB_MANAGER_SERVICE_URL}/gen-training-synthetic-front-id-photo`, req.body,
       { headers: {'x-user-id': userId} }
     );
 
@@ -51,14 +51,38 @@ export const genTrainingIdPhotos = async (req: Request, res: Response, next: Nex
   }
 };
 
-export const genTrainingIdPhotosFromUploaded = async (req: Request, res: Response, next: NextFunction) => {
+export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'];
 
   try {
     req.log.info(`Create training id photos`)
 
     const serviceResponse = await axios.post(
-      `${JOB_MANAGER_SERVICE_URL}/gen-training-id-photos-from-uploaded`, req.body,
+      `${JOB_MANAGER_SERVICE_URL}/gen-training-synthetic-id-photos`, req.body,
+      { headers: {'x-user-id': userId} }
+    );
+
+    return res.status(serviceResponse.status).json(serviceResponse.data);
+  } catch (error: any) {
+    if (error.response) {
+      req.log.error(`Failed to create training id photos with status ${error.response.status}`)
+      return res.status(error.response.status).json(error.response.data);
+    } else {
+      req.log.error(`Failed to create training id photos: ${error}`)
+      console.log(error);
+      return res.status(500).json(error);
+    }
+  }
+};
+
+export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'];
+
+  try {
+    req.log.info(`Create training id photos`)
+
+    const serviceResponse = await axios.post(
+      `${JOB_MANAGER_SERVICE_URL}/gen-training-twin-id-photos`, req.body,
       { headers: {'x-user-id': userId} }
     );
 
