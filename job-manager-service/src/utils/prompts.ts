@@ -866,7 +866,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -897,7 +898,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -928,7 +930,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -959,7 +962,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -994,7 +998,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1024,7 +1029,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1059,7 +1065,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1089,7 +1096,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1119,7 +1127,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1149,7 +1158,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1179,7 +1189,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1209,7 +1220,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1239,7 +1251,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1269,7 +1282,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1299,7 +1313,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1329,7 +1344,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1365,6 +1381,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1395,6 +1412,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: {
@@ -1420,7 +1438,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: { enabled: false },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.6 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0 : 1.0 },
         ],
       },
       metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'rearFullBodyView'},
