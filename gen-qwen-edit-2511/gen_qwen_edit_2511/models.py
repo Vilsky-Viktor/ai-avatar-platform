@@ -30,11 +30,16 @@ class FaceRecognition(BaseModel):
     mediaPaths: list[str] = []
     threshold: FaceRecognitionThreshold = Field(default_factory=FaceRecognitionThreshold)
 
+class FaceDirection(BaseModel):
+    enabled: bool = False
+    direction: str = "" #left or right
+
 class JobInput(BaseModel):
     checkDependencies: bool = False
     inference: InferenceConfig = Field(default_factory=InferenceConfig)
     faceRecognition: FaceRecognition = Field(default_factory=FaceRecognition)
     faceExpression: FaceExpression = Field(default_factory=FaceExpression)
+    faceDirection: FaceDirection = Field(default_factory=FaceDirection)
     loras: list[LoraConfig] = []
 
 class JobResult(BaseModel):

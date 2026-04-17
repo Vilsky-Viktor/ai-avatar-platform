@@ -190,6 +190,58 @@ class _FaceRecognitionInstance:
         return max_similarity if found_any else None
 
     @utils.timeit
+    def check_face_direction(self, img, expected_direction: str) -> bool:
+        """
+        Check if the face is turned in the expected direction from the avatar's perspective.
+        'right' = avatar's right → viewer sees left cheek → nose shifts left in image (yaw_ratio < 0)
+        'left'  = avatar's left  → viewer sees right cheek → nose shifts right in image (yaw_ratio > 0)
+        Returns True if direction matches, or True if face cannot be reliably detected (fail open).
+        """
+        self._ensure_loaded()
+        image_bytes = utils.to_image_bytes(img)
+        cv_img = utils.bytes_to_cv2(image_bytes)
+
+        faces = self._face_app.get(cv_img)
+        if not faces:
+            pad    = 200
+            padded = cv2.copyMakeBorder(cv_img, pad, pad, pad, pad, cv2.BORDER_CONSTANT, value=(128, 128, 128))
+            faces  = self._face_app.get(padded)
+            if not faces:
+                logger.warning(f"[instance {self.idx}] No face detected for direction check — passing by default")
+                return True
+
+        best_face = max(faces, key=lambda f: f.det_score * (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
+
+        if best_face.kps is None:
+            logger.warning(f"[instance {self.idx}] No keypoints for direction check — passing by default")
+            return True
+
+        kps = best_face.kps
+        # InsightFace 5-point layout (viewer's frame): [0]=right_eye, [1]=left_eye, [2]=nose_tip
+        right_eye_x = kps[0][0]
+        left_eye_x  = kps[1][0]
+        nose_x      = kps[2][0]
+
+        mid_eye_x      = (right_eye_x + left_eye_x) / 2.0
+        inter_ocular   = abs(left_eye_x - right_eye_x)
+
+        if inter_ocular < 1:
+            logger.warning(f"[instance {self.idx}] Inter-ocular distance near zero — cannot determine direction")
+            return True
+
+        yaw_ratio = (nose_x - mid_eye_x) / inter_ocular
+
+        # Avatar's right → face turns to viewer's left → nose_x < mid_eye_x → yaw_ratio < 0
+        # Avatar's left  → face turns to viewer's right → nose_x > mid_eye_x → yaw_ratio > 0
+        if expected_direction == "right":
+            result = yaw_ratio < 0
+        else:
+            result = yaw_ratio > 0
+
+        logger.info(f"[instance {self.idx}] Face direction: yaw_ratio={yaw_ratio:.3f}, expected={expected_direction} → {'ok' if result else 'FAIL'}")
+        return result
+
+    @utils.timeit
     def check_face_match(self, img, id_photos: list) -> float:
         logger.info(f"[instance {self.idx}] Checking face match ...")
         image_bytes    = utils.to_image_bytes(img)

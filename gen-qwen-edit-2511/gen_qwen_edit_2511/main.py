@@ -93,16 +93,27 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             if job_input.faceExpression.enabled:
                 logger.info(f"Expression mode: '{job_input.faceExpression.type}' scale={job_input.faceExpression.scale}")
 
-            max_runs = job.maxRuns if job_input.faceRecognition.enabled else 1
+            use_retries = job_input.faceRecognition.enabled or job_input.faceDirection.enabled
+            max_runs = job.maxRuns if use_retries else 1
             best_img = None
             best_match = 0.0
             in_range = False  # whether any image fell within [min, max]
-            all_imgs: list[tuple[float, object]] = []  # (face_match, img) for every run
+            all_imgs: list[tuple[float, object]] = []  # direction-passing images (face_match, img)
+
+            recognition_count = 0  # runs where face recognition was actually performed
 
             for run_idx in range(max_runs):
                 logger.info(f"---------- Run #{run_idx + 1}/{max_runs} ----------")
 
                 img, _ = pipe.run_inference(job_input, reference_images)
+
+                if job_input.faceDirection.enabled:
+                    direction_ok = fr.check_face_direction(img, job_input.faceDirection.direction)
+                    if not direction_ok:
+                        logger.info(f"Direction check failed, skipping image")
+                        continue
+
+                recognition_count += 1
 
                 if job_input.faceRecognition.enabled:
                     face_match = fr.check_face_match(img, id_photos)
@@ -118,8 +129,8 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
                             best_match = face_match
                             best_img = img
 
-                        if run_idx == 0 and face_match < MIN_FACE_MATCH:
-                            logger.info(f"First run face match too low ({face_match} < {MIN_FACE_MATCH}), stopping early")
+                        if recognition_count == 1 and face_match < MIN_FACE_MATCH:
+                            logger.info(f"First recognized run face match too low ({face_match} < {MIN_FACE_MATCH}), stopping early")
                             break
 
                         if face_match >= threshold.min:

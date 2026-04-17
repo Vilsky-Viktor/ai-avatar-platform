@@ -17,6 +17,11 @@ export enum JobStatuses {
   error = 'error',
 }
 
+export enum Directions {
+  left = 'left',
+  right = 'right',
+}
+
 export type FaceSwapParams = {
   enabled: boolean;
   model?: string;
@@ -86,11 +91,17 @@ export type LoraData = {
   filename?: string;
 }
 
+export type FaceDirection = {
+  enabled: boolean;
+  direction?: Directions;
+}
+
 export type JobInput = {
   checkDependencies: boolean;
   inference: InferenceConfig;
   faceRecognition?: FaceRecognition;
   faceExpression?: FaceExpression;
+  faceDirection?: FaceDirection;
   loras?: LoraData[];
 }
 
