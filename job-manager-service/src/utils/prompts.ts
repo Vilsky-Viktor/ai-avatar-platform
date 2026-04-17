@@ -215,7 +215,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Front full body of subject in input images. Natural body to head proportions from image 1, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. ${body} body type. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt with all undone buttons showing chest and abdomen'}, barefoot, no shoes. Light wooden floor`,
+          prompt: `Front full body of subject in input images. Natural body to head proportions from image 1, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. ${body} body type. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt with all undone buttons showing chest and abdomen'}, barefoot, without shoes. Light wooden floor`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: verticalRatio[0], 
