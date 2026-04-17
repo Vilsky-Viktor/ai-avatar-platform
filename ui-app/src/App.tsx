@@ -2,9 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ContextProvider, useApp } from './providers/ContextProvider';
 import UserLayer from './layers/UserLayer';
 import AuthLayer from './layers/AuthLayer';
+import { useEffect } from 'react';
 
 const RootRouter = () => {
   const { user, loading } = useApp();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [])
 
   if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-base-100">...</div>;
 

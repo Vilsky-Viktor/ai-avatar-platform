@@ -88,12 +88,12 @@ export const AVATAR_PARAMETER_OPTIONS = {
     ears: ["attached", "detached", "petite", "protruding", "pointed", "elven", "round", "droopy"],
     bustSize: ["flat", "small", "medium", "large", "extra-large"],
     bodyHair: ["none", "peach fuzz", "fine light", "fine medium", "textured light", "textured medium", "dense moderate", "dense intense"],
+    hairColor: ["black", "dark brown", "light brown", "blonde", "honey blonde", "ash blonde", "platinum", "auburn", "red", "silver", "salt & pepper", "white", "gray", "pastel blue", "pastel green", "pastel pink"],
     male: {
         attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
         body: ["slim", "athletic", "average", "muscular", "large"],
         face: ["square", "oval", "round", "diamond", "angular"],
         hairStyle: ["short cut", "crew cut", "side part", "long straight", "man bun", "waves", "dreadlocks", "afro", "undercut", "bald", "braids"],
-        hairColor: ["black", "dark brown", "light brown", "blonde", "ash blonde", "red", "platinum", "salt & pepper", "white"],
         skin: ["smooth", "freckled", "tanned", "weathered"],
         facialHair: ["clean-shaven", "stubble", "full beard", "short beard", "mustache", "goatee"],
     },
@@ -102,7 +102,6 @@ export const AVATAR_PARAMETER_OPTIONS = {
         body: ["slim", "athletic", "average", "curvy", "full-figured"],
         face: ["oval", "heart", "round", "square", "diamond"],
         hairStyle: ["long straight", "long waves", "pixie cut", "ponytail", "bob cut", "curly", "afro", "box braids", "space buns", "shaved sides"],
-        hairColor: ["black", "dark brown", "light brown", "honey blonde", "platinum", "auburn", "red", "silver", "pastel blue", "pastel pink"],
         skin: ["smooth", "dewy", "freckled", "matte", "sun-kissed"],
         facialHair: ["none", "full beard", "short stubble", "mustache", "light fuzz"],
     }

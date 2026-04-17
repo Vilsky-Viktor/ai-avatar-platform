@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
-import { Sparkles, User, Clock, Loader2, RefreshCcw, ChevronDown, CircleOff } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import FullscreenModal from "../../components/createAvatar/FullscreenModal";
+import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
 import { AvatarStatus, type Avatar } from '../../types/avatar';
 import { updateAvatar, restartJobById, genTrainingSyntheticIdPhotos, genTrainingSyntheticFrontIdPhoto } from '../../services/apiGateway';
 import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
@@ -34,10 +36,6 @@ function CreateSyntheticIdPhotosPage() {
     const jobsRef = useRef(stepData.jobs);
     useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);
     const restartingJobIds = useRef<Set<string>>(new Set());
-
-    useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
 
     useEffect(() => {
         saveLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY, stepData);
@@ -161,10 +159,14 @@ function CreateSyntheticIdPhotosPage() {
         }
     }
 
-    const restartJob = async (jobId: string, listIdx: number) => {
-        restartingJobIds.current.add(jobId);
+    const restartJob = async (listIdx: number) => {
+        const job = jobsRef.current[listIdx];
+        if (!job?.id) return;
+
+        restartingJobIds.current.add(job.id);
         setJob(listIdx, null);
-        const restartedJob = await restartJobById(jobId);
+
+        const restartedJob = await restartJobById(job.id);
         setJob(listIdx, restartedJob);
     }
 
@@ -220,197 +222,6 @@ function CreateSyntheticIdPhotosPage() {
         navigate('/avatar/create/general');
     }
 
-    const FullscreenModal = () => {
-        if (!fullscreenSrc) return null;
-
-        return (
-            <div
-            className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center backdrop-blur-sm transition-opacity duration-200"
-            onClick={() => setFullscreenSrc(null)}
-            >
-            <button
-                className="absolute top-5 right-6 z-10 text-white text-6xl font-light hover:scale-110 hover:rotate-6 transition-transform duration-200"
-                onClick={() => setFullscreenSrc(null)}
-                aria-label="Close fullscreen view"
-            >
-                ×
-            </button>
-
-            <img
-                src={fullscreenSrc}
-                alt="Full size generated avatar"
-                className="max-w-[96vw] max-h-[96vh] object-contain rounded-xl shadow-2xl transition-transform duration-300 scale-100"
-                onClick={(e) => e.stopPropagation()}
-            />
-            </div>
-        );
-    };
-
-    const renderPhotoArea = (job: Partial<Job> | null, idx: number) => {
-        if (job === null) {
-            return (
-                <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
-                    <div className="flex flex-col items-center gap-4">
-                        <User size={50} strokeWidth={1} className="text-base-content/10" />
-
-                        <div className="text-center">
-                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-base-content/30">
-                                Photo {idx + 1}
-                            </span>
-
-                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
-                                Click generate
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
-                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
-                </div>
-            )
-        }
-
-        if (job.status === JobStatuses.pending) {
-            return (
-                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
-                    <div className="flex flex-col items-center gap-6">
-                        <div className="relative">
-                            <Clock size={50} strokeWidth={1} className="text-base-content/30 animate-pulse" />
-                        </div>
-
-                        <div className="text-center">
-                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
-                                Waiting
-                            </span>
-                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
-                                Queue processing
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        if (job.status === JobStatuses.generating) {
-            return (
-                <div className="flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
-                    <div className="flex flex-col items-center gap-6">
-                        <div className="relative">
-                            <>
-                                <Loader2 size={60} strokeWidth={1} className="text-primary animate-spin" />
-                                <Sparkles size={20} className="absolute -top-3 -right-3 text-primary animate-pulse" />
-                            </>
-                        </div>
-
-                        <div className="text-center">
-                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
-                                Generating
-                            </span>
-                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
-                                Creating a new life
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        if (job.status === JobStatuses.error) {
-            return (
-                <div className="flex relative rounded-[1rem] border border-error/20 bg-error/[0.02] flex flex-col items-center justify-center aspect-square">
-                    <div className="flex flex-col items-center gap-6">
-                        <div className="relative">
-                            <CircleOff size={50} strokeWidth={1} className="text-base-content/30 animate-pulse" />
-                        </div>
-
-                        <div className="text-center">
-                            <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-error">
-                                Error
-                            </span>
-
-                            <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
-                                Something went wrong
-                            </p>
-                        </div>
-                    </div>
-
-                    {!stepData.finished && (
-                        <button
-                            className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
-                            onClick={() => restartJob(job.id!, idx)}
-                        >
-                            <RefreshCcw size={18} className="text-white spin-once-on-hover" />
-                        </button>
-                    )}
-                    
-                </div>
-            );
-        }
-
-        if (job.status === JobStatuses.completed) {
-            const url = job.result?.mediaUrl;
-            const bestFaceMatch = job.result?.bestFaceMatch ?? 0;
-
-            if (!url) {
-                return (
-                    <div className="relative rounded-[1rem] border border-base-content/10 bg-base-200/30 aspect-square" />
-                );
-            }
-
-            return (
-                <div
-                    className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
-                    onClick={() => setFullscreenSrc(url)}
-                    >
-                    <img
-                        src={url}
-                        alt={`Generated avatar photo ${idx + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
-                    />
-
-                    <div className="absolute top-1 left-1 z-10">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
-                            <span className="font-bold">{job.order}</span>
-                        </div>
-                    </div>
-
-                    {!stepData.finished && (allJobsStarted() && !isFrontJob(idx)) && (
-                        <button
-                            className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-primary transition-all cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); restartJob(job.id!, idx); }}
-                        >
-                            <RefreshCcw size={18} className="text-white spin-once-on-hover" />
-                        </button>
-                    )}
-
-                    {bestFaceMatch > 0 && (
-                        <div className="absolute bottom-1 right-1 z-10">
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
-                                <span className="font-bold">
-                                    {(bestFaceMatch * 100).toFixed(0)}%
-                                </span>
-
-                                <div
-                                    className={`w-2 h-2 rounded-full ${
-                                        bestFaceMatch >= 0.65
-                                        ? 'bg-green-400'
-                                        : bestFaceMatch >= 0.6
-                                        ? 'bg-yellow-400'
-                                        : bestFaceMatch >= 0.55
-                                        ? 'bg-orange-400'
-                                        : 'bg-red-400'
-                                    }`}
-                                />
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        return null;
-    }
-
     return (
         <>
             <CreateAvatarStepper step={1} />
@@ -424,7 +235,7 @@ function CreateSyntheticIdPhotosPage() {
                         { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].attractiveness },
                         { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].face },
                         { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].hairStyle },
-                        { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].hairColor },
+                        { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS.hairColor },
                         { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
                         { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
                         { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
@@ -474,9 +285,15 @@ function CreateSyntheticIdPhotosPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {stepData.jobs.map((job, idx) => (
-                        <div key={idx}>
-                            {renderPhotoArea(job, idx)}
-                        </div>
+                        <JobPhotoCard
+                            key={idx}
+                            job={job}
+                            idx={idx}
+                            onPhotoClick={setFullscreenSrc}
+                            onRetry={restartJob}
+                            canRestart={!stepData.finished && allJobsStarted() && !isFrontJob(idx)}
+                            faceMatchThresholds={{ green: 0.6, yellow: 0.55, orange: 0.5 }}
+                        />
                     ))}
                     {onlyFrontJobCompleted() && (
                         <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
@@ -517,7 +334,7 @@ function CreateSyntheticIdPhotosPage() {
                 finish={false}
             />
 
-            <FullscreenModal />
+            <FullscreenModal src={fullscreenSrc} onClose={() => setFullscreenSrc(null)} />
         </>
     )
 }
