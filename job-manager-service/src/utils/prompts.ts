@@ -5,9 +5,6 @@ import imageRatios from '../types/imageRatios';
 
 export const AVATAR_REFERENCE_NAME = '<avatarlife>';
 
-const LEFT_ARROW = 'arrows/left.png';
-const RIGHT_ARROW = 'arrows/right.png';
-
 export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
   const {
     gender,
@@ -133,7 +130,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         checkDependencies: true,
         inference: {
           prompt: `<sks> right side view eye-level shot close-up. Pure 85 degree side view. Facing left side of the frame, nose pointing left side of the frame. Exact same person from input images. Change outfit to dark red t-shirt`,
-          mediaPaths: [idPhotoSet.generated.rightQuarter!, LEFT_ARROW],
+          mediaPaths: [idPhotoSet.generated.rightQuarter!],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -157,7 +154,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         checkDependencies: true,
         inference: {
           prompt: `<sks> left side view eye-level shot close-up. Pure 85 degree side view. Facing right side of the frame, nose pointing right side of the frame. Exact same person from input images. Change outfit to dark brown t-shirt`,
-          mediaPaths: [idPhotoSet.generated.leftQuarter!, RIGHT_ARROW],
+          mediaPaths: [idPhotoSet.generated.leftQuarter!],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -319,7 +316,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         checkDependencies: true,
         inference: {
           prompt: `<sks> front-left quarter view eye-level shot close-up. Pure 45 degree quarter view. Facing right side of the frame, nose pointing right side of the frame. Exact same person from input images. Change outfit to dark green t-shirt. Change background to gray concrete color wall. Change lighting to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.uploaded.leftQuarter!, idPhotoSet.uploaded.leftQuarter!, RIGHT_ARROW],
+          mediaPaths: [idPhotoSet.uploaded.leftQuarter!, idPhotoSet.uploaded.leftQuarter!],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
@@ -349,7 +346,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
           guidanceScale: 1.0,
         },
         faceDirection: { enabled: true, direction: Directions.right },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!, LEFT_ARROW], threshold: { min: 0.87 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.87 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
@@ -365,7 +362,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         checkDependencies: true,
         inference: {
           prompt: `<sks> left side view eye-level shot close-up. Pure 80 degree side view. Facing right side of the frame, nose pointing right side of the frame. Exact same person from input images. Change outfit to dark brown t-shirt`,
-          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!, RIGHT_ARROW],
+          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!],
           numSteps: 8,
           width: squareRatio[0], 
           height: squareRatio[1],
