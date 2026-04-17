@@ -1,4 +1,4 @@
-import { AvatarParameters, AvatarGender } from '../types/avatar';
+import { AvatarParameters, AvatarGender, AvatarTypes } from '../types/avatar';
 import { IdPhotoSetPaths, ImagePaths } from '../types/trainingPhotoSet';
 import { Job, FaceExpressionTypes } from '../types/job';
 import imageRatios from '../types/imageRatios';
@@ -437,7 +437,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
   ]
 }
 
-export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avatarType: AvatarTypes, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
   const { gender } = parameters;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
@@ -445,6 +445,8 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
   const verticalRatio = imageRatios.qwenEdit2511['9:16'];
 
   const isFemale = gender === 'female';
+
+  const emotionNumFrontRepetitions = avatarType === AvatarTypes.twin ? 3 : 2;
 
   return [
     // =================================================================
@@ -456,7 +458,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to deep slate blue sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -478,7 +480,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to crimson red sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -500,7 +502,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to warm peach sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -522,7 +524,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to bright yellow sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.frontSmile!, idPhotoSet.generated.frontSmile!, idPhotoSet.generated.frontSmile!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -544,7 +546,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to electric teal sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -566,7 +568,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to burnt orange sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -588,7 +590,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to soft rose sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -610,7 +612,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to dusty lavender sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -632,7 +634,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to dark violet sleeveless t-shirt`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
@@ -672,7 +674,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.5 : 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -703,7 +705,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.5 : 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -734,7 +736,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.5 : 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -765,7 +767,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.5 : 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -796,7 +798,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.5 : 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },
@@ -827,7 +829,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, idPho
         },
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.5 : 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 }
         ],
       },

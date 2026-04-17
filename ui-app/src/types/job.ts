@@ -1,5 +1,5 @@
 import type { FirestoreTimestamp } from "./firestore";
-import type { AvatarParameters } from "./avatar";
+import type { AvatarParameters, AvatarTypes } from "./avatar";
 
 export enum MediaTypes {
   image = 'image',
@@ -128,6 +128,7 @@ export type Job = {
 }
 
 export type TrainingJobRequest = {
+  avatarType?: AvatarTypes;
   groupId?: string;
   avatarId: string;
   parameters: AvatarParameters;

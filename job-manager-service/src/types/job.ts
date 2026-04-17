@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { AvatarParameters } from './avatar';
+import { AvatarParameters, AvatarTypes } from './avatar';
 
 export enum MediaTypes {
   image = 'image',
@@ -140,6 +140,7 @@ export type JobRequest = {
 }
 
 export type TrainingJobRequest = {
+  avatarType: AvatarTypes;
   groupId?: string;
   avatarId: string;
   parameters: AvatarParameters;

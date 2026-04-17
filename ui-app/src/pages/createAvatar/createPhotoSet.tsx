@@ -36,6 +36,10 @@ function CreatePhotoSetPage() {
     const restartingJobIds = useRef<Set<string>>(new Set());
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [])
+
+    useEffect(() => {
         const initialize = () => {
             if (initialized.current) return;
             initialized.current = true;
@@ -148,14 +152,15 @@ function CreatePhotoSetPage() {
         const emptyJobs = Array(34).fill(null);
         setJobs(emptyJobs);
 
-        const job: TrainingJobRequest = {
+        const jobRequest: TrainingJobRequest = {
+            avatarType: generalData.type,
             groupId: idPhotoData.jobs[0]?.groupId,
             avatarId: generalData.avatarId,
             parameters: generalData.parameters,
         }
 
         try {
-            const jobs = await genTrainingPhotoSet(job);
+            const jobs = await genTrainingPhotoSet(jobRequest);
             setJobs(jobs);
         } catch (error) {
             console.log('Failed to create jobs for photo set')

@@ -1,8 +1,13 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { useNavigate } from 'react-router-dom';
 
 function AvatarTrainingPage() {
     const navigate = useNavigate();
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [])
 
     return ( 
         <>

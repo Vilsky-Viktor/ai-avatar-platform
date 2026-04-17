@@ -23,9 +23,6 @@ export const genTrainingSyntheticFrontIdPhoto = async (req: Request, res: Respon
   const jobRequest: TrainingJobRequest = req.body;
   const groupId = uuid.v4();
 
-  const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
-
   req.log.info(`Create synthetic front ID photo job for user ${userId} with group ID ${groupId}`);
 
   const idPhotoSet: IdPhotoSetPaths = { uploaded: {}, generated: {} };
@@ -230,7 +227,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
       }
     }
 
-    const inputs = generateTrainingPhotoSetData(jobRequest.parameters, idPhotoSet);
+    const inputs = generateTrainingPhotoSetData(jobRequest.parameters, jobRequest.avatarType, idPhotoSet);
     const jobs: Job[] = [];
 
     const baseJob: Partial<Job> = {

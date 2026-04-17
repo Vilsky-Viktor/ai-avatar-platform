@@ -63,7 +63,6 @@ function CreateTwinIdPhotosPage() {
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
     const jobsRef = useRef(stepData.jobs);
-    useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);
     const restartingJobIds = useRef<Set<string>>(new Set());
 
     const VIEW_CONFIG = [
@@ -78,6 +77,12 @@ function CreateTwinIdPhotosPage() {
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+    useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [])
 
     useEffect(() => {
         const savedPaths = stepData.uploadedPhotos;
@@ -346,10 +351,10 @@ function CreateTwinIdPhotosPage() {
                         <button
                             onClick={createJobs}
                             disabled={generatingStarted() || stepData.finished}
-                            className={`btn btn-primary btn-dash group relative px-12 py-8 my-12 rounded-2xl transition-all duration-500 hover:scale-[1.01] ${generatingStarted() || stepData.finished ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            className="inline-flex items-center gap-3 px-12 py-4 my-12 rounded-2xl bg-primary text-primary-content text-sm font-semibold uppercase tracking-[0.35em] transition-all duration-300 hover:opacity-90 hover:scale-[1.005] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                         >
-                            {((generatingStarted() && !generatingCompleted())) && <span className="loading loading-spinner mr-2"></span>}
-                            <span className="text-sm uppercase tracking-[0.4em]">Generate Photos</span>
+                            {(generatingStarted() && !generatingCompleted()) && <span className="loading loading-spinner loading-xs"></span>}
+                            <span>Generate Photos</span>
                         </button>
                     </div>
                 )}

@@ -26,3 +26,8 @@ export enum AvatarGender {
   male = 'male',
   female = 'female'
 }
+
+export enum AvatarTypes {
+  twin = 'twin',
+  synthetic = 'synthetic'
+}

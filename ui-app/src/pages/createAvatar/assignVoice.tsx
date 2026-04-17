@@ -56,6 +56,10 @@ function AssignVoicePage() {
     };
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [])
+
+    useEffect(() => {
         getVoices();
         if (stepData.uploaded && stepData.mediaPath) {
             getMediaUrlFromPath(stepData.mediaPath).then(setUploadedAudioUrl);

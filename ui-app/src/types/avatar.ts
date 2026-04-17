@@ -48,6 +48,7 @@ export type Avatar = {
   userId?: string;
   name: string;
   slug: string;
+  type: AvatarTypes;
   parameters: AvatarParameters;
   mainImagePath?: string;
   voicePath?: string;

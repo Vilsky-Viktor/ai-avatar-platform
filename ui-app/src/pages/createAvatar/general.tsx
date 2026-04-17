@@ -25,6 +25,10 @@ function GeneralPage() {
     };
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [])
+
+    useEffect(() => {
         saveLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY, stepData)
     }, [stepData]);
 
