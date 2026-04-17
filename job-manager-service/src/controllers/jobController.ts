@@ -140,9 +140,9 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
   const idPhotoSet: IdPhotoSetPaths = {
     uploaded: {
       front: `${avatarMediaPath}/uploaded/front-${squareDimensions}.png`,
-      frontSmile: `${avatarMediaPath}/uploaded/smile-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/uploaded/right-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/uploaded/left-${squareDimensions}.png`,
+      frontSmile: `${avatarMediaPath}/uploaded/frontSmile-${squareDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/uploaded/rightQuarter-${squareDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/uploaded/leftQuarter-${squareDimensions}.png`,
     },
     generated: {
       front: `${avatarMediaPath}/001-training-photo-set-${groupId}-${squareDimensions}.png`,
