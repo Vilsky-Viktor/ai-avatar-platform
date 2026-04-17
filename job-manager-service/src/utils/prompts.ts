@@ -538,7 +538,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.85 },
+        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.8 },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.frontSmile!], threshold: { min: 0.94, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
