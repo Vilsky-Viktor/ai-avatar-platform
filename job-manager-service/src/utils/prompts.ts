@@ -532,7 +532,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Change outfit to bright yellow sleeveless t-shirt`,
+          prompt: `Change outfit to bright yellow sleeveless t-shirt. Exact same teeth from input images`,
           mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
           numSteps: 8,
           width: squareRatio[0],
