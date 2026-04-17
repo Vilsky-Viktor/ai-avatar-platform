@@ -533,16 +533,15 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         checkDependencies: true,
         inference: {
           prompt: `Change outfit to bright yellow sleeveless t-shirt. Exact same teeth from input images`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
+          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.frontSmile),
           numSteps: 8,
           width: squareRatio[0],
           height: squareRatio[1],
         },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.8 },
+        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.85 },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.frontSmile!], threshold: { min: 0.94, max: 0.96 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
-          ...(AvatarTypes.twin ? [{ path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 }] : []),
           { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
