@@ -1489,62 +1489,66 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
   ];
 };
 
-export const generatePhotoSetCaptions = (parameters: AvatarParameters & {gender: string}): string[] => {
-  const { gender, body, bodyHair, bustSize } = parameters;
+export const generatePhotoSetCaptions = (parameters: AvatarParameters): string[] => {
+  const { gender } = parameters;
   const isFemale = gender === 'female';
-  
-  const bodyHairTag = bodyHair === 'none' ? 'smooth skin' : `${bodyHair} body hair`;
-  const bodyTag = `${body} build, ${bodyHairTag}, ${bustSize} bust`;
 
   return [
-    // --- Headshots & Tight Portraits ---
-    `${AVATAR_REFERENCE_NAME}, close-up headshot, front view, neutral expression, white button-down shirt, open top buttons, studio lighting`,
-    `${AVATAR_REFERENCE_NAME}, front-facing portrait, thoughtful expression, dark gray cotton t-shirt, indoor window light`,
-    `${AVATAR_REFERENCE_NAME}, front view, gentle smile, dark green crew-neck t-shirt, outdoor park, golden hour side lighting`,
-    `${AVATAR_REFERENCE_NAME}, front view, relaxed face, black dress shirt, low-key lighting, rim light, dark studio`,
-    `${AVATAR_REFERENCE_NAME}, frontal portrait, mild surprise, light blue collared shirt, dark suit jacket, office environment`,
-    `${AVATAR_REFERENCE_NAME}, front view, confident stare, light gray crew-neck t-shirt, harsh midday sunlight, urban street`,
-    `${AVATAR_REFERENCE_NAME}, portrait, curious expression, pastel yellow home t-shirt, cozy living room, warm light`,
-    `${AVATAR_REFERENCE_NAME}, upper chest view, soft smile, red silk shirt, city night background, tungsten light, ${bustSize} bust`,
+    // --- ID reference angles (orders 1–9) ---
+    `Front close-up, neutral expression, ${isFemale ? 'white strapless top' : 'white sleeveless shirt'}, gray studio wall, soft diffused studio light`,
+    `Front close-up, gentle smile with teeth, dark gray sleeveless t-shirt, gray studio wall, soft diffused studio light`,
+    `Quarter close-up (avatar's right), dark blue t-shirt, gray studio wall, soft diffused studio light`,
+    `Quarter close-up (avatar's left), dark green t-shirt, gray studio wall, soft diffused studio light`,
+    `Side close-up (avatar's right), dark red t-shirt, soft diffused studio light`,
+    `Side close-up (avatar's left), dark brown t-shirt, soft diffused studio light`,
+    `Rear close-up, 180° back view, no face visible, soft diffused studio light`,
+    `Extreme face close-up, face fills full frame, no neck or shoulders, soft diffused studio light`,
+    `Full body standing, ${isFemale ? 'white strapless top and white running shorts' : 'white sleeveless shirt and white running shorts'}, barefoot, gray studio wall, light wooden floor, soft diffused studio light`,
 
-    // --- 3/4 and Profile Angles ---
-    `${AVATAR_REFERENCE_NAME}, three-quarter view facing left, neutral, casual clothing, indoor cafe, natural daylight`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 right angle portrait, white sleeveless t-shirt, outdoor nature, golden hour side lighting`,
-    `${AVATAR_REFERENCE_NAME}, three-quarter left, happy expression, dark gray knit sweater, dramatic cinematic lighting`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 facing right, light gray fleece hoodie, urban street, overcast daylight`,
-    `${AVATAR_REFERENCE_NAME}, three-quarter view, surprised look, pink button-up shirt, park scenery, sunset backlight`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 angle left, calm face, dark gray home t-shirt, indoor lamp light`,
-    `${AVATAR_REFERENCE_NAME}, left profile view, neutral expression, dark blue shirt, even side lighting, plain background`,
-    `${AVATAR_REFERENCE_NAME}, right side profile, black long neck turtleneck sweater, golden hour rim light`,
+    // --- Close-up emotions (orders 10–18) ---
+    `Sad expression, deep slate blue sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Angry expression, crimson red sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Mild happy expression, warm peach sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Happy smile with teeth, bright yellow sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Surprised expression, electric teal sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Anxious expression, burnt orange sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Shy expression, soft rose sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Sleepy expression, dusty lavender sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
+    `Fearful expression, dark violet sleeveless t-shirt, close-up front portrait, gray studio wall, soft diffused studio light`,
 
-    // --- Additional Profiles & Dynamic Angles ---
-    `${AVATAR_REFERENCE_NAME}, left profile close-up, dark brown t-shirt, dramatic low-key lighting, studio setting`,
-    `${AVATAR_REFERENCE_NAME}, side view right, yellow cotton shirt, window backlight, silhouette edge`,
-    `${AVATAR_REFERENCE_NAME}, profile left, subtle smile, orange t-shirt, city rooftop, blue evening light`,
-    `${AVATAR_REFERENCE_NAME}, three-quarter right looking down, army green t-shirt, bedroom window, morning light`,
-    `${AVATAR_REFERENCE_NAME}, 3/4 view, head tilt, white dress shirt, light gray blazer, modern workspace`,
+    // --- Front chest-up portraits (orders 19–24) ---
+    `Front chest-up, ${isFemale ? 'soft beige cashmere turtleneck' : 'olive green henley'}, cozy living room, warm window light`,
+    `Front chest-up, ${isFemale ? 'flowy sage green midi dress' : 'khaki jacket with white tee'}, outdoor park, golden hour`,
+    `Front chest-up, ${isFemale ? 'silky emerald green camisole' : 'fitted black turtleneck with charcoal overcoat'}, city rooftop night, tungsten light`,
+    `Front chest-up, pensive gaze upward, ${isFemale ? 'chunky cream cable-knit sweater' : 'soft taupe merino crewneck'}, cozy living room, candlelight`,
+    `Front chest-up, confident stare, ${isFemale ? 'tailored pale blue Oxford shirt' : 'light gray button-down with light blue tie'}, modern office, bright white lighting`,
+    `Front chest-up, fitted dark charcoal turtleneck, deep dark studio, soft low-key light`,
 
-    // --- Full-Body Shots ---
-    `${AVATAR_REFERENCE_NAME}, full body standing, black hoodie, cargo pants, ${bodyTag}, urban street, golden hour`,
-    `${AVATAR_REFERENCE_NAME}, full body walking side view, athletic tank top, spandex shorts, ${bodyTag}, city sidewalk`,
-    `${AVATAR_REFERENCE_NAME}, full body casual, looking over shoulder, ${isFemale ? 'summer sundress' : 'polo shirt and chinos'}, ${bodyTag}, forest nature`,
-    `${AVATAR_REFERENCE_NAME}, full body standing barefoot, white linen shirt, dark blue shorts, visible feet and toes, ${bodyTag}, wooden floor`,
-    `${AVATAR_REFERENCE_NAME}, full body barefoot, wearing ${isFemale ? 'red bikini' : 'red swimming shorts'}, ${bodyTag}, beach sand, ocean background`,
-    `${AVATAR_REFERENCE_NAME}, full body barefoot on lounge chair, ${isFemale ? 'white skirt and pink blouse' : 'Hawaiian shirt and white shorts'}, ${bodyTag}, beach background`,
-    `${AVATAR_REFERENCE_NAME}, full body walking barefoot, denim shorts, white t-shirt, visible feet and toes, ${bodyTag}, tropical path`,
-    `${AVATAR_REFERENCE_NAME}, full body sitting on chair, light button-up shirt, tan chinos, ${bodyTag}, indoor cafe`,
-    `${AVATAR_REFERENCE_NAME}, full body sitting cross-legged, barefoot, casual shorts and t-shirt, visible bare feet, ${bodyTag}, park grass`,
-    `${AVATAR_REFERENCE_NAME}, full body sitting on low wall, barefoot, athletic sport suit, visible ankles and feet, ${bodyTag}, urban rooftop`,
-    `${AVATAR_REFERENCE_NAME}, full body leaning against wall, barefoot, crew-neck sweater and trousers, ${bodyTag}, studio lighting`,
-    `${AVATAR_REFERENCE_NAME}, full body laying on bed, neutral color pajamas, ${bodyTag}, early morning sunrise`,
+    // --- Quarter chest-up portraits (orders 25–26) ---
+    `Quarter view (avatar's right), ${isFemale ? 'oversized oatmeal cardigan' : 'soft gray zip-up hoodie'}, loft living room, indoor lamp light`,
+    `Quarter view (avatar's left), ${isFemale ? 'beige trench coat over cream turtleneck' : 'camel overcoat over white crewneck'}, indoor cafe, natural daylight`,
 
-    // --- Upper-Body Variations ---
-    `${AVATAR_REFERENCE_NAME}, upper body 3/4 pose, casual white t-shirt, blue jeans, ${bodyTag}, park daylight`,
-    `${AVATAR_REFERENCE_NAME}, upper body leaning, dark blazer over neutral shirt, ${bodyTag}, neon city lighting`,
-    `${AVATAR_REFERENCE_NAME}, upper body 3/4 view, arms crossed, crew-neck sweater, ${bodyTag}, studio lighting`,
-    `${AVATAR_REFERENCE_NAME}, upper body sitting, casual olive shirt, leaning forward, ${bodyTag}, indoor lamp light`,
-    `${AVATAR_REFERENCE_NAME}, upper body sitting on couch, barefoot, sleeveless white t-shirt, light blue jeans, ${bodyTag}, living room`,
-    `${AVATAR_REFERENCE_NAME}, upper body back view turning head, casual hoodie, ${bodyTag}, urban street`,
-    `${AVATAR_REFERENCE_NAME}, upper body sitting, barefoot, gray home shorts and t-shirt, visible feet, ${bodyTag}, natural light`
+    // --- Side chest-up portraits (orders 27–28) ---
+    `Side view (avatar's right), ${isFemale ? 'light pink windbreaker' : 'light blue windbreaker'}, urban street, early evening`,
+    `Side view (avatar's left), ${isFemale ? 'metallic silver cropped jacket' : 'black puffer vest over hoodie'}, urban street, early evening`,
+
+    // --- Upper body / waist-up (orders 29–30) ---
+    `Waist-up sitting at desk, ${isFemale ? 'soft gray tailored blazer' : 'slim-fit navy blazer with white dress shirt'}, co-working space, office lighting`,
+    `Waist-up standing, ${isFemale ? 'black racing-style crop jacket' : 'black racing jacket with gray tee'}, luxury car garage, indoor lighting`,
+
+    // --- Full body diverse poses (orders 31–43) ---
+    `Full body walking, ${isFemale ? 'black cocktail dress with high heels' : 'charcoal suit with white dress shirt'}, city sidewalk, overcast daylight`,
+    `Full body deep squat, ${isFemale ? 'taupe linen wide-leg trousers and olive linen top' : 'taupe linen trousers and olive linen shirt'}, outdoor nature, soft diffused daylight`,
+    `Full body sitting on hotel bed, ${isFemale ? 'pink racerback crop tank and gray fleece shorts' : 'relaxed gray joggers and white tee'}, hotel room, soft light`,
+    `Full body standing barefoot, ${isFemale ? 'breezy floral sundress' : 'red shorts and sleeveless black tee'}, beach sand and ocean, golden hour`,
+    `Full body sitting on lounge chair, ${isFemale ? 'yellow floral wrap midi dress' : 'pastel yellow shorts and hawaiian shirt'}, beach, soft daylight`,
+    `Full body jogging, ${isFemale ? 'breezy white cover-up dress' : 'linen shorts and sleeveless white tee'}, tropical path, soft daylight`,
+    `Full body sitting cross-legged, ${isFemale ? 'terracotta boho pants and cropped top' : 'dark green cargo shorts and gray tee'}, park grass, early morning`,
+    `Full body leaning against gym lockers, ${isFemale ? 'all-black athleisure set' : 'all-black tracksuit'}, gym changing room, even indoor lighting`,
+    `Full body lying on abdomen on bed, ${isFemale ? 'soft pink sleep pajama' : 'gray modal lounge shorts and tee'}, bedroom, soft romantic light`,
+    `Full body dancing, ${isFemale ? 'black micro mini skirt and sleeveless white bodysuit' : 'black crew-neck tee and black trousers'}, night street, city lights`,
+    `Full body extreme low-angle shot, blue jeans and light gray polo, white clouds and pebbles background, soft daylight`,
+    `Full body extreme high-angle overhead, white shorts and light gray tee with orange flip flops, sahara desert, sunny`,
+    `Full body rear view on balcony, ${isFemale ? 'high-waisted black trousers and white crop top' : 'slim navy chinos and white oxford shirt'}, city skyline, daylight`,
   ];
 };
