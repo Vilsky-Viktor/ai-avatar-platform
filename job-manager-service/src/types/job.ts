@@ -144,12 +144,6 @@ export type Job = {
   updatedAt?: Timestamp;
 }
 
-export type JobRequest = {
-  groupId?: string;
-  avatarId: string;
-  input: JobRequestInput;
-}
-
 export type TrainingJobRequest = {
   avatarType: AvatarTypes;
   groupId?: string;

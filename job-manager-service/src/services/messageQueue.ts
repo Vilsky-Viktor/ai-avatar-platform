@@ -15,7 +15,7 @@ export const publishJob = async (topicName: string, job: Job) => {
         const topic = pubsub.topic(topicName);
 
         const messageId = await topic.publishMessage({
-            data: Buffer.from(JSON.stringify(job)),
+            data: Buffer.from(JSON.stringify({ job })),
             attributes: {
                 timestamp: new Date().toISOString(),
                 service: 'avatar-manager',

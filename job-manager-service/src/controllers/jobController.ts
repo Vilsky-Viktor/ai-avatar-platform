@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, MediaTypes, JobTargets, JobStatuses, JobRequest, TrainingJobRequest, JobMetadata } from '../types/job';
+import { Job, MediaTypes, JobTargets, JobStatuses, TrainingJobRequest, JobMetadata } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateTrainingPhotoSetData, genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/prompts';
+import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
+import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import { 
   getById as getByIdDb,
   create as createDb, 
