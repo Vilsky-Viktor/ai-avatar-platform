@@ -20,6 +20,7 @@ def publish_status(result_payload):
         logger.debug(f"Result/update published: {future.result()}")
     except Exception as error:
         logger.error(f"Failed to publish result to Pub/Sub: {error}")
+        raise
 
 def get_subscriber_client():
     return pubsub_v1.SubscriberClient()

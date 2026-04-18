@@ -176,8 +176,12 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             logger.error(f"Error processing job {job.id}: {error}", exc_info=True)
             job.status = "error"
             job.result.errorMessage = str(error)
-            mq.publish_status(job.model_dump())
-            message.ack()
+            try:
+                mq.publish_status(job.model_dump())
+                message.ack()
+            except Exception as publish_error:
+                logger.error(f"Failed to publish error status for job {job.id}: {publish_error}", exc_info=True)
+                message.nack()
 
         finally:
             pipe.clear_cache()

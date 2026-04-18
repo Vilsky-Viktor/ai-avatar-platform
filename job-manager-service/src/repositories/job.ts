@@ -54,24 +54,22 @@ export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promi
     return dbJobs;
 };
 
-export const update = async (userId: string, jobId: string, updateData: Partial<Job>): Promise<boolean> => {
-    try {
-        const jobRef = db.collection(JOBS_COLLECTION_NAME).doc(jobId);
-        const doc = await jobRef.get();
+export const update = async (userId: string, jobId: string, updateData: Partial<Job>): Promise<void> => {
+    const jobRef = db.collection(JOBS_COLLECTION_NAME).doc(jobId);
+    const doc = await jobRef.get();
 
-        if (!doc.exists || doc.data()?.userId !== userId) {
-            return false;
-        }
-
-        await jobRef.update({
-            ...updateData,
-            updatedAt: Timestamp.now()
-        });
-
-        return true;
-    } catch (error) {
-        return false;
+    if (!doc.exists) {
+        throw new Error(`Job ${jobId} not found`);
     }
+
+    if (doc.data()?.userId !== userId) {
+        throw new Error(`Unauthorized: user ${userId} does not own job ${jobId}`);
+    }
+
+    await jobRef.update({
+        ...updateData,
+        updatedAt: Timestamp.now()
+    });
 }
 
 export const deleteById = async (userId: string, id: string): Promise<boolean> => {
