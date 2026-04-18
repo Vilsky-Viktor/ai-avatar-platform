@@ -42,7 +42,7 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
       ])
     }
 
-    return res.status(201).json({'result': 'ok'});
+    return res.status(200).json({'result': 'ok'});
   } catch (error) {
     req.log.info(`Failed to delete media ${id} for user ${headerUserId}: ${error}`);
     next(error);
@@ -75,7 +75,7 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
       ])
     }
 
-    return res.status(201).json({'result': 'ok'});
+    return res.status(200).json({'result': 'ok'});
   } catch (error) {
     req.log.info(`Failed to delete media for ${avatarId} and user ${headerUserId}: ${error}`);
     next(error);
@@ -118,7 +118,7 @@ export const deleteByUserId = async (req: Request, res: Response, next: NextFunc
       }
     }
 
-    return res.status(201).json({'result': 'ok'});
+    return res.status(200).json({'result': 'ok'});
   } catch (error) {
     req.log.info(`Failed to delete media for ${userId}: ${error}`);
     next(error);

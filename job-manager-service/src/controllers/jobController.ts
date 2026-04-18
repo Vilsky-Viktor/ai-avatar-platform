@@ -11,7 +11,7 @@ import {
   deleteByAvatarId as deleteByAvatarIdDb, 
 } from '../repositories/job';
 import { publishJob, publishJobs } from '../services/messageQueue';
-import { createPod } from '../services/runpodService';
+import { buildPhotoSetJobs } from '../utils/jobBuilder';
 import uuid from 'uuid';
 import imageRatios from '../types/imageRatios';
 
@@ -80,12 +80,11 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
 
   try {
     const inputs = genTrainingSyntheticIdPhotoData(jobRequest.parameters, idPhotoSet);
-    const inputsWithoutFront = inputs.slice(1)
-    const jobs: Job[] = [];
+    const inputsWithoutFront = inputs.slice(1);
 
     const baseJob: Partial<Job> = {
       groupId: jobRequest.groupId,
-      userId: userId,
+      userId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
       target: JobTargets.trainingPhotoSet,
@@ -93,26 +92,7 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
       maxRuns: 3,
     }
 
-    for (const [idx, customInput] of inputsWithoutFront.entries()) {
-      const newJob = {...baseJob};
-
-      const inference = customInput.input?.inference;
-
-      newJob.order = customInput.order;
-      newJob.maxRuns = customInput.maxRuns ?? baseJob.maxRuns;
-      newJob.input = customInput.input
-      newJob.metadata = customInput.metadata;
-
-      if (newJob.metadata) {
-        newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
-      }
-
-      newJob.result = {
-        fileName: `${String(customInput.order).padStart(3, '0')}-training-photo-set-${jobRequest.groupId}-${inference?.width}x${inference?.height}.png`,
-      }
-
-      jobs.push(newJob as Job);
-    }
+    const jobs = buildPhotoSetJobs(baseJob, inputsWithoutFront, jobRequest.groupId!);
 
     const dbJobs = await createManyDb(userId, jobs);
 
@@ -153,11 +133,10 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
 
   try {
     const inputs = genTrainingTwinIdPhotoData(jobRequest.parameters, idPhotoSet);
-    const jobs: Job[] = [];
 
     const baseJob: Partial<Job> = {
       groupId,
-      userId: userId,
+      userId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
       target: JobTargets.trainingPhotoSet,
@@ -165,26 +144,7 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
       maxRuns: 3,
     }
 
-    for (const [idx, customInput] of inputs.entries()) {
-      const newJob = {...baseJob};
-
-      const inference = customInput.input?.inference;
-
-      newJob.order = customInput.order;
-      newJob.maxRuns = customInput.maxRuns ?? baseJob.maxRuns;
-      newJob.input = customInput.input
-      newJob.metadata = customInput.metadata;
-
-      if (newJob.metadata) {
-        newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
-      }
-
-      newJob.result = {
-        fileName: `${String(customInput.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png`,
-      }
-
-      jobs.push(newJob as Job);
-    }
+    const jobs = buildPhotoSetJobs(baseJob, inputs, groupId);
 
     const dbJobs = await createManyDb(userId, jobs);
 
@@ -228,11 +188,10 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
     }
 
     const inputs = generateTrainingPhotoSetData(jobRequest.parameters, jobRequest.avatarType, idPhotoSet);
-    const jobs: Job[] = [];
 
     const baseJob: Partial<Job> = {
       groupId: jobRequest.groupId,
-      userId: userId,
+      userId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
       target: JobTargets.trainingPhotoSet,
@@ -240,26 +199,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
       maxRuns: 3,
     }
 
-    for (const [idx, customInput] of inputs.entries()) {
-      const newJob = {...baseJob};
-
-      const inference = customInput.input?.inference;
-
-      newJob.order = customInput.order;
-      newJob.maxRuns = customInput.maxRuns ?? baseJob.maxRuns;
-      newJob.input = customInput.input
-      newJob.metadata = customInput.metadata;
-
-      if (newJob.metadata) {
-        newJob.metadata.queueTopic = GEN_QWEN_EDIT_2511_TOPIC;
-      }
-
-      newJob.result = {
-        fileName: `${String(customInput.order).padStart(3, '0')}-training-photo-set-${jobRequest.groupId}-${inference?.width}x${inference?.height}.png`,
-      }
-
-      jobs.push(newJob as Job);
-    }
+    const jobs = buildPhotoSetJobs(baseJob, inputs, jobRequest.groupId!);
 
     const dbJobs = await createManyDb(userId, jobs);
 
@@ -320,7 +260,7 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const dbJob = await updateDb(userId, id, updateData);
 
-    return res.status(201).json(dbJob);
+    return res.status(200).json(dbJob);
   } catch (error) {
     req.log.info(`Failed to update job for ${id}: ${error}`);
     next(error);
@@ -336,7 +276,7 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
   try {
     await deleteByIdDb(userId, id);
 
-    return res.status(201).json({'result': 'ok'});
+    return res.status(200).json({'result': 'ok'});
   } catch (error) {
     req.log.info(`Failed to delete job ${id} for user ${userId}: ${error}`);
     next(error);
@@ -352,7 +292,7 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
   try {
     await deleteByAvatarIdDb(userId, avatarId);
 
-    return res.status(201).json({'result': 'ok'});
+    return res.status(200).json({'result': 'ok'});
   } catch (error) {
     req.log.info(`Failed to delete jobs for ${avatarId} and user ${userId}: ${error}`);
     next(error);

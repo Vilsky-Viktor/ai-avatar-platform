@@ -5,6 +5,14 @@ const DB_NAME = process.env.DB_NAME || '';
 const JOBS_COLLECTION_NAME = process.env.JOBS_COLLECTION_NAME || '';
 const db = getFirestore(DB_NAME);
 
+const batchDeleteQuery = async (query: FirebaseFirestore.Query): Promise<void> => {
+  const snapshot = await query.get();
+  if (snapshot.empty) return;
+  const batch = db.batch();
+  snapshot.docs.forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
+};
+
 export const getById = async (userId: string, id: string): Promise<Job | null> => {
     const doc = await db.collection(JOBS_COLLECTION_NAME).doc(id).get();
 
@@ -82,22 +90,9 @@ export const deleteById = async (userId: string, id: string): Promise<boolean> =
     return true;
 };
 
-export const deleteByAvatarId = async (userId: string, avatarId: string): Promise<boolean> => {
-    const jobsQuery = db.collection(JOBS_COLLECTION_NAME)
+export const deleteByAvatarId = async (userId: string, avatarId: string): Promise<void> => {
+    const query = db.collection(JOBS_COLLECTION_NAME)
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId);
-
-    const snapshot = await jobsQuery.get();
-    
-    if (snapshot.empty) {
-        return false;
-    }
-
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-    return true;
+    await batchDeleteQuery(query);
 };

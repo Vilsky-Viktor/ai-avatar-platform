@@ -17,7 +17,7 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const avatarsDB = await getAllDb(headerUserId as string);
 
-    return res.status(201).json(avatarsDB);
+    return res.status(200).json(avatarsDB);
   } catch (error) {
     req.log.info(`Failed to get all avatars for user ${headerUserId}: ${error}`);
     next(error);
@@ -50,7 +50,7 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const avatarDB = await updateDb(headerUserId, id, avatarData);
 
-    return res.status(201).json(avatarDB);
+    return res.status(200).json(avatarDB);
   } catch (error) {
     req.log.info(`Failed to update avatar ${id} for user ${headerUserId}: ${error}`);
     next(error);
@@ -71,7 +71,7 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
 
     await deleteByAvatarIdDb(userId, id);
     
-    return res.status(201).json({'result': 'ok'});
+    return res.status(200).json({'result': 'ok'});
   } catch (error) {
     req.log.info(`Failed to delete avatar ${id} for user ${userId}: ${error}`);
     next(error);

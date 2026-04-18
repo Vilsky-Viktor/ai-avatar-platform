@@ -5,6 +5,15 @@ const DB_NAME = process.env.DB_NAME || ''
 const MEDIA_COLLECTION_NAME = process.env.MEDIA_COLLECTION_NAME || ''
 const db = getFirestore(DB_NAME)
 
+const batchDeleteQuery = async (query: FirebaseFirestore.Query): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> => {
+  const snapshot = await query.get();
+  if (snapshot.empty) return [];
+  const batch = db.batch();
+  snapshot.docs.forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
+  return snapshot.docs;
+};
+
 export const create = async (userId: string, media: Omit<Media, 'id'>): Promise<Media> => {
     const mediaRef = db.collection(MEDIA_COLLECTION_NAME).doc();
     const newId = mediaRef.id; 
@@ -41,40 +50,16 @@ export const deleteById = async (userId: string, id: string): Promise<Media | nu
 };
 
 export const deleteByAvatarId = async (userId: string, avatarId: string): Promise<Media[]> => {
-    const jobsQuery = db.collection(MEDIA_COLLECTION_NAME)
+    const query = db.collection(MEDIA_COLLECTION_NAME)
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId);
-
-    const snapshot = await jobsQuery.get();
-    
-    if (snapshot.empty) {
-        return [];
-    }
-
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-    return snapshot.docs.map((doc) => doc.data() as Media);
+    const docs = await batchDeleteQuery(query);
+    return docs.map(doc => doc.data() as Media);
 };
 
 export const deleteByUserId = async (userId: string): Promise<Media[]> => {
-    const jobsQuery = db.collection(MEDIA_COLLECTION_NAME)
+    const query = db.collection(MEDIA_COLLECTION_NAME)
         .where("userId", "==", userId);
-
-    const snapshot = await jobsQuery.get();
-    
-    if (snapshot.empty) {
-        return [];
-    }
-
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-    return snapshot.docs.map((doc) => doc.data() as Media);
+    const docs = await batchDeleteQuery(query);
+    return docs.map(doc => doc.data() as Media);
 };

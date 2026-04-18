@@ -15,7 +15,7 @@ export const getPods = async (podName: string): Promise<Pod[]> => {
             }
         });
 
-        return response.data.filter((pod: Pod) => pod.name = podName);
+        return response.data.filter((pod: Pod) => pod.name === podName);
     } catch (error: any) {
         logger.error(`Failed to get Runpod pods: ${error.message}`)
         throw error;

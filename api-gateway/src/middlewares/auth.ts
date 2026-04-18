@@ -12,7 +12,7 @@ export const validateAuth = async (req: Request, res: Response, next: NextFuncti
 
     next();
   } catch (error) {
-    console.log(error)
+    req.log.error(error)
     res.status(401).send('Expired or Invalid Token');
   }
 };
