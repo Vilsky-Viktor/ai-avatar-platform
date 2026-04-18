@@ -2,3 +2,4 @@ gcp-json-key.json
 .vscode
 .DS_Store
 .claude
+node_modules
