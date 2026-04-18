@@ -1,17 +1,13 @@
 import { Router } from 'express';
-import {
-  genTrainingPhotoSet,
-  genTrainingSyntheticFrontIdPhoto,
-  genTrainingSyntheticIdPhotos,
-  genTrainingTwinIdPhotos,
-  restartJob
-} from '../controllers/jobController';
+import { createProxyHandler } from '../utils/proxy';
 
+const BASE = process.env.JOB_MANAGER_SERVICE_URL;
 const router = Router();
 
-router.post('/gen-training-photo-set', genTrainingPhotoSet);
-router.post('/gen-training-synthetic-front-id-photo', genTrainingSyntheticFrontIdPhoto);
-router.post('/gen-training-synthetic-id-photos', genTrainingSyntheticIdPhotos);
-router.post('/gen-training-twin-id-photos', genTrainingTwinIdPhotos);
-router.post('/restart/:id', restartJob);
+router.post('/gen-training-photo-set',                createProxyHandler('post', () => `${BASE}/gen-training-photo-set`,                'Create training photo set'));
+router.post('/gen-training-synthetic-front-id-photo', createProxyHandler('post', () => `${BASE}/gen-training-synthetic-front-id-photo`, 'Create synthetic front ID photo'));
+router.post('/gen-training-synthetic-id-photos',      createProxyHandler('post', () => `${BASE}/gen-training-synthetic-id-photos`,      'Create synthetic ID photos'));
+router.post('/gen-training-twin-id-photos',           createProxyHandler('post', () => `${BASE}/gen-training-twin-id-photos`,           'Create twin ID photos'));
+router.post('/restart/:id',                           createProxyHandler('post', (req) => `${BASE}/restart/${req.params.id}`,           'Restart job'));
+
 export default router;

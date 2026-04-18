@@ -1,16 +1,12 @@
 import { Router } from 'express';
-import {
-  getAllAvatars,
-  createAvatar,
-  updateAvatar,
-  deleteAvatarById
-} from '../controllers/avatarController';
+import { createProxyHandler } from '../utils/proxy';
 
+const BASE = process.env.AVATAR_SERVICE_URL;
 const router = Router();
 
-router.get('/get-all', getAllAvatars);
-router.post('/create', createAvatar);
-router.patch('/update/:id', updateAvatar);
-router.delete('/delete-by-id/:id', deleteAvatarById);
+router.get('/get-all',                       createProxyHandler('get',    () => `${BASE}/get-all`,                          'Get all avatars'));
+router.post('/create',                       createProxyHandler('post',   () => `${BASE}/create`,                          'Create avatar'));
+router.patch('/update/:id',                  createProxyHandler('patch',  (req) => `${BASE}/update/${req.params.id}`,      'Update avatar'));
+router.delete('/delete-by-id/:id',           createProxyHandler('delete', (req) => `${BASE}/delete-by-avatar-id/${req.params.id}`, 'Delete avatar'));
 
 export default router;
