@@ -157,6 +157,16 @@ export const restartJobById = async (jobId: string): Promise<Job> => {
   }
 }
 
+export const getMediaByAvatarId = async (avatarId: string): Promise<Media[]> => {
+  try {
+    const res = await apiClient.get(`/media/get/avatar/${avatarId}`);
+    return res.data as Media[];
+  } catch (error) {
+    console.error("Error fetching media:", error);
+    throw error;
+  }
+}
+
 export const createMedia = async (media: Media): Promise<Media> => {
   try {
     const res = await apiClient.post('/media/create', media);
@@ -164,6 +174,16 @@ export const createMedia = async (media: Media): Promise<Media> => {
     return res.data as Media;
   } catch (error) {
     console.error("Error creating media:", error);
+    throw error;
+  }
+}
+
+export const createTrainingMedia = async (groupId: string): Promise<Media[]> => {
+  try {
+    const res = await apiClient.post(`/media/create-training/${groupId}`);
+    return res.data as Media[];
+  } catch (error) {
+    console.error("Error creating training media:", error);
     throw error;
   }
 }

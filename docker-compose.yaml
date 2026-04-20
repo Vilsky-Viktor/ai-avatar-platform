@@ -147,6 +147,7 @@ services:
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - MEDIA_COLLECTION_NAME=media
       - AVATAR_SERVICE_URL=http://avatar-service:3200
+      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
 
   runpod-service:
     <<: *default-dns

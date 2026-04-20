@@ -1,126 +1,96 @@
 import { Request, Response, NextFunction } from 'express';
-import { type Media, MediaSection, MediaType } from '../types/media';
-import { create as createDb, deleteById as deleteByIdDb, deleteByAvatarId as deleteByAvatarIdDb, deleteByUserId as deleteByUserIdDb } from '../repositories/media';
-import { updateCounterByFieldName } from '../services/avatarService';
+import { type Media, MediaSection } from '../types/media';
+import { create as createDb, createMany as createManyDb, getByAvatarId as getByAvatarIdDb, deleteById as deleteByIdDb, deleteByAvatarId as deleteByAvatarIdDb } from '../repositories/media';
+import { getJobsByGroupId } from '../services/jobManagerService';
 import { removeStoredMediaByPaths } from '../services/storage';
 
-export const create = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const media: Media = req.body;
-
-  req.log.info(`Create media for job ${media.jobId} for user ${headerUserId}`);
+export const getByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const avatarId = req.params.id as string;
 
   try {
-    const mediaDB = await createDb(headerUserId as string, media);
-
-    if (media.section === MediaSection.avatar) {
-      const counterFieldName = media.type === MediaType.image ? 'imageCount' : 'videoCount';
-      await updateCounterByFieldName(headerUserId as string, media.avatarId, counterFieldName, 1);
-    }
-
-    return res.status(201).json(mediaDB);
+    const media = await getByAvatarIdDb(userId, avatarId);
+    return res.status(200).json(media);
   } catch (error) {
-    req.log.info(`Failed to create media for job ${media.jobId} for user ${headerUserId}: ${error}`);
+    req.log.info(`Failed to get media for avatar ${avatarId} for user ${userId}: ${error}`);
+    next(error);
+  }
+};
+
+export const createTrainingMedia = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const groupId = req.params.groupId as string;
+
+  try {
+    const jobs = await getJobsByGroupId(userId, groupId);
+
+    const mediaList = jobs.map(job => ({
+      userId,
+      avatarId: job.avatarId,
+      jobId: job.id,
+      groupId: job.groupId,
+      type: job.mediaType,
+      section: MediaSection.avatar,
+      isRemovable: false,
+      isIdPhoto: job.order! < 10,
+      isPhotoSet: job.order! > 9,
+      path: job.result?.mediaPath,
+      dimensions: job.metadata?.dimensions,
+      ratio: job.metadata?.ratio,
+      angle: job.metadata?.angle,
+      shotType: job.metadata?.shotType,
+      upscaled: false,
+      order: job.order,
+    } as Omit<Media, 'id'>));
+
+    const created = await createManyDb(userId, mediaList);
+    return res.status(201).json(created);
+  } catch (error) {
+    req.log.info(`Failed to create training media for job group ID ${groupId} for user ${userId}: ${error}`);
+    next(error);
+  }
+};
+
+export const create = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const media: Media = req.body;
+
+  try {
+    const created = await createDb(userId, media);
+    return res.status(201).json(created);
+  } catch (error) {
+    req.log.info(`Failed to create media for job ${media.jobId} for user ${userId}: ${error}`);
     next(error);
   }
 };
 
 export const deleteById = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const { id } = req.params;
-
-  req.log.info(`Delete media ${id} for user ${headerUserId}`);
+  const userId = req.headers['x-user-id'] as string;
+  const id = req.params.id as string;
 
   try {
-    const removedMedia = await deleteByIdDb(headerUserId as string, id as string);
-
-    if (removedMedia) {
-      const counterFieldName = removedMedia.type === MediaType.image ? 'imageCount' : 'videoCount';
-      await Promise.all([
-        updateCounterByFieldName(headerUserId as string, removedMedia.avatarId, counterFieldName, -1),
-        removeStoredMediaByPaths([removedMedia.path])
-      ])
-    }
-
-    return res.status(200).json({'result': 'ok'});
+    const removed = await deleteByIdDb(userId, id);
+    if (removed) await removeStoredMediaByPaths([removed.path]);
+    return res.status(200).json({ result: 'ok' });
   } catch (error) {
-    req.log.info(`Failed to delete media ${id} for user ${headerUserId}: ${error}`);
+    req.log.info(`Failed to delete media ${id} for user ${userId}: ${error}`);
     next(error);
   }
 };
 
 export const deleteByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
-  const { avatarId } = req.params;
-
-  req.log.info(`Delete media for avatar ${avatarId} and user ${headerUserId}`);
+  const userId = req.headers['x-user-id'] as string;
+  const avatarId = req.params.avatarId as string;
 
   try {
-    const removedMedia = await deleteByAvatarIdDb(headerUserId as string, avatarId as string);
-
-    if (removedMedia.length > 0) {
-      let imageIncrement = 0;
-      let videoIncrement = 0;
-
-      for (const media of removedMedia) {
-        media.type === MediaType.image ? imageIncrement-- : videoIncrement--;
-      }
-
-      const avatarMediaPath = `media/${headerUserId}-user/avatars/${removedMedia[0].avatarId}-avatar/`;
-
-      await Promise.all([
-        updateCounterByFieldName(headerUserId as string, removedMedia[0].avatarId, 'imageCount', imageIncrement),
-        updateCounterByFieldName(headerUserId as string, removedMedia[0].avatarId, 'videoCount', videoIncrement),
-        removeStoredMediaByPaths([avatarMediaPath])
-      ])
+    const removed = await deleteByAvatarIdDb(userId, avatarId);
+    if (removed.length > 0) {
+      const avatarMediaPath = `media/${userId}-user/avatars/${avatarId}-avatar/`;
+      await removeStoredMediaByPaths([avatarMediaPath]);
     }
-
-    return res.status(200).json({'result': 'ok'});
+    return res.status(200).json({ result: 'ok' });
   } catch (error) {
-    req.log.info(`Failed to delete media for ${avatarId} and user ${headerUserId}: ${error}`);
-    next(error);
-  }
-};
-
-export const deleteByUserId = async (req: Request, res: Response, next: NextFunction) => {
-  const { userId } = req.params;
-
-  req.log.info(`Delete media for user ${userId}`);
-
-  try {
-    const removedMedia = await deleteByUserIdDb(userId as string);
-
-    if (removedMedia.length > 0) {
-
-      const removedMediaByAvatarId = new Map<string, Media[]>();
-
-      for (const media of removedMedia) {
-        const existing = removedMediaByAvatarId.get(media.avatarId) || [];
-        existing.push(media);
-        removedMediaByAvatarId.set(media.avatarId, existing);
-      }
-
-      for (const [avatarId, mediaList] of removedMediaByAvatarId) {
-        let imageIncrement = 0;
-        let videoIncrement = 0;
-
-        const avatarMediaPath = `media/${userId}-user/avatars/${avatarId}-avatar/`;
-
-        for (const media of mediaList) {
-          media.type === MediaType.image ? imageIncrement-- : videoIncrement--;
-        }
-
-        await Promise.all([
-          updateCounterByFieldName(userId as string, avatarId, 'imageCount', imageIncrement),
-          updateCounterByFieldName(userId as string, avatarId, 'videoCount', videoIncrement),
-          removeStoredMediaByPaths([avatarMediaPath])
-        ])
-      }
-    }
-
-    return res.status(200).json({'result': 'ok'});
-  } catch (error) {
-    req.log.info(`Failed to delete media for ${userId}: ${error}`);
+    req.log.info(`Failed to delete media for avatar ${avatarId} for user ${userId}: ${error}`);
     next(error);
   }
 };

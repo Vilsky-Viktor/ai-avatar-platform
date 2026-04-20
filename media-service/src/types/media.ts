@@ -15,6 +15,7 @@ export type Media = {
     userId: string;
     avatarId: string;
     jobId: string;
+    groupId: string;
     type: MediaType,
     section: MediaSection,
     isRemovable: boolean,
@@ -22,6 +23,9 @@ export type Media = {
     isPhotoSet: boolean,
     path: string;
     dimensions: string;
+    ratio: string;
+    angle?: string;
+    shotType?: string;
     upscaled: boolean;
     order: number;
     createdAt?: Timestamp;

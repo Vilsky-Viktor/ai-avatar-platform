@@ -33,6 +33,10 @@ export type AvatarParameters = {
   height: string;
 }
 
+export type AvatarLoras = {
+  qwenEdit2511Path: string;
+}
+
 export type Avatar = {
   id?: string;
   userId?: string;
@@ -44,6 +48,7 @@ export type Avatar = {
   voicePath?: string;
   isUploadedVoice?: boolean;
   photoSetGenerated: boolean;
+  loras: AvatarLoras;
   updatedAt?: FirestoreTimestamp;
   createdAt?: FirestoreTimestamp
 }

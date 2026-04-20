@@ -7,17 +7,15 @@ const RETRY_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 500;
 const REQUEST_TIMEOUT_MS = 10000;
 
-async function request(method: HttpMethod, url: string, userId: string, body?: unknown): Promise<void> {
+async function request<T = void>(method: HttpMethod, url: string, userId: string, body?: unknown): Promise<T> {
   const config = { headers: { 'x-user-id': userId }, timeout: REQUEST_TIMEOUT_MS };
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
     try {
-      if (method === 'get' || method === 'delete') {
-        await axios[method](url, config);
-      } else {
-        await axios[method](url, body, config);
-      }
-      return;
+      const response = method === 'get' || method === 'delete'
+        ? await axios[method](url, config)
+        : await axios[method](url, body, config);
+      return response.data as T;
     } catch (error: any) {
       const status = error.response?.status;
       const isClientError = status >= 400 && status < 500;
@@ -37,11 +35,12 @@ async function request(method: HttpMethod, url: string, userId: string, body?: u
       }
     }
   }
+  throw new Error('Unreachable');
 }
 
 export const createServiceClient = (baseUrl: string | undefined) => ({
-  get:    (path: string, userId: string)                    => request('get',    `${baseUrl}${path}`, userId),
-  post:   (path: string, userId: string, body?: unknown)    => request('post',   `${baseUrl}${path}`, userId, body),
-  patch:  (path: string, userId: string, body?: unknown)    => request('patch',  `${baseUrl}${path}`, userId, body),
-  delete: (path: string, userId: string)                    => request('delete', `${baseUrl}${path}`, userId),
+  get:    <T = void>(path: string, userId: string)                    => request<T>('get',    `${baseUrl}${path}`, userId),
+  post:   <T = void>(path: string, userId: string, body?: unknown)    => request<T>('post',   `${baseUrl}${path}`, userId, body),
+  patch:  <T = void>(path: string, userId: string, body?: unknown)    => request<T>('patch',  `${baseUrl}${path}`, userId, body),
+  delete: <T = void>(path: string, userId: string)                    => request<T>('delete', `${baseUrl}${path}`, userId),
 });

@@ -7,30 +7,50 @@ const db = getFirestore(DB_NAME)
 
 const batchDeleteQuery = async (query: FirebaseFirestore.Query): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> => {
   const snapshot = await query.get();
+
   if (snapshot.empty) return [];
+
   const batch = db.batch();
   snapshot.docs.forEach(doc => batch.delete(doc.ref));
+
   await batch.commit();
+
   return snapshot.docs;
 };
 
 export const create = async (userId: string, media: Omit<Media, 'id'>): Promise<Media> => {
-    const mediaRef = db.collection(MEDIA_COLLECTION_NAME).doc();
-    const newId = mediaRef.id; 
+    const [dbMedia] = await createMany(userId, [media]);
+    return dbMedia;
+}
 
+export const createMany = async (userId: string, mediaList: Omit<Media, 'id'>[]): Promise<Media[]> => {
     const now = Timestamp.now();
+    const batch = db.batch();
+    const dbMediaList: Media[] = [];
 
-    const dbAvatar: Media = {
-        ...media,
-        id: newId,
-        userId: userId,
-        createdAt: now,
-        updatedAt: now,
-    };
+    for (const media of mediaList) {
+        const mediaRef = db.collection(MEDIA_COLLECTION_NAME).doc();
+        const dbMedia: Media = {
+            ...media,
+            id: mediaRef.id,
+            userId,
+            createdAt: now,
+            updatedAt: now,
+        };
+        batch.set(mediaRef, dbMedia);
+        dbMediaList.push(dbMedia);
+    }
 
-    await mediaRef.set(dbAvatar);
-    
-    return dbAvatar;
+    await batch.commit();
+    return dbMediaList;
+}
+
+export const getByAvatarId = async (userId: string, avatarId: string): Promise<Media[]> => {
+    const snapshot = await db.collection(MEDIA_COLLECTION_NAME)
+        .where('userId', '==', userId)
+        .where('avatarId', '==', avatarId)
+        .get();
+    return snapshot.docs.map(doc => doc.data() as Media);
 }
 
 export const deleteById = async (userId: string, id: string): Promise<Media | null> => {
@@ -53,13 +73,6 @@ export const deleteByAvatarId = async (userId: string, avatarId: string): Promis
     const query = db.collection(MEDIA_COLLECTION_NAME)
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId);
-    const docs = await batchDeleteQuery(query);
-    return docs.map(doc => doc.data() as Media);
-};
-
-export const deleteByUserId = async (userId: string): Promise<Media[]> => {
-    const query = db.collection(MEDIA_COLLECTION_NAME)
-        .where("userId", "==", userId);
     const docs = await batchDeleteQuery(query);
     return docs.map(doc => doc.data() as Media);
 };

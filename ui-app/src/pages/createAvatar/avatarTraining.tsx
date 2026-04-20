@@ -5,8 +5,10 @@ import {
     getAvatarData,
     initialAvatarData
 } from '../../utils/avatarCreation';
+import { getMediaByAvatarId, createTrainingMedia, getUserAvatarById } from '../../services/apiGateway';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { scrollToTop } from '../../utils/scroller';
+import type { Media } from '../../types/media';
 
 function AvatarTrainingPage() {
     const navigate = useNavigate();
@@ -14,10 +16,32 @@ function AvatarTrainingPage() {
     const [newAvatarData, _] = useState(() => getAvatarData());
     const [avatar, setAvatar] = useState(initialAvatarData);
     const [pageLoading, setPageLoading] = useState(true);
+    const [media, setMedia] = useState([] as Media[])
 
     useEffect(() => {
         scrollToTop();
+        initPage();
     }, []);
+
+    const initPage = async () => {
+        const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+        setAvatar(existingAvatar);
+
+        const existingMedia = await getMediaByAvatarId(newAvatarData.avatarId);
+
+        if (existingMedia.length) {
+            setMedia(existingMedia);
+        } else {
+            const newMedia = await createTrainingMedia(newAvatarData.groupId);
+            setMedia(newMedia);
+        }
+
+        setPageLoading(false);
+    }
+
+    const stepLocked = () => {
+        return false;
+    }
 
     const canProceed = () => {
         return false
@@ -37,9 +61,15 @@ function AvatarTrainingPage() {
         <>
             <CreateAvatarStepper step={4}/>
 
-            <div className="mx-auto px-4 pt-12 mb-50">
-                Avatar training
-            </div>
+            {pageLoading ? (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
+                </div>
+            ) : (
+                <div className="mx-auto px-4 pt-12 mb-50">
+                    Avatar training
+                </div>
+            )}
 
             <BottomDock
                 avatarId={newAvatarData.avatarId}
