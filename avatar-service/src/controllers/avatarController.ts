@@ -4,22 +4,39 @@ import {
   create as createDb, 
   update as updateDb,
   deleteByAvatarId as deleteByAvatarIdDb, 
-  getAll as getAllDb 
+  getAll as getAllDb,
+  getById as getByIdDb,
 } from '../repositories/avatar';
 import { deleteJobsByAvatarId, deleteJobsByUserId } from '../services/jobService';
 import { deleteMediaByAvatarId } from '../services/mediaService';
 
-export const getAll = async (req: Request, res: Response, next: NextFunction) => {
-  const headerUserId = req.headers['x-user-id'];
+export const getById = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const avatarId = req.params.id as string;
 
-  req.log.info(`Get all avatars for user ${headerUserId}`);
+  req.log.info(`Get avatar ${avatarId} for user ${userId}`);
 
   try {
-    const avatarsDB = await getAllDb(headerUserId as string);
+    const avatarDB = await getByIdDb(userId, avatarId);
+
+    return res.status(200).json(avatarDB);
+  } catch (error) {
+    req.log.info(`Failed to get avatar ${avatarId} for user ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+
+  req.log.info(`Get all avatars for user ${userId}`);
+
+  try {
+    const avatarsDB = await getAllDb(userId);
 
     return res.status(200).json(avatarsDB);
   } catch (error) {
-    req.log.info(`Failed to get all avatars for user ${headerUserId}: ${error}`);
+    req.log.info(`Failed to get all avatars for user ${userId}: ${error}`);
     next(error);
   }
 };

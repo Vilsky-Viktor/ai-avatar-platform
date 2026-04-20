@@ -1,26 +1,16 @@
 import { deleteAvatarById } from "../services/apiGateway";
-import { AvatarGender, AvatarTypes } from "../types/avatar";
-import { IdPhotoModes, type IdPhotoStepData, type PhotoSetStepData, type GeneralStepData, type VoiceStepData } from "../types/avatarCreation";
+import { AvatarGender, AvatarTypes, type Avatar } from "../types/avatar";
+import { type NewAvatarData } from "../types/avatarCreation";
+import { decode, encode } from "./encoder";
 
+export const NEW_AVATAR_DATA = 'new_avatar_data';
 
-export const GENERAL_STORAGE_KEY = 'avatar_general_data';
-export const ID_PHOTO_STORAGE_KEY = 'avatar_id_photo_data';
-export const PHOTO_SET_STORAGE_KEY = 'avatar_photo_set_data';
-export const VOICE_STORAGE_KEY = 'avatar_voice_data';
+export const NUM_ID_PHOTOS = 9;
+export const NUM_PHOTO_SET_PHOTOS = 34;
 
-
-function encodeBase64(text: string): string {
-  return btoa(text);
-}
-
-function decodeBase64(base64String: string): string {
-  return atob(base64String);
-}
 
 export const handleCancel = async (avatarId: string, setCancelLoading: Function, navigate: Function) => {
-    localStorage.removeItem(GENERAL_STORAGE_KEY);
-    localStorage.removeItem(ID_PHOTO_STORAGE_KEY);
-    localStorage.removeItem(PHOTO_SET_STORAGE_KEY);
+    localStorage.removeItem(NEW_AVATAR_DATA);
 
     if (avatarId) {
         setCancelLoading(true);
@@ -35,26 +25,23 @@ export const handleCancel = async (avatarId: string, setCancelLoading: Function,
     navigate('/');
 };
 
+export const initialNewAvatarData = {
+    avatarId: "",
+    groupId: ""
+} as NewAvatarData;
+
 export const initialAvatarParameters = {
     gender: AvatarGender.male, ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
     face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '', 
     skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '', height: ''
 };
 
-export const initialIdPhotoData = {
-    jobs: [],
-    uploadedPhotos: { front: '', frontSmile: '', rightQuarter: '', leftQuarter: '' },
-    finished: false
-} as IdPhotoStepData;
-
-export const initialGeneralData = {
-    name: '',
-    slug: '',
-    type: AvatarTypes.digitalTwin,
-    parameters: initialAvatarParameters,
-    avatarId: '',
-    finished: false
-};
+export const initialAvatarData = {
+    name: "",
+    slug: "",
+    type: AvatarTypes.synthetic,
+    parameters: initialAvatarParameters
+} as Avatar;
 
 export const initialUploadedIdPhotoSet = [
     { photo: null, isDragging: false },
@@ -62,18 +49,6 @@ export const initialUploadedIdPhotoSet = [
     { photo: null, isDragging: false },
     { photo: null, isDragging: false },
 ]
-
-export const initialPhotoSetData = {
-  jobs: Array(36).fill(null),
-  finished: false,
-} as PhotoSetStepData;
-
-export const initialVoiceData = {
-    mediaPath: "",
-    uploaded: false,
-    selectedId: "",
-    finished: false,
-} as VoiceStepData;
 
 export const AVATAR_PARAMETER_OPTIONS = {
     ethnicity: ["northern european", "southern european", "eastern european", "east asian", "south asian", "southeast asian", "central asian", "middle eastern", "north african", "west african", "east african", "latino", "native american", "pacific islander"],
@@ -91,7 +66,7 @@ export const AVATAR_PARAMETER_OPTIONS = {
     hairColor: ["black", "dark brown", "light brown", "blonde", "honey blonde", "ash blonde", "platinum", "auburn", "red", "silver", "salt & pepper", "white", "gray", "pastel blue", "pastel green", "pastel pink"],
     male: {
         attractiveness: ["rugged", "handsome", "pretty boy", "masculine", "scholarly", "weathered", "sharp", "soft featured", "unconventional", "intimidating", "approachable"],
-        body: ["slim", "athletic", "average", "muscular", "large"],
+        body: ["slim", "athletic", "average", "muscular", "large", "dad bod"],
         face: ["square", "oval", "round", "diamond", "angular"],
         hairStyle: ["short cut", "crew cut", "side part", "long straight", "man bun", "waves", "dreadlocks", "afro", "undercut", "bald", "braids"],
         skin: ["smooth", "freckled", "tanned", "weathered"],
@@ -107,31 +82,19 @@ export const AVATAR_PARAMETER_OPTIONS = {
     }
 };
 
-type StepData = GeneralStepData | IdPhotoStepData | PhotoSetStepData | VoiceStepData;
-
-export const getLocalStorageData = <T extends StepData>(key: string): T => {
-    const encodedData = localStorage.getItem(key);
+export const getAvatarData = (): NewAvatarData => {
+    const encodedData = localStorage.getItem(NEW_AVATAR_DATA);
 
     if (encodedData) {
-        const decodedData = decodeBase64(encodedData);
+        const decodedData = decode(encodedData);
         return JSON.parse(decodedData);
     }
 
-    if (key === GENERAL_STORAGE_KEY) {
-        return initialGeneralData as T;
-    } else if (key === ID_PHOTO_STORAGE_KEY) {
-        return initialIdPhotoData as T;
-    } else if (key === PHOTO_SET_STORAGE_KEY) {
-        return initialPhotoSetData as T;
-    } else if (key === VOICE_STORAGE_KEY) {
-        return initialVoiceData as T;
-    } else {
-        return {} as T
-    }
+    return initialNewAvatarData;
 }
 
-export const saveLocalStorageData = <T extends StepData>(key: string, data: T): void => {
+export const saveAvatarData = (data: NewAvatarData): void => {
     const jsonData = JSON.stringify(data);
-    const encodedData = encodeBase64(jsonData);
-    localStorage.setItem(key, encodedData);
+    const encodedData = encode(jsonData);
+    localStorage.setItem(NEW_AVATAR_DATA, encodedData);
 }

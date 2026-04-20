@@ -4,51 +4,49 @@ import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepp
 import { ChevronDown } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
-import { AvatarStatus, type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingSyntheticIdPhotos, genTrainingSyntheticFrontIdPhoto } from '../../services/apiGateway';
+import { type Avatar } from '../../types/avatar';
+import { updateAvatar, restartJobById, genTrainingSyntheticIdPhotos, genTrainingSyntheticFrontIdPhoto, getUserAvatarById, getJobsByGroupId } from '../../services/apiGateway';
 import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { 
-    GENERAL_STORAGE_KEY,  
-    ID_PHOTO_STORAGE_KEY, 
-    getLocalStorageData,
-    saveLocalStorageData,
-    AVATAR_PARAMETER_OPTIONS
+    AVATAR_PARAMETER_OPTIONS,
+    getAvatarData,
+    initialAvatarData,
+    saveAvatarData,
+    NUM_ID_PHOTOS
 } from '../../utils/avatarCreation';
 import BottomDock from '../../components/createAvatar/BottomDock';
-import { type IdPhotoStepData, type GeneralStepData } from "../../types/avatarCreation";
+import { type NewAvatarData } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { listenToCollectionByGroupId } from '../../services/db';
-import { type AvatarParameters } from "../../types/avatar";
-
-
-const NUM_ID_PHOTOS = 9
+import { scrollToTop, scrollToBottom } from '../../utils/scroller';
 
 
 function CreateSyntheticIdPhotosPage() {
     const navigate = useNavigate();
     const { user } = useApp();
 
-    const [generalData, setGeneralData] = useState(() => getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY));
-    const [stepData, setStepData] = useState(() => getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY));
+    const [newAvatarData, setNewAvatarData] = useState(() => getAvatarData());
+    const [avatar, setAvatar] = useState(initialAvatarData);
+    const [pageLoading, setPageLoading] = useState(true);
+
+    const [jobs, setJobs] = useState([] as (Job | null)[]);
+    const jobsRef = useRef<(Job | null)[]>([]);
+
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
-    const jobsRef = useRef(stepData.jobs);
-    const restartingJobIds = useRef<Set<string>>(new Set());
-
-    useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [])
+        scrollToTop();
+    }, []);
 
     useEffect(() => {
-        saveLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY, stepData);
-    }, [stepData]);
+        initPage()
+    }, []);
 
     useEffect(() => {
-        saveLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY, generalData)
-    }, [generalData]);
+        saveAvatarData(newAvatarData);
+    }, [newAvatarData]);
 
     useEffect(() => {
         if (!fullscreenSrc) return;
@@ -66,16 +64,18 @@ function CreateSyntheticIdPhotosPage() {
     useEffect(() => {
         if (!jobsCreated()) return;
 
-        console.log("jobs updated")
-
-        const groupId = stepData.jobs[0]?.groupId!;
+        const groupId = jobs[0]?.groupId!;
 
         const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
         })
 
         return () => unsubscribe();
-    }, [stepData.jobs]);
+    }, [jobs]);
+
+    useEffect(() => {
+        jobsRef.current = jobs;
+    }, [jobs]);
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
@@ -86,55 +86,71 @@ function CreateSyntheticIdPhotosPage() {
                 job.result.mediaUrl = downloadUrl;
             }
 
-            if (job.id && restartingJobIds.current.has(job.id)) {
-                if (job.status === JobStatuses.pending) restartingJobIds.current.delete(job.id);
-                continue;
-            }
-
-            const jobIndex = jobsRef.current.findIndex((item) => item?.id === job.id);
-            const oldJob = jobsRef.current[jobIndex];
+            const currentJobs = jobsRef.current;
+            const jobIndex = currentJobs.findIndex((item) => item?.id === job.id);
+            const oldJob = currentJobs[jobIndex];
 
             if (oldJob && oldJob?.status !== job.status) {
-                console.log(`job updated ${job.id} with status ${job.status}`)
+                console.log(`job updated ${job.id} - "${oldJob.status}" status to status "${job.status}"`)
                 setJob(jobIndex, job);
             }
         }
     }
 
-    const setJobs = (jobs: (Job | null)[]) => {
-        setStepData((prev: IdPhotoStepData) => ({...prev, jobs}));
+    const initPage = async () => {
+        const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+        setAvatar(existingAvatar);
+
+        if (newAvatarData.groupId) {
+            const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
+            const onlyIdPhotoJobs = fetchedJobs.slice(0, NUM_ID_PHOTOS);
+            const enrichedJobs = await Promise.all(
+                onlyIdPhotoJobs.map(async (job: Job) => {
+                    const mediaUrl = job.result?.mediaPath
+                        ? await getMediaUrlFromPath(job.result.mediaPath).catch(() => undefined)
+                        : undefined;
+                    return { ...job, result: { ...job.result, mediaUrl } };
+                })
+            );
+            setJobs(enrichedJobs as Job[]);
+        }
+        setPageLoading(false);
     }
 
     const setJob = (listIdx: number, job: Job | null) => {
-        setStepData((prev: IdPhotoStepData) => ({
-            ...prev,
-            jobs: prev.jobs.map((oldJob, idx) => idx === listIdx ? job : oldJob)
-        }));
+        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
-    const setParameters = (parameters: AvatarParameters) => {
-        setGeneralData((prev: GeneralStepData) => ({...prev, parameters}));
+    const setParameter = (key: string, value: string) => {
+        setAvatar((avatar: Avatar) => ({...avatar, parameters: { ...avatar.parameters, [key]: value }}))
     }
 
-    const setFinished = () => {
-        setStepData((prev: IdPhotoStepData) => ({...prev, finished: true}));
+    const setGroupId = (groupId: string) => {
+        setNewAvatarData((prev: NewAvatarData) => ({...prev, groupId}));
     }
 
     const jobsCreated = () => {
-        return stepData.jobs.length > 0 && stepData.jobs.every(job => job !== null);
+        return jobs.length > 0 && jobs.every(job => job !== null);
     }
 
     const createFrontJob = async () => {
         setJobs([null]);
 
+        const payload: Partial<Avatar> = {
+            parameters: avatar.parameters,
+        };
+        await updateAvatar(newAvatarData.avatarId, payload);
+
         const jobRequest: TrainingJobRequest = {
-            avatarId: generalData.avatarId,
-            parameters: generalData.parameters
+            avatarId: newAvatarData.avatarId,
+            parameters: avatar.parameters
         }
 
         try {
             const job = await genTrainingSyntheticFrontIdPhoto(jobRequest);
             setJobs([job]);
+            setGroupId(job.groupId!);
+            setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
             console.log('Failed to create front job for id photos')
         }
@@ -142,45 +158,42 @@ function CreateSyntheticIdPhotosPage() {
 
     const createJobs = async () => {
         const emptyJobs = Array(NUM_ID_PHOTOS - 1).fill(null);
-        const jobs = stepData.jobs;
-
-        jobs.push(...emptyJobs);
-
-        setJobs(jobs);
+        setJobs([...jobsRef.current, ...emptyJobs]);
 
         const jobRequest: TrainingJobRequest = {
-            groupId: stepData.jobs[0]?.groupId,
-            avatarId: generalData.avatarId,
-            parameters: generalData.parameters
+            groupId: newAvatarData.groupId,
+            avatarId: newAvatarData.avatarId,
+            parameters: avatar.parameters
         }
 
         try {
             const newJobs = await genTrainingSyntheticIdPhotos(jobRequest);
-            const frontJob = stepData.jobs[0];
-            
+            const frontJob = jobsRef.current[0];
+
             setJobs([frontJob, ...newJobs]);
+            setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
             console.log('Failed to create jobs for id photos')
         }
     }
 
     const restartJob = async (listIdx: number) => {
-        const job = jobsRef.current[listIdx];
+        const job = jobs[listIdx];
         if (!job?.id) return;
 
-        restartingJobIds.current.add(job.id);
         setJob(listIdx, null);
 
         const restartedJob = await restartJobById(job.id);
         setJob(listIdx, restartedJob);
+        setTimeout(() => scrollToBottom(), 500);
     }
 
     const generatingStarted = () => {
-        return stepData.jobs.length > 0;
+        return jobs.length > 0;
     }
 
     const generatingCompleted = () => {
-        return stepData.jobs.length > 0 && stepData.jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
+        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
     }
 
     const isFrontJob = (idx: number) => {
@@ -188,33 +201,34 @@ function CreateSyntheticIdPhotosPage() {
     }
 
     const onlyFrontJobCompleted = () => {
-        return stepData.jobs.length === 1 && stepData.jobs[0]?.status === JobStatuses.completed;
+        return jobs.length === 1 && jobs[0]?.status === JobStatuses.completed;
     }
 
     const allJobsStarted = () => {
-        return stepData.jobs.length === NUM_ID_PHOTOS && stepData.jobs.every(job => job !== null);
+        return jobs.length === NUM_ID_PHOTOS && jobs.every(job => job !== null);
     }
 
     const parametersFilled = () => {
-        return Object.values(generalData.parameters).every((value) => value !== '');
+        return Object.values(avatar.parameters).every((value) => value !== '');
     }
 
     const canProceed = () => {
         return generatingCompleted();
     };
 
+    const stepLocked = () => {
+        return Boolean(avatar.mainImagePath);
+    }
+
     const nextStep = async () => {
         if (!canProceed) return
 
         try {
-            if (!stepData.finished) {
+            if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    status: AvatarStatus.idCreated,
-                    mainImagePath: stepData.jobs[0]?.result?.mediaPath,
+                    mainImagePath: jobs[0]?.result?.mediaPath,
                 };
-                await updateAvatar(generalData.avatarId, payload);
-
-                setFinished();
+                await updateAvatar(newAvatarData.avatarId, payload);
             }
 
             navigate('/avatar/create/photo-set');
@@ -231,108 +245,114 @@ function CreateSyntheticIdPhotosPage() {
         <>
             <CreateAvatarStepper step={1} />
 
-            <div className="mx-auto px-4 pt-12 mb-50">
-                <div className="grid grid-cols-3 gap-8">
-                    {[
-                        { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
-                        { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
-                        { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
-                        { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].attractiveness },
-                        { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].face },
-                        { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].hairStyle },
-                        { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS.hairColor },
-                        { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
-                        { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
-                        { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
-                        { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes }, // Fixed the typo here
-                        { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
-                        { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
-                        { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].skin },
-                        { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[generalData.parameters.gender].facialHair },
-                    ].map((field) => (
-                        <div key={field.key} className={`group flex flex-col gap-0.5 ${stepData.finished ? 'opacity-50' : 'opacity-100'}`}>
-                            <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
-                                {field.label}
-                            </label>
-
-                            <div className="relative">
-                                <select
-                                    value={generalData.parameters[field.key as keyof typeof generalData.parameters]}
-                                    disabled={stepData.finished}
-                                    onChange={(e) => setParameters({...generalData.parameters, [field.key]: e.target.value})}
-                                    className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
-                                >
-                                    <option value="" disabled>Select</option>
-                                    {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
-
-                                </select>
-
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
-                                    <ChevronDown size={16} strokeWidth={2.5} />
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+            {pageLoading ? (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
                 </div>
+            ) : (
+                <div className="mx-auto px-4 pt-12 mb-50">
+                    <div className="grid grid-cols-3 gap-8">
+                        {[
+                            { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
+                            { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
+                            { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
+                            { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].attractiveness },
+                            { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].face },
+                            { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].hairStyle },
+                            { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS.hairColor },
+                            { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
+                            { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
+                            { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
+                            { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes }, // Fixed the typo here
+                            { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
+                            { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
+                            { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].skin },
+                            { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].facialHair },
+                        ].map((field) => (
+                            <div key={field.key} className={`group flex flex-col gap-0.5 ${stepLocked() ? 'opacity-50' : 'opacity-100'}`}>
+                                <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
+                                    {field.label}
+                                </label>
 
-                {parametersFilled() && (
-                    <div className='text-center'>
-                        <button
-                            onClick={createFrontJob}
-                            disabled={generatingStarted() || stepData.finished}
-                            className="inline-flex items-center gap-3 px-12 py-4 my-12 rounded-2xl bg-primary text-primary-content text-sm font-semibold uppercase tracking-[0.35em] transition-all duration-300 hover:opacity-90 hover:scale-[1.005] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                        >
-                            {(generatingStarted() && !generatingCompleted()) && <span className="loading loading-spinner loading-xs"></span>}
-                            <span>Generate Photos</span>
-                        </button>
-                    </div>
-                )}
+                                <div className="relative">
+                                    <select
+                                        value={avatar.parameters[field.key as keyof typeof avatar.parameters]}
+                                        disabled={stepLocked()}
+                                        onChange={(e) => setParameter(field.key, e.target.value)}
+                                        className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
+                                    >
+                                        <option value="" disabled>Select</option>
+                                        {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {stepData.jobs.map((job, idx) => (
-                        <JobPhotoCard
-                            key={idx}
-                            job={job}
-                            idx={idx}
-                            onPhotoClick={setFullscreenSrc}
-                            onRetry={restartJob}
-                            canRestart={!stepData.finished && allJobsStarted() && !isFrontJob(idx)}
-                            faceMatchThresholds={{ green: 0.6, yellow: 0.55, orange: 0.5 }}
-                        />
-                    ))}
-                    {onlyFrontJobCompleted() && (
-                        <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="text-center">
-                                    <p className="text-[12px] font-medium uppercase tracking-widest mt-1">
-                                        Do you like it?
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-error/40 hover:text-error/70 cursor-pointer transition-all duration-200"
-                                        onClick={createFrontJob}
-                                    >
-                                        No
-                                    </button>
-                                    <button
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-primary/40 hover:text-primary/70 cursor-pointer transition-all duration-200"
-                                        onClick={createJobs}
-                                    >
-                                        Yes
-                                    </button>
+                                    </select>
+
+                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
+                                        <ChevronDown size={16} strokeWidth={2.5} />
+                                    </div>
                                 </div>
                             </div>
+                        ))}
+                    </div>
 
-                            <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
-                            <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
+                    {parametersFilled() && (
+                        <div className='text-center'>
+                            <button
+                                onClick={createFrontJob}
+                                disabled={generatingStarted() || stepLocked()}
+                                className="inline-flex items-center gap-3 px-12 py-4 my-12 rounded-2xl bg-primary text-primary-content text-sm font-semibold uppercase tracking-[0.35em] transition-all duration-300 hover:opacity-90 hover:scale-[1.005] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+                            >
+                                {(generatingStarted() && !generatingCompleted()) && <span className="loading loading-spinner loading-xs"></span>}
+                                <span>Generate Photos</span>
+                            </button>
                         </div>
                     )}
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {jobs.map((job, idx) => (
+                            <JobPhotoCard
+                                key={idx}
+                                job={job}
+                                idx={idx}
+                                onPhotoClick={setFullscreenSrc}
+                                onRetry={restartJob}
+                                canRestart={!stepLocked() && allJobsStarted() && !isFrontJob(idx)}
+                                faceMatchThresholds={{ green: 0.6, yellow: 0.55, orange: 0.5 }}
+                            />
+                        ))}
+                        {onlyFrontJobCompleted() && (
+                            <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="text-center">
+                                        <p className="text-[12px] font-medium uppercase tracking-widest mt-1">
+                                            Do you like it?
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-error/40 hover:text-error/70 cursor-pointer transition-all duration-200"
+                                            onClick={createFrontJob}
+                                        >
+                                            No
+                                        </button>
+                                        <button
+                                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-primary/40 hover:text-primary/70 cursor-pointer transition-all duration-200"
+                                            onClick={createJobs}
+                                        >
+                                            Yes
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
+                                <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <BottomDock
-                avatarId={generalData.avatarId}
+                avatarId={newAvatarData.avatarId}
                 canProceed={canProceed}
                 nextStep={nextStep}
                 previousStep={previousStep}

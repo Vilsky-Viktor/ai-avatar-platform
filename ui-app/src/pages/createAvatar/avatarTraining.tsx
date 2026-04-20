@@ -1,26 +1,22 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { useNavigate } from 'react-router-dom';
 import { 
-    GENERAL_STORAGE_KEY,  
-    ID_PHOTO_STORAGE_KEY, 
-    getLocalStorageData,
-    saveLocalStorageData,
-    initialUploadedIdPhotoSet,
-    PHOTO_SET_STORAGE_KEY
+    getAvatarData,
+    initialAvatarData
 } from '../../utils/avatarCreation';
-import { type IdPhotoStepData, type GeneralStepData, type PhotoSetStepData } from "../../types/avatarCreation";
 import BottomDock from '../../components/createAvatar/BottomDock';
+import { scrollToTop } from '../../utils/scroller';
 
 function AvatarTrainingPage() {
     const navigate = useNavigate();
 
-    const generalStepData = getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY);
-    const idPhotoStepData = getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY)
-    const photoSetStepData = getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY)
+    const [newAvatarData, _] = useState(() => getAvatarData());
+    const [avatar, setAvatar] = useState(initialAvatarData);
+    const [pageLoading, setPageLoading] = useState(true);
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToTop();
     }, []);
 
     const canProceed = () => {
@@ -46,7 +42,7 @@ function AvatarTrainingPage() {
             </div>
 
             <BottomDock
-                avatarId={generalStepData.avatarId}
+                avatarId={newAvatarData.avatarId}
                 canProceed={canProceed}
                 nextStep={nextStep}
                 previousStep={previousStep}

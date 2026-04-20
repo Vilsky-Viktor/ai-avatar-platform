@@ -5,102 +5,67 @@ import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
 import ImageCropperModal from "../../components/createAvatar/ImageCropperModal";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
-import { AvatarStatus, type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingTwinIdPhotos } from '../../services/apiGateway';
+import { type Avatar } from '../../types/avatar';
+import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getUserAvatarById } from '../../services/apiGateway';
 import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
 import { type Point, type Area } from 'react-easy-crop';
+import { getCroppedImg } from '../../utils/imageUtils';
 import { 
-    GENERAL_STORAGE_KEY,  
-    ID_PHOTO_STORAGE_KEY, 
-    getLocalStorageData,
-    saveLocalStorageData,
-    initialUploadedIdPhotoSet
+    initialUploadedIdPhotoSet,
+    getAvatarData,
+    initialAvatarData,
+    saveAvatarData,
+    NUM_ID_PHOTOS
 } from '../../utils/avatarCreation';
 import BottomDock from '../../components/createAvatar/BottomDock';
-import { type IdPhotoStepData, type GeneralStepData, type UploadedIdPhoto, type UploadedPhotoPaths } from "../../types/avatarCreation";
+import { type UploadedIdPhoto, type NewAvatarData } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { listenToCollectionByGroupId } from '../../services/db';
+import { scrollToTop, scrollToBottom } from '../../utils/scroller';
 
 
-const CROP_SIZE = [1328, 1328]
+const CROP_SIZE: [number, number] = [1328, 1328]
 
-
-const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string> => {
-    const image = new Image();
-    image.src = imageSrc;
-    await new Promise((resolve) => (image.onload = resolve));
-
-    const canvas = document.createElement('canvas');
-    canvas.width = CROP_SIZE[0];
-    canvas.height = CROP_SIZE[1];
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) return "";
-
-    ctx.drawImage(
-        image,
-        pixelCrop.x,
-        pixelCrop.y,
-        pixelCrop.width,
-        pixelCrop.height,
-        0,
-        0,
-        CROP_SIZE[0],
-        CROP_SIZE[1]
-    );
-
-    return canvas.toDataURL('image/jpeg', 0.9);
-};
 
 function CreateTwinIdPhotosPage() {
     const navigate = useNavigate();
     const { user } = useApp();
 
-    const generalData = getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY);
-    const [stepData, setStepData] = useState(() => getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY))
+    const [newAvatarData, setNewAvatarData] = useState(() => getAvatarData());
+    const [avatar, setAvatar] = useState(initialAvatarData);
+    const [pageLoading, setPageLoading] = useState(true);
+
+    const [jobs, setJobs] = useState([] as (Job | null)[]);
+    const jobsRef = useRef<(Job | null)[]>([]);
+
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
-    const jobsRef = useRef(stepData.jobs);
-    const restartingJobIds = useRef<Set<string>>(new Set());
-
-    const VIEW_CONFIG = [
-        { label: 'Front', name: 'front', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Front smile', name: 'frontSmile', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Right quarter', name: 'rightQuarter', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Left quarter', name: 'leftQuarter', ref: useRef<HTMLInputElement>(null) },
-    ];
-
     const [tempImage, setTempImage] = useState<string | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
-    useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);
+    const uploadedPhotosConfig = [
+        { label: 'Front', name: 'front', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Front smile', name: 'frontSmile', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Right quarter', name: 'rightQuarter', ref: useRef<HTMLInputElement>(null) },
+        { label: 'Left quarter', name: 'leftQuarter', ref: useRef<HTMLInputElement>(null) },
+    ];
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [])
-
-    useEffect(() => {
-        const savedPaths = stepData.uploadedPhotos;
-        if (!savedPaths) return;
-
-        VIEW_CONFIG.forEach((view, index) => {
-            const mediaPath = savedPaths[view.name as keyof UploadedPhotoPaths];
-            if (mediaPath) {
-                getMediaUrlFromPath(mediaPath).then(url => {
-                    if (url) updatePhotoAtIndex(index, url);
-                });
-            }
-        });
+        scrollToTop();
     }, []);
 
     useEffect(() => {
-        saveLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY, stepData);
-    }, [stepData]);
+        initPage()
+    }, []);
+
+    useEffect(() => {
+        saveAvatarData(newAvatarData);
+    }, [newAvatarData]);
 
     useEffect(() => {
         if (!fullscreenSrc) return;
@@ -118,16 +83,18 @@ function CreateTwinIdPhotosPage() {
     useEffect(() => {
         if (!jobsCreated()) return;
 
-        console.log("jobs updated")
-
-        const groupId = stepData.jobs[0]?.groupId!;
+        const groupId = jobs[0]?.groupId!;
 
         const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
         })
 
         return () => unsubscribe();
-    }, [stepData.jobs]);
+    }, [jobs]);
+
+    useEffect(() => {
+        jobsRef.current = jobs;
+    }, [jobs]);
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
@@ -138,19 +105,53 @@ function CreateTwinIdPhotosPage() {
                 job.result.mediaUrl = downloadUrl;
             }
 
-            if (job.id && restartingJobIds.current.has(job.id)) {
-                if (job.status === JobStatuses.pending) restartingJobIds.current.delete(job.id);
-                continue;
-            }
-
-            const jobIndex = jobsRef.current.findIndex((item) => item?.id === job.id);
-            const oldJob = jobsRef.current[jobIndex];
+            const currentJobs = jobsRef.current;
+            const jobIndex = currentJobs.findIndex((item) => item?.id === job.id);
+            const oldJob = currentJobs[jobIndex];
 
             if (oldJob && oldJob?.status !== job.status) {
-                console.log(`job updated ${job.id} with status ${job.status}`)
+                console.log(`job updated ${job.id} - "${oldJob.status}" status to status "${job.status}"`);
                 setJob(jobIndex, job);
             }
         }
+    }
+
+    const initPage = async () => {
+        const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+        setAvatar(existingAvatar);
+
+        if (newAvatarData.groupId) {
+            const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
+            const onlyIdPhotoJobs = fetchedJobs.slice(0, NUM_ID_PHOTOS);
+            const enrichedJobs = await Promise.all(
+                onlyIdPhotoJobs.map(async (job: Job) => {
+                    const mediaUrl = job.result?.mediaPath
+                        ? await getMediaUrlFromPath(job.result.mediaPath).catch(() => undefined)
+                        : undefined;
+                    return { ...job, result: { ...job.result, mediaUrl } };
+                })
+            );
+            setJobs(enrichedJobs as Job[]);
+        }
+
+        await loadUploadedPhotoUrls();
+        setPageLoading(false);
+    }
+
+    const loadUploadedPhotoUrls = async () => {
+        const mediaUrls = await Promise.all(
+            uploadedPhotosConfig.map(config =>
+                getMediaUrlFromPath(getUploadedMediaPath(config.name)).catch(() => null)
+            )
+        );
+
+        setUploadedPhotos((prev: UploadedIdPhoto[]) =>
+            prev.map((uploadedPhoto, idx) => ({ ...uploadedPhoto, mediaUrl: mediaUrls[idx] ?? undefined }))
+        );
+    }
+
+    const getUploadedMediaPath = (name: string) => {
+        return `media/${user?.id}-user/avatars/${newAvatarData.avatarId}-avatar/images/uploaded/${name}-${CROP_SIZE[0]}x${CROP_SIZE[1]}.png`;
     }
 
     const updatePhotoAtIndex = (index: number, photo: string | null) => {
@@ -183,10 +184,10 @@ function CreateTwinIdPhotosPage() {
 
     const handleCropComplete = useCallback(async () => {
         if (tempImage && activeIndex !== null && croppedAreaPixels) {
-            const croppedResult = await getCroppedImg(tempImage, croppedAreaPixels);
+            const croppedResult = await getCroppedImg(tempImage, croppedAreaPixels, CROP_SIZE);
             updatePhotoAtIndex(activeIndex, croppedResult);
             closeEditor();
-            await uploadToBucket(VIEW_CONFIG[activeIndex].name, croppedResult);
+            await uploadToBucket(uploadedPhotosConfig[activeIndex].name, croppedResult);
         }
     }, [tempImage, activeIndex, croppedAreaPixels]);
 
@@ -221,32 +222,21 @@ function CreateTwinIdPhotosPage() {
         if (file) onFileSelected(index, file);
     };
 
-    const setJobs = (jobs: (Job | null)[]) => {
-        setStepData((prev: IdPhotoStepData) => ({...prev, jobs}));
-    }
-
     const setJob = (listIdx: number, job: Job | null) => {
-        setStepData((prev: IdPhotoStepData) => ({
-            ...prev,
-            jobs: prev.jobs.map((oldJob, idx) => idx === listIdx ? job : oldJob)
-        }));
+        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
-    const setFinished = () => {
-        setStepData((prev: IdPhotoStepData) => ({...prev, finished: true}));
+    const setGroupId = (groupId: string) => {
+        setNewAvatarData((prev: NewAvatarData) => ({...prev, groupId}));
     }
 
     const uploadToBucket = async (name: string, image: string) => {
-        const mediaPath = `media/${user?.id}-user/avatars/${generalData.avatarId}-avatar/images/uploaded/${name}-${CROP_SIZE[0]}x${CROP_SIZE[1]}.png`;
+        const mediaPath = getUploadedMediaPath(name);
         await uploadMediaToBucket(mediaPath, image);
-        setStepData(prev => ({
-            ...prev,
-            uploadedPhotos: { ...prev.uploadedPhotos, [name]: mediaPath } as UploadedPhotoPaths,
-        }));
     }
 
     const jobsCreated = () => {
-        return stepData.jobs.length > 0 && stepData.jobs.every(job => job !== null);
+        return jobs.length > 0 && jobs.every(job => job !== null);
     }
 
     const createJobs = async () => {
@@ -254,60 +244,60 @@ function CreateTwinIdPhotosPage() {
         setJobs(emptyJobs);
 
         const jobRequest: TrainingJobRequest = {
-            avatarId: generalData.avatarId,
-            parameters: generalData.parameters
+            avatarId: newAvatarData.avatarId,
+            parameters: avatar.parameters
         }
 
         try {
             const jobs = await genTrainingTwinIdPhotos(jobRequest);
             setJobs(jobs);
+            setGroupId(jobs[0].groupId!);
+            setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
             console.log('Failed to create jobs for photo set')
         }
     }
 
     const restartJob = async (listIdx: number) => {
-        const job = jobsRef.current[listIdx];
+        const job = jobs[listIdx];
         if (!job?.id) return;
 
-        restartingJobIds.current.add(job.id);
         setJob(listIdx, null);
 
         const restartedJob = await restartJobById(job.id);
         setJob(listIdx, restartedJob);
+        setTimeout(() => scrollToBottom(), 500);
     }
 
     const photosUploaded = () => {
-        const allPathsSaved = !!stepData.uploadedPhotos &&
-            VIEW_CONFIG.every(v => !!stepData.uploadedPhotos![v.name as keyof UploadedPhotoPaths]);
-        const allPhotosInState = uploadedPhotos.every((item) => item.photo);
-        return allPathsSaved || allPhotosInState;
+        return uploadedPhotos.every((photo) => photo.photo || photo.mediaUrl);
     }
 
     const generatingStarted = () => {
-        return stepData.jobs.length > 0;
+        return jobs.length > 0;
     }
 
     const generatingCompleted = () => {
-        return stepData.jobs.length > 0 && stepData.jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
+        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
     }
 
     const canProceed = () => {
         return generatingCompleted();
     };
 
+    const stepLocked = () => {
+        return Boolean(avatar.mainImagePath);
+    }
+
     const nextStep = async () => {
         if (!canProceed) return
 
         try {
-            if (!stepData.finished) {
+            if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    status: AvatarStatus.idCreated,
-                    mainImagePath: stepData.jobs[0]?.result?.mediaPath,
+                    mainImagePath: jobs[0]?.result?.mediaPath,
                 };
-                await updateAvatar(generalData.avatarId, payload);
-
-                setFinished();
+                await updateAvatar(newAvatarData.avatarId, payload);
             }
 
             navigate('/avatar/create/photo-set');
@@ -324,58 +314,65 @@ function CreateTwinIdPhotosPage() {
         <>
             <CreateAvatarStepper step={1} />
 
-            <div className="mx-auto px-4 pt-12 mb-50">
-                <ImageCropperModal
-                    tempImage={tempImage}
-                    crop={crop}
-                    zoom={zoom}
-                    setCrop={setCrop}
-                    setZoom={setZoom}
-                    onCropAreaChange={(_, pixels) => setCroppedAreaPixels(pixels)}
-                    onClose={closeEditor}
-                    onApply={handleCropComplete}
-                />
-
-                <PhotoUploadGrid
-                    viewConfig={VIEW_CONFIG}
-                    uploadedPhotos={uploadedPhotos}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onFileUpload={handleFileUpload}
-                    onRemovePhoto={(index) => updatePhotoAtIndex(index, null)}
-                />
-
-                {photosUploaded() && (
-                    <div className='text-center'>
-                        <button
-                            onClick={createJobs}
-                            disabled={generatingStarted() || stepData.finished}
-                            className="inline-flex items-center gap-3 px-12 py-4 my-12 rounded-2xl bg-primary text-primary-content text-sm font-semibold uppercase tracking-[0.35em] transition-all duration-300 hover:opacity-90 hover:scale-[1.005] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                        >
-                            {(generatingStarted() && !generatingCompleted()) && <span className="loading loading-spinner loading-xs"></span>}
-                            <span>Generate Photos</span>
-                        </button>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {stepData.jobs.map((job, idx) => (
-                        <JobPhotoCard
-                            key={idx}
-                            job={job}
-                            idx={idx}
-                            onPhotoClick={setFullscreenSrc}
-                            onRetry={restartJob}
-                            canRestart={!stepData.finished}
-                        />
-                    ))}
+            {pageLoading ? (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
                 </div>
-                
-            </div>
+            ) : (
+                <div className="mx-auto px-4 pt-12 mb-50">
+                    <ImageCropperModal
+                        tempImage={tempImage}
+                        crop={crop}
+                        zoom={zoom}
+                        setCrop={setCrop}
+                        setZoom={setZoom}
+                        onCropAreaChange={(_, pixels) => setCroppedAreaPixels(pixels)}
+                        onClose={closeEditor}
+                        onApply={handleCropComplete}
+                    />
 
+                    <PhotoUploadGrid
+                        viewConfig={uploadedPhotosConfig}
+                        uploadedPhotos={uploadedPhotos}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onFileUpload={handleFileUpload}
+                        onRemovePhoto={(index) => updatePhotoAtIndex(index, null)}
+                        removable={!stepLocked() && !generatingStarted()}
+                    />
+
+                    {photosUploaded() && (
+                        <div className='text-center'>
+                            <button
+                                onClick={createJobs}
+                                disabled={generatingStarted() || stepLocked()}
+                                className="inline-flex items-center gap-3 px-12 py-4 my-12 rounded-2xl bg-primary text-primary-content text-sm font-semibold uppercase tracking-[0.35em] transition-all duration-300 hover:opacity-90 hover:scale-[1.005] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+                            >
+                                {(generatingStarted() && !generatingCompleted()) && <span className="loading loading-spinner loading-xs"></span>}
+                                <span>Generate Photos</span>
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {jobs.map((job, idx) => (
+                            <JobPhotoCard
+                                key={idx}
+                                job={job}
+                                idx={idx}
+                                onPhotoClick={setFullscreenSrc}
+                                onRetry={restartJob}
+                                canRestart={!stepLocked()}
+                            />
+                        ))}
+                    </div>
+                    
+                </div>
+            )}
+            
             <BottomDock
-                avatarId={generalData.avatarId}
+                avatarId={newAvatarData.avatarId}
                 canProceed={canProceed}
                 nextStep={nextStep}
                 previousStep={previousStep}

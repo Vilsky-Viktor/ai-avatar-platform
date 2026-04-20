@@ -1,15 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
-export enum AvatarStatus {
-  initialized = 'initialized',
-  idCreated = 'id_created',
-  photosetCreated = 'photoset_created',
-  voiceAssigned = 'voice_assigned',
-  training = 'training',
-  trained = 'trained',
-  error = 'error'
-}
-
 export enum AvatarGender {
   male = 'male',
   female = 'female'
@@ -46,13 +36,15 @@ export type AvatarParameters = {
 
 export type Avatar = {
   id?: string;
-  userId: string;
+  userId?: string;
   name: string;
   slug: string;
   type: AvatarTypes;
-  parameters?: AvatarParameters;
-  mainImage?: string;
-  status: AvatarStatus;
+  parameters: AvatarParameters;
+  mainImagePath?: string;
+  voicePath?: string;
+  isUploadedVoice?: boolean;
+  photoSetGenerated: boolean;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

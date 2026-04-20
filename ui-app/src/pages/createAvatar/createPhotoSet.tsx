@@ -2,85 +2,81 @@ import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepp
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from "react";
 import { JobStatuses, type Job, type TrainingJobRequest } from "../../types/job";
-import { genTrainingPhotoSet, restartJobById, updateAvatar } from "../../services/apiGateway";
+import { genTrainingPhotoSet, restartJobById, updateAvatar, getUserAvatarById, getJobsByGroupId } from "../../services/apiGateway";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
 import {
-    ID_PHOTO_STORAGE_KEY,
-    GENERAL_STORAGE_KEY,
-    PHOTO_SET_STORAGE_KEY,
-    getLocalStorageData,
-    saveLocalStorageData,
+    initialAvatarData,
+    getAvatarData,
+    NUM_ID_PHOTOS,
+    NUM_PHOTO_SET_PHOTOS
 } from '../../utils/avatarCreation';
 import BottomDock from "../../components/createAvatar/BottomDock";
 import { listenToCollectionByGroupId } from '../../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { useApp } from '../../providers/ContextProvider';
-import { type IdPhotoStepData, type GeneralStepData, type PhotoSetStepData  } from "../../types/avatarCreation";
-import { type Avatar, AvatarStatus, AvatarTypes } from "../../types/avatar";
+import { type Avatar, AvatarTypes } from "../../types/avatar";
+import { scrollToTop } from '../../utils/scroller';
 
 
 function CreatePhotoSetPage() {
     const navigate = useNavigate();
     const { user } = useApp();
 
-    const generalData = getLocalStorageData<GeneralStepData>(GENERAL_STORAGE_KEY);
-    const idPhotoData = getLocalStorageData<IdPhotoStepData>(ID_PHOTO_STORAGE_KEY)
-    const [stepData, setStepData] = useState(() => getLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY));
-    const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
+    const [newAvatarData, _] = useState(() => getAvatarData());
+    const [avatar, setAvatar] = useState(initialAvatarData);
+    const [pageLoading, setPageLoading] = useState(true);
 
+    const [jobs, setJobs] = useState([] as (Job | null)[]);
+    const jobsRef = useRef<(Job | null)[]>([]);
+
+    const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
     const initialized = useRef<boolean>(false);
-    const jobsRef = useRef(stepData.jobs);
-    useEffect(() => { jobsRef.current = stepData.jobs; }, [stepData.jobs]);
-    const restartingJobIds = useRef<Set<string>>(new Set());
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToTop();
     }, [])
 
     useEffect(() => {
-        const initialize = () => {
-            if (initialized.current) return;
-            initialized.current = true;
-
-            if (stepData.jobs.every((job: Job | null) => job === null)) {
-                console.log("create jobs")
-                createJobs();
-            } else {
-                console.log(stepData.jobs);
-                setJobs(stepData.jobs);
-                console.log("update jobs")
-            }
-        };
-
-        initialize();
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') initialize();
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+        initPage();
     }, []);
-
-    useEffect(() => {
-        saveLocalStorageData<PhotoSetStepData>(PHOTO_SET_STORAGE_KEY, stepData);
-    }, [stepData]);
 
     useEffect(() => {
         if (!jobsCreated()) return;
 
-        console.log("jobs updated")
-
-        const groupId = stepData.jobs[0]?.groupId!;
+        const groupId = jobs[0]?.groupId!;
 
         const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
         })
 
         return () => unsubscribe();
-    }, [stepData.jobs]);
+    }, [jobs]);
+
+    useEffect(() => {
+        jobsRef.current = jobs;
+    }, [jobs]);
+
+    const listener = async (querySnap: QuerySnapshot) => {
+        for (const docSnap of querySnap.docs) {
+            const job = docSnap.data() as Job;
+
+            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
+                const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
+                job.result.mediaUrl = downloadUrl;
+            }
+
+            const currentJobs = jobsRef.current;
+            const jobIndex = currentJobs.findIndex((item) => item?.id === job.id);
+            const oldJob = currentJobs[jobIndex];
+
+            if (oldJob && oldJob?.status !== job.status) {
+                console.log(`job updated ${job.id} - "${oldJob.status}" status to status "${job.status}"`)
+                setJob(jobIndex, job);
+            }
+        }
+    }
 
     useEffect(() => {
         if (!fullscreenSrc) return;
@@ -95,68 +91,58 @@ function CreatePhotoSetPage() {
         return () => window.removeEventListener("keydown", handleEsc);
     }, [fullscreenSrc]);
 
-    const listener = async (querySnap: QuerySnapshot) => {
-        console.log(`listener triggered`)
+    const initPage = async () => {
+        if (initialized.current) return;
+        initialized.current = true;
 
-        for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as Job;
+        const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+        setAvatar(existingAvatar);
 
-            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
-                const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
-                job.result.mediaUrl = downloadUrl;
-            }
+        const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
 
-            if (job.id && restartingJobIds.current.has(job.id)) {
-                if (job.status === JobStatuses.pending) restartingJobIds.current.delete(job.id);
-                continue;
-            }
-
-            const jobIndex = jobsRef.current.findIndex((item) => item?.id === job.id);
-            const oldJob = jobsRef.current[jobIndex];
-
-            if (oldJob && oldJob?.status !== job.status) {
-                console.log(`job updated ${job.id} with status ${job.status}`)
-                setJob(jobIndex, job);
-            }
+        if (fetchedJobs.length === NUM_ID_PHOTOS + NUM_PHOTO_SET_PHOTOS) {
+            const onlyPhotoSetJobs = fetchedJobs.slice(NUM_ID_PHOTOS);
+            const enrichedJobs = await Promise.all(
+                onlyPhotoSetJobs.map(async (job: Job) => {
+                    const mediaUrl = job.result?.mediaPath
+                        ? await getMediaUrlFromPath(job.result.mediaPath).catch(() => undefined)
+                        : undefined;
+                    return { ...job, result: { ...job.result, mediaUrl } };
+                })
+            );
+            setJobs(enrichedJobs as Job[]);
+        } else {
+            await createJobs(existingAvatar);
         }
-    }
 
+        setPageLoading(false);
+    }
+    
     const generatingCompleted = () => {
-        return stepData.jobs.length > 0 && stepData.jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
+        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
     }
 
     const canProceed = () => {
         return generatingCompleted();
     };
 
-    const setJobs = (jobs: (Job | null)[]) => {
-        setStepData((prev: PhotoSetStepData) => ({...prev, jobs}));
-    }
-
     const setJob = (listIdx: number, job: Job | null) => {
-        setStepData((prev) => ({
-            ...prev,
-            jobs: prev.jobs.map((oldJob, idx) => idx === listIdx ? job : oldJob)
-        }));
+        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
-    const setFinished = () => {
-        setStepData((prev: PhotoSetStepData) => ({...prev, finished: true}));
-    }
-
     const jobsCreated = () => {
-        return stepData.jobs.length > 0 && stepData.jobs.every(job => job !== null);
+        return jobs.length > 0 && jobs.every(job => job !== null);
     }
 
-    const createJobs = async () => {
-        const emptyJobs = Array(34).fill(null);
+    const createJobs = async (avatarData: Avatar = avatar) => {
+        const emptyJobs = Array(NUM_PHOTO_SET_PHOTOS).fill(null);
         setJobs(emptyJobs);
 
         const jobRequest: TrainingJobRequest = {
-            avatarType: generalData.type,
-            groupId: idPhotoData.jobs[0]?.groupId,
-            avatarId: generalData.avatarId,
-            parameters: generalData.parameters,
+            avatarType: avatarData.type,
+            groupId: newAvatarData.groupId,
+            avatarId: newAvatarData.avatarId,
+            parameters: avatarData.parameters,
         }
 
         try {
@@ -167,25 +153,30 @@ function CreatePhotoSetPage() {
         }
     }
 
-    const restartJob = async (jobId: string, listIdx: number) => {
-        restartingJobIds.current.add(jobId);
+    const restartJob = async (listIdx: number) => {
+        const job = jobs[listIdx];
+        if (!job?.id) return;
+
         setJob(listIdx, null);
-        const restartedJob = await restartJobById(jobId);
+
+        const restartedJob = await restartJobById(job.id);
         setJob(listIdx, restartedJob);
+    }
+
+    const stepLocked = () => {
+        return avatar.photoSetGenerated;
     }
 
     const nextStep = async () => {
         if (!canProceed) return;
 
         try {
-            if (!stepData.finished) {
+            if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    status: AvatarStatus.photosetCreated, 
+                    photoSetGenerated: true, 
                 };
 
-                await updateAvatar(generalData.avatarId, payload);
-
-                setFinished()
+                await updateAvatar(newAvatarData.avatarId, payload);
             }
 
             navigate('/avatar/create/assign-voice');
@@ -195,7 +186,7 @@ function CreatePhotoSetPage() {
     }
 
     const previousStep = () => {
-        if (generalData.type === AvatarTypes.digitalTwin) {
+        if (avatar.type === AvatarTypes.digitalTwin) {
             navigate('/avatar/create/twin-id-photos');
         } else {
             navigate('/avatar/create/synthetic-id-photos');
@@ -206,23 +197,29 @@ function CreatePhotoSetPage() {
         <>
             <CreateAvatarStepper step={2}/>
 
-            <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {stepData.jobs.map((job, idx) => (
-                        <JobPhotoCard
-                            key={idx}
-                            job={job}
-                            idx={idx}
-                            onPhotoClick={setFullscreenSrc}
-                            onRetry={(i) => { const j = jobsRef.current[i]; if (j?.id) restartJob(j.id, i); }}
-                            canRestart={!stepData.finished}
-                        />
-                    ))}
+            {pageLoading ? (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
                 </div>
-            </div>
+            ) : (
+                <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {jobs.map((job, idx) => (
+                            <JobPhotoCard
+                                key={idx}
+                                job={job}
+                                idx={idx}
+                                onPhotoClick={setFullscreenSrc}
+                                onRetry={restartJob}
+                                canRestart={!stepLocked()}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <BottomDock
-                avatarId={generalData.avatarId}
+                avatarId={newAvatarData.avatarId}
                 canProceed={canProceed}
                 nextStep={nextStep}
                 previousStep={previousStep}

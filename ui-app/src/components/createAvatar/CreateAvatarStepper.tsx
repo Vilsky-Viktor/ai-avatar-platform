@@ -31,7 +31,7 @@ function CreateAvatarStepper({ step }: Props) {
                         <div key={s.id} className="relative z-10 flex flex-col items-center group">
                             {/* The Dot */}
                             <div className={`
-                                w-9 h-9 rounded-full flex items-center justify-center
+                                w-9 h-9 rounded-lg flex items-center justify-center
                                 transition-all duration-500 border
                                 ${isActive 
                                     ? 'bg-base-100 border-primary shadow-[0_0_15px_rgba(var(--p),0.2)]' 

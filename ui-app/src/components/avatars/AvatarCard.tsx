@@ -1,5 +1,5 @@
-import { Image, Video, Calendar, MoreVertical, Trash2 } from 'lucide-react';
-import { type Avatar, AvatarStatus } from '../../types/avatar';
+import { MoreVertical, Trash2 } from 'lucide-react';
+import { type Avatar } from '../../types/avatar';
 import { useApp } from '../../providers/ContextProvider';
 import { ThemeColor } from '../../types/settings';
 import { AvatarGender } from '../../types/avatar';
@@ -37,26 +37,6 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
     setImageSrc(frontPictureUrl);
   }
 
-  const getStatusLabel = () => {
-    switch(avatar.status) {
-        case AvatarStatus.error: return 'Failed';
-        case AvatarStatus.trained: return 'Ready';
-        default: return 'Processing';
-    }
-  };
-
-  const getStatusColor = () => {
-    if (avatar.status === AvatarStatus.error) return 'text-error';
-    if (avatar.status === AvatarStatus.trained) return 'text-success';
-    return 'text-warning';
-  };
-
-  const getStatus = () => {
-    if (avatar.status === AvatarStatus.error) return 'status-error';
-    if (avatar.status === AvatarStatus.trained) return 'status-success';
-    return 'status-warning';
-  }
-
   const deleteAvatar = async () => {
     setLoadingDelete(true);
     await onDelete(avatar.id!);
@@ -88,18 +68,6 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
             border border-base-content/5 mt-2
             animate-in fade-in zoom-in-95 duration-200 origin-top-right
           ">
-            {/* STATUS ITEM */}
-            <li className="animate-in slide-in-from-top-2 duration-300 delay-75">
-                <div className="flex justify-between items-center active:bg-transparent cursor-default">
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Status</span>
-                    <span className={`text-[10px] font-medium uppercase tracking-tighter ${getStatusColor()}`}>
-                        {getStatusLabel()}
-                    </span>
-                </div>
-            </li>
-
-            <div className="divider my-1 opacity-5"></div>
-
             {/* DELETE ITEM */}
             <li className="animate-in slide-in-from-top-2 duration-300 delay-150">
                 <button 
@@ -142,7 +110,6 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
           <div className="absolute bottom-4 left-7 right-7 z-30">
             <h2 className="text-xl font-medium uppercase tracking-[0.2em] text-base-content drop-shadow-md truncate flex items-center">
               {avatar.name}
-              <div className={`status mb-1 ml-3 opacity-60 ${getStatus()}`}></div>
             </h2>
           </div>
         </figure>

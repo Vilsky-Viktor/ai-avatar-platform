@@ -1,9 +1,17 @@
-import { Job } from '../types/job';
+import { Job, JobStatuses } from '../types/job';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import logger from '../logger';
 
 const DB_NAME = process.env.DB_NAME || '';
 const JOBS_COLLECTION_NAME = process.env.JOBS_COLLECTION_NAME || '';
 const db = getFirestore(DB_NAME);
+
+const STATUS_ORDER: Record<string, number> = {
+    [JobStatuses.pending]:    0,
+    [JobStatuses.generating]: 1,
+    [JobStatuses.completed]:  2,
+    [JobStatuses.error]:      2,
+};
 
 const batchDeleteQuery = async (query: FirebaseFirestore.Query): Promise<void> => {
   const snapshot = await query.get();
@@ -26,6 +34,16 @@ export const getById = async (userId: string, id: string): Promise<Job | null> =
 
     return doc.data() as Job;
 };
+
+export const getByGroupId = async (userId: string, groupId: string): Promise<Job[]> => {
+    const snapshot = await db.collection(JOBS_COLLECTION_NAME)
+        .where("userId", "==", userId)
+        .where("groupId", "==", groupId)
+        .orderBy("order", "asc")
+        .get();
+
+    return snapshot.docs.map(doc => doc.data() as Job);
+}
 
 export const create = async (userId: string, job: Omit<Job, 'id'>): Promise<Job> => {
     const [dbJob] = await createMany(userId, [job]);
@@ -54,21 +72,35 @@ export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promi
     return dbJobs;
 };
 
-export const update = async (userId: string, jobId: string, updateData: Partial<Job>): Promise<void> => {
+export const update = async (userId: string, jobId: string, updateData: Partial<Job>, forceStatus = false): Promise<void> => {
     const jobRef = db.collection(JOBS_COLLECTION_NAME).doc(jobId);
-    const doc = await jobRef.get();
 
-    if (!doc.exists) {
-        throw new Error(`Job ${jobId} not found`);
-    }
+    await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(jobRef);
 
-    if (doc.data()?.userId !== userId) {
-        throw new Error(`Unauthorized: user ${userId} does not own job ${jobId}`);
-    }
+        if (!doc.exists) {
+            throw Object.assign(new Error(`Job ${jobId} not found`), { status: 404 });
+        }
 
-    await jobRef.update({
-        ...updateData,
-        updatedAt: Timestamp.now()
+        if (doc.data()?.userId !== userId) {
+            throw Object.assign(new Error(`Unauthorized: user ${userId} does not own job ${jobId}`), { status: 403 });
+        }
+
+        if (updateData.status) {
+            const currentStatus = doc.data()?.status as string;
+            const currentOrder = STATUS_ORDER[currentStatus] ?? 0;
+            const newOrder = STATUS_ORDER[updateData.status] ?? 0;
+
+            if (!forceStatus && newOrder < currentOrder) {
+                logger.warn({ jobId, currentStatus, newStatus: updateData.status }, 'Skipping status update — regression blocked');
+                return;
+            }
+        }
+
+        transaction.update(jobRef, {
+            ...updateData,
+            updatedAt: Timestamp.now()
+        });
     });
 }
 

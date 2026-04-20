@@ -56,8 +56,8 @@ function Header() {
                 <div className="dropdown dropdown-end cursor-pointer">
                     <div tabIndex={0} role="button" className="group flex items-center">
                         <div className="relative">
-                            <div className="absolute inset-0 rounded-full bg-primary/20 scale-110 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-base-300 group-hover:ring-primary transition-all duration-300 relative z-10">
+                            <div className="absolute inset-0 rounded-lg bg-primary/20 scale-110 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="w-9 h-9 rounded-lg overflow-hidden ring-1 ring-base-300 group-hover:ring-primary transition-all duration-300 relative z-10">
                                 <img
                                     src={user?.img ?? "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"}
                                     referrerPolicy="no-referrer"

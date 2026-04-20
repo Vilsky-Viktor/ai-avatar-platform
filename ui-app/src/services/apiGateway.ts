@@ -36,13 +36,24 @@ export const syncUser = async (user: FirebaseUser): Promise<User> => {
   }
 };
 
+export const getUserAvatarById = async (avatarId: string): Promise<Avatar> => {
+  try {
+    const res = await apiClient.get(`/avatars/get/${avatarId}`);
+
+    return res.data as Avatar;
+  } catch (error) {
+    console.error(`Error fetching avatar ${avatarId} avatar:`, error);
+    throw error;
+  }
+}
+
 export const getAllUserAvatars = async (): Promise<Avatar[]> => {
   try {
     const res = await apiClient.get('/avatars/get-all');
 
     return res.data as Avatar[];
   } catch (error) {
-    console.error("Error creating avatar:", error);
+    console.error("Error fetching avatars avatar:", error);
     throw error;
   }
 }
@@ -120,6 +131,17 @@ export const genTrainingTwinIdPhotos = async (jobRequest: TrainingJobRequest): P
     return res.data as Job[];
   } catch (error) {
     console.error("Error creating training twin photo jobs job:", error);
+    throw error;
+  }
+}
+
+export const getJobsByGroupId  = async (groupId: string): Promise<Job[]> => {
+  try {
+    const res = await apiClient.get(`/jobs/get/group/${groupId}`, {});
+
+    return res.data as Job[];
+  } catch (error) {
+    console.error("Error fetching job:", error);
     throw error;
   }
 }

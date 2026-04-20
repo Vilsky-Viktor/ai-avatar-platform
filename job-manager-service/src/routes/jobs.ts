@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  getByGroupId,
   genTrainingPhotoSet,
   genTrainingSyntheticFrontIdPhoto,
   genTrainingSyntheticIdPhotos,
@@ -12,6 +13,7 @@ import {
 
 const router = Router();
 
+router.get('/get/group/:groupId', getByGroupId);
 router.post('/gen-training-photo-set', genTrainingPhotoSet);
 router.post('/gen-training-synthetic-front-id-photo', genTrainingSyntheticFrontIdPhoto);
 router.post('/gen-training-synthetic-id-photos', genTrainingSyntheticIdPhotos);

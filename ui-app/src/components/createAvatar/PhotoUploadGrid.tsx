@@ -16,14 +16,16 @@ type Props = {
     onDrop: (index: number, e: React.DragEvent) => void;
     onFileUpload: (index: number, e: React.ChangeEvent<HTMLInputElement>) => void;
     onRemovePhoto: (index: number) => void;
+    removable?: boolean;
 };
 
-function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, onDrop, onFileUpload, onRemovePhoto }: Props) {
+function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, onDrop, onFileUpload, onRemovePhoto, removable }: Props) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full mt-8">
             {viewConfig.map((view, index) => {
                 const photoData = uploadedPhotos[index];
-                const hasPhoto = !!photoData?.photo;
+                const imageSrc = photoData?.photo || photoData?.mediaUrl;
+                const hasPhoto = !!imageSrc;
 
                 return (
                     <div
@@ -47,19 +49,21 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                         {hasPhoto ? (
                             <>
                                 <img
-                                    src={photoData.photo!}
+                                    src={imageSrc!}
                                     className="absolute inset-0 w-full h-full object-contain z-0 rounded-[1.5rem]"
                                     alt={view.label}
                                 />
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onRemovePhoto(index);
-                                    }}
-                                    className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center group-hover:hover:bg-error transition-all cursor-pointer"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                                {removable && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onRemovePhoto(index);
+                                        }}
+                                        className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center group-hover:hover:bg-error transition-all cursor-pointer"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
                             </>
                         ) : (
                             <div className="flex flex-col items-center gap-4 pointer-events-none">

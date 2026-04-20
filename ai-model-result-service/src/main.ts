@@ -14,16 +14,22 @@ function listenForResults() {
   logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for AI model results...');
 
   const messageHandler = async (message: Message) => {
+    let job: Job | undefined;
     try {
-      const job: Job = JSON.parse(message.data.toString());
+      job = JSON.parse(message.data.toString()) as Job;
 
       logger.info({ jobId: job.id, status: job.status, msgId: message.id }, 'Received message');
 
       await updateJob(job);
       message.ack();
-    } catch (err) {
-      logger.error({ err }, 'Error parsing message or handling result');
-      message.nack();
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        logger.warn({ jobId: job?.id, msgId: message.id }, 'Job not found, skipping message');
+        message.ack();
+      } else {
+        logger.error({ err }, 'Error parsing message or handling result');
+        message.nack();
+      }
     }
   };
 

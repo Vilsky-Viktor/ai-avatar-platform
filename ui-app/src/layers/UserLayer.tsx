@@ -12,7 +12,7 @@ function UserLayer() {
     return (
         <div className="min-h-screen flex flex-col bg-base-200 w-full transition-colors duration-300">
             <Header/>
-            <main className="flex-grow p-6 pt-20">
+            <main className="flex-grow p-6">
                 <div className="max-w-7xl mx-auto w-full">
                     <Routes>
                         <Route path="/" element={<AvatarsPage />} />

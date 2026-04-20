@@ -1,15 +1,5 @@
 import type { FirestoreTimestamp } from "./firestore";
 
-export enum AvatarStatus {
-  initialized = 'initialized',
-  idCreated = 'id_created',
-  photosetCreated = 'photoset_created',
-  voiceAssigned = 'voice_assigned',
-  training = 'training',
-  trained = 'trained',
-  error = 'error'
-}
-
 export enum AvatarTypes {
   digitalTwin = 'twin',
   synthetic = 'synthetic'
@@ -52,7 +42,8 @@ export type Avatar = {
   parameters: AvatarParameters;
   mainImagePath?: string;
   voicePath?: string;
-  status?: AvatarStatus;
+  isUploadedVoice?: boolean;
+  photoSetGenerated: boolean;
   updatedAt?: FirestoreTimestamp;
   createdAt?: FirestoreTimestamp
 }

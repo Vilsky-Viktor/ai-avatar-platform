@@ -5,9 +5,10 @@ type HttpMethod = 'get' | 'post' | 'patch' | 'delete';
 
 const RETRY_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 500;
+const REQUEST_TIMEOUT_MS = 10000;
 
 async function request(method: HttpMethod, url: string, userId: string, body?: unknown): Promise<void> {
-  const config = { headers: { 'x-user-id': userId } };
+  const config = { headers: { 'x-user-id': userId }, timeout: REQUEST_TIMEOUT_MS };
 
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
     try {

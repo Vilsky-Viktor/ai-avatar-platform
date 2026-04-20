@@ -5,6 +5,7 @@ import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
 import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import { 
   getById as getByIdDb,
+  getByGroupId as getByGroupIdDb,
   create as createDb, 
   createMany as createManyDb, 
   update as updateDb,
@@ -17,7 +18,22 @@ import uuid from 'uuid';
 import imageRatios from '../types/imageRatios';
 
 
-const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511'
+const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
+
+export const getByGroupId = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const groupId = req.params.groupId as string;
+
+  req.log.info(`Get jobs by group ID ${groupId} for user ${userId} with group ID ${groupId}`);
+
+  try {
+    const jobs = await getByGroupIdDb(userId, groupId);
+    return res.status(201).json(jobs);
+  } catch (error) {
+    req.log.info(`Failed to get jobs by group ID ${groupId} for ${userId}: ${error}`);
+    next(error);
+  }
+}
 
 export const genTrainingSyntheticFrontIdPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -241,7 +257,7 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
 
     job.status = JobStatuses.pending;
 
-    await updateDb(userId, id, job);
+    await updateDb(userId, id, job, true);
     await publishJob(job.metadata.queueTopic, job);
 
     return res.status(200).json(job);

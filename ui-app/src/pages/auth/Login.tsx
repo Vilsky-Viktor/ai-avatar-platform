@@ -6,6 +6,7 @@ import { auth } from '../../firebase';
 import { syncUser } from '../../services/apiGateway';
 import Loading from '../../components/Loading';
 import { ScanFace, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { scrollToTop } from '../../utils/scroller';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ function LoginPage() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToTop();
     }, [])
 
     const isFormValid = () => {

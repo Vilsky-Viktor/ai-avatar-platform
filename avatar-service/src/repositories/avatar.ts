@@ -6,6 +6,17 @@ const AVATARS_COLLECTION_NAME = process.env.AVATARS_COLLECTION_NAME || ''
 const USERS_COLLECTION_NAME = process.env.USERS_COLLECTION_NAME || ''
 const db = getFirestore(DB_NAME)
 
+export const getById = async (userId: string, avatarId: string): Promise<Avatar> => {
+    const avatarDocRef = db.collection(USERS_COLLECTION_NAME)
+        .doc(userId)
+        .collection(AVATARS_COLLECTION_NAME)
+        .doc(avatarId);
+
+    const avatarDoc = await avatarDocRef.get();
+    if (!avatarDoc.exists) throw Object.assign(new Error(`Avatar ${avatarId} not found`), { status: 404 });
+    return avatarDoc.data() as Avatar;
+}
+
 export const getAll = async (userId: string): Promise<Avatar[]> => {
     const avatarsCollectionRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
