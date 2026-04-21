@@ -1,6 +1,7 @@
 import json
 import multiprocessing
 import os
+import threading
 
 from google.cloud import pubsub_v1
 
@@ -27,7 +28,7 @@ def _publish_error(job: Job, message: str):
         logger.error(f"Failed to publish error status: {e}", exc_info=True)
 
 
-def make_process_job(shared: training.SharedComponents):
+def make_process_job(shared: training.SharedComponents, semaphore: threading.Semaphore):
     def process_job(message: pubsub_v1.subscriber.message.Message):
         job: Job | None = None
 
@@ -86,30 +87,32 @@ def make_process_job(shared: training.SharedComponents):
 
             dest = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/loras/{job.result.fileName}"
             out_dir = storage.make_lora_output_dir(job.id)
-            try:
-                training.train_lora(
-                    images=images,
-                    prompts=aligned_prompts,
-                    config=inference,
-                    out_dir=out_dir,
-                    shared=shared,
-                    num_buckets=job.metadata.numBuckets,
-                )
-            except Exception as e:
-                logger.error(f"Training failed: {e}", exc_info=True)
-                storage.cleanup_lora_output_dir(job.id)
-                _publish_error(job, str(e))
-                return
 
-            logger.info(f"Uploading LoRA to gs://{dest} ...")
-            try:
-                storage.upload_lora(out_dir, dest)
-            except Exception as e:
-                logger.error(f"Upload failed: {e}", exc_info=True)
-                _publish_error(job, str(e))
-                return
-            finally:
-                storage.cleanup_lora_output_dir(job.id)
+            with semaphore:
+                try:
+                    training.train_lora(
+                        images=images,
+                        prompts=aligned_prompts,
+                        config=inference,
+                        out_dir=out_dir,
+                        shared=shared,
+                        num_buckets=job.metadata.numBuckets,
+                    )
+                except Exception as e:
+                    logger.error(f"Training failed: {e}", exc_info=True)
+                    storage.cleanup_lora_output_dir(job.id)
+                    _publish_error(job, str(e))
+                    return
+
+                logger.info(f"Uploading LoRA to gs://{dest} ...")
+                try:
+                    storage.upload_lora(out_dir, dest)
+                except Exception as e:
+                    logger.error(f"Upload failed: {e}", exc_info=True)
+                    _publish_error(job, str(e))
+                    return
+                finally:
+                    storage.cleanup_lora_output_dir(job.id)
 
             job.status = "completed"
             job.result.mediaPath = dest
@@ -144,6 +147,7 @@ def run_worker(worker_idx: int):
 
     reset_inactivity_timer()
 
+    semaphore = threading.Semaphore(1)
     subscriber = mq.get_subscriber_client()
     sub_path = subscriber.subscription_path(mq.PROJECT_ID, mq.SUBSCRIPTION_ID)
 
@@ -152,7 +156,7 @@ def run_worker(worker_idx: int):
     with subscriber:
         streaming_pull = subscriber.subscribe(
             sub_path,
-            callback=make_process_job(shared),
+            callback=make_process_job(shared, semaphore),
             flow_control=pubsub_v1.types.FlowControl(max_messages=1),
         )
         try:

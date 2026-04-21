@@ -41,7 +41,7 @@ QWEN_MODEL_PATH = os.environ.get("QWEN_MODEL_PATH", "/workspace/models/qwen-edit
 
 # LoRA targets — image stream + text stream projections for maximum fidelity
 LORA_TARGET_MODULES = [
-    "to_q", "to_k", "to_v", "to_out.0",          # image stream
+    "to_q", "to_k", "to_v", "to_out.0",  # image stream
     "add_q_proj", "add_k_proj", "add_v_proj", "to_add_out",  # text stream
 ]
 
@@ -100,11 +100,11 @@ def load_shared_components() -> SharedComponents:
 
 
 def train_lora(
-    images:     list[Image.Image],
-    prompts:    list[str],
-    config:     InferenceConfig,
-    out_dir:    Path,
-    shared:     SharedComponents,
+    images: list[Image.Image],
+    prompts: list[str],
+    config: InferenceConfig,
+    out_dir: Path,
+    shared: SharedComponents,
     num_buckets: int = 1,
 ) -> Path:
     """
