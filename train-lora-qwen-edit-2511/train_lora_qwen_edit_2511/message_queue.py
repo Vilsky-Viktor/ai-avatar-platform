@@ -3,9 +3,9 @@ import os
 
 from google.cloud import pubsub_v1
 
-PROJECT_ID       = os.environ.get("PROJECT_ID", "loom24-mvp")
-SUBSCRIPTION_ID  = os.environ.get("SUBSCRIPTION_ID", "train-lora-qwen-edit-2511-sub")
-RESULT_TOPIC_ID  = os.environ.get("RESULT_TOPIC_ID", "ai-model-result")
+PROJECT_ID = os.environ.get("PROJECT_ID", "loom24-mvp")
+SUBSCRIPTION_ID = os.environ.get("SUBSCRIPTION_ID", "train-lora-qwen-edit-2511-sub")
+RESULT_TOPIC_ID = os.environ.get("RESULT_TOPIC_ID", "ai-model-result")
 
 
 def get_subscriber_client() -> pubsub_v1.SubscriberClient:

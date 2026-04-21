@@ -4,11 +4,11 @@ import threading
 
 from .logger import logger
 
-RUNPOD_POD_ID      = os.environ.get("RUNPOD_POD_ID")
+RUNPOD_POD_ID = os.environ.get("RUNPOD_POD_ID")
 INACTIVITY_TIMEOUT = int(os.environ.get("INACTIVITY_TIMEOUT", "300"))
 
 _timer: threading.Timer | None = None
-_lock  = threading.Lock()
+_lock = threading.Lock()
 
 
 def _terminate():

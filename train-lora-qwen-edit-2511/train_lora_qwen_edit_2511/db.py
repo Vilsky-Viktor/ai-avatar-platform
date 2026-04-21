@@ -1,8 +1,8 @@
 import os
 from google.cloud.firestore import Client
 
-DB_NAME             = os.environ.get("DB_NAME", "ai-avatar-db")
-JOBS_COLLECTION     = os.environ.get("JOBS_COLLECTION_NAME", "jobs")
+DB_NAME = os.environ.get("DB_NAME", "ai-avatar-db")
+JOBS_COLLECTION = os.environ.get("JOBS_COLLECTION_NAME", "jobs")
 
 _db: Client | None = None
 

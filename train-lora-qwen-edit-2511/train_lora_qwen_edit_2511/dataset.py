@@ -11,7 +11,7 @@ from torchvision import transforms
 # Ordered by aspect ratio priority — num_buckets slices this list.
 ASPECT_RATIO_BUCKETS = [
     (1328, 1328),  # 1:1
-    (928,  1664),  # 9:16 portrait
+    (928, 1664),   # 9:16 portrait
     (1104, 1472),  # 3:4 portrait
 ]
 
@@ -27,11 +27,11 @@ def _nearest_bucket(img: Image.Image, num_buckets: int) -> tuple[int, int]:
 def _resize_and_crop(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
     """Scale so the shorter side fills the target, then center-crop."""
     scale = max(target_w / img.width, target_h / img.height)
-    new_w = round(img.width  * scale)
+    new_w = round(img.width * scale)
     new_h = round(img.height * scale)
     img = img.resize((new_w, new_h), Image.LANCZOS)
     left = (new_w - target_w) // 2
-    top  = (new_h - target_h) // 2
+    top = (new_h - target_h) // 2
     return img.crop((left, top, left + target_w, top + target_h))
 
 
@@ -51,10 +51,10 @@ class TrainingDataset(Dataset):
 
     def __init__(
         self,
-        images:      list[Image.Image],
-        prompts:     list[str],
+        images: list[Image.Image],
+        prompts: list[str],
         num_buckets: int = 1,
-        repeats:     int = 10,
+        repeats: int = 10,
         random_flip: bool = True,
     ):
         assert len(images) == len(prompts), "images and prompts must have the same length"
@@ -78,8 +78,8 @@ class TrainingDataset(Dataset):
         pixel_values, prompt, img_shape = self.entries[idx]
         return {
             "pixel_values": pixel_values,
-            "prompt":        prompt,
-            "img_shape":     img_shape,   # (H, W) — passed to transformer
+            "prompt": prompt,
+            "img_shape": img_shape,  # (H, W) — passed to transformer
         }
 
 
@@ -92,6 +92,6 @@ def _augment(img: Image.Image, random_flip: bool) -> torch.Tensor:
 def collate_fn(examples: list[dict]) -> dict:
     return {
         "pixel_values": torch.stack([e["pixel_values"] for e in examples]),
-        "prompts":      [e["prompt"]     for e in examples],
-        "img_shapes":   [e["img_shape"]  for e in examples],
+        "prompts": [e["prompt"] for e in examples],
+        "img_shapes": [e["img_shape"] for e in examples],
     }
