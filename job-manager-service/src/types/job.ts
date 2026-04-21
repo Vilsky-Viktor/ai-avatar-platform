@@ -105,12 +105,6 @@ export type JobInput = {
   loras?: LoraData[];
 }
 
-export type JobRequestInput = {
-  gender: string;
-  parameters: AvatarParameters;
-  idPhotoPaths?: string[]
-};
-
 export type JobResult = {
   mediaPath?: string;
   faceMatches?: number[];

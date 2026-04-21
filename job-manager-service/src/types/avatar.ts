@@ -31,3 +31,7 @@ export enum AvatarTypes {
   twin = 'twin',
   synthetic = 'synthetic'
 }
+
+export type AvatarLoras = {
+  qwenEdit2511Path: string;
+}

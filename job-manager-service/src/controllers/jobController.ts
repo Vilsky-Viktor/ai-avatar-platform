@@ -16,6 +16,7 @@ import { publishJob, publishJobs } from '../services/messageQueue';
 import { buildPhotoSetJobs } from '../utils/jobBuilder';
 import uuid from 'uuid';
 import imageRatios from '../types/imageRatios';
+import { AvatarLoras } from '../types/avatar';
 
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
@@ -24,13 +25,33 @@ export const getByGroupId = async (req: Request, res: Response, next: NextFuncti
   const userId = req.headers['x-user-id'] as string;
   const groupId = req.params.groupId as string;
 
-  req.log.info(`Get jobs by group ID ${groupId} for user ${userId} with group ID ${groupId}`);
+  req.log.info(`Get jobs by group ID ${groupId} for user ${userId}`);
 
   try {
     const jobs = await getByGroupIdDb(userId, groupId);
     return res.status(201).json(jobs);
   } catch (error) {
     req.log.info(`Failed to get jobs by group ID ${groupId} for ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+export const trainLoras = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const groupId = req.params.groupId as string;
+
+  req.log.info(`Train LORAs for user ${userId} with group ID ${groupId}`);
+
+  try {
+    const jobs = await getByGroupIdDb(userId, groupId);
+
+    const loras = {
+      qwenEdit2511Path: ''
+    } as AvatarLoras;
+
+    return res.status(201).json(loras);
+  } catch (error) {
+    req.log.info(`Failed to create jobs to train LORAs with group ID ${groupId} for ${userId}: ${error}`);
     next(error);
   }
 }

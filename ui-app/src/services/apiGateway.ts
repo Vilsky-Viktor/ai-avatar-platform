@@ -2,7 +2,7 @@ import axios from 'axios';
 import { auth } from '../firebase';
 import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
-import type { Avatar, AvatarGender } from '../types/avatar';
+import type { Avatar, AvatarGender, AvatarLoras } from '../types/avatar';
 import type { Job, TrainingJobRequest } from '../types/job';
 import type { Media } from '../types/media';
 import type { Voice } from '../types/voice';
@@ -188,13 +188,24 @@ export const createTrainingMedia = async (groupId: string): Promise<Media[]> => 
   }
 }
 
-export const getVoicesByGender = async (gender: AvatarGender) => {
+export const getVoicesByGender = async (gender: AvatarGender): Promise<Voice[]> => {
   try {
     const res = await apiClient.get(`/voices/get-by-gender/${gender}`);
 
     return res.data as Voice[];
   } catch (error) {
     console.error("Error fetching voices:", error);
+    throw error;
+  }
+}
+
+export const trainLoras = async (groupId: string): Promise<AvatarLoras> => {
+  try {
+    const res = await apiClient.post(`/jobs/train-loras/group/${groupId}`, {});
+
+    return res.data as AvatarLoras;
+  } catch (error) {
+    console.error("Error creating jobs to train LORAs:", error);
     throw error;
   }
 }
