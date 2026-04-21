@@ -2,7 +2,7 @@ import os
 import subprocess
 import threading
 
-from .logger import logger
+from train_lora_qwen_edit_2511.logger import logger
 
 RUNPOD_POD_ID = os.environ.get("RUNPOD_POD_ID")
 INACTIVITY_TIMEOUT = int(os.environ.get("INACTIVITY_TIMEOUT", "300"))

@@ -27,9 +27,9 @@ from diffusers.training_utils import (
 )
 from transformers import Qwen2Tokenizer, Qwen2_5_VLForConditionalGeneration
 
-from .dataset import TrainingDataset, collate_fn
-from .logger import logger
-from .models import InferenceConfig
+from train_lora_qwen_edit_2511.dataset import TrainingDataset, collate_fn
+from train_lora_qwen_edit_2511.logger import logger
+from train_lora_qwen_edit_2511.models import InferenceConfig
 
 QWEN_MODEL_PATH = os.environ.get("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")
 

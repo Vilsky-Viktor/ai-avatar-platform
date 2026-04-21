@@ -9,7 +9,7 @@ from filelock import FileLock
 from google.cloud import storage
 from PIL import Image
 
-from .logger import logger
+from train_lora_qwen_edit_2511.logger import logger
 
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "loom24-mvp.firebasestorage.app")
 BUCKET_MODELS_PATH = "models"
