@@ -203,7 +203,7 @@ def train_lora(
     )
 
     # ── 6. Training loop ──────────────────────────────────────────────────────
-    logger.info(f"Starting training: {config.numSteps} steps, grad_accum={config.gradientAccumulationSteps}, lr={config.learningRate}")
+    logger.info(f"Starting training: {config.numSteps} steps, grad_accum={config.gradientAccumulationSteps}, lr={config.learningRate}, scheduler=constant_with_warmup, clip_grad_norm={config.clipGradNorm}, optimizer=AdamW8bit")
     transformer.train()
     global_step = 0
     accum_loss = 0.0

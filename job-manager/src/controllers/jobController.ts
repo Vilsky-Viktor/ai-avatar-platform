@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { Job, MediaTypes, JobTargets, JobStatuses, TrainingJobRequest, JobMetadata } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateTrainingPhotoSetData, generatePhotoSetCaptions } from '../utils/photoSetInputData';
+import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
+import { generatePhotoSetCaptions } from '../utils/photoSetCaptions';
 import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import {
   getById as getByIdDb,
@@ -56,7 +57,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
 
     const captions = generatePhotoSetCaptions(jobRequest.parameters);
     const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
-    const prompts = completedJobs.map(j => captions[(j.order ?? 1) - 1]);
+    const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
     const numBuckets = 3;
 
     const trainingJob: Job = {

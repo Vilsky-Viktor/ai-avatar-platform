@@ -13,3 +13,8 @@ export type IdPhotoSetPaths = {
     generated: ImagePaths;
     uploaded: ImagePaths;
 }
+
+export type PhotoSetCaption = {
+  caption: string;
+  order: number;
+}
