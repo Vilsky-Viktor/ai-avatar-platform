@@ -11,12 +11,12 @@ from PIL import Image
 
 from .logger import logger
 
-BUCKET_NAME          = os.environ.get("BUCKET_NAME", "loom24-mvp.firebasestorage.app")
-BUCKET_MODELS_PATH   = "models"
-LOCAL_MODELS_PATH    = Path(os.environ.get("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")).parent
-MEDIA_CACHE_DIR      = Path(os.environ.get("MEDIA_CACHE_DIR", "/workspace/media_cache"))
-MEDIA_CACHE_TTL      = int(os.environ.get("MEDIA_CACHE_TTL_SECONDS", "3600"))
-LORA_OUTPUT_DIR      = Path(os.environ.get("LORA_OUTPUT_DIR", "/workspace/lora_output"))
+BUCKET_NAME = os.environ.get("BUCKET_NAME", "loom24-mvp.firebasestorage.app")
+BUCKET_MODELS_PATH = "models"
+LOCAL_MODELS_PATH = Path(os.environ.get("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")).parent
+MEDIA_CACHE_DIR = Path(os.environ.get("MEDIA_CACHE_DIR", "/workspace/media_cache"))
+MEDIA_CACHE_TTL = int(os.environ.get("MEDIA_CACHE_TTL_SECONDS", "3600"))
+LORA_OUTPUT_DIR = Path(os.environ.get("LORA_OUTPUT_DIR", "/workspace/lora_output"))
 
 MEDIA_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 LORA_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -50,9 +50,9 @@ def download_images(media_paths: list[str]) -> list[Image.Image | None]:
     images: list[Image.Image | None] = []
 
     for blob_path in media_paths:
-        safe_name  = blob_path.replace("/", "__")
+        safe_name = blob_path.replace("/", "__")
         cache_path = MEDIA_CACHE_DIR / safe_name
-        lock_path  = cache_path.with_suffix(".lock")
+        lock_path = cache_path.with_suffix(".lock")
 
         with FileLock(str(lock_path), timeout=45):
             if not _is_fresh(cache_path):
@@ -89,7 +89,7 @@ def download_model(model_name: str):
     logger.info(f"Syncing {model_name} from bucket: {BUCKET_NAME}")
 
     bucket = _get_gcs().bucket(BUCKET_NAME)
-    blobs  = list(bucket.list_blobs(prefix=remote_prefix))
+    blobs = list(bucket.list_blobs(prefix=remote_prefix))
 
     if not blobs:
         raise RuntimeError(f"No blobs found at gs://{BUCKET_NAME}/{remote_prefix}")
@@ -97,7 +97,7 @@ def download_model(model_name: str):
     for blob in blobs:
         if blob.name.endswith("/"):
             continue
-        relative   = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
+        relative = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
         local_path = LOCAL_MODELS_PATH / relative
 
         if local_path.exists() and local_path.stat().st_size == blob.size:

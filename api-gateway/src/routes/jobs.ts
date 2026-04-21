@@ -29,8 +29,8 @@ router.post(
     createProxyHandler('post', (req) => `${BASE}/restart/${req.params.id}`, 'Restart job')
 );
 router.post(
-    '/train-loras/group/:groupId',
-    createProxyHandler('post', (req) => `${BASE}/train-loras/group/${req.params.groupId}`, 'Train LORAs')
+    '/train-loras/',
+    createProxyHandler('post', () => `${BASE}/train-loras`, 'Train LORAs')
 );
 
 export default router;

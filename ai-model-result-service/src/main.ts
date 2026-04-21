@@ -1,7 +1,8 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
 import { updateJob } from './services/jobManagerService'
-import { Job } from './types/job';
+import { Job, JobTargets } from './types/job';
+import { updateAvatar } from './services/avatarService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'ai-model-result-sub';
@@ -21,6 +22,15 @@ function listenForResults() {
       logger.info({ jobId: job.id, status: job.status, msgId: message.id }, 'Received message');
 
       await updateJob(job);
+
+      if (job.target === JobTargets.qwenEdit2511Lora) {
+        await updateAvatar(
+          job.userId,
+          job.avatarId,
+          { 'loras.qwenEdit2511Path': job.result?.mediaPath! }
+        );
+      }
+
       message.ack();
     } catch (err: any) {
       if (err?.response?.status === 404) {

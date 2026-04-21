@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { useNavigate } from 'react-router-dom';
 import {
@@ -6,11 +6,11 @@ import {
     initialAvatarData,
     NEW_AVATAR_DATA
 } from '../../utils/avatarCreation';
-import { getMediaByAvatarId, createTrainingMedia, getUserAvatarById, trainLoras } from '../../services/apiGateway';
+import { getMediaByAvatarId, createTrainingMedia, getUserAvatarById, trainLoras, updateAvatar } from '../../services/apiGateway';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { scrollToTop } from '../../utils/scroller';
 import type { Media } from '../../types/media';
-import type { AvatarLoras } from '../../types/avatar';
+import type { Avatar, AvatarLoras } from '../../types/avatar';
 import { Check, X } from 'lucide-react';
 
 type StepStatus = 'pending' | 'loading' | 'done' | 'error';
@@ -28,11 +28,13 @@ function AvatarTrainingPage() {
     const [avatar, setAvatar] = useState(initialAvatarData);
     const [media, setMedia] = useState([] as Media[]);
     const [loras, setLoras] = useState({} as AvatarLoras);
-
+    const [pageLoading, setPageLoading] = useState(true);
     const [steps, setSteps] = useState<Step[]>([
         { label: 'Processing photos', description: 'Preparing media', status: 'pending' },
         { label: 'Starting training', description: 'Launching training', status: 'pending' },
     ]);
+    const initialized = useRef<boolean>(false);
+    
 
     const setStepStatus = (index: number, status: StepStatus) => {
         setSteps(prev => prev.map((s, i) => i === index ? { ...s, status } : s));
@@ -44,11 +46,16 @@ function AvatarTrainingPage() {
     }, []);
 
     const initPage = async () => {
+        if (initialized.current) return;
+        initialized.current = true;
+
         const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
         setAvatar(existingAvatar);
-        setLoras(avatar.loras || {});
+        setLoras(existingAvatar.loras || {});
 
         const existingMedia = await getMediaByAvatarId(newAvatarData.avatarId);
+
+        setPageLoading(false);
 
         if (existingMedia.length) {
             setMedia(existingMedia);
@@ -66,13 +73,20 @@ function AvatarTrainingPage() {
             }
         }
 
-        if (loras && Object.keys(loras).length > 0) {
+        if (existingAvatar.loras && Object.keys(existingAvatar.loras).length > 0) {
             setStepStatus(1, 'done');
         } else {
             setStepStatus(1, 'loading');
             try {
-                const loraPaths = await trainLoras(newAvatarData.groupId);
+                const loraPaths = await trainLoras({avatarId: newAvatarData.avatarId, groupId: newAvatarData.groupId, parameters: avatar.parameters});
                 setLoras(loraPaths);
+
+                const payload: Partial<Avatar> = {
+                    loras: loraPaths, 
+                };
+
+                await updateAvatar(newAvatarData.avatarId, payload);
+
                 setStepStatus(1, 'done');
             } catch {
                 setStepStatus(1, 'error');
@@ -81,7 +95,7 @@ function AvatarTrainingPage() {
     };
 
     const canProceed = () => {
-        return media.length > 0 && Object.keys(loras).length;
+        return media.length > 0 && Object.keys(loras).length > 0 && steps.every(s => s.status === 'done');
     };
 
     const nextStep = async () => {
@@ -100,57 +114,63 @@ function AvatarTrainingPage() {
         <>
             <CreateAvatarStepper step={4}/>
 
-            <div className="flex justify-center pt-20 pb-50">
-                <div className="flex flex-col gap-10">
-                    {steps.map((step, i) => (
-                        <div key={i} className="flex items-center gap-8">
-                            {/* Checkbox */}
-                            <div className="relative shrink-0 flex items-center justify-center">
-                                {step.status === 'loading' && (
-                                    <span className="absolute w-16 h-16 rounded-2xl border border-primary/25 animate-ping" />
-                                )}
-                                <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-700
-                                    ${step.status === 'done'
-                                        ? 'border-primary bg-primary'
-                                        : step.status === 'loading'
-                                            ? 'border-primary/50'
-                                            : step.status === 'error'
-                                                ? 'border-error bg-error'
-                                                : 'border-base-content/10'
-                                    }`}
-                                >
-                                    {step.status === 'done' && <Check size={22} strokeWidth={2.5} className="text-primary-content" />}
-                                    {step.status === 'loading' && <span className="loading loading-spinner loading-md text-primary" />}
-                                    {step.status === 'error' && <X size={22} strokeWidth={2.5} className="text-error-content" />}
+            {pageLoading ? (
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
+                </div>
+            ) : (
+                <div className="flex justify-center pt-20 pb-50">
+                    <div className="flex flex-col gap-10">
+                        {steps.map((step, i) => (
+                            <div key={i} className="flex items-center gap-8">
+                                {/* Checkbox */}
+                                <div className="relative shrink-0 flex items-center justify-center">
+                                    {step.status === 'loading' && (
+                                        <span className="absolute w-16 h-16 rounded-2xl border border-primary/25 animate-ping" />
+                                    )}
+                                    <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-700
+                                        ${step.status === 'done'
+                                            ? 'border-primary bg-primary'
+                                            : step.status === 'loading'
+                                                ? 'border-primary/50'
+                                                : step.status === 'error'
+                                                    ? 'border-error bg-error'
+                                                    : 'border-base-content/10'
+                                        }`}
+                                    >
+                                        {step.status === 'done' && <Check size={22} strokeWidth={2.5} className="text-primary-content" />}
+                                        {step.status === 'loading' && <span className="loading loading-spinner loading-md text-primary" />}
+                                        {step.status === 'error' && <X size={22} strokeWidth={2.5} className="text-error-content" />}
+                                    </div>
+                                </div>
+
+                                {/* Text */}
+                                <div className="flex flex-col gap-1.5">
+                                    <span className={`text-2xl font-light tracking-tight transition-colors duration-700
+                                        ${step.status === 'error' ? 'text-error' : step.status === 'pending' ? 'text-base-content/20' : 'text-base-content'}`}
+                                    >
+                                        {step.label}
+                                    </span>
+                                    <span className={`text-[11px] uppercase tracking-[0.25em] transition-colors duration-700
+                                        ${step.status === 'done' ? 'text-primary/50' : step.status === 'loading' ? 'text-base-content/35' : step.status === 'error' ? 'text-error/50' : 'text-base-content/15'}`}
+                                    >
+                                        {step.status === 'done' ? 'Completed' : step.status === 'loading' ? step.description : step.status === 'error' ? 'Failed' : 'Waiting'}
+                                    </span>
                                 </div>
                             </div>
+                        ))}
 
-                            {/* Text */}
-                            <div className="flex flex-col gap-1.5">
-                                <span className={`text-2xl font-light tracking-tight transition-colors duration-700
-                                    ${step.status === 'error' ? 'text-error' : step.status === 'pending' ? 'text-base-content/20' : 'text-base-content'}`}
-                                >
-                                    {step.label}
-                                </span>
-                                <span className={`text-[11px] uppercase tracking-[0.25em] transition-colors duration-700
-                                    ${step.status === 'done' ? 'text-primary/50' : step.status === 'loading' ? 'text-base-content/35' : step.status === 'error' ? 'text-error/50' : 'text-base-content/15'}`}
-                                >
-                                    {step.status === 'done' ? 'Completed' : step.status === 'loading' ? step.description : step.status === 'error' ? 'Failed' : 'Waiting'}
+                        {canProceed() && (
+                            <div className="flex flex-col gap-2 mt-4">
+                                <span className="text-3xl font-light tracking-tight text-base-content">All set.</span>
+                                <span className="text-[11px] uppercase tracking-[0.25em] text-base-content/30">
+                                    Training runs in the background
                                 </span>
                             </div>
-                        </div>
-                    ))}
-
-                    {canProceed() && (
-                        <div className="flex flex-col gap-2 mt-4">
-                            <span className="text-3xl font-light tracking-tight text-base-content">All set.</span>
-                            <span className="text-[11px] uppercase tracking-[0.25em] text-base-content/30">
-                                Training runs in the background
-                            </span>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <BottomDock
                 avatarId={newAvatarData.avatarId}

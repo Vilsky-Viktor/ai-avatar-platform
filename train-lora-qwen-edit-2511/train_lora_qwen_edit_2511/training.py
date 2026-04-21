@@ -8,6 +8,7 @@ References:
 import copy
 import math
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 import torch
@@ -45,40 +46,39 @@ LORA_TARGET_MODULES = [
 ]
 
 
-def train_lora(
-    images:      list[Image.Image],
-    prompts:     list[str],
-    config:      InferenceConfig,
-    out_dir:     Path,
-    num_buckets: int = 1,
-) -> Path:
-    """
-    Train a LoRA on the given images and save weights to out_dir.
-    Returns out_dir on success.
-    """
-    device     = torch.device("cuda")
-    weight_dtype = torch.bfloat16
+@dataclass
+class SharedComponents:
+    scheduler: FlowMatchEulerDiscreteScheduler
+    vae: AutoencoderKLQwenImage
+    vae_scale_factor: int
+    text_pipeline: QwenImagePipeline
+    weight_dtype: torch.dtype
 
-    # ── 1. Load model components ──────────────────────────────────────────────
-    logger.info("Loading scheduler and VAE ...")
+
+def load_shared_components() -> SharedComponents:
+    """Load VAE, scheduler, tokenizer and text encoder once at startup."""
+    weight_dtype = torch.bfloat16
+    device = torch.device("cuda")
+
+    logger.info("Loading scheduler ...")
     scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
         QWEN_MODEL_PATH, subfolder="scheduler", shift=3.0
     )
-    scheduler_copy = copy.deepcopy(scheduler)
 
+    logger.info("Loading VAE ...")
     vae = AutoencoderKLQwenImage.from_pretrained(
         QWEN_MODEL_PATH, subfolder="vae"
     ).to(device=device, dtype=weight_dtype)
-
+    vae.requires_grad_(False)
     vae_scale_factor = 2 ** len(vae.temperal_downsample)
-    latents_mean = torch.tensor(vae.config.latents_mean).view(1, vae.config.z_dim, 1, 1, 1).to(device)
-    latents_std  = 1.0 / torch.tensor(vae.config.latents_std).view(1, vae.config.z_dim, 1, 1, 1).to(device)
+    vae.to("cpu")
 
     logger.info("Loading text encoder ...")
     tokenizer = Qwen2Tokenizer.from_pretrained(QWEN_MODEL_PATH, subfolder="tokenizer")
     text_encoder = Qwen2_5_VLForConditionalGeneration.from_pretrained(
         QWEN_MODEL_PATH, subfolder="text_encoder", torch_dtype=weight_dtype
-    ).to(device)
+    )
+    text_encoder.requires_grad_(False)
 
     text_pipeline = QwenImagePipeline.from_pretrained(
         QWEN_MODEL_PATH,
@@ -89,14 +89,37 @@ def train_lora(
         scheduler=None,
     )
 
+    logger.info("Shared components loaded — keeping on CPU until needed")
+    return SharedComponents(
+        scheduler=scheduler,
+        vae=vae,
+        vae_scale_factor=vae_scale_factor,
+        text_pipeline=text_pipeline,
+        weight_dtype=weight_dtype,
+    )
+
+
+def train_lora(
+    images:     list[Image.Image],
+    prompts:    list[str],
+    config:     InferenceConfig,
+    out_dir:    Path,
+    shared:     SharedComponents,
+    num_buckets: int = 1,
+) -> Path:
+    """
+    Train a LoRA on the given images and save weights to out_dir.
+    Returns out_dir on success.
+    """
+    device = torch.device("cuda")
+    weight_dtype = shared.weight_dtype
+    scheduler_copy = copy.deepcopy(shared.scheduler)
+
+    # ── 1. Load transformer ───────────────────────────────────────────────────
     logger.info("Loading transformer ...")
     transformer = QwenImageTransformer2DModel.from_pretrained(
         QWEN_MODEL_PATH, subfolder="transformer", torch_dtype=weight_dtype
     ).to(device)
-
-    # Freeze everything; only LoRA params will be trainable
-    vae.requires_grad_(False)
-    text_encoder.requires_grad_(False)
     transformer.requires_grad_(False)
     transformer.enable_gradient_checkpointing()
 
@@ -133,9 +156,14 @@ def train_lora(
 
     # ── 4. Pre-cache latents & text embeddings ────────────────────────────────
     logger.info("Caching latents and text embeddings ...")
-    latents_cache:      list[torch.Tensor] = []
-    prompt_embeds_cache:      list[torch.Tensor] = []
+    latents_cache: list[torch.Tensor] = []
+    prompt_embeds_cache: list[torch.Tensor] = []
     prompt_embeds_mask_cache: list[torch.Tensor] = []
+
+    vae = shared.vae.to(device)
+    latents_mean = torch.tensor(vae.config.latents_mean).view(1, vae.config.z_dim, 1, 1, 1).to(device)
+    latents_std = 1.0 / torch.tensor(vae.config.latents_std).view(1, vae.config.z_dim, 1, 1, 1).to(device)
+    shared.text_pipeline.to(device)
 
     with torch.no_grad():
         for batch in dataloader:
@@ -145,7 +173,7 @@ def train_lora(
             lat = (lat - latents_mean) * latents_std
             latents_cache.append(lat.to(dtype=weight_dtype))
 
-            embeds, mask = text_pipeline.encode_prompt(
+            embeds, mask = shared.text_pipeline.encode_prompt(
                 prompt=batch["prompts"],
                 device=device,
                 max_sequence_length=256,
@@ -153,10 +181,9 @@ def train_lora(
             prompt_embeds_cache.append(embeds)
             prompt_embeds_mask_cache.append(mask)
 
-    # Free text encoder, tokenizer, VAE — no longer needed
-    text_pipeline.to("cpu")
-    vae.to("cpu")
-    del text_encoder, tokenizer, vae, text_pipeline
+    # Move shared components back to CPU — transformer takes over the GPU
+    shared.text_pipeline.to("cpu")
+    shared.vae.to("cpu")
     free_memory()
 
     # ── 5. Optimizer & LR scheduler ──────────────────────────────────────────
@@ -177,8 +204,8 @@ def train_lora(
     # ── 6. Training loop ──────────────────────────────────────────────────────
     logger.info(f"Starting training: {config.numSteps} steps, grad_accum={config.gradientAccumulationSteps}, lr={config.learningRate}")
     transformer.train()
-    global_step    = 0
-    accum_loss     = 0.0
+    global_step = 0
+    accum_loss = 0.0
     optimizer.zero_grad()
 
     epoch = 0
@@ -190,9 +217,9 @@ def train_lora(
             if global_step >= config.numSteps:
                 break
 
-            model_input    = latents_cache[cache_idx].to(device)
-            prompt_embeds  = prompt_embeds_cache[cache_idx].to(device)
-            prompt_mask    = prompt_embeds_mask_cache[cache_idx]
+            model_input = latents_cache[cache_idx].to(device)
+            prompt_embeds = prompt_embeds_cache[cache_idx].to(device)
+            prompt_mask = prompt_embeds_mask_cache[cache_idx]
             if prompt_mask is not None:
                 prompt_mask = prompt_mask.to(device)
 
@@ -206,11 +233,11 @@ def train_lora(
                 logit_std=1.0,
                 mode_scale=1.29,
             )
-            indices   = (u * scheduler_copy.config.num_train_timesteps).long()
+            indices = (u * scheduler_copy.config.num_train_timesteps).long()
             timesteps = scheduler_copy.timesteps[indices].to(device)
 
-            noise            = torch.randn_like(model_input)
-            sigmas           = _get_sigmas(timesteps, scheduler_copy, n_dim=model_input.ndim, dtype=model_input.dtype, device=device)
+            noise = torch.randn_like(model_input)
+            sigmas = _get_sigmas(timesteps, scheduler_copy, n_dim=model_input.ndim, dtype=model_input.dtype, device=device)
             noisy_model_input = (1.0 - sigmas) * model_input + sigmas * noise
 
             # Pack latents for transformer input
@@ -236,16 +263,16 @@ def train_lora(
             )[0]
             model_pred = QwenImagePipeline._unpack_latents(
                 model_pred,
-                height=H * vae_scale_factor,
-                width=W  * vae_scale_factor,
-                vae_scale_factor=vae_scale_factor,
+                height=H * shared.vae_scale_factor,
+                width=W * shared.vae_scale_factor,
+                vae_scale_factor=shared.vae_scale_factor,
             )
 
             weighting = compute_loss_weighting_for_sd3(
                 weighting_scheme="logit_normal", sigmas=sigmas
             )
             target = noise - model_input
-            loss   = torch.mean(
+            loss = torch.mean(
                 (weighting.float() * (model_pred.float() - target.float()) ** 2).reshape(bsz, -1), 1
             ).mean()
 
@@ -275,7 +302,7 @@ def train_lora(
     )
     logger.info("LoRA saved.")
 
-    # Cleanup
+    # Cleanup transformer only — shared components are kept alive for next job
     del transformer
     free_memory()
 
@@ -289,10 +316,10 @@ def _get_sigmas(
     dtype:  torch.dtype,
     device: torch.device,
 ) -> torch.Tensor:
-    sigmas            = scheduler.sigmas.to(device=device, dtype=dtype)
+    sigmas = scheduler.sigmas.to(device=device, dtype=dtype)
     schedule_timesteps = scheduler.timesteps.to(device)
-    timesteps          = timesteps.to(device)
-    step_indices       = [(schedule_timesteps == t).nonzero().item() for t in timesteps]
+    timesteps = timesteps.to(device)
+    step_indices = [(schedule_timesteps == t).nonzero().item() for t in timesteps]
     sigma = sigmas[step_indices].flatten()
     while len(sigma.shape) < n_dim:
         sigma = sigma.unsqueeze(-1)

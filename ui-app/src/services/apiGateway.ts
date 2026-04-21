@@ -199,9 +199,9 @@ export const getVoicesByGender = async (gender: AvatarGender): Promise<Voice[]> 
   }
 }
 
-export const trainLoras = async (groupId: string): Promise<AvatarLoras> => {
+export const trainLoras = async (jobRequest: TrainingJobRequest): Promise<AvatarLoras> => {
   try {
-    const res = await apiClient.post(`/jobs/train-loras/group/${groupId}`, {});
+    const res = await apiClient.post(`/jobs/train-loras`, jobRequest);
 
     return res.data as AvatarLoras;
   } catch (error) {

@@ -1,16 +1,15 @@
 import json
+import multiprocessing
 import os
-from concurrent.futures import ThreadPoolExecutor
-
+from google.cloud import pubsub_v1
 from google.cloud.pubsub_v1.subscriber.message import Message
-
-from .db             import get_job_by_id
-from .logger         import logger, set_job_id, clear_job_id
-from .message_queue  import get_subscriber_client, publish_status, SUBSCRIPTION_ID, PROJECT_ID
-from .models         import Job
-from .runpod         import reset_inactivity_timer, stop_inactivity_timer
-from .storage        import download_images, download_model, upload_lora, make_lora_output_dir, cleanup_lora_output_dir
-from .training       import train_lora
+from .db import get_job_by_id
+from .logger import logger, set_job_id, clear_job_id
+from .message_queue import get_subscriber_client, publish_status, SUBSCRIPTION_ID, PROJECT_ID
+from .models import Job
+from .runpod import reset_inactivity_timer, stop_inactivity_timer
+from .storage import download_images, download_model, upload_lora, make_lora_output_dir, cleanup_lora_output_dir
+from .training import train_lora, load_shared_components, SharedComponents
 
 MESSAGE_CONCURRENCY = int(os.environ.get("MESSAGE_CONCURRENCY", "1"))
 
@@ -24,102 +23,139 @@ def _publish_error(job: Job, message: str):
         logger.error(f"Failed to publish error status: {e}", exc_info=True)
 
 
-def process_job(message: Message):
-    job: Job | None = None
+def make_process_job(shared: SharedComponents):
+    def process_job(message: Message):
+        job: Job | None = None
+
+        try:
+            job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
+            set_job_id(job.id)
+            stop_inactivity_timer()
+
+            inference = job.input.inference
+            logger.info(f"Received training job: avatar={job.avatarId}, steps={inference.numSteps}")
+
+            # Check if job was cancelled
+            db_job = get_job_by_id(job.id)
+            if db_job is None or db_job.get("status") == "cancelled":
+                logger.info("Job cancelled or not found — skipping")
+                message.ack()
+                return
+
+            media_paths = inference.mediaPaths
+            prompts = inference.prompts
+
+            if not media_paths:
+                _publish_error(job, "No mediaPaths provided in job input")
+                logger.error("No mediaPaths provided in job input")
+                message.ack()
+                return
+
+            if len(prompts) != len(media_paths):
+                err = f"prompts length ({len(prompts)}) != mediaPaths length ({len(media_paths)})"
+                _publish_error(job, err)
+                logger.error(err)
+                message.ack()
+                return
+
+            logger.info(f"Downloading {len(media_paths)} training images ...")
+            raw = download_images(media_paths)
+
+            # Keep only successfully downloaded images, preserving prompt alignment
+            pairs = [(img, prompt) for img, prompt in zip(raw, prompts) if img is not None]
+            if not pairs:
+                _publish_error(job, "No images could be downloaded")
+                logger.error("No images could be downloaded — acking with error")
+                message.ack()
+                return
+
+            images, aligned_prompts = zip(*pairs)
+            images = list(images)
+            aligned_prompts = list(aligned_prompts)
+            logger.info(f"Downloaded {len(images)}/{len(media_paths)} images successfully")
+
+            # Ack early — training takes 30-60 min; holding the lease that long risks redelivery
+            message.ack()
+
+            job.status = "generating"
+            publish_status(job.model_dump())
+
+            dest = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/loras/{job.result.fileName}"
+            out_dir = make_lora_output_dir(job.id)
+            try:
+                train_lora(
+                    images=images,
+                    prompts=aligned_prompts,
+                    config=inference,
+                    out_dir=out_dir,
+                    shared=shared,
+                    num_buckets=job.metadata.numBuckets,
+                )
+            except Exception as e:
+                logger.error(f"Training failed: {e}", exc_info=True)
+                cleanup_lora_output_dir(job.id)
+                _publish_error(job, str(e))
+                return
+
+            logger.info(f"Uploading LoRA to gs://{dest} ...")
+            try:
+                upload_lora(out_dir, dest)
+            except Exception as e:
+                logger.error(f"Upload failed: {e}", exc_info=True)
+                _publish_error(job, str(e))
+                return
+            finally:
+                cleanup_lora_output_dir(job.id)
+
+            job.status = "completed"
+            job.result.mediaPath = dest
+            publish_status(job.model_dump())
+            logger.info(f"Job completed — LoRA at {dest}")
+
+        except Exception as e:
+            logger.error(f"Unexpected error processing job: {e}", exc_info=True)
+            if job is not None:
+                _publish_error(job, str(e))
+                try:
+                    message.ack()
+                except Exception:
+                    pass
+            else:
+                message.nack()
+        finally:
+            clear_job_id()
+            reset_inactivity_timer()
+
+    return process_job
+
+
+def run_worker(worker_idx: int):
+    logger.info(f"[worker {worker_idx}] Starting")
 
     try:
-        job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
-        set_job_id(job.id)
-        stop_inactivity_timer()
-
-        inference = job.input.inference
-        logger.info(f"Received training job: avatar={job.avatarId}, steps={inference.numSteps}")
-
-        # Check if job was cancelled
-        db_job = get_job_by_id(job.id)
-        if db_job is None or db_job.get("status") == "cancelled":
-            logger.info("Job cancelled or not found — skipping")
-            message.ack()
-            return
-
-        media_paths = inference.mediaPaths
-        prompts     = inference.prompts
-
-        if not media_paths:
-            _publish_error(job, "No mediaPaths provided in job input")
-            logger.error("No mediaPaths provided in job input")
-            message.ack()
-            return
-
-        if len(prompts) != len(media_paths):
-            err = f"prompts length ({len(prompts)}) != mediaPaths length ({len(media_paths)})"
-            _publish_error(job, err)
-            logger.error(err)
-            message.ack()
-            return
-
-        logger.info(f"Downloading {len(media_paths)} training images ...")
-        raw = download_images(media_paths)
-
-        # Keep only successfully downloaded images, preserving prompt alignment
-        pairs = [(img, prompt) for img, prompt in zip(raw, prompts) if img is not None]
-        if not pairs:
-            _publish_error(job, "No images could be downloaded")
-            logger.error("No images could be downloaded — acking with error")
-            message.ack()
-            return
-
-        images, aligned_prompts = zip(*pairs)
-        images          = list(images)
-        aligned_prompts = list(aligned_prompts)
-        logger.info(f"Downloaded {len(images)}/{len(media_paths)} images successfully")
-
-        # Train
-        dest    = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/loras/{job.result.fileName}"
-        out_dir = make_lora_output_dir(job.id)
-        try:
-            train_lora(
-                images=images,
-                prompts=aligned_prompts,
-                config=inference,
-                out_dir=out_dir,
-                num_buckets=job.metadata.numBuckets,
-            )
-        except Exception as e:
-            logger.error(f"Training failed: {e}", exc_info=True)
-            cleanup_lora_output_dir(job.id)
-            _publish_error(job, str(e))
-            message.ack()
-            return
-
-        # Upload LoRA to GCS
-        logger.info(f"Uploading LoRA to gs://{dest} ...")
-        try:
-            upload_lora(out_dir, dest)
-        except Exception as e:
-            logger.error(f"Upload failed: {e}", exc_info=True)
-            _publish_error(job, str(e))
-            message.ack()
-            return
-        finally:
-            cleanup_lora_output_dir(job.id)
-
-        job.status = "completed"
-        job.result.mediaPath = dest
-        publish_status(job.model_dump())
-        message.ack()
-        logger.info(f"Job completed — LoRA at {dest}")
-
+        shared = load_shared_components()
     except Exception as e:
-        logger.error(f"Unexpected error processing job: {e}", exc_info=True)
-        if job is not None:
-            _publish_error(job, str(e))
-            message.ack()
-        else:
-            message.nack()
-    finally:
-        clear_job_id()
-        reset_inactivity_timer()
+        logger.error(f"[worker {worker_idx}] Failed to load shared components: {e}", exc_info=True)
+        raise
+
+    reset_inactivity_timer()
+
+    subscriber = get_subscriber_client()
+    subscription_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
+
+    logger.info(f"[worker {worker_idx}] Subscribed to: {subscription_path}")
+
+    with subscriber:
+        streaming_pull = subscriber.subscribe(
+            subscription_path,
+            callback=make_process_job(shared),
+            flow_control=pubsub_v1.types.FlowControl(max_messages=1),
+        )
+        try:
+            streaming_pull.result()
+        except KeyboardInterrupt:
+            logger.info(f"[worker {worker_idx}] Shutdown signal received.")
+            streaming_pull.cancel()
 
 
 def main():
@@ -131,31 +167,25 @@ def main():
         logger.error(f"Failed to download model: {e}", exc_info=True)
         raise
 
-    reset_inactivity_timer()
-
-    subscriber = get_subscriber_client()
-    subscription_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
-
-    flow_control = subscriber.types.FlowControl(max_messages=MESSAGE_CONCURRENCY)
-
-    executor = ThreadPoolExecutor(max_workers=MESSAGE_CONCURRENCY)
-
-    def callback(message: Message):
-        executor.submit(process_job, message)
-
-    streaming_pull = subscriber.subscribe(
-        subscription_path,
-        callback=callback,
-        flow_control=flow_control,
-    )
-
-    logger.info(f"Listening on {subscription_path} ...")
-    try:
-        streaming_pull.result()
-    except Exception as e:
-        logger.error(f"Streaming pull error: {e}", exc_info=True)
-        streaming_pull.cancel()
-        streaming_pull.result()
+    if MESSAGE_CONCURRENCY == 1:
+        run_worker(0)
+    else:
+        multiprocessing.set_start_method("spawn")
+        processes = [
+            multiprocessing.Process(target=run_worker, args=(i,), daemon=False)
+            for i in range(MESSAGE_CONCURRENCY)
+        ]
+        for p in processes:
+            p.start()
+        try:
+            for p in processes:
+                p.join()
+        except KeyboardInterrupt:
+            logger.info("Shutdown signal received, terminating workers.")
+            for p in processes:
+                p.terminate()
+            for p in processes:
+                p.join()
 
 
 if __name__ == "__main__":

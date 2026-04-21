@@ -39,13 +39,12 @@ export const getByGroupId = async (req: Request, res: Response, next: NextFuncti
 
 export const trainLoras = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
-  const groupId = req.params.groupId as string;
   const jobRequest: TrainingJobRequest = req.body;
 
-  req.log.info(`Train LORAs for user ${userId} with group ID ${groupId}`);
+  req.log.info(`Train LORAs for user ${userId} with group ID ${jobRequest.groupId}`);
 
   try {
-    const jobs = await getByGroupIdDb(userId, groupId);
+    const jobs = await getByGroupIdDb(userId, jobRequest.groupId!);
 
     const completedJobs = jobs
       .filter(j => j.status === JobStatuses.completed && j.result?.mediaPath)
@@ -55,16 +54,15 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
       return res.status(400).json({ error: 'No completed jobs with media found in group' });
     }
 
-    const avatarId = completedJobs[0].avatarId;
     const captions = generatePhotoSetCaptions(jobRequest.parameters);
     const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
     const prompts = completedJobs.map(j => captions[(j.order ?? 1) - 1]);
     const numBuckets = 3;
 
     const trainingJob: Job = {
-      groupId,
+      groupId: jobRequest.groupId,
       userId,
-      avatarId,
+      avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
       target: JobTargets.qwenEdit2511Lora,
       status: JobStatuses.pending,
@@ -77,6 +75,11 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
           numSteps: 1500,
           width: imageRatios.qwenEdit2511['1:1'][0],
           height: imageRatios.qwenEdit2511['1:1'][1],
+          guidanceScale: 4.0,
+          rank: 64,
+          loraAlpha: 64,
+          learningRate: 5e-5,
+          gradientAccumulationSteps: 8,
         },
       },
       metadata: { queueTopic: TRAIN_LORA_QWEN_EDIT_2511_TOPIC, numBuckets } as JobMetadata,
@@ -89,7 +92,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const loras: AvatarLoras = { qwenEdit2511Path: '' };
     return res.status(201).json(loras);
   } catch (error) {
-    req.log.info(`Failed to create jobs to train LORAs with group ID ${groupId} for ${userId}: ${error}`);
+    req.log.info(`Failed to create jobs to train LORAs with group ID ${jobRequest.groupId} for ${userId}: ${error}`);
     next(error);
   }
 }

@@ -20,7 +20,7 @@ router.post('/gen-training-synthetic-front-id-photo', genTrainingSyntheticFrontI
 router.post('/gen-training-synthetic-id-photos', genTrainingSyntheticIdPhotos);
 router.post('/gen-training-twin-id-photos', genTrainingTwinIdPhotos);
 router.post('/restart/:id', restart);
-router.post('/train-loras/group/:groupId', trainLoras);
+router.post('/train-loras', trainLoras);
 router.patch('/update/:id', update);
 router.delete('/delete-by-id/:id', deleteById);
 router.delete('/delete-by-avatar-id/:avatarId', deleteByAvatarId);
