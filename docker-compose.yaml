@@ -35,22 +35,22 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=development
-      - USER_SERVICE_URL=http://user-service:3100
-      - AVATAR_SERVICE_URL=http://avatar-service:3200
-      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
-      - MEDIA_SERVICE_URL=http://media-service:3400
-      - VOICE_SERVICE_URL=http://voice-service:3600
+      - USER_URL=http://user:3100
+      - AVATAR_URL=http://avatar:3200
+      - JOB_MANAGER_URL=http://job-manager:3300
+      - MEDIA_URL=http://media:3400
+      - VOICE_URL=http://voice:3600
 
-  user-service:
+  user:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./user-service
+      context: ./user
     ports:
       - "3100:3100"
     volumes:
-      - ./user-service:/app
+      - ./user:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
@@ -61,16 +61,16 @@ services:
       - DB_NAME=ai-avatar-db
       - COLLECTION_NAME=users
 
-  avatar-service:
+  avatar:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./avatar-service
+      context: ./avatar
     ports:
       - "3200:3200"
     volumes:
-      - ./avatar-service:/app
+      - ./avatar:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
@@ -81,19 +81,19 @@ services:
       - DB_NAME=ai-avatar-db
       - USERS_COLLECTION_NAME=users
       - AVATARS_COLLECTION_NAME=avatars
-      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
-      - MEDIA_SERVICE_URL=http://media-service:3400
+      - JOB_MANAGER_URL=http://job-manager:3300
+      - MEDIA_URL=http://media:3400
 
-  job-manager-service:
+  job-manager:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./job-manager-service
+      context: ./job-manager
     ports:
       - "3300:3300"
     volumes:
-      - ./job-manager-service:/app
+      - ./job-manager:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
@@ -105,38 +105,38 @@ services:
       - JOBS_COLLECTION_NAME=jobs
       - GEN_QWEN_EDIT_2511_TOPIC=gen-qwen-edit-2511
       - TRAIN_LORA_QWEN_EDIT_2511_TOPI=train-lora-qwen-edit-2511
-      - RUNPOD_SERVICE_URL=http://runpod-service:3500
-      - LLM_REQUEST_SERVICE_URL=http://llm-request-service:3700
+      - RUNPOD_URL=http://runpod:3500
+      - LLM_REQUEST_URL=http://llm-request:3700
 
-  ai-model-result-service:
+  ai-model-result:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./ai-model-result-service
+      context: ./ai-model-result
     volumes:
-      - ./ai-model-result-service:/app
+      - ./ai-model-result:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
-      - AVATAR_SERVICE_URL=http://avatar-service:3200
-      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
-      - MEDIA_SERVICE_URL=http://media-service:3400
+      - AVATAR_URL=http://avatar:3200
+      - JOB_MANAGER_URL=http://job-manager:3300
+      - MEDIA_URL=http://media:3400
       - SUBSCRIPTION_ID=ai-model-result-sub
 
-  media-service:
+  media:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./media-service
+      context: ./media
     ports:
       - "3400:3400"
     volumes:
-      - ./media-service:/app
+      - ./media:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
@@ -147,19 +147,19 @@ services:
       - DB_NAME=ai-avatar-db
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - MEDIA_COLLECTION_NAME=media
-      - AVATAR_SERVICE_URL=http://avatar-service:3200
-      - JOB_MANAGER_SERVICE_URL=http://job-manager-service:3300
+      - AVATAR_URL=http://avatar:3200
+      - JOB_MANAGER_URL=http://job-manager:3300
 
-  runpod-service:
+  runpod:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./runpod-service
+      context: ./runpod
     ports:
       - "3500:3500"
     volumes:
-      - ./runpod-service:/app
+      - ./runpod:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
@@ -172,16 +172,16 @@ services:
       - TEXT_IMAGE_TO_IMAGE_TEMPLATE_ID=m1bv0g3gi7
       - REGION=US-CA-2
 
-  voice-service:
+  voice:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./voice-service
+      context: ./voice
     ports:
       - "3600:3600"
     volumes:
-      - ./voice-service:/app
+      - ./voice:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
@@ -193,16 +193,16 @@ services:
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - MEDIA_COLLECTION_NAME=voices
 
-  llm-request-service:
+  llm-request:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./llm-request-service
+      context: ./llm-request
     ports:
       - "3700:3700"
     volumes:
-      - ./llm-request-service:/app
+      - ./llm-request:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:

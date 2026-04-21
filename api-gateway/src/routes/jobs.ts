@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { createProxyHandler } from '../utils/proxy';
 
-const BASE = process.env.JOB_MANAGER_SERVICE_URL;
+const BASE = process.env.JOB_MANAGER_URL;
 const router = Router();
 
 router.get(
