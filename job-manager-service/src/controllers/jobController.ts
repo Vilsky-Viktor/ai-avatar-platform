@@ -1,16 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { Job, MediaTypes, JobTargets, JobStatuses, TrainingJobRequest, JobMetadata } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
+import { generateTrainingPhotoSetData, generatePhotoSetCaptions } from '../utils/photoSetInputData';
 import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/idPhotoInputData';
-import { 
+import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
-  create as createDb, 
-  createMany as createManyDb, 
+  create as createDb,
+  createMany as createManyDb,
   update as updateDb,
-  deleteById as deleteByIdDb, 
-  deleteByAvatarId as deleteByAvatarIdDb, 
+  deleteById as deleteByIdDb,
+  deleteByAvatarId as deleteByAvatarIdDb,
 } from '../repositories/job';
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { buildPhotoSetJobs } from '../utils/jobBuilder';
@@ -20,6 +20,7 @@ import { AvatarLoras } from '../types/avatar';
 
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
+const TRAIN_LORA_QWEN_EDIT_2511_TOPIC = process.env.TRAIN_LORA_QWEN_EDIT_2511_TOPIC || 'train-lora-qwen-edit-2511';
 
 export const getByGroupId = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -39,16 +40,53 @@ export const getByGroupId = async (req: Request, res: Response, next: NextFuncti
 export const trainLoras = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const groupId = req.params.groupId as string;
+  const jobRequest: TrainingJobRequest = req.body;
 
   req.log.info(`Train LORAs for user ${userId} with group ID ${groupId}`);
 
   try {
     const jobs = await getByGroupIdDb(userId, groupId);
 
-    const loras = {
-      qwenEdit2511Path: ''
-    } as AvatarLoras;
+    const completedJobs = jobs
+      .filter(j => j.status === JobStatuses.completed && j.result?.mediaPath)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
+    if (!completedJobs.length) {
+      return res.status(400).json({ error: 'No completed jobs with media found in group' });
+    }
+
+    const avatarId = completedJobs[0].avatarId;
+    const captions = generatePhotoSetCaptions(jobRequest.parameters);
+    const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
+    const prompts = completedJobs.map(j => captions[(j.order ?? 1) - 1]);
+    const numBuckets = 3;
+
+    const trainingJob: Job = {
+      groupId,
+      userId,
+      avatarId,
+      mediaType: MediaTypes.image,
+      target: JobTargets.qwenEdit2511Lora,
+      status: JobStatuses.pending,
+      maxRuns: 1,
+      input: {
+        checkDependencies: false,
+        inference: {
+          mediaPaths,
+          prompts,
+          numSteps: 1500,
+          width: imageRatios.qwenEdit2511['1:1'][0],
+          height: imageRatios.qwenEdit2511['1:1'][1],
+        },
+      },
+      metadata: { queueTopic: TRAIN_LORA_QWEN_EDIT_2511_TOPIC, numBuckets } as JobMetadata,
+      result: { fileName: 'qwen-edit-2511-lora.safetensors' },
+    };
+
+    const dbJob = await createDb(userId, trainingJob);
+    await publishJob(TRAIN_LORA_QWEN_EDIT_2511_TOPIC, dbJob);
+
+    const loras: AvatarLoras = { qwenEdit2511Path: '' };
     return res.status(201).json(loras);
   } catch (error) {
     req.log.info(`Failed to create jobs to train LORAs with group ID ${groupId} for ${userId}: ${error}`);

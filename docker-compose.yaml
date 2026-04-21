@@ -104,6 +104,7 @@ services:
       - DB_NAME=ai-avatar-db
       - JOBS_COLLECTION_NAME=jobs
       - GEN_QWEN_EDIT_2511_TOPIC=gen-qwen-edit-2511
+      - TRAIN_LORA_QWEN_EDIT_2511_TOPI=train-lora-qwen-edit-2511
       - RUNPOD_SERVICE_URL=http://runpod-service:3500
       - LLM_REQUEST_SERVICE_URL=http://llm-request-service:3700
 

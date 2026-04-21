@@ -8,6 +8,7 @@ export enum MediaTypes {
 
 export enum JobTargets {
   trainingPhotoSet = 'trainingPhotoSet',
+  qwenEdit2511Lora = 'qwenEdit2511Lora',
 }
 
 export enum JobStatuses {
@@ -61,6 +62,7 @@ export type FaceExpression = {
 
 export type InferenceConfig = {
   prompt?: string;
+  prompts?: string[];
   negativePrompt?: string;
   mediaPaths?: string[];
   guidanceScale?: number;
@@ -68,6 +70,10 @@ export type InferenceConfig = {
   width?: number;
   height?: number;
   seed?: number;
+  rank?: number;
+  loraAlpha?: number;
+  learningRate?: number;
+  gradientAccumulationSteps?: number;
 }
 
 export type FaceRecognition = {
@@ -114,11 +120,12 @@ export type JobResult = {
 }
 
 export type JobMetadata = {
-  dimensions: string;
-  ratio: string;
-  angle: string;
-  shotType: string;
+  dimensions?: string;
+  ratio?: string;
+  angle?: string;
+  shotType?: string;
   queueTopic?: string;
+  numBuckets?: number;
 }
 
 export type Job = {

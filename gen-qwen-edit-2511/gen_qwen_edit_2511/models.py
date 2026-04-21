@@ -34,6 +34,17 @@ class FaceDirection(BaseModel):
     enabled: bool = False
     direction: str = "" #left or right
 
+class TrainingConfig(BaseModel):
+    outputLoraPath: str                       # GCS destination path, e.g. "models/qwen-edit-2511/loras/avatar-xyz"
+    triggerWord: str = "ohwx person"          # Unique token bound to the subject
+    rank: int = 128                           # LoRA rank — high for maximum detail capacity
+    loraAlpha: float = 128.0                  # Alpha = rank → effective scale = 1.0
+    learningRate: float = 1e-4
+    numSteps: int = 1500
+    gradientAccumulationSteps: int = 4
+    resolution: int = 1024                    # Base resolution; per-image buckets snap to nearest
+
+
 class JobInput(BaseModel):
     checkDependencies: bool = False
     inference: InferenceConfig = Field(default_factory=InferenceConfig)
@@ -41,6 +52,7 @@ class JobInput(BaseModel):
     faceExpression: FaceExpression = Field(default_factory=FaceExpression)
     faceDirection: FaceDirection = Field(default_factory=FaceDirection)
     loras: list[LoraConfig] = []
+    training: TrainingConfig | None = None
 
 class JobResult(BaseModel):
     mediaPath: str = ""
