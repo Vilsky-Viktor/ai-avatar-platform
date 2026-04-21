@@ -6,6 +6,7 @@ accelerate>=0.25.0
 diffusers>=0.36.0
 transformers>=4.46.2
 peft>=0.11.1
+bitsandbytes>=0.43.0
 sentencepiece
 google-cloud-pubsub
 google-cloud-storage

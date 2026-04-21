@@ -9,6 +9,8 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     DIFFUSERS_ATTN_BACKEND="flash"
 
 WORKDIR /app
+RUN pip install --no-cache-dir bitsandbytes>=0.43.0
+
 COPY train_lora_qwen_edit_2511 ./train_lora_qwen_edit_2511
 
 COPY entrypoint.sh /entrypoint.sh

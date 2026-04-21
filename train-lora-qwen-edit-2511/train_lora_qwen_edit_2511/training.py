@@ -11,6 +11,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+import bitsandbytes as bnb
 import torch
 from peft import LoraConfig
 from peft.utils import get_peft_model_state_dict
@@ -187,7 +188,7 @@ def train_lora(
     free_memory()
 
     # ── 5. Optimizer & LR scheduler ──────────────────────────────────────────
-    optimizer = torch.optim.AdamW(
+    optimizer = bnb.optim.AdamW8bit(
         trainable_params,
         lr=config.learningRate,
         betas=(0.9, 0.999),
@@ -195,7 +196,7 @@ def train_lora(
         eps=1e-8,
     )
     lr_scheduler = get_scheduler(
-        "cosine",
+        "constant_with_warmup",
         optimizer=optimizer,
         num_warmup_steps=max(1, config.numSteps // 20),
         num_training_steps=config.numSteps,
@@ -280,7 +281,7 @@ def train_lora(
             accum_loss += loss.item()
 
             if (cache_idx + 1) % config.gradientAccumulationSteps == 0 or cache_idx == cache_len - 1:
-                torch.nn.utils.clip_grad_norm_(trainable_params, 1.0)
+                torch.nn.utils.clip_grad_norm_(trainable_params, config.clipGradNorm)
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()

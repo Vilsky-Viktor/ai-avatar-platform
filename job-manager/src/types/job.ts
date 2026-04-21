@@ -74,6 +74,7 @@ export type InferenceConfig = {
   loraAlpha?: number;
   learningRate?: number;
   gradientAccumulationSteps?: number;
+  clipGradNorm?: number;
 }
 
 export type FaceRecognition = {

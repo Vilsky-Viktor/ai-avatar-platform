@@ -14,6 +14,7 @@ class InferenceConfig(BaseModel):
     loraAlpha: float = 128.0
     learningRate: float = 1e-4
     gradientAccumulationSteps: int = 4
+    clipGradNorm: float = 1.0
 
 class JobInput(BaseModel):
     checkDependencies: bool = False
