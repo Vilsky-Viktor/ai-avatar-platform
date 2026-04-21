@@ -1,10 +1,3 @@
-"""
-LoRA training for QwenImageEditPlusPipeline using DreamBooth-style flow-matching loss.
-
-References:
-  diffusers/examples/dreambooth/train_dreambooth_lora_qwen_image.py
-"""
-
 import copy
 import math
 import os
