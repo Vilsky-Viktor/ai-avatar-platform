@@ -39,3 +39,7 @@ def _build_logger() -> logging.Logger:
 
 
 logger = _build_logger()
+
+
+def get_logger(_name: str = None) -> logging.Logger:
+    return logger

@@ -1,15 +1,19 @@
 import json
 import multiprocessing
 import os
+
 from google.cloud import pubsub_v1
-from google.cloud.pubsub_v1.subscriber.message import Message
-from .db import get_job_by_id
-from .logger import logger, set_job_id, clear_job_id
-from .message_queue import get_subscriber_client, publish_status, SUBSCRIPTION_ID, PROJECT_ID
-from .models import Job
-from .runpod import reset_inactivity_timer, stop_inactivity_timer
-from .storage import download_images, download_model, upload_lora, make_lora_output_dir, cleanup_lora_output_dir
-from .training import train_lora, load_shared_components, SharedComponents
+
+import train_lora_qwen_edit_2511.logger as log
+from train_lora_qwen_edit_2511.logger import set_job_id, clear_job_id
+import train_lora_qwen_edit_2511.db as db
+import train_lora_qwen_edit_2511.message_queue as mq
+import train_lora_qwen_edit_2511.storage as storage
+import train_lora_qwen_edit_2511.training as training
+from train_lora_qwen_edit_2511.models import Job
+from train_lora_qwen_edit_2511.runpod import reset_inactivity_timer, stop_inactivity_timer
+
+logger = log.get_logger(__name__)
 
 MESSAGE_CONCURRENCY = int(os.environ.get("MESSAGE_CONCURRENCY", "1"))
 
@@ -18,13 +22,13 @@ def _publish_error(job: Job, message: str):
     job.status = "error"
     job.result.errorMessage = message
     try:
-        publish_status(job.model_dump())
+        mq.publish_status(job.model_dump())
     except Exception as e:
         logger.error(f"Failed to publish error status: {e}", exc_info=True)
 
 
-def make_process_job(shared: SharedComponents):
-    def process_job(message: Message):
+def make_process_job(shared: training.SharedComponents):
+    def process_job(message: pubsub_v1.subscriber.message.Message):
         job: Job | None = None
 
         try:
@@ -36,7 +40,7 @@ def make_process_job(shared: SharedComponents):
             logger.info(f"Received training job: avatar={job.avatarId}, steps={inference.numSteps}")
 
             # Check if job was cancelled
-            db_job = get_job_by_id(job.id)
+            db_job = db.get_job_by_id(job.id)
             if db_job is None or db_job.get("status") == "cancelled":
                 logger.info("Job cancelled or not found — skipping")
                 message.ack()
@@ -59,7 +63,7 @@ def make_process_job(shared: SharedComponents):
                 return
 
             logger.info(f"Downloading {len(media_paths)} training images ...")
-            raw = download_images(media_paths)
+            raw = storage.download_images(media_paths)
 
             # Keep only successfully downloaded images, preserving prompt alignment
             pairs = [(img, prompt) for img, prompt in zip(raw, prompts) if img is not None]
@@ -78,12 +82,12 @@ def make_process_job(shared: SharedComponents):
             message.ack()
 
             job.status = "generating"
-            publish_status(job.model_dump())
+            mq.publish_status(job.model_dump())
 
             dest = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/loras/{job.result.fileName}"
-            out_dir = make_lora_output_dir(job.id)
+            out_dir = storage.make_lora_output_dir(job.id)
             try:
-                train_lora(
+                training.train_lora(
                     images=images,
                     prompts=aligned_prompts,
                     config=inference,
@@ -93,23 +97,23 @@ def make_process_job(shared: SharedComponents):
                 )
             except Exception as e:
                 logger.error(f"Training failed: {e}", exc_info=True)
-                cleanup_lora_output_dir(job.id)
+                storage.cleanup_lora_output_dir(job.id)
                 _publish_error(job, str(e))
                 return
 
             logger.info(f"Uploading LoRA to gs://{dest} ...")
             try:
-                upload_lora(out_dir, dest)
+                storage.upload_lora(out_dir, dest)
             except Exception as e:
                 logger.error(f"Upload failed: {e}", exc_info=True)
                 _publish_error(job, str(e))
                 return
             finally:
-                cleanup_lora_output_dir(job.id)
+                storage.cleanup_lora_output_dir(job.id)
 
             job.status = "completed"
             job.result.mediaPath = dest
-            publish_status(job.model_dump())
+            mq.publish_status(job.model_dump())
             logger.info(f"Job completed — LoRA at {dest}")
 
         except Exception as e:
@@ -133,21 +137,21 @@ def run_worker(worker_idx: int):
     logger.info(f"[worker {worker_idx}] Starting")
 
     try:
-        shared = load_shared_components()
+        shared = training.load_shared_components()
     except Exception as e:
         logger.error(f"[worker {worker_idx}] Failed to load shared components: {e}", exc_info=True)
         raise
 
     reset_inactivity_timer()
 
-    subscriber = get_subscriber_client()
-    subscription_path = subscriber.subscription_path(PROJECT_ID, SUBSCRIPTION_ID)
+    subscriber = mq.get_subscriber_client()
+    sub_path = subscriber.subscription_path(mq.PROJECT_ID, mq.SUBSCRIPTION_ID)
 
-    logger.info(f"[worker {worker_idx}] Subscribed to: {subscription_path}")
+    logger.info(f"[worker {worker_idx}] Subscribed to: {sub_path}")
 
     with subscriber:
         streaming_pull = subscriber.subscribe(
-            subscription_path,
+            sub_path,
             callback=make_process_job(shared),
             flow_control=pubsub_v1.types.FlowControl(max_messages=1),
         )
@@ -162,7 +166,7 @@ def main():
     logger.info(f"Starting train-lora-qwen-edit-2511 (concurrency={MESSAGE_CONCURRENCY})")
 
     try:
-        download_model("qwen-edit-2511")
+        storage.download_model("qwen-edit-2511")
     except Exception as e:
         logger.error(f"Failed to download model: {e}", exc_info=True)
         raise
