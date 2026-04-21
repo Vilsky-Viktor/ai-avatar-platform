@@ -17,6 +17,16 @@ from train_lora_qwen_edit_2511.runpod import reset_inactivity_timer, stop_inacti
 logger = log.get_logger(__name__)
 
 MESSAGE_CONCURRENCY = int(os.environ.get("MESSAGE_CONCURRENCY", "1"))
+MODEL_NAME = os.environ.get("MODEL_NAME", "qwen-edit-2511")
+DIFFUSERS_ATTN_BACKEND = os.environ.get("DIFFUSERS_ATTN_BACKEND", "native")
+
+ATTN_BACKEND_NAMES = {
+    "flash": "Flash Attention 2",
+    "_flash_3": "Flash Attention 3",
+    "native": "PyTorch SDPA",
+    "sage": "SageAttention",
+    "_sage_qk_int8_pv_fp8_cuda_sm90": "SageAttention INT8/FP8 SM90",
+}
 
 
 def _publish_error(job: Job, message: str):
@@ -168,9 +178,10 @@ def run_worker(worker_idx: int):
 
 def main():
     logger.info(f"Starting train-lora-qwen-edit-2511 (concurrency={MESSAGE_CONCURRENCY})")
+    logger.info(f"Attention backend: {ATTN_BACKEND_NAMES.get(DIFFUSERS_ATTN_BACKEND, DIFFUSERS_ATTN_BACKEND)}")
 
     try:
-        storage.download_model("qwen-edit-2511")
+        storage.download_model(MODEL_NAME)
     except Exception as e:
         logger.error(f"Failed to download model: {e}", exc_info=True)
         raise
