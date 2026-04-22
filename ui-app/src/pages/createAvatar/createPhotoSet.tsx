@@ -212,6 +212,7 @@ function CreatePhotoSetPage() {
                                 onPhotoClick={setFullscreenSrc}
                                 onRegenerate={restartJob}
                                 canRestart={!stepLocked()}
+                                showOrder={true}
                             />
                         ))}
                     </div>

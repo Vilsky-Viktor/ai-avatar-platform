@@ -5,6 +5,8 @@ import { getMediaUrlFromPath } from '../services/storage';
 import type { Avatar } from '../types/avatar';
 import type { Media } from '../types/media';
 import PhotoCard from '../components/PhotoCard';
+import FullscreenModal from '../components/createAvatar/FullscreenModal';
+import CreateMediaCard from '../components/avatar/CreateMediaCard';
 
 function AvatarPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -66,7 +68,29 @@ function AvatarPage() {
                 </div>
             ) : (
                 <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
+                    <div className="flex items-center gap-8 mb-10">
+                        <h1 className="text-2xl font-medium uppercase tracking-[0.2em]">{avatar.name}</h1>
+                        <div className="flex items-center gap-6 text-base-content/40">
+                            <div className="flex flex-col items-center">
+                                <span className="text-lg font-bold text-base-content">{numModels}</span>
+                                <span className="text-[10px] uppercase tracking-[0.2em]">Models</span>
+                            </div>
+                            <div className="w-px h-8 bg-base-content/10" />
+                            <div className="flex flex-col items-center">
+                                <span className="text-lg font-bold text-base-content">{numImages}</span>
+                                <span className="text-[10px] uppercase tracking-[0.2em]">Images</span>
+                            </div>
+                            <div className="w-px h-8 bg-base-content/10" />
+                            <div className="flex flex-col items-center">
+                                <span className="text-lg font-bold text-base-content">{numVideos}</span>
+                                <span className="text-[10px] uppercase tracking-[0.2em]">Videos</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <CreateMediaCard />
+
                         {media.map((media, idx) => (
                             <PhotoCard
                                 key={idx}
@@ -78,6 +102,8 @@ function AvatarPage() {
                     </div>
                 </div>
             )}
+
+            <FullscreenModal src={fullscreenSrc} onClose={() => setFullscreenSrc(null)} />
         </>
     );
 }

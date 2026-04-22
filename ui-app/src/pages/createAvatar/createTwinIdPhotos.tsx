@@ -364,6 +364,7 @@ function CreateTwinIdPhotosPage() {
                                 onPhotoClick={setFullscreenSrc}
                                 onRegenerate={restartJob}
                                 canRestart={!stepLocked()}
+                                showOrder={true}
                             />
                         ))}
                     </div>

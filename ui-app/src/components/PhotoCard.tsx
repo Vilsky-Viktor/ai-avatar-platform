@@ -21,6 +21,7 @@ type Props = {
     onPhotoClick: (url: string) => void;
     onRegenerate?: (jobId: string) => void;
     canRestart?: boolean;
+    showOrder?: boolean;
     faceMatchThresholds?: FaceMatchThresholds;
 };
 
@@ -31,6 +32,7 @@ function PhotoCard({
     onPhotoClick,
     onRegenerate,
     canRestart = true,
+    showOrder = false,
     faceMatchThresholds = DEFAULT_THRESHOLDS,
 }: Props) {
     if (!job && !media) {
@@ -153,11 +155,13 @@ function PhotoCard({
                     className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
                 />
 
-                <div className="absolute top-1 left-1 z-10">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
-                        <span className="font-bold">{order}</span>
+                {showOrder && (
+                    <div className="absolute top-1 left-1 z-10">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
+                            <span className="font-bold">{order}</span>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {canRestart && onRegenerate && (
                     <button
