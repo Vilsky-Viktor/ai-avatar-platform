@@ -681,37 +681,6 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Deep squat, arms resting on knees. Change outfit to ${isFemale ? 'flowy taupe linen wide-leg trousers, tucked olive green relaxed linen top' : 'taupe linen trousers, olive green relaxed linen shirt'} and black sandals. Change background to outdoor nature. Change light to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: portraitRatio[0],
-          height: portraitRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.front!],
-          threshold: { min: AvatarTypes.twin ? 0.92 : 0.8 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: {
-        dimensions: `${portraitRatio[0]}x${portraitRatio[1]}`,
-        ratio: '3:4',
-        angle: '0:0',
-        shotType: 'frontFullBodyView',
-      },
-      maxRuns: 5,
-      order: 32,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
           prompt: `Sitting, hands on sides supporting body. Change outfit to ${isFemale ? 'pink fitted racerback crop tank top, light gray fleece sweat shorts with elastic waistband' : 'relaxed gray joggers, white t-shirt'}. Change background to king size bed in the hotel room. Change light to simple hotel interior soft light`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
           numSteps: 8,
@@ -737,7 +706,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 33,
+      order: 32,
     },
     {
       input: {
@@ -768,38 +737,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 34,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Sitting, direct stare to camera, one knee bent upwards. Change outfit to ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'pastel yellow shorts and hawaiian shirt'}, barefoot. Change background to lounge chair on the beach. Change light to soft daylight`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: portraitRatio[0],
-          height: portraitRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: AvatarTypes.twin ? 0.92 : 0.8 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: {
-        dimensions: `${portraitRatio[0]}x${portraitRatio[1]}`,
-        ratio: '3:4',
-        angle: '0:0',
-        shotType: 'frontFullBodyView',
-      },
-      maxRuns: 5,
-      order: 35,
+      order: 33,
     },
     {
       input: {
@@ -830,38 +768,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 36,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Sitting cross-legged, relaxed pose. Change outfit to ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit dark green cargo shorts and gray tee'}, flip flops. Change background to park grass. Change light to early morning`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: portraitRatio[0],
-          height: portraitRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.body!],
-          threshold: { min: AvatarTypes.twin ? 0.92 : 0.8 }
-        },
-        loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: {
-        dimensions: `${portraitRatio[0]}x${portraitRatio[1]}`,
-        ratio: '3:4',
-        angle: '0:0',
-        shotType: 'frontFullBodyView',
-      },
-      maxRuns: 5,
-      order: 37,
+      order: 34,
     },
     {
       input: {
@@ -892,7 +799,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 38,
+      order: 35,
     },
     {
       input: {
@@ -923,7 +830,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 39,
+      order: 36,
     },
     {
       input: {
@@ -954,7 +861,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 40,
+      order: 37,
     },
 
     // =================================================================
@@ -990,7 +897,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 41,
+      order: 38,
     },
     {
       input: {
@@ -1021,7 +928,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         shotType: 'frontFullBodyView',
       },
       maxRuns: 5,
-      order: 42,
+      order: 39,
     },
     {
       input: {
@@ -1043,7 +950,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
       },
       metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'rearFullBodyView'},
       maxRuns: 1,
-      order: 43,
+      order: 40,
     }
   ];
 };

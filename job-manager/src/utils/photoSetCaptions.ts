@@ -49,19 +49,16 @@ export const generatePhotoSetCaptions = (parameters: AvatarParameters): PhotoSet
     { order: 29, caption: `${AVATAR_REFERENCE_NAME} waist-up portrait sitting at a desk, ${isFemale ? 'soft gray tailored blazer' : 'slim-fit navy blazer with white dress shirt'}, modern co-working office space, bright overhead office lighting` },
     { order: 30, caption: `${AVATAR_REFERENCE_NAME} waist-up portrait standing upright, ${isFemale ? 'black racing-style crop jacket' : 'black racing jacket with gray t-shirt'}, luxury car garage interior, even overhead indoor lighting` },
 
-    // --- Full body diverse poses (orders 31–43) ---
+    // --- Full body diverse poses (orders 31–40) ---
     { order: 31, caption: `${AVATAR_REFERENCE_NAME} walking forward, ${isFemale ? 'black cocktail dress with high heels' : 'charcoal suit with white dress shirt'}, city sidewalk, overcast diffused daylight` },
-    { order: 32, caption: `${AVATAR_REFERENCE_NAME} in a deep squat pose, ${isFemale ? 'taupe linen wide-leg trousers and olive linen top' : 'taupe linen trousers and olive linen shirt'}, outdoor nature setting, soft diffused daylight` },
-    { order: 33, caption: `${AVATAR_REFERENCE_NAME} sitting on a hotel bed, ${isFemale ? 'pink racerback crop tank and gray fleece shorts' : 'relaxed gray joggers and white t-shirt'}, hotel room interior, soft ambient light` },
-    { order: 34, caption: `${AVATAR_REFERENCE_NAME} standing barefoot, ${isFemale ? 'breezy floral sundress' : 'red shorts and sleeveless black t-shirt'}, sandy beach with ocean in background, warm golden hour sunlight` },
-    { order: 35, caption: `${AVATAR_REFERENCE_NAME} sitting on a lounge chair, ${isFemale ? 'yellow floral wrap midi dress' : 'pastel yellow shorts and hawaiian shirt'}, beach setting, soft natural daylight` },
-    { order: 36, caption: `${AVATAR_REFERENCE_NAME} jogging on a path, ${isFemale ? 'breezy white cover-up dress' : 'linen shorts and sleeveless white t-shirt'}, tropical path with greenery, soft natural daylight` },
-    { order: 37, caption: `${AVATAR_REFERENCE_NAME} sitting cross-legged on the ground, ${isFemale ? 'terracotta boho pants and cropped top' : 'dark green cargo shorts and gray t-shirt'}, park grass setting, soft early morning light` },
-    { order: 38, caption: `${AVATAR_REFERENCE_NAME} leaning against gym lockers, ${isFemale ? 'all-black athleisure set' : 'all-black tracksuit'}, gym changing room interior, even overhead indoor lighting` },
-    { order: 39, caption: `${AVATAR_REFERENCE_NAME} lying on abdomen on a bed, ${isFemale ? 'soft pink sleep pajama' : 'gray modal lounge shorts and t-shirt'}, bedroom interior, soft warm romantic light` },
-    { order: 40, caption: `${AVATAR_REFERENCE_NAME} dancing on a street at night, ${isFemale ? 'black micro mini skirt and sleeveless white bodysuit' : 'black crew-neck t-shirt and black trousers'}, city street with colorful lights in background` },
-    { order: 41, caption: `${AVATAR_REFERENCE_NAME} extreme low-angle upward shot, blue jeans and light gray polo shirt, white clouds and pebbled ground in background, soft natural daylight` },
-    { order: 42, caption: `${AVATAR_REFERENCE_NAME} extreme high-angle overhead downward shot, white shorts and light gray t-shirt with orange flip flops, sahara desert terrain, bright sunny daylight` },
-    { order: 43, caption: `${AVATAR_REFERENCE_NAME} rear view standing on a balcony, ${isFemale ? 'high-waisted black trousers and white crop top' : 'slim navy chinos and white oxford shirt'}, city skyline background, natural daylight` },
+    { order: 32, caption: `${AVATAR_REFERENCE_NAME} sitting on a hotel bed, ${isFemale ? 'pink racerback crop tank and gray fleece shorts' : 'relaxed gray joggers and white t-shirt'}, hotel room interior, soft ambient light` },
+    { order: 33, caption: `${AVATAR_REFERENCE_NAME} standing barefoot, ${isFemale ? 'breezy floral sundress' : 'red shorts and sleeveless black t-shirt'}, sandy beach with ocean in background, warm golden hour sunlight` },
+    { order: 34, caption: `${AVATAR_REFERENCE_NAME} jogging on a path, ${isFemale ? 'breezy white cover-up dress' : 'linen shorts and sleeveless white t-shirt'}, tropical path with greenery, soft natural daylight` },
+    { order: 35, caption: `${AVATAR_REFERENCE_NAME} leaning against gym lockers, ${isFemale ? 'all-black athleisure set' : 'all-black tracksuit'}, gym changing room interior, even overhead indoor lighting` },
+    { order: 36, caption: `${AVATAR_REFERENCE_NAME} lying on abdomen on a bed, ${isFemale ? 'soft pink sleep pajama' : 'gray modal lounge shorts and t-shirt'}, bedroom interior, soft warm romantic light` },
+    { order: 37, caption: `${AVATAR_REFERENCE_NAME} dancing on a street at night, ${isFemale ? 'black micro mini skirt and sleeveless white bodysuit' : 'black crew-neck t-shirt and black trousers'}, city street with colorful lights in background` },
+    { order: 38, caption: `${AVATAR_REFERENCE_NAME} extreme low-angle upward shot, blue jeans and light gray polo shirt, white clouds and pebbled ground in background, soft natural daylight` },
+    { order: 39, caption: `${AVATAR_REFERENCE_NAME} extreme high-angle overhead downward shot, white shorts and light gray t-shirt with orange flip flops, sahara desert terrain, bright sunny daylight` },
+    { order: 40, caption: `${AVATAR_REFERENCE_NAME} rear view standing on a balcony, ${isFemale ? 'high-waisted black trousers and white crop top' : 'slim navy chinos and white oxford shirt'}, city skyline background, natural daylight` },
   ];
 };

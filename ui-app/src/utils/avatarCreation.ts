@@ -6,7 +6,7 @@ import { decode, encode } from "./encoder";
 export const NEW_AVATAR_DATA = 'new_avatar_data';
 
 export const NUM_ID_PHOTOS = 9;
-export const NUM_PHOTO_SET_PHOTOS = 34;
+export const NUM_PHOTO_SET_PHOTOS = 31;
 
 
 export const handleCancel = async (avatarId: string, setCancelLoading: Function, navigate: Function) => {
