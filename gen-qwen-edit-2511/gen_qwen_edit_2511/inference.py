@@ -158,7 +158,7 @@ class _PipelineInstance:
     @utils.timeit
     def run_inference(self, job_input: JobInput, images: list[Image.Image]):
         if not images:
-            images = [Image.new("RGB", (job_input.inference.width, job_input.inference.height), (255, 255, 255))]
+            images = [Image.new("RGB", (job_input.inference.width, job_input.inference.height), (0, 0, 0))]
 
         seed      = job_input.inference.seed or secrets.randbelow(2**32)
         generator = torch.Generator(device=self.device).manual_seed(seed)
