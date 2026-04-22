@@ -12,7 +12,8 @@ import {
   PhotoJobRequest,
 } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { AVATAR_REFERENCE_NAME, generateTrainingPhotoSetData } from '../utils/photoSetInputData';
+import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
+import { AVATAR_REFERENCE_NAME } from '../utils/photoSetCaptions';
 import { generatePhotoSetCaptions } from '../utils/photoSetCaptions';
 import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import {

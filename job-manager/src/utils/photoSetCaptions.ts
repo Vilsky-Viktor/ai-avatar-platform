@@ -1,6 +1,7 @@
 import { AvatarParameters } from '../types/avatar';
 import { PhotoSetCaption } from '../types/trainingPhotoSet';
-import { AVATAR_REFERENCE_NAME } from './photoSetInputData';
+
+export const AVATAR_REFERENCE_NAME = '<loom24>';
 
 export const generatePhotoSetCaptions = (parameters: AvatarParameters): PhotoSetCaption[] => {
   const { gender } = parameters;

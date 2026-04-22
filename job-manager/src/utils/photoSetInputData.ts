@@ -3,8 +3,6 @@ import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
 import { InferenceJob, FaceExpressionTypes, Directions } from '../types/job';
 import imageRatios from '../types/imageRatios';
 
-export const AVATAR_REFERENCE_NAME = '<avatarlife>';
-
 export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avatarType: AvatarTypes, idPhotoSet: IdPhotoSetPaths): Partial<InferenceJob>[] => {
   const { gender } = parameters;
 
