@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 class TrainingConfig(BaseModel):
     mediaPaths: list[str] = []
     prompts: list[str] = []
-    numSteps: int
+    numSteps: int = 0
     width: int | None = None
     height: int | None = None
     rank: int = 32

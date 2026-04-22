@@ -43,12 +43,23 @@ def make_process_job(shared: training.SharedComponents, semaphore: threading.Sem
         job: Job | None = None
 
         try:
-            job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
+            try:
+                job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
+            except Exception as parse_err:
+                logger.error(f"Failed to parse job message — acking to discard: {parse_err}")
+                message.ack()
+                return
+
             set_job_id(job.id)
             stop_inactivity_timer()
 
             training_cfg = job.input.training
             logger.info(f"Received training job: avatar={job.avatarId}, steps={training_cfg.numSteps}")
+
+            if not training_cfg.numSteps:
+                logger.error("numSteps is 0 — stale or malformed job, discarding")
+                message.ack()
+                return
 
             # Check if job was cancelled
             db_job = db.get_job_by_id(job.id)
