@@ -22,6 +22,7 @@ export type Media = {
     isIdPhoto: boolean,
     isPhotoSet: boolean,
     path: string;
+    url?: string;
     dimensions: string;
     ratio: string;
     angle?: string;

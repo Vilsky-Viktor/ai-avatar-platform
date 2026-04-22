@@ -2,9 +2,9 @@ import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepp
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from "react";
 import { JobStatuses, type InferenceJob, type TrainingJobRequest } from "../../types/job";
-import { genTrainingPhotoSet, restartJobById, updateAvatar, getUserAvatarById, getJobsByGroupId } from "../../services/apiGateway";
+import { genTrainingPhotoSet, restartJobById, updateAvatar, getAvatarById, getJobsByGroupId } from "../../services/apiGateway";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
-import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
+import PhotoCard from "../../components/PhotoCard";
 import {
     initialAvatarData,
     getAvatarData,
@@ -95,7 +95,7 @@ function CreatePhotoSetPage() {
         if (initialized.current) return;
         initialized.current = true;
 
-        const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+        const existingAvatar = await getAvatarById(newAvatarData.avatarId);
         setAvatar(existingAvatar);
 
         const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
@@ -153,13 +153,13 @@ function CreatePhotoSetPage() {
         }
     }
 
-    const restartJob = async (listIdx: number) => {
-        const job = jobs[listIdx];
-        if (!job?.id) return;
+    const restartJob = async (jobId: string) => {
+        const listIdx = jobs.findIndex(j => j?.id === jobId);
+        if (listIdx === -1) return;
 
         setJob(listIdx, null);
 
-        const restartedJob = await restartJobById(job.id);
+        const restartedJob = await restartJobById(jobId);
         setJob(listIdx, restartedJob as InferenceJob);
     }
 
@@ -205,12 +205,12 @@ function CreatePhotoSetPage() {
                 <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {jobs.map((job, idx) => (
-                            <JobPhotoCard
+                            <PhotoCard
                                 key={idx}
                                 job={job}
                                 idx={idx}
                                 onPhotoClick={setFullscreenSrc}
-                                onRetry={restartJob}
+                                onRegenerate={restartJob}
                                 canRestart={!stepLocked()}
                             />
                         ))}

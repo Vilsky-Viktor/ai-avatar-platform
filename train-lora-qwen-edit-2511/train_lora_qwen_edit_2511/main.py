@@ -12,7 +12,6 @@ import train_lora_qwen_edit_2511.message_queue as mq
 import train_lora_qwen_edit_2511.storage as storage
 import train_lora_qwen_edit_2511.training as training
 from train_lora_qwen_edit_2511.models import Job
-from train_lora_qwen_edit_2511.runpod import reset_inactivity_timer, stop_inactivity_timer
 
 logger = log.get_logger(__name__)
 
@@ -51,8 +50,6 @@ def make_process_job(shared: training.SharedComponents, semaphore: threading.Sem
                 return
 
             set_job_id(job.id)
-            stop_inactivity_timer()
-
             training_cfg = job.input.training
             logger.info(f"Received training job: avatar={job.avatarId}, steps={training_cfg.numSteps}")
 
@@ -152,7 +149,6 @@ def make_process_job(shared: training.SharedComponents, semaphore: threading.Sem
                 message.nack()
         finally:
             clear_job_id()
-            reset_inactivity_timer()
 
     return process_job
 
@@ -165,8 +161,6 @@ def run_worker(worker_idx: int):
     except Exception as e:
         logger.error(f"[worker {worker_idx}] Failed to load shared components: {e}", exc_info=True)
         raise
-
-    reset_inactivity_timer()
 
     semaphore = threading.Semaphore(1)
     subscriber = mq.get_subscriber_client()

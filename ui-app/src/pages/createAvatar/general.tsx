@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepper';
 import { User, ChevronDown } from 'lucide-react';
-import { createAvatar, getUserAvatarById } from '../../services/apiGateway';
+import { createAvatar, getAvatarById } from '../../services/apiGateway';
 import { AvatarTypes, type Avatar } from '../../types/avatar';
 import { AvatarGender } from '../../types/avatar';
 import { getAvatarData, initialAvatarData, initialNewAvatarData, saveAvatarData } from '../../utils/avatarCreation';
@@ -42,7 +42,7 @@ function GeneralPage() {
 
     const initPage = async () => {
         if (newAvatarData.avatarId) {
-            const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+            const existingAvatar = await getAvatarById(newAvatarData.avatarId);
             setAvatar(existingAvatar);
         }
 

@@ -3,9 +3,9 @@ import { type Avatar } from '../../types/avatar';
 import { useApp } from '../../providers/ContextProvider';
 import { ThemeColor } from '../../types/settings';
 import { AvatarGender } from '../../types/avatar';
-import type { FirestoreTimestamp } from '../../types/firestore';
 import { useEffect, useState } from 'react';
 import { getMediaUrlFromPath } from '../../services/storage';
+import { useNavigate } from 'react-router-dom';
 
 type PropType = {
     avatar: Avatar;
@@ -14,7 +14,7 @@ type PropType = {
 
 const AvatarCard = ({ avatar, onDelete }: PropType) => {
   const { theme } = useApp();
-  const [loadingDelete, setLoadingDelete] = useState(false);
+  const navigate = useNavigate();
 
   const getAvatarDefaultImage = () => {
     const isDark = theme === ThemeColor.Dark;
@@ -35,12 +35,6 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
 
     const frontPictureUrl = await getMediaUrlFromPath(avatar.mainImagePath);
     setImageSrc(frontPictureUrl);
-  }
-
-  const deleteAvatar = async () => {
-    setLoadingDelete(true);
-    await onDelete(avatar.id!);
-    setLoadingDelete(false);
   }
 
   return (
@@ -86,7 +80,11 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
       </div>
 
       {/* Main Card Interaction Area */}
-      <button className="w-full h-full text-left focus:outline-none overflow-hidden rounded-2xl relative cursor-pointer">
+      <button
+        className={`w-full h-full text-left focus:outline-none overflow-hidden rounded-2xl relative ${avatar.photoSetGenerated ? 'cursor-pointer' : 'cursor-default'}`}
+        disabled={!avatar.photoSetGenerated}
+        onClick={() => avatar.photoSetGenerated && navigate(`/avatar/${avatar.slug}`)}
+      >
         {/* Hover Border Highlight */}
         <div className="absolute inset-0 z-50 pointer-events-none rounded-2xl border-2 border-transparent group-hover:border-primary/40 transition-colors duration-300" />
         

@@ -9,6 +9,10 @@ router.get(
     createProxyHandler('get', (req) => `${BASE}/get/${req.params.id}`, 'Get avatar by ID')
 );
 router.get(
+    '/get/slug/:slug',
+    createProxyHandler('get', (req) => `${BASE}/get/slug/${req.params.slug}`, 'Get avatar by ID')
+);
+router.get(
     '/get-all',
     createProxyHandler('get', () => `${BASE}/get-all`, 'Get all avatars')
 );

@@ -6,7 +6,7 @@ import {
     initialAvatarData,
     NEW_AVATAR_DATA
 } from '../../utils/avatarCreation';
-import { getMediaByAvatarId, createTrainingMedia, getUserAvatarById, trainLoras, updateAvatar } from '../../services/apiGateway';
+import { getMediaByAvatarId, createTrainingMedia, getAvatarById, trainLoras, updateAvatar } from '../../services/apiGateway';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { scrollToTop } from '../../utils/scroller';
 import type { Media } from '../../types/media';
@@ -49,7 +49,7 @@ function AvatarTrainingPage() {
         if (initialized.current) return;
         initialized.current = true;
 
-        const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+        const existingAvatar = await getAvatarById(newAvatarData.avatarId);
         setAvatar(existingAvatar);
         setLoras(existingAvatar.loras || {});
 

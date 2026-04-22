@@ -36,13 +36,24 @@ export const syncUser = async (user: FirebaseUser): Promise<User> => {
   }
 };
 
-export const getUserAvatarById = async (avatarId: string): Promise<Avatar> => {
+export const getAvatarById = async (avatarId: string): Promise<Avatar> => {
   try {
     const res = await apiClient.get(`/avatars/get/${avatarId}`);
 
     return res.data as Avatar;
   } catch (error) {
     console.error(`Error fetching avatar ${avatarId} avatar:`, error);
+    throw error;
+  }
+}
+
+export const getAvatarBySlug = async (slug: string): Promise<Avatar> => {
+  try {
+    const res = await apiClient.get(`/avatars/get/slug/${slug}`);
+
+    return res.data as Avatar;
+  } catch (error) {
+    console.error(`Error fetching avatar ${slug} avatar:`, error);
     throw error;
   }
 }

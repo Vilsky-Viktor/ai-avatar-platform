@@ -8,7 +8,7 @@ import {
     initialAvatarData
 } from '../../utils/avatarCreation';
 import { AvatarGender, type Avatar } from '../../types/avatar';
-import { updateAvatar, getVoicesByGender, getUserAvatarById } from '../../services/apiGateway';
+import { updateAvatar, getVoicesByGender, getAvatarById } from '../../services/apiGateway';
 import type { Voice } from '../../types/voice';
 import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
 import { Upload, Play, Pause, Check, Music, Trash2 } from 'lucide-react';
@@ -66,7 +66,7 @@ function AssignVoicePage() {
 
     const initPage = async () => {
         try {
-            const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+            const existingAvatar = await getAvatarById(newAvatarData.avatarId);
             setAvatar(existingAvatar);
             savedVoicePathRef.current = existingAvatar.voicePath ?? null;
 

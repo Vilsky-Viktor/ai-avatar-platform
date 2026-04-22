@@ -7,6 +7,7 @@ import CreatePhotoSetPage from '../pages/createAvatar/createPhotoSet';
 import AssignVoicePage from '../pages/createAvatar/assignVoice';
 import AvatarTrainingPage from '../pages/createAvatar/avatarTraining';
 import GeneralPage from '../pages/createAvatar/general';
+import AvatarPage from '../pages/Avatar';
 
 function UserLayer() {
     return (
@@ -22,6 +23,7 @@ function UserLayer() {
                         <Route path="/avatar/create/photo-set" element={<CreatePhotoSetPage />} />
                         <Route path="/avatar/create/assign-voice" element={<AssignVoicePage />} />
                         <Route path="/avatar/create/training" element={<AvatarTrainingPage />} />
+                        <Route path="/avatar/:slug" element={<AvatarPage />} />
                     </Routes>
                 </div>
             </main>

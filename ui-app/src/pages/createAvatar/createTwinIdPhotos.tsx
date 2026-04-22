@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
-import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
+import PhotoCard from "../../components/PhotoCard";
 import ImageCropperModal from "../../components/createAvatar/ImageCropperModal";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
 import { type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getUserAvatarById } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getAvatarById } from '../../services/apiGateway';
 import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
@@ -117,7 +117,7 @@ function CreateTwinIdPhotosPage() {
     }
 
     const initPage = async () => {
-        const existingAvatar = await getUserAvatarById(newAvatarData.avatarId);
+        const existingAvatar = await getAvatarById(newAvatarData.avatarId);
         setAvatar(existingAvatar);
 
         if (newAvatarData.groupId) {
@@ -258,13 +258,13 @@ function CreateTwinIdPhotosPage() {
         }
     }
 
-    const restartJob = async (listIdx: number) => {
-        const job = jobs[listIdx];
-        if (!job?.id) return;
+    const restartJob = async (jobId: string) => {
+        const listIdx = jobs.findIndex(j => j?.id === jobId);
+        if (listIdx === -1) return;
 
         setJob(listIdx, null);
 
-        const restartedJob = await restartJobById(job.id);
+        const restartedJob = await restartJobById(jobId);
         setJob(listIdx, restartedJob as InferenceJob);
         setTimeout(() => scrollToBottom(), 500);
     }
@@ -357,12 +357,12 @@ function CreateTwinIdPhotosPage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {jobs.map((job, idx) => (
-                            <JobPhotoCard
+                            <PhotoCard
                                 key={idx}
                                 job={job}
                                 idx={idx}
                                 onPhotoClick={setFullscreenSrc}
-                                onRetry={restartJob}
+                                onRegenerate={restartJob}
                                 canRestart={!stepLocked()}
                             />
                         ))}

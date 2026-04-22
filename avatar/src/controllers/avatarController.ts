@@ -6,6 +6,7 @@ import {
   deleteByAvatarId as deleteByAvatarIdDb, 
   getAll as getAllDb,
   getById as getByIdDb,
+  getBySlug as getBySlugDb,
 } from '../repositories/avatar';
 import { deleteJobsByAvatarId, deleteJobsByUserId } from '../services/jobService';
 import { deleteMediaByAvatarId } from '../services/mediaService';
@@ -22,6 +23,22 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
     return res.status(200).json(avatarDB);
   } catch (error) {
     req.log.info(`Failed to get avatar ${avatarId} for user ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+export const getBySlug = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const avatarSlug = req.params.slug as string;
+
+  req.log.info(`Get avatar ${avatarSlug} for user ${userId}`);
+
+  try {
+    const avatarDB = await getBySlugDb(userId, avatarSlug);
+
+    return res.status(200).json(avatarDB);
+  } catch (error) {
+    req.log.info(`Failed to get avatar ${avatarSlug} for user ${userId}: ${error}`);
     next(error);
   }
 }

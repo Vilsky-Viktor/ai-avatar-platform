@@ -49,6 +49,7 @@ export const getByAvatarId = async (userId: string, avatarId: string): Promise<M
     const snapshot = await db.collection(MEDIA_COLLECTION_NAME)
         .where('userId', '==', userId)
         .where('avatarId', '==', avatarId)
+        .orderBy('createdAt', 'desc')
         .get();
     return snapshot.docs.map(doc => doc.data() as Media);
 }

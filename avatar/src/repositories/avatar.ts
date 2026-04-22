@@ -17,6 +17,18 @@ export const getById = async (userId: string, avatarId: string): Promise<Avatar>
     return avatarDoc.data() as Avatar;
 }
 
+export const getBySlug = async (userId: string, avatarSlug: string): Promise<Avatar> => {
+    const snapshot = await db.collection(USERS_COLLECTION_NAME)
+        .doc(userId)
+        .collection(AVATARS_COLLECTION_NAME)
+        .where('slug', '==', avatarSlug)
+        .limit(1)
+        .get();
+
+    if (snapshot.empty) throw Object.assign(new Error(`Avatar ${avatarSlug} not found`), { status: 404 });
+    return snapshot.docs[0].data() as Avatar;
+}
+
 export const getAll = async (userId: string): Promise<Avatar[]> => {
     const avatarsCollectionRef = db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
