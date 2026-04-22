@@ -86,7 +86,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
         training: {
           mediaPaths,
           prompts,
-          numSteps: mediaPaths.length * 100,
+          numSteps: mediaPaths.length * 150,
           rank: 32,
           loraAlpha: 32,
           learningRate: 2e-4,
