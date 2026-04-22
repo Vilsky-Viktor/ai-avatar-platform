@@ -1,6 +1,12 @@
 
 export const ratios = {
-    'square': '1:1',
+    'square':    '1:1',
+    'landscape': '16:9',
+    'portrait':  '9:16',
+    'photo':     '4:3',
+    'vertical':  '3:4',
+    'wide':      '3:2',
+    'tall':      '2:3',
 }
 
 export const flux2Dev = {

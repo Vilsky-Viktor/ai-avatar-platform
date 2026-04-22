@@ -1,5 +1,17 @@
+import { Timestamp } from 'firebase-admin/firestore';
+
+export enum AvatarGender {
+  male = 'male',
+  female = 'female'
+}
+
+export enum AvatarTypes {
+  twin = 'twin',
+  synthetic = 'synthetic'
+}
+
 export type AvatarParameters = {
-  gender: string;
+  gender: AvatarGender;
   ethnicity: string;
   skinColor: string;
   age: string;
@@ -22,16 +34,22 @@ export type AvatarParameters = {
   height: string;
 }
 
-export enum AvatarGender {
-  male = 'male',
-  female = 'female'
-}
-
-export enum AvatarTypes {
-  twin = 'twin',
-  synthetic = 'synthetic'
-}
-
 export type AvatarLoras = {
   qwenEdit2511Path: string;
+}
+
+export type Avatar = {
+  id?: string;
+  userId?: string;
+  name: string;
+  slug: string;
+  type: AvatarTypes;
+  parameters: AvatarParameters;
+  mainImagePath?: string;
+  voicePath?: string;
+  isUploadedVoice?: boolean;
+  photoSetGenerated: boolean;
+  loras: AvatarLoras;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }

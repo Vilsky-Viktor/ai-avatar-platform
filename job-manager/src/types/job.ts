@@ -9,6 +9,7 @@ export enum MediaTypes {
 export enum JobTargets {
   trainingPhotoSet = 'trainingPhotoSet',
   qwenEdit2511Lora = 'qwenEdit2511Lora',
+  avatarMedia = 'avatarMedia',
 }
 
 export enum JobStatuses {
@@ -195,4 +196,14 @@ export type TrainingJobRequest = {
   groupId?: string;
   avatarId: string;
   parameters: AvatarParameters;
+}
+
+import { qwenEdit2511 } from './imageRatios';
+
+export type ImageRatio = keyof typeof qwenEdit2511;
+
+export type PhotoJobRequest = {
+  avatarId: string;
+  ratio: ImageRatio;
+  prompt: string;
 }

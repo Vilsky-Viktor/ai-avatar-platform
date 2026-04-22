@@ -21,3 +21,47 @@
 .spin-once-on-hover:hover {
   animation: spin-once 0.5s ease-in-out;
 }
+
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-draw-in {
+  0%   { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0% 0 0 round 24px); }
+}
+
+@keyframes modal-cursor-sweep {
+  0%   { left: 0%;   opacity: 1; }
+  90%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+@keyframes modal-content-emerge {
+  0%, 55%  { opacity: 0; filter: blur(5px); transform: translateY(8px); }
+  100%     { opacity: 1; filter: blur(0);   transform: translateY(0); }
+}
+
+@keyframes border-lr {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes border-tb {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes border-rl {
+  from { clip-path: inset(0 0 0 100%); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes border-bt {
+  from { clip-path: inset(100% 0 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes panel-reveal {
+  0%   { clip-path: inset(50% 2% 50% 2% round 24px); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { clip-path: inset(0% 0% 0% 0% round 24px); opacity: 1; }
+}

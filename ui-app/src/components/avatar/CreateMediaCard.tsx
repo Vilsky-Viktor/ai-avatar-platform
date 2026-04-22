@@ -1,8 +1,16 @@
 import { Plus } from 'lucide-react';
 
-const CreateMediaCard = () => {
+type Props = {
+    onClick: () => void;
+};
+
+const CreateMediaCard = ({ onClick }: Props) => {
     return (
-        <button className="group relative overflow-hidden rounded-2xl aspect-square border-2 border-transparent hover:border-primary/50 bg-base-100 transition-all duration-300 cursor-pointer focus:outline-none active:scale-[0.98]">
+        <button
+            type="button"
+            onClick={onClick}
+            className="group relative overflow-hidden rounded-2xl aspect-square border-2 border-transparent hover:border-primary/50 bg-base-100 transition-all duration-300 cursor-pointer focus:outline-none active:scale-[0.98] w-full"
+        >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(var(--p),0.1),transparent)] group-hover:bg-[radial-gradient(circle_at_50%_120%,rgba(var(--p),0.2),transparent)] transition-all duration-500" />
             <div className="relative z-10 flex flex-col items-center justify-center h-full gap-3">
                 <div className="relative">

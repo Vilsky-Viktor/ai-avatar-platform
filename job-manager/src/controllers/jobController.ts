@@ -9,9 +9,10 @@ import {
   TrainingJobRequest,
   InferenceJobMetadata,
   TrainingJobMetadata,
+  PhotoJobRequest,
 } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
+import { AVATAR_REFERENCE_NAME, generateTrainingPhotoSetData } from '../utils/photoSetInputData';
 import { generatePhotoSetCaptions } from '../utils/photoSetCaptions';
 import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import {
@@ -24,6 +25,7 @@ import {
   deleteByAvatarId as deleteByAvatarIdDb,
 } from '../repositories/job';
 import { publishJob, publishJobs } from '../services/messageQueue';
+import { getAvatarById } from '../services/avatarService';
 import { buildPhotoSetJobs } from '../utils/jobBuilder';
 import uuid from 'uuid';
 import imageRatios from '../types/imageRatios';
@@ -85,8 +87,8 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
           prompts,
           numSteps: mediaPaths.length * 100,
           rank: 32,
-          loraAlpha: 16,
-          learningRate: 1.35e-4,
+          loraAlpha: 32,
+          learningRate: 2e-4,
           gradientAccumulationSteps: 1,
           clipGradNorm: 0.5,
         },
@@ -299,6 +301,58 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
     next(error);
   }
 
+}
+
+export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const jobRequest: PhotoJobRequest = req.body;
+  const fileId = uuid.v4();
+
+  const [width, height] = imageRatios.qwenEdit2511[jobRequest.ratio];
+  const dimensions = `${width}x${height}`;
+
+  req.log.info(`Generate avatar photo for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}`);
+
+  try {
+    const avatar = await getAvatarById(userId, jobRequest.avatarId);
+    const loraPath = avatar.loras.qwenEdit2511Path;
+
+    const job: InferenceJob = {
+      userId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.image,
+      target: JobTargets.avatarMedia,
+      status: JobStatuses.pending,
+      maxRuns: 1,
+      input: {
+        checkDependencies: false,
+        inference: {
+          prompt: `${AVATAR_REFERENCE_NAME} ${jobRequest.prompt}`,
+          numSteps: 50,
+          guidanceScale: 4.0,
+          width,
+          height,
+        },
+        loras: [{ path: loraPath, scale: 1.0 }],
+      },
+      metadata: {
+        queueTopic: GEN_QWEN_EDIT_2511_TOPIC,
+        ratio: jobRequest.ratio,
+        dimensions,
+      } as InferenceJobMetadata,
+      result: {
+        fileName: `${fileId}-${dimensions}.png`,
+      },
+    };
+
+    const dbJob = await createDb(userId, job);
+    await publishJob(GEN_QWEN_EDIT_2511_TOPIC, dbJob);
+
+    return res.status(201).json(dbJob);
+  } catch (error) {
+    req.log.info(`Failed to generate avatar photo for ${userId}: ${error}`);
+    next(error);
+  }
 }
 
 export const restart = async (req: Request, res: Response, next: NextFunction) => {

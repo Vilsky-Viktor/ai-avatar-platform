@@ -3,6 +3,7 @@ import { type Media, MediaSection } from '../types/media';
 import { create as createDb, createMany as createManyDb, getByAvatarId as getByAvatarIdDb, deleteById as deleteByIdDb, deleteByAvatarId as deleteByAvatarIdDb } from '../repositories/media';
 import { getJobsByGroupId } from '../services/jobManagerService';
 import { removeStoredMediaByPaths } from '../services/storage';
+import { InferenceJob } from '../types/job';
 
 export const getByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -16,6 +17,35 @@ export const getByAvatarId = async (req: Request, res: Response, next: NextFunct
     next(error);
   }
 };
+
+export const createFromJob = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const job: InferenceJob = req.body;
+
+  const media = {
+    userId,
+    avatarId: job.avatarId,
+    jobId: job.id,
+    groupId: job.groupId,
+    type: job.mediaType,
+    section: MediaSection.avatar,
+    isRemovable: true,
+    isIdPhoto: false,
+    isPhotoSet: false,
+    path: job.result?.mediaPath,
+    dimensions: job.metadata?.dimensions,
+    ratio: job.metadata?.ratio,
+    upscaled: false,
+  } as Media;
+
+  try {
+    const created = await createDb(userId, media);
+    return res.status(201).json(created);
+  } catch (error) {
+    req.log.info(`Failed to create training media for job ${job.id} for user ${userId}: ${error}`);
+    next(error);
+  }
+}
 
 export const createTrainingMedia = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;

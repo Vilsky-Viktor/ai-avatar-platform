@@ -6,6 +6,7 @@ export enum MediaTypes {
 export enum JobTargets {
   trainingPhotoSet = 'trainingPhotoSet',
   qwenEdit2511Lora = 'qwenEdit2511Lora',
+  avatarMedia = 'avatarMedia',
 }
 
 export enum JobStatuses {

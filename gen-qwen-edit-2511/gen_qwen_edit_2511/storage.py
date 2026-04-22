@@ -119,7 +119,9 @@ def ensure_lora_downloaded(lora_path: str) -> str:
     """
     local_path = Path("/workspace") / lora_path
 
-    if local_path.is_dir() and any(local_path.iterdir()):
+    is_file_path = "." in Path(lora_path).name
+    cached = local_path.is_file() if is_file_path else (local_path.is_dir() and any(local_path.iterdir()))
+    if cached:
         logger.info(f"LoRA already cached: {lora_path}")
         return str(local_path)
 
@@ -127,26 +129,34 @@ def ensure_lora_downloaded(lora_path: str) -> str:
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(lock_path), timeout=300):
         # Double-check after acquiring — another thread may have downloaded it
-        if local_path.is_dir() and any(local_path.iterdir()):
+        cached = local_path.is_file() if is_file_path else (local_path.is_dir() and any(local_path.iterdir()))
+        if cached:
             logger.info(f"LoRA already cached (downloaded by concurrent thread): {lora_path}")
             return str(local_path)
 
         logger.info(f"Downloading LoRA from bucket: {lora_path}")
         bucket = storage_client.bucket(BUCKET_NAME)
-        blobs = list(bucket.list_blobs(prefix=lora_path.rstrip("/") + "/"))
 
-        if not blobs:
-            raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
-
-        for blob in blobs:
-            if blob.name.endswith("/"):
-                continue
-            relative = os.path.relpath(blob.name, lora_path)
-            dest = local_path / relative
-            if dest.exists() and dest.stat().st_size == blob.size:
-                continue
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            blob.download_to_filename(str(dest))
+        # Single file path (e.g. .safetensors)
+        if "." in Path(lora_path).name:
+            blob = bucket.blob(lora_path)
+            if not blob.exists():
+                raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(str(local_path))
+        else:
+            blobs = list(bucket.list_blobs(prefix=lora_path.rstrip("/") + "/"))
+            if not blobs:
+                raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
+            for blob in blobs:
+                if blob.name.endswith("/"):
+                    continue
+                relative = os.path.relpath(blob.name, lora_path)
+                dest = local_path / relative
+                if dest.exists() and dest.stat().st_size == blob.size:
+                    continue
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                blob.download_to_filename(str(dest))
 
         logger.info(f"LoRA download complete: {lora_path}")
 

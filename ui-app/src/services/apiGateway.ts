@@ -3,7 +3,7 @@ import { auth } from '../firebase';
 import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
 import type { Avatar, AvatarGender, AvatarLoras } from '../types/avatar';
-import type { Job, TrainingJobRequest } from '../types/job';
+import type { Job, TrainingJobRequest, PhotoJobRequest, InferenceJob } from '../types/job';
 import type { Media } from '../types/media';
 import type { Voice } from '../types/voice';
 
@@ -141,7 +141,18 @@ export const genTrainingTwinIdPhotos = async (jobRequest: TrainingJobRequest): P
 
     return res.data as Job[];
   } catch (error) {
-    console.error("Error creating training twin photo jobs job:", error);
+    console.error("Error creating training twin photo jobs:", error);
+    throw error;
+  }
+}
+
+export const genAvatarPhoto = async (jobRequest: PhotoJobRequest): Promise<InferenceJob> => {
+  try {
+    const res = await apiClient.post('/jobs/gen-avatar-photo', jobRequest);
+
+    return res.data as InferenceJob;
+  } catch (error) {
+    console.error("Error creating job to generate avatar photo:", error);
     throw error;
   }
 }

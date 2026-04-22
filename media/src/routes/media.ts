@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getByAvatarId,
   create,
+  createFromJob,
   createTrainingMedia,
   deleteById,
   deleteByAvatarId,
@@ -11,6 +12,7 @@ const router = Router();
 
 router.get('/get/avatar/:id', getByAvatarId);
 router.post('/create', create);
+router.post('/create-from-job', createFromJob);
 router.post('/create-training/:groupId', createTrainingMedia);
 router.delete('/delete-by-id/:id', deleteById);
 router.delete('/delete-by-avatar-id/:avatarId', deleteByAvatarId);

@@ -25,6 +25,10 @@ router.post(
     createProxyHandler('post', () => `${BASE}/gen-training-twin-id-photos`, 'Create twin ID photos')
 );
 router.post(
+    '/gen-avatar-photo',
+    createProxyHandler('post', () => `${BASE}/gen-avatar-photo`, 'Generate avatar photo')
+);
+router.post(
     '/restart/:id',
     createProxyHandler('post', (req) => `${BASE}/restart/${req.params.id}`, 'Restart job')
 );

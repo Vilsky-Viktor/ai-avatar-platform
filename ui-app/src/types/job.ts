@@ -6,6 +6,7 @@ export type { MediaType };
 export enum JobTargets {
   trainingPhotoSet = 'trainingPhotoSet',
   qwenEdit2511Lora = 'qwenEdit2511Lora',
+  avatarMedia = 'avatarMedia',
 }
 
 export enum JobStatuses {
@@ -99,4 +100,10 @@ export type TrainingJobRequest = {
   groupId?: string;
   avatarId: string;
   parameters: AvatarParameters;
+}
+
+export type PhotoJobRequest = {
+  avatarId: string;
+  ratio: string;
+  prompt: string;
 }
