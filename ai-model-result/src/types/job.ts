@@ -15,99 +15,25 @@ export enum JobStatuses {
   error = 'error',
 }
 
-export type FaceSwapParams = {
-  enabled: boolean;
-  model?: string;
-  weight?: number;
-  pixelBoost?: string;
-  referenceIdx?: number;
-}
+// ── Inference ────────────────────────────────────────────────────────────────
 
-export type FaceEnhancementParams = {
-  enabled: boolean;
-  model?: string;
-  weight?: number;
-  blend?: number;
-  referenceIdx?: number;
-}
-
-export type InferenceConfig = {
-  prompt?: string;
-  negativePrompt?: string;
-  mediaPaths?: string[];
-  guidanceScale?: number;
-  numSteps: number;
-  width?: number;
-  height?: number;
-  seed?: number;
-}
-
-export enum FaceExpressionTypes {
-  sad = 'sad',
-  angry = 'angry',
-  confused = 'confused',
-  contempt = 'contempt',
-  confident = 'confident',
-  disgust = 'disgust',
-  fear = 'fear',
-  happy = 'happy',
-  shy = 'shy',
-  sleepy = 'sleepy',
-  surprised = 'surprised',
-  anxious = 'anxious'
-}
-
-export type FaceExpression = {
-  enabled: boolean;
-  type: FaceExpressionTypes;
-  scale?: number;
-}
-
-export type FaceRecognition = {
-  enabled: boolean;
-  mediaPaths?: string[];
-  threshold?: {
-    min: number;
-    max?: number;
-  };
-}
-
-export type ControlNet = {
-  enabled: boolean;
-  imagePath?: string;
-  scale?: number;
-}
-
-export type LoraData = {
-  path: string;
-  scale?: number;
-  filename?: string;
-}
-
-export type JobInput = {
-  checkDependencies: boolean;
-  inference: InferenceConfig;
-  faceRecognition?: FaceRecognition;
-  faceExpression?: FaceExpression;
-  loras?: LoraData[];
-}
-
-export type JobResult = {
+export type InferenceJobResult = {
   mediaPath?: string;
   faceMatches?: number[];
   bestFaceMatch?: number;
   errorMessage?: string;
-  fileName: string;
+  fileName?: string;
 }
 
-export type Metadata = {
-  dimensions: string;
-  ratio: string;
-  angle: string;
-  shotType: string;
+export type InferenceJobMetadata = {
+  dimensions?: string;
+  ratio?: string;
+  angle?: string;
+  shotType?: string;
+  queueTopic?: string;
 }
 
-export type Job = {
+export type InferenceJob = {
   id?: string;
   groupId?: string;
   order?: number;
@@ -117,7 +43,34 @@ export type Job = {
   target: JobTargets;
   status?: JobStatuses;
   maxRuns: number;
-  input: JobInput;
-  result?: JobResult;
-  metadata?: Metadata;
+  result?: InferenceJobResult;
+  metadata?: InferenceJobMetadata;
 }
+
+// ── Training ─────────────────────────────────────────────────────────────────
+
+export type TrainingJobResult = {
+  mediaPath?: string;
+  errorMessage?: string;
+  fileName?: string;
+}
+
+export type TrainingJobMetadata = {
+  queueTopic?: string;
+  numBuckets?: number;
+}
+
+export type TrainingJob = {
+  id?: string;
+  groupId?: string;
+  userId: string;
+  avatarId: string;
+  mediaType: MediaTypes;
+  target: JobTargets;
+  status?: JobStatuses;
+  maxRuns: number;
+  result?: TrainingJobResult;
+  metadata?: TrainingJobMetadata;
+}
+
+export type Job = InferenceJob | TrainingJob;

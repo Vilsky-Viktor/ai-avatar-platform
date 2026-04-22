@@ -29,7 +29,7 @@ from transformers import Qwen2Tokenizer, Qwen2_5_VLForConditionalGeneration
 
 from train_lora_qwen_edit_2511.dataset import TrainingDataset, collate_fn
 from train_lora_qwen_edit_2511.logger import logger
-from train_lora_qwen_edit_2511.models import InferenceConfig
+from train_lora_qwen_edit_2511.models import TrainingConfig
 
 QWEN_MODEL_PATH = os.environ.get("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")
 
@@ -96,7 +96,7 @@ def load_shared_components() -> SharedComponents:
 def train_lora(
     images: list[Image.Image],
     prompts: list[str],
-    config: InferenceConfig,
+    config: TrainingConfig,
     out_dir: Path,
     shared: SharedComponents,
     num_buckets: int = 1,
@@ -196,7 +196,7 @@ def train_lora(
     )
 
     # ── 6. Training loop ──────────────────────────────────────────────────────
-    logger.info(f"Starting training: {config.numSteps} steps, grad_accum={config.gradientAccumulationSteps}, lr={config.learningRate}, scheduler=constant_with_warmup, clip_grad_norm={config.clipGradNorm}, optimizer=AdamW8bit")
+    logger.info(f"Starting training: {config.numSteps} steps, grad_accum={config.gradientAccumulationSteps}, lr={config.learningRate}, scheduler=constant_with_warmup, timestep_type=sigmoid, clip_grad_norm={config.clipGradNorm}, optimizer=AdamW8bit")
     transformer.train()
     global_step = 0
     accum_loss = 0.0

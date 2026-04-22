@@ -1,5 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, MediaTypes, JobTargets, JobStatuses, TrainingJobRequest, JobMetadata } from '../types/job';
+import {
+  Job,
+  InferenceJob,
+  TrainingJob,
+  MediaTypes,
+  JobTargets,
+  JobStatuses,
+  TrainingJobRequest,
+  InferenceJobMetadata,
+  TrainingJobMetadata,
+} from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
 import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
 import { generatePhotoSetCaptions } from '../utils/photoSetCaptions';
@@ -47,7 +57,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
   try {
     const jobs = await getByGroupIdDb(userId, jobRequest.groupId!);
 
-    const completedJobs = jobs
+    const completedJobs = (jobs as InferenceJob[])
       .filter(j => j.status === JobStatuses.completed && j.result?.mediaPath)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -60,7 +70,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
     const numBuckets = 3;
 
-    const trainingJob: Job = {
+    const trainingJob: TrainingJob = {
       groupId: jobRequest.groupId,
       userId,
       avatarId: jobRequest.avatarId,
@@ -70,21 +80,18 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
       maxRuns: 1,
       input: {
         checkDependencies: false,
-        inference: {
+        training: {
           mediaPaths,
           prompts,
-          numSteps: 4300,
-          width: imageRatios.qwenEdit2511['1:1'][0],
-          height: imageRatios.qwenEdit2511['1:1'][1],
-          guidanceScale: 4.0,
+          numSteps: mediaPaths.length * 100,
           rank: 32,
-          loraAlpha: 32,
-          learningRate: 2e-4,
+          loraAlpha: 16,
+          learningRate: 1.35e-4,
           gradientAccumulationSteps: 1,
           clipGradNorm: 0.5,
         },
       },
-      metadata: { queueTopic: TRAIN_LORA_QWEN_EDIT_2511_TOPIC, numBuckets } as JobMetadata,
+      metadata: { queueTopic: TRAIN_LORA_QWEN_EDIT_2511_TOPIC, numBuckets } as TrainingJobMetadata,
       result: { fileName: 'qwen-edit-2511-lora.safetensors' },
     };
 
@@ -114,7 +121,7 @@ export const genTrainingSyntheticFrontIdPhoto = async (req: Request, res: Respon
 
     const inference = frontInput.input?.inference;
 
-    const newJob: Job = {
+    const newJob: InferenceJob = {
       groupId,
       userId: userId,
       avatarId: jobRequest.avatarId,
@@ -124,7 +131,7 @@ export const genTrainingSyntheticFrontIdPhoto = async (req: Request, res: Respon
       maxRuns: frontInput.maxRuns ?? 3,
       order: frontInput.order,
       input: frontInput.input!,
-      metadata: { ...frontInput.metadata, queueTopic: GEN_QWEN_EDIT_2511_TOPIC } as JobMetadata,
+      metadata: { ...frontInput.metadata, queueTopic: GEN_QWEN_EDIT_2511_TOPIC } as InferenceJobMetadata,
       result: { fileName: `${String(frontInput.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png` }
     }
 
@@ -163,7 +170,7 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
     const inputs = genTrainingSyntheticIdPhotoData(jobRequest.parameters, idPhotoSet);
     const inputsWithoutFront = inputs.slice(1);
 
-    const baseJob: Partial<Job> = {
+    const baseJob: Partial<InferenceJob> = {
       groupId: jobRequest.groupId,
       userId,
       avatarId: jobRequest.avatarId,
@@ -215,7 +222,7 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
   try {
     const inputs = genTrainingTwinIdPhotoData(jobRequest.parameters, idPhotoSet);
 
-    const baseJob: Partial<Job> = {
+    const baseJob: Partial<InferenceJob> = {
       groupId,
       userId,
       avatarId: jobRequest.avatarId,
@@ -270,7 +277,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
 
     const inputs = generateTrainingPhotoSetData(jobRequest.parameters, jobRequest.avatarType, idPhotoSet);
 
-    const baseJob: Partial<Job> = {
+    const baseJob: Partial<InferenceJob> = {
       groupId: jobRequest.groupId,
       userId,
       avatarId: jobRequest.avatarId,
@@ -316,7 +323,7 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
     }
 
     job.result = {
-      fileName: job.result?.fileName!
+      fileName: job.result?.fileName
     };
 
     job.status = JobStatuses.pending;

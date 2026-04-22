@@ -1,11 +1,11 @@
 import { AvatarParameters, AvatarTypes } from '../types/avatar';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { Job, FaceExpressionTypes, Directions } from '../types/job';
+import { InferenceJob, FaceExpressionTypes, Directions } from '../types/job';
 import imageRatios from '../types/imageRatios';
 
 export const AVATAR_REFERENCE_NAME = '<avatarlife>';
 
-export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avatarType: AvatarTypes, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avatarType: AvatarTypes, idPhotoSet: IdPhotoSetPaths): Partial<InferenceJob>[] => {
   const { gender } = parameters;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];

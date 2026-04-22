@@ -23,6 +23,23 @@ export enum Directions {
   right = 'right',
 }
 
+export enum FaceExpressionTypes {
+  sad = 'sad',
+  angry = 'angry',
+  confused = 'confused',
+  contempt = 'contempt',
+  confident = 'confident',
+  disgust = 'disgust',
+  fear = 'fear',
+  happy = 'happy',
+  shy = 'shy',
+  sleepy = 'sleepy',
+  surprised = 'surprised',
+  anxious = 'anxious'
+}
+
+// ── Shared inference input helpers ──────────────────────────────────────────
+
 export type FaceSwapParams = {
   enabled: boolean;
   model?: string;
@@ -39,42 +56,10 @@ export type FaceEnhancementParams = {
   referenceIdx?: number;
 }
 
-export enum FaceExpressionTypes {
-  sad = 'sad',
-  angry = 'angry',
-  confused = 'confused',
-  contempt = 'contempt',
-  confident = 'confident',
-  disgust = 'disgust',
-  fear = 'fear',
-  happy = 'happy',
-  shy = 'shy',
-  sleepy = 'sleepy',
-  surprised = 'surprised',
-  anxious = 'anxious'
-}
-
 export type FaceExpression = {
   enabled: boolean;
   type: FaceExpressionTypes;
   scale?: number;
-}
-
-export type InferenceConfig = {
-  prompt?: string;
-  prompts?: string[];
-  negativePrompt?: string;
-  mediaPaths?: string[];
-  guidanceScale?: number;
-  numSteps: number;
-  width?: number;
-  height?: number;
-  seed?: number;
-  rank?: number;
-  loraAlpha?: number;
-  learningRate?: number;
-  gradientAccumulationSteps?: number;
-  clipGradNorm?: number;
 }
 
 export type FaceRecognition = {
@@ -103,7 +88,21 @@ export type FaceDirection = {
   direction?: Directions;
 }
 
-export type JobInput = {
+// ── Inference ────────────────────────────────────────────────────────────────
+
+export type InferenceConfig = {
+  prompt?: string;
+  prompts?: string[];
+  negativePrompt?: string;
+  mediaPaths?: string[];
+  guidanceScale?: number;
+  numSteps: number;
+  width?: number;
+  height?: number;
+  seed?: number;
+}
+
+export type InferenceJobInput = {
   checkDependencies: boolean;
   inference: InferenceConfig;
   faceRecognition?: FaceRecognition;
@@ -112,39 +111,84 @@ export type JobInput = {
   loras?: LoraData[];
 }
 
-export type JobResult = {
+export type InferenceJobResult = {
   mediaPath?: string;
   faceMatches?: number[];
   bestFaceMatch?: number;
   errorMessage?: string;
-  fileName: string;
+  fileName?: string;
 }
 
-export type JobMetadata = {
+export type InferenceJobMetadata = {
   dimensions?: string;
   ratio?: string;
   angle?: string;
   shotType?: string;
   queueTopic?: string;
+}
+
+// ── Training ─────────────────────────────────────────────────────────────────
+
+export type TrainingConfig = {
+  mediaPaths: string[];
+  prompts: string[];
+  numSteps: number;
+  width?: number;
+  height?: number;
+  rank: number;
+  loraAlpha: number;
+  learningRate: number;
+  gradientAccumulationSteps?: number;
+  clipGradNorm?: number;
+}
+
+export type TrainingJobInput = {
+  checkDependencies: boolean;
+  training: TrainingConfig;
+}
+
+export type TrainingJobResult = {
+  mediaPath?: string;
+  errorMessage?: string;
+  fileName?: string;
+}
+
+export type TrainingJobMetadata = {
+  queueTopic?: string;
   numBuckets?: number;
 }
 
-export type Job = {
+// ── Job ──────────────────────────────────────────────────────────────────────
+
+type BaseJob = {
   id?: string;
   groupId?: string;
-  order?: number;
   userId: string;
   avatarId: string;
   mediaType: MediaTypes;
   target: JobTargets;
   status?: JobStatuses;
   maxRuns: number;
-  input: JobInput;
-  result?: JobResult;
-  metadata?: JobMetadata;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
+
+export type InferenceJob = BaseJob & {
+  order?: number;
+  input: InferenceJobInput;
+  result?: InferenceJobResult;
+  metadata?: InferenceJobMetadata;
+}
+
+export type TrainingJob = BaseJob & {
+  input: TrainingJobInput;
+  result?: TrainingJobResult;
+  metadata?: TrainingJobMetadata;
+}
+
+export type Job = InferenceJob | TrainingJob;
+
+// ── Request types ─────────────────────────────────────────────────────────────
 
 export type TrainingJobRequest = {
   avatarType: AvatarTypes;

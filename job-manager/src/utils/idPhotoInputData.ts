@@ -1,9 +1,9 @@
 import { AvatarParameters } from '../types/avatar';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { Job, Directions } from '../types/job';
+import { InferenceJob, Directions } from '../types/job';
 import imageRatios from '../types/imageRatios';
 
-export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<InferenceJob>[] => {
   const {
     gender,
     attractiveness,
@@ -238,7 +238,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
   ]
 }
 
-export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<Job>[] => {
+export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<InferenceJob>[] => {
   const { gender, height, body, bodyHair, bustSize } = parameters;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];

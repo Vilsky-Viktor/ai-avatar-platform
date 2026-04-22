@@ -1,8 +1,8 @@
-import { Job } from '../types/job';
+import { InferenceJob } from '../types/job';
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
 
-export function buildPhotoSetJobs(baseJob: Partial<Job>, inputs: Partial<Job>[], groupId: string): Job[] {
+export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partial<InferenceJob>[], groupId: string): InferenceJob[] {
   return inputs.map(customInput => {
     const inference = customInput.input?.inference;
     return {
@@ -16,6 +16,6 @@ export function buildPhotoSetJobs(baseJob: Partial<Job>, inputs: Partial<Job>[],
       result: {
         fileName: `${String(customInput.order).padStart(3, '0')}-training-photo-set-${groupId}-${inference?.width}x${inference?.height}.png`,
       },
-    } as Job;
+    } as InferenceJob;
   });
 }

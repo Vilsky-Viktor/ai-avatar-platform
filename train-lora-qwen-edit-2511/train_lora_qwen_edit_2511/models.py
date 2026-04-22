@@ -2,33 +2,33 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-class InferenceConfig(BaseModel):
-    prompts: list[str] = []
-    seed: int | None = None
+class TrainingConfig(BaseModel):
     mediaPaths: list[str] = []
-    guidanceScale: float = 4.0
+    prompts: list[str] = []
     numSteps: int
-    width: int = 1328
-    height: int = 1328
-    rank: int = 128
-    loraAlpha: float = 128.0
-    learningRate: float = 1e-4
-    gradientAccumulationSteps: int = 4
-    clipGradNorm: float = 1.0
+    width: int | None = None
+    height: int | None = None
+    rank: int = 32
+    loraAlpha: float = 16.0
+    learningRate: float = 1.35e-4
+    gradientAccumulationSteps: int = 1
+    clipGradNorm: float = 0.5
+
 
 class JobInput(BaseModel):
     checkDependencies: bool = False
-    inference: InferenceConfig = Field(default_factory=InferenceConfig)
+    training: TrainingConfig = Field(default_factory=TrainingConfig)
+
 
 class JobResult(BaseModel):
     mediaPath: str = ""
-    faceMatches: list[float] = []
-    bestFaceMatch: float | None = None
     errorMessage: str = ""
     fileName: str | None = None
 
+
 class Metadata(BaseModel):
     numBuckets: int = 1
+
 
 class Job(BaseModel):
     id: str = "unknown"
@@ -42,4 +42,3 @@ class Job(BaseModel):
     input: JobInput = Field(default_factory=JobInput)
     result: JobResult = Field(default_factory=JobResult)
     metadata: Metadata = Field(default_factory=Metadata)
-    order: int | None = None

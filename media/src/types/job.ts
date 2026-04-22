@@ -1,9 +1,9 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { AvatarParameters, AvatarTypes } from './avatar';
 import { MediaType } from './media';
 
 export enum JobTargets {
   trainingPhotoSet = 'trainingPhotoSet',
+  qwenEdit2511Lora = 'qwenEdit2511Lora',
 }
 
 export enum JobStatuses {
@@ -13,117 +13,25 @@ export enum JobStatuses {
   error = 'error',
 }
 
-export enum Directions {
-  left = 'left',
-  right = 'right',
-}
+// ── Inference ────────────────────────────────────────────────────────────────
 
-export type FaceSwapParams = {
-  enabled: boolean;
-  model?: string;
-  weight?: number;
-  pixelBoost?: string;
-  referenceIdx?: number;
-}
-
-export type FaceEnhancementParams = {
-  enabled: boolean;
-  model?: string;
-  weight?: number;
-  blend?: number;
-  referenceIdx?: number;
-}
-
-export enum FaceExpressionTypes {
-  sad = 'sad',
-  angry = 'angry',
-  confused = 'confused',
-  contempt = 'contempt',
-  confident = 'confident',
-  disgust = 'disgust',
-  fear = 'fear',
-  happy = 'happy',
-  shy = 'shy',
-  sleepy = 'sleepy',
-  surprised = 'surprised',
-  anxious = 'anxious'
-}
-
-export type FaceExpression = {
-  enabled: boolean;
-  type: FaceExpressionTypes;
-  scale?: number;
-}
-
-export type InferenceConfig = {
-  prompt?: string;
-  negativePrompt?: string;
-  mediaPaths?: string[];
-  guidanceScale?: number;
-  numSteps: number;
-  width?: number;
-  height?: number;
-  seed?: number;
-}
-
-export type FaceRecognition = {
-  enabled: boolean;
-  mediaPaths?: string[];
-  threshold?: {
-    min: number;
-    max?: number;
-  };
-}
-
-export type ControlNet = {
-  enabled: boolean;
-  imagePath?: string;
-  scale?: number;
-}
-
-export type LoraData = {
-  path: string;
-  scale?: number;
-  filename?: string;
-}
-
-export type FaceDirection = {
-  enabled: boolean;
-  direction?: Directions;
-}
-
-export type JobInput = {
-  checkDependencies: boolean;
-  inference: InferenceConfig;
-  faceRecognition?: FaceRecognition;
-  faceExpression?: FaceExpression;
-  faceDirection?: FaceDirection;
-  loras?: LoraData[];
-}
-
-export type JobRequestInput = {
-  gender: string;
-  parameters: AvatarParameters;
-  idPhotoPaths?: string[]
-};
-
-export type JobResult = {
+export type InferenceJobResult = {
   mediaPath?: string;
   faceMatches?: number[];
   bestFaceMatch?: number;
   errorMessage?: string;
-  fileName: string;
+  fileName?: string;
 }
 
-export type JobMetadata = {
-  dimensions: string;
-  ratio: string;
-  angle: string;
-  shotType: string;
+export type InferenceJobMetadata = {
+  dimensions?: string;
+  ratio?: string;
+  angle?: string;
+  shotType?: string;
   queueTopic?: string;
 }
 
-export type Job = {
+export type InferenceJob = {
   id?: string;
   groupId?: string;
   order?: number;
@@ -133,16 +41,38 @@ export type Job = {
   target: JobTargets;
   status?: JobStatuses;
   maxRuns: number;
-  input: JobInput;
-  result?: JobResult;
-  metadata?: JobMetadata;
+  result?: InferenceJobResult;
+  metadata?: InferenceJobMetadata;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
 
-export type TrainingJobRequest = {
-  avatarType: AvatarTypes;
-  groupId?: string;
-  avatarId: string;
-  parameters: AvatarParameters;
+// ── Training ─────────────────────────────────────────────────────────────────
+
+export type TrainingJobResult = {
+  mediaPath?: string;
+  errorMessage?: string;
+  fileName?: string;
 }
+
+export type TrainingJobMetadata = {
+  queueTopic?: string;
+  numBuckets?: number;
+}
+
+export type TrainingJob = {
+  id?: string;
+  groupId?: string;
+  userId: string;
+  avatarId: string;
+  mediaType: MediaType;
+  target: JobTargets;
+  status?: JobStatuses;
+  maxRuns: number;
+  result?: TrainingJobResult;
+  metadata?: TrainingJobMetadata;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export type Job = InferenceJob | TrainingJob;

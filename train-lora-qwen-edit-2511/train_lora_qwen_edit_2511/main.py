@@ -47,8 +47,8 @@ def make_process_job(shared: training.SharedComponents, semaphore: threading.Sem
             set_job_id(job.id)
             stop_inactivity_timer()
 
-            inference = job.input.inference
-            logger.info(f"Received training job: avatar={job.avatarId}, steps={inference.numSteps}")
+            training_cfg = job.input.training
+            logger.info(f"Received training job: avatar={job.avatarId}, steps={training_cfg.numSteps}")
 
             # Check if job was cancelled
             db_job = db.get_job_by_id(job.id)
@@ -57,8 +57,8 @@ def make_process_job(shared: training.SharedComponents, semaphore: threading.Sem
                 message.ack()
                 return
 
-            media_paths = inference.mediaPaths
-            prompts = inference.prompts
+            media_paths = training_cfg.mediaPaths
+            prompts = training_cfg.prompts
 
             if not media_paths:
                 _publish_error(job, "No mediaPaths provided in job input")
@@ -103,7 +103,7 @@ def make_process_job(shared: training.SharedComponents, semaphore: threading.Sem
                     training.train_lora(
                         images=images,
                         prompts=aligned_prompts,
-                        config=inference,
+                        config=training_cfg,
                         out_dir=out_dir,
                         shared=shared,
                         num_buckets=job.metadata.numBuckets,

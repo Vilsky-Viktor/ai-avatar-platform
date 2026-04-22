@@ -46,7 +46,7 @@ def job_canceled(job_id: str) -> bool:
 
 @utils.timeit
 def process_job(message: pubsub_v1.subscriber.message.Message):
-    job = Job.model_validate(json.loads(message.data.decode("utf-8")))
+    job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
     job_input = job.input
     logger.info(f"========= Processing job {job.id}, order {job.order or 'none'} =========")
 
