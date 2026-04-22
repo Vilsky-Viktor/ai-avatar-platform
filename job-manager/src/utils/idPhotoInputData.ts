@@ -28,7 +28,6 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
   } = parameters;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
   const isFemale = gender === 'female';
 
   return [
@@ -221,8 +220,8 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
           prompt: `Front full body of subject in input images. Natural body to head proportions from image 1, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. ${body} body type. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt with all undone buttons showing chest and abdomen'}, barefoot, without shoes. Light wooden floor`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
-          width: verticalRatio[0],
-          height: verticalRatio[1],
+          width: squareRatio[0],
+          height: squareRatio[1],
           guidanceScale: 1.0,
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.8 }},
@@ -231,7 +230,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
-      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'FrontFullBodyView'},
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'FrontFullBodyView'},
       maxRuns: 5,
       order: 9,
     },
@@ -242,7 +241,6 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
   const { gender, height, body, bodyHair, bustSize } = parameters;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
   const isFemale = gender === 'female';
 
   return [
@@ -427,8 +425,8 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
           prompt: `Front full body of subject in input images. Natural body to head proportions from image 1, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. ${body} body type. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt with all undone buttons showing chest and abdomen'}, barefoot, no shoes. Change background to gray concrete color wall, light wooden floor. Change lighting to soft diffused daylight`,
           mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.uploaded.front!, idPhotoSet.generated.front!],
           numSteps: 8,
-          width: verticalRatio[0],
-          height: verticalRatio[1],
+          width: squareRatio[0],
+          height: squareRatio[1],
           guidanceScale: 1.0,
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.generated.front!], threshold: { min: 0.9, max: 0.925 }},
@@ -437,7 +435,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.7 },
         ],
       },
-      metadata: { dimensions: `${verticalRatio[0]}x${verticalRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'FrontFullBodyView'},
+      metadata: { dimensions: `${squareRatio[0]}x${squareRatio[1]}`, ratio: '9:16', angle: '0:0', shotType: 'FrontFullBodyView'},
       maxRuns: 7,
       order: 9,
     },

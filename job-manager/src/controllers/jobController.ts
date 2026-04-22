@@ -70,7 +70,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const captions = generatePhotoSetCaptions(jobRequest.parameters);
     const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
     const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
-    const numBuckets = 3;
+    const numBuckets = 1;
 
     const trainingJob: TrainingJob = {
       groupId: jobRequest.groupId,
