@@ -16,6 +16,7 @@ storage_client = storage.Client()
 BUCKET_NAME = os.getenv("BUCKET_NAME", "loom24-mvp.firebasestorage.app")
 BUCKET_MODELS_PATH = "models"
 LOCAL_MODELS_PATH = "/workspace/models"
+LOCAL_LORAS_PATH = "/workspace/loras"
 
 # Media cache — downloaded inputs and finalized results (evicted after TTL, re-downloadable)
 LOCAL_MEDIA_CACHE_DIR = Path("/workspace/media_cache")
@@ -117,7 +118,7 @@ def ensure_lora_downloaded(lora_path: str) -> str:
     ``"models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject"``.
     Returns the absolute local path.
     """
-    local_path = Path("/workspace") / lora_path
+    local_path = Path(LOCAL_LORAS_PATH) / lora_path
 
     lora_file_extenstions = {".safetensors", ".bin", ".pt", ".ckpt"}
     is_file_path = Path(lora_path).suffix in lora_file_extenstions

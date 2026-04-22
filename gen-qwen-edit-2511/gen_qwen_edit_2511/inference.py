@@ -13,6 +13,7 @@ from PIL import Image
 
 from gen_qwen_edit_2511.logger import get_logger
 from gen_qwen_edit_2511.models import JobInput, LoraConfig
+from gen_qwen_edit_2511.storage import LOCAL_LORAS_PATH
 import gen_qwen_edit_2511.utils as utils
 
 
@@ -80,7 +81,7 @@ class _PipelineInstance:
                 del self._lora_cache[path]
 
         for lora in to_load:
-            local_path   = str(Path("/workspace") / lora.path)
+            local_path   = str(Path(LOCAL_LORAS_PATH) / lora.path)
             adapter_name = self._adapter_name(lora.path)
             logger.info(f"[instance {self.idx}]   [load] {Path(lora.path).name} scale={lora.scale}")
             with warnings.catch_warnings():
