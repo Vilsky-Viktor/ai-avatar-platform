@@ -57,13 +57,13 @@ export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promi
 
     for (const job of jobs) {
         const jobRef = db.collection(JOBS_COLLECTION_NAME).doc();
-        const dbJob: Job = {
+        const dbJob = {
             ...job,
             id: jobRef.id,
             userId,
             createdAt: now,
             updatedAt: now,
-        };
+        } as Job;
         batch.set(jobRef, dbJob);
         dbJobs.push(dbJob);
     }
