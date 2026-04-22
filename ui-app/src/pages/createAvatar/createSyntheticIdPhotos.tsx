@@ -6,7 +6,7 @@ import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
 import { type Avatar } from '../../types/avatar';
 import { updateAvatar, restartJobById, genTrainingSyntheticIdPhotos, genTrainingSyntheticFrontIdPhoto, getUserAvatarById, getJobsByGroupId } from '../../services/apiGateway';
-import { JobStatuses, type Job, type TrainingJobRequest } from '../../types/job';
+import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { 
     AVATAR_PARAMETER_OPTIONS,
@@ -31,8 +31,8 @@ function CreateSyntheticIdPhotosPage() {
     const [avatar, setAvatar] = useState(initialAvatarData);
     const [pageLoading, setPageLoading] = useState(true);
 
-    const [jobs, setJobs] = useState([] as (Job | null)[]);
-    const jobsRef = useRef<(Job | null)[]>([]);
+    const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
+    const jobsRef = useRef<(InferenceJob | null)[]>([]);
 
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
 
@@ -79,7 +79,7 @@ function CreateSyntheticIdPhotosPage() {
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as Job;
+            const job = docSnap.data() as InferenceJob;
 
             if (job.status === JobStatuses.completed && job.result?.mediaPath) {
                 const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
@@ -105,20 +105,20 @@ function CreateSyntheticIdPhotosPage() {
             const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
             const onlyIdPhotoJobs = fetchedJobs.slice(0, NUM_ID_PHOTOS);
             const enrichedJobs = await Promise.all(
-                onlyIdPhotoJobs.map(async (job: Job) => {
+                (onlyIdPhotoJobs as InferenceJob[]).map(async (job: InferenceJob) => {
                     const mediaUrl = job.result?.mediaPath
                         ? await getMediaUrlFromPath(job.result.mediaPath).catch(() => undefined)
                         : undefined;
                     return { ...job, result: { ...job.result, mediaUrl } };
                 })
             );
-            setJobs(enrichedJobs as Job[]);
+            setJobs(enrichedJobs as InferenceJob[]);
         }
         setPageLoading(false);
     }
 
-    const setJob = (listIdx: number, job: Job | null) => {
-        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
+    const setJob = (listIdx: number, job: InferenceJob | null) => {
+        setJobs((prev: (InferenceJob | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
     const setParameter = (key: string, value: string) => {
@@ -148,7 +148,7 @@ function CreateSyntheticIdPhotosPage() {
 
         try {
             const job = await genTrainingSyntheticFrontIdPhoto(jobRequest);
-            setJobs([job]);
+            setJobs([job as InferenceJob]);
             setGroupId(job.groupId!);
             setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
@@ -170,7 +170,7 @@ function CreateSyntheticIdPhotosPage() {
             const newJobs = await genTrainingSyntheticIdPhotos(jobRequest);
             const frontJob = jobsRef.current[0];
 
-            setJobs([frontJob, ...newJobs]);
+            setJobs([frontJob, ...(newJobs as InferenceJob[])]);
             setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
             console.log('Failed to create jobs for id photos')
@@ -184,7 +184,7 @@ function CreateSyntheticIdPhotosPage() {
         setJob(listIdx, null);
 
         const restartedJob = await restartJobById(job.id);
-        setJob(listIdx, restartedJob);
+        setJob(listIdx, restartedJob as InferenceJob);
         setTimeout(() => scrollToBottom(), 500);
     }
 
@@ -193,7 +193,7 @@ function CreateSyntheticIdPhotosPage() {
     }
 
     const generatingCompleted = () => {
-        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
+        return jobs.length > 0 && jobs.every((job: InferenceJob | null) => job && job.status === JobStatuses.completed);
     }
 
     const isFrontJob = (idx: number) => {
@@ -307,7 +307,7 @@ function CreateSyntheticIdPhotosPage() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {jobs.map((job, idx) => (
                             <JobPhotoCard
                                 key={idx}

@@ -1,7 +1,7 @@
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from "react";
-import { JobStatuses, type Job, type TrainingJobRequest } from "../../types/job";
+import { JobStatuses, type InferenceJob, type TrainingJobRequest } from "../../types/job";
 import { genTrainingPhotoSet, restartJobById, updateAvatar, getUserAvatarById, getJobsByGroupId } from "../../services/apiGateway";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import JobPhotoCard from "../../components/createAvatar/JobPhotoCard";
@@ -28,8 +28,8 @@ function CreatePhotoSetPage() {
     const [avatar, setAvatar] = useState(initialAvatarData);
     const [pageLoading, setPageLoading] = useState(true);
 
-    const [jobs, setJobs] = useState([] as (Job | null)[]);
-    const jobsRef = useRef<(Job | null)[]>([]);
+    const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
+    const jobsRef = useRef<(InferenceJob | null)[]>([]);
 
     const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
     const initialized = useRef<boolean>(false);
@@ -60,7 +60,7 @@ function CreatePhotoSetPage() {
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as Job;
+            const job = docSnap.data() as InferenceJob;
 
             if (job.status === JobStatuses.completed && job.result?.mediaPath) {
                 const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
@@ -101,33 +101,33 @@ function CreatePhotoSetPage() {
         const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
 
         if (fetchedJobs.length === NUM_ID_PHOTOS + NUM_PHOTO_SET_PHOTOS) {
-            const onlyPhotoSetJobs = fetchedJobs.slice(NUM_ID_PHOTOS);
+            const onlyPhotoSetJobs = fetchedJobs.slice(NUM_ID_PHOTOS) as InferenceJob[];
             const enrichedJobs = await Promise.all(
-                onlyPhotoSetJobs.map(async (job: Job) => {
+                onlyPhotoSetJobs.map(async (job: InferenceJob) => {
                     const mediaUrl = job.result?.mediaPath
                         ? await getMediaUrlFromPath(job.result.mediaPath).catch(() => undefined)
                         : undefined;
                     return { ...job, result: { ...job.result, mediaUrl } };
                 })
             );
-            setJobs(enrichedJobs as Job[]);
+            setJobs(enrichedJobs as InferenceJob[]);
         } else {
             await createJobs(existingAvatar);
         }
 
         setPageLoading(false);
     }
-    
+
     const generatingCompleted = () => {
-        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
+        return jobs.length > 0 && jobs.every((job: InferenceJob | null) => job && job.status === JobStatuses.completed);
     }
 
     const canProceed = () => {
         return generatingCompleted();
     };
 
-    const setJob = (listIdx: number, job: Job | null) => {
-        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
+    const setJob = (listIdx: number, job: InferenceJob | null) => {
+        setJobs((prev: (InferenceJob | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
     const jobsCreated = () => {
@@ -147,7 +147,7 @@ function CreatePhotoSetPage() {
 
         try {
             const jobs = await genTrainingPhotoSet(jobRequest);
-            setJobs(jobs);
+            setJobs(jobs as InferenceJob[]);
         } catch (error) {
             console.log('Failed to create jobs for photo set')
         }
@@ -160,7 +160,7 @@ function CreatePhotoSetPage() {
         setJob(listIdx, null);
 
         const restartedJob = await restartJobById(job.id);
-        setJob(listIdx, restartedJob);
+        setJob(listIdx, restartedJob as InferenceJob);
     }
 
     const stepLocked = () => {
@@ -173,7 +173,7 @@ function CreatePhotoSetPage() {
         try {
             if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    photoSetGenerated: true, 
+                    photoSetGenerated: true,
                 };
 
                 await updateAvatar(newAvatarData.avatarId, payload);
@@ -203,7 +203,7 @@ function CreatePhotoSetPage() {
                 </div>
             ) : (
                 <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {jobs.map((job, idx) => (
                             <JobPhotoCard
                                 key={idx}

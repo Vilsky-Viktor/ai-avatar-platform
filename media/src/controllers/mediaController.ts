@@ -83,11 +83,11 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
   const avatarId = req.params.avatarId as string;
 
   try {
-    const removed = await deleteByAvatarIdDb(userId, avatarId);
-    if (removed.length > 0) {
-      const avatarMediaPath = `media/${userId}-user/avatars/${avatarId}-avatar/`;
-      await removeStoredMediaByPaths([avatarMediaPath]);
-    }
+    await deleteByAvatarIdDb(userId, avatarId);
+
+    const avatarMediaPath = `media/${userId}-user/avatars/${avatarId}-avatar/`;
+    await removeStoredMediaByPaths([avatarMediaPath]);
+
     return res.status(200).json({ result: 'ok' });
   } catch (error) {
     req.log.info(`Failed to delete media for avatar ${avatarId} for user ${userId}: ${error}`);
