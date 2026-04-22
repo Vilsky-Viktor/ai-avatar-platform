@@ -429,7 +429,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
           height: squareRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.generated.front!], threshold: { min: 0.9, max: 0.925 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!, idPhotoSet.generated.front!], threshold: { min: 0.9 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.7 },
