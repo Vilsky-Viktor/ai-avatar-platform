@@ -254,10 +254,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
   const jobRequest: TrainingJobRequest = req.body;
 
   const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const verticalRatio = imageRatios.qwenEdit2511['9:16'];
-
   const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
-  const verticalDimensions = `${verticalRatio[0]}x${verticalRatio[1]}`;
 
   req.log.info(`Create Photo Set jobs for user ${userId} with group ID ${jobRequest.groupId}`);
 
@@ -274,7 +271,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
         rightSide: `${avatarMediaPath}/005-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
         leftSide: `${avatarMediaPath}/006-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
         back: `${avatarMediaPath}/007-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        body: `${avatarMediaPath}/009-training-photo-set-${jobRequest.groupId}-${verticalDimensions}.png`,
+        body: `${avatarMediaPath}/009-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
       }
     }
 
