@@ -119,7 +119,8 @@ def ensure_lora_downloaded(lora_path: str) -> str:
     """
     local_path = Path("/workspace") / lora_path
 
-    is_file_path = "." in Path(lora_path).name
+    _FILE_EXTENSIONS = {".safetensors", ".bin", ".pt", ".ckpt"}
+    is_file_path = Path(lora_path).suffix in _FILE_EXTENSIONS
     cached = local_path.is_file() if is_file_path else (local_path.is_dir() and any(local_path.iterdir()))
     if cached:
         logger.info(f"LoRA already cached: {lora_path}")
@@ -138,7 +139,7 @@ def ensure_lora_downloaded(lora_path: str) -> str:
         bucket = storage_client.bucket(BUCKET_NAME)
 
         # Single file path (e.g. .safetensors)
-        if "." in Path(lora_path).name:
+        if is_file_path:
             blob = bucket.blob(lora_path)
             if not blob.exists():
                 raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
