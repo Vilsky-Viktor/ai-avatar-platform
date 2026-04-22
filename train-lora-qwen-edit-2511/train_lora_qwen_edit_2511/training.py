@@ -151,6 +151,7 @@ def train_lora(
     # ── 4. Pre-cache latents & text embeddings ────────────────────────────────
     logger.info("Caching latents and text embeddings ...")
     latents_cache: list[torch.Tensor] = []
+    black_latents_cache: list[torch.Tensor] = []
     prompt_embeds_cache: list[torch.Tensor] = []
     prompt_embeds_mask_cache: list[torch.Tensor] = []
 
@@ -166,6 +167,13 @@ def train_lora(
             lat = vae.encode(px).latent_dist.sample()
             lat = (lat - latents_mean) * latents_std
             latents_cache.append(lat.to(dtype=weight_dtype))
+
+            # Black control image — same spatial dims; model conditions on this during generation
+            # Pixel tensors are normalized to [-1, 1]; black = -1 (not 0, which is mid-gray)
+            black_px = torch.full_like(px, -1.0)
+            black_lat = vae.encode(black_px).latent_dist.sample()
+            black_lat = (black_lat - latents_mean) * latents_std
+            black_latents_cache.append(black_lat.to(dtype=weight_dtype))
 
             embeds, mask = shared.text_pipeline.encode_prompt(
                 prompt=batch["prompts"],
@@ -212,6 +220,7 @@ def train_lora(
                 break
 
             model_input = latents_cache[cache_idx].to(device)
+            black_latent = black_latents_cache[cache_idx].to(device)
             prompt_embeds = prompt_embeds_cache[cache_idx].to(device)
             prompt_mask = prompt_embeds_mask_cache[cache_idx]
             if prompt_mask is not None:
@@ -234,27 +243,41 @@ def train_lora(
             sigmas = _get_sigmas(timesteps, scheduler_copy, n_dim=model_input.ndim, dtype=model_input.dtype, device=device)
             noisy_model_input = (1.0 - sigmas) * model_input + sigmas * noise
 
-            # Pack latents for transformer input
-            noisy_packed = noisy_model_input.permute(0, 2, 1, 3, 4)
             H = model_input.shape[3]
             W = model_input.shape[4]
+
+            # Pack noisy target latent
             noisy_packed = QwenImagePipeline._pack_latents(
-                noisy_packed,
+                noisy_model_input.permute(0, 2, 1, 3, 4),
                 batch_size=bsz,
                 num_channels_latents=model_input.shape[1],
                 height=H,
                 width=W,
             )
-            img_shapes = [[(1, H // 2, W // 2)]] * bsz
+
+            # Pack black control image latent and concatenate — mirrors inference-time conditioning
+            black_packed = QwenImagePipeline._pack_latents(
+                black_latent.permute(0, 2, 1, 3, 4),
+                batch_size=bsz,
+                num_channels_latents=black_latent.shape[1],
+                height=H,
+                width=W,
+            )
+            latent_model_input = torch.cat([noisy_packed, black_packed], dim=1)
+
+            # img_shapes: target shape + control image shape
+            img_shapes = [[(1, H // 2, W // 2), (1, H // 2, W // 2)]] * bsz
 
             model_pred = transformer(
-                hidden_states=noisy_packed,
+                hidden_states=latent_model_input,
                 encoder_hidden_states=prompt_embeds,
                 encoder_hidden_states_mask=prompt_mask,
                 timestep=timesteps / 1000,
                 img_shapes=img_shapes,
                 return_dict=False,
             )[0]
+            # Slice to target tokens only (control tokens are appended after)
+            model_pred = model_pred[:, : noisy_packed.shape[1]]
             model_pred = QwenImagePipeline._unpack_latents(
                 model_pred,
                 height=H * shared.vae_scale_factor,
