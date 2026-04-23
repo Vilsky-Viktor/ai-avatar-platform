@@ -114,7 +114,6 @@ def make_process_job(shared: training.SharedComponents, semaphore: threading.Sem
                         config=training_cfg,
                         out_dir=out_dir,
                         shared=shared,
-                        num_buckets=job.metadata.numBuckets,
                     )
                 except Exception as e:
                     logger.error(f"Training failed: {e}", exc_info=True)

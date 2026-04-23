@@ -1,5 +1,5 @@
 export const scrollToBottom = () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    window.scrollTo({ top: document.body.scrollHeight - 20, behavior: 'smooth' });
 }
 
 export const scrollToTop = () => {

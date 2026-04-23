@@ -71,8 +71,6 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const captions = generatePhotoSetCaptions(jobRequest.parameters);
     const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
     const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
-    const numBuckets = 1;
-
     const trainingJob: TrainingJob = {
       groupId: jobRequest.groupId,
       userId,
@@ -86,7 +84,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
         training: {
           mediaPaths,
           prompts,
-          numSteps: mediaPaths.length * 150,
+          numSteps: mediaPaths.length * 170,
           rank: 32,
           loraAlpha: 32,
           learningRate: 2e-4,
@@ -94,7 +92,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
           clipGradNorm: 0.5,
         },
       },
-      metadata: { queueTopic: TRAIN_LORA_QWEN_EDIT_2511_TOPIC, numBuckets } as TrainingJobMetadata,
+      metadata: { queueTopic: TRAIN_LORA_QWEN_EDIT_2511_TOPIC } as TrainingJobMetadata,
       result: { fileName: 'qwen-edit-2511-lora.safetensors' },
     };
 
@@ -153,8 +151,8 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: TrainingJobRequest = req.body;
 
-  const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
+  const trainingRatio = imageRatios.qwenEdit2511['1:1'];
+  const trainingDimensions = `${trainingRatio[0]}x${trainingRatio[1]}`;
 
   req.log.info(`Create synthetic ID photo jobs for user ${userId} with group ID ${jobRequest.groupId}`);
 
@@ -163,9 +161,10 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
   const idPhotoSet: IdPhotoSetPaths = {
     uploaded: {},
     generated: {
-      front: `${avatarMediaPath}/001-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+      front: `${avatarMediaPath}/001-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+      upperBody: `${avatarMediaPath}/008-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
     }
   }
 
@@ -201,8 +200,8 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
   const jobRequest: TrainingJobRequest = req.body;
   const groupId = uuid.v4();
 
-  const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
+  const trainingRatio = imageRatios.qwenEdit2511['1:1'];
+  const trainingDimensions = `${trainingRatio[0]}x${trainingRatio[1]}`;
 
   req.log.info(`Create twin ID photo jobs for user ${userId} with group ID ${groupId}`);
 
@@ -210,15 +209,16 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
 
   const idPhotoSet: IdPhotoSetPaths = {
     uploaded: {
-      front: `${avatarMediaPath}/uploaded/front-${squareDimensions}.png`,
-      frontSmile: `${avatarMediaPath}/uploaded/frontSmile-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/uploaded/rightQuarter-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/uploaded/leftQuarter-${squareDimensions}.png`,
+      front: `${avatarMediaPath}/uploaded/front-${trainingDimensions}.png`,
+      frontSmile: `${avatarMediaPath}/uploaded/frontSmile-${trainingDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/uploaded/rightQuarter-${trainingDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/uploaded/leftQuarter-${trainingDimensions}.png`,
     },
     generated: {
-      front: `${avatarMediaPath}/001-training-photo-set-${groupId}-${squareDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${groupId}-${squareDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${groupId}-${squareDimensions}.png`,
+      front: `${avatarMediaPath}/001-training-photo-set-${groupId}-${trainingDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/003-training-photo-set-${groupId}-${trainingDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/004-training-photo-set-${groupId}-${trainingDimensions}.png`,
+      upperBody: `${avatarMediaPath}/008-training-photo-set-${groupId}-${trainingDimensions}.png`,
     }
   }
 
@@ -253,8 +253,8 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: TrainingJobRequest = req.body;
 
-  const squareRatio = imageRatios.qwenEdit2511['1:1'];
-  const squareDimensions = `${squareRatio[0]}x${squareRatio[1]}`;
+  const trainingRatio = imageRatios.qwenEdit2511['1:1'];
+  const trainingDimensions = `${trainingRatio[0]}x${trainingRatio[1]}`;
 
   req.log.info(`Create Photo Set jobs for user ${userId} with group ID ${jobRequest.groupId}`);
 
@@ -264,14 +264,13 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
     const idPhotoSet: IdPhotoSetPaths = {
       uploaded: {},
       generated: {
-        front: `${avatarMediaPath}/001-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        frontSmile: `${avatarMediaPath}/002-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        rightQuarter: `${avatarMediaPath}/003-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        rightSide: `${avatarMediaPath}/005-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        leftSide: `${avatarMediaPath}/006-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        back: `${avatarMediaPath}/007-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
-        body: `${avatarMediaPath}/009-training-photo-set-${jobRequest.groupId}-${squareDimensions}.png`,
+        front: `${avatarMediaPath}/001-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        frontSmile: `${avatarMediaPath}/002-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        rightQuarter: `${avatarMediaPath}/003-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        rightSide: `${avatarMediaPath}/005-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        leftSide: `${avatarMediaPath}/006-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        upperBody: `${avatarMediaPath}/008-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
       }
     }
 

@@ -26,10 +26,6 @@ class JobResult(BaseModel):
     fileName: str | None = None
 
 
-class Metadata(BaseModel):
-    numBuckets: int = 1
-
-
 class Job(BaseModel):
     id: str = "unknown"
     groupId: str = ""
@@ -41,4 +37,3 @@ class Job(BaseModel):
     maxRuns: int
     input: JobInput = Field(default_factory=JobInput)
     result: JobResult = Field(default_factory=JobResult)
-    metadata: Metadata = Field(default_factory=Metadata)

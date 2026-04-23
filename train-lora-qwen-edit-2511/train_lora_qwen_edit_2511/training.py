@@ -99,7 +99,6 @@ def train_lora(
     config: TrainingConfig,
     out_dir: Path,
     shared: SharedComponents,
-    num_buckets: int = 1,
 ) -> Path:
     """
     Train a LoRA on the given images and save weights to out_dir.
@@ -133,11 +132,10 @@ def train_lora(
     logger.info(f"Trainable LoRA parameters: {sum(p.numel() for p in trainable_params):,}")
 
     # ── 3. Dataset & dataloader ───────────────────────────────────────────────
-    logger.info(f"Building dataset from {len(images)} images, num_buckets={num_buckets} ...")
+    logger.info(f"Building dataset from {len(images)} images ...")
     dataset = TrainingDataset(
         images=images,
         prompts=prompts,
-        num_buckets=num_buckets,
         repeats=max(1, math.ceil(config.numSteps * 1 / max(len(images), 1))),
     )
     dataloader = DataLoader(

@@ -42,7 +42,7 @@ function listenForResults() {
         logger.warn({ jobId: job?.id, msgId: message.id }, 'Job not found, skipping message');
         message.ack();
       } else {
-        logger.error({ err }, 'Error parsing message or handling result');
+        logger.error({ err }, 'Error saving job results');
         message.nack();
       }
     }

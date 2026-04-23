@@ -240,7 +240,7 @@ function CreateTwinIdPhotosPage() {
     }
 
     const createJobs = async () => {
-        const emptyJobs = Array(9).fill(null);
+        const emptyJobs = Array(NUM_ID_PHOTOS).fill(null);
         setJobs(emptyJobs);
 
         const jobRequest: TrainingJobRequest = {

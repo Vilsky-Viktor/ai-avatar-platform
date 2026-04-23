@@ -156,7 +156,6 @@ export type TrainingJobResult = {
 
 export type TrainingJobMetadata = {
   queueTopic?: string;
-  numBuckets?: number;
 }
 
 // ── Job ──────────────────────────────────────────────────────────────────────

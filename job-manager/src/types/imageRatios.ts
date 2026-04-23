@@ -1,12 +1,12 @@
 
 export const ratios = {
-    'square':    '1:1',
+    'square': '1:1',
     'landscape': '16:9',
-    'portrait':  '9:16',
-    'photo':     '4:3',
-    'vertical':  '3:4',
-    'wide':      '3:2',
-    'tall':      '2:3',
+    'portrait': '9:16',
+    'photo': '4:3',
+    'vertical': '3:4',
+    'wide': '3:2',
+    'tall': '2:3',
 }
 
 export const flux2Dev = {
@@ -20,6 +20,7 @@ export const flux2Dev = {
 }
 
 export const qwenEdit2511 = {
+    "1:1T": [1024, 1024],
     "1:1": [1328, 1328],
     "16:9": [1664, 928],
     "9:16": [928, 1664],
