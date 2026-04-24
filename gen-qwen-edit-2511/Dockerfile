@@ -11,8 +11,6 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     ADAFACE_ARCHITECTURE="ir_101" \
     QUANTIZE_TRANSFORMER="" \
     QUANTIZE_TEXT_ENCODER=""
-# QUANTIZE_TRANSFORMER: uint3 | uint4 | uint8 | int8
-# QUANTIZE_TEXT_ENCODER: qfloat8 | int8
 
 WORKDIR /app
 COPY gen_qwen_edit_2511 ./gen_qwen_edit_2511
