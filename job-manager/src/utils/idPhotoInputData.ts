@@ -197,22 +197,22 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Upper body front view of subject in input images. Exactly same face. Exactly ${body} body type. Exactly ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. Exactly ${bustSize} chest. Exactly ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white shirt, all buttons undone showing chest and abdomen, short sleeves'}. Looking directly at camera.`,
-          mediaPaths: [idPhotoSet.generated.front!],
+          prompt: `Front full body of subject in input images. Natural body to head proportions from image 1, head is one-seventh of total body height. ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. ${body} body type. ${bustSize} chest. ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt with all undone buttons showing chest and abdomen'}, barefoot, without shoes. Light wooden floor`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: trainingRatio[0],
           height: trainingRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.85 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.8 }},
         loras: [
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontUpperBodyView'},
+      metadata: { dimensions: trainingDimensions, ratio: '9:16', angle: '0:0', shotType: 'FrontFullBodyView'},
       maxRuns: 5,
-      order: 8,
+      order: 9,
     },
   ]
 }
@@ -389,20 +389,19 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Upper body front view of subject in input images. Exactly same face. Exactly ${body} body type. Exactly ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. Exactly ${bustSize} chest. Exactly ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white shirt, all buttons undone showing chest and abdomen, short sleeves'}. Looking directly at camera.`,
-          mediaPaths: [idPhotoSet.generated.front!],
+          prompt: `Full body front view of subject in input images. Exactly same face, sharp focus on face. Exactly ${body} body type. Exactly ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'No body hair'}. Exactly ${bustSize} chest. Exactly ${height} height. Wearing ${isFemale ? 'white running shorts and white strapless top' : 'white running shorts, white sleeveless shirt'}, barefoot. Looking directly at camera.`,
+          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: trainingRatio[0],
           height: trainingRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.96 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.95 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
         ],
       },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontUpperBodyView'},
+      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontFullBodyView'},
       maxRuns: 5,
       order: 8,
     },

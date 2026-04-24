@@ -8,8 +8,13 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import torch
-from diffusers import QwenImageEditPlusPipeline
+from diffusers import QwenImageEditPlusPipeline, TorchAoConfig
+from diffusers.quantizers.pipe_quant_config import PipelineQuantizationConfig
+from optimum.quanto import freeze as quanto_freeze
+from optimum.quanto import qtypes
+from optimum.quanto import quantize as quanto_quantize
 from PIL import Image
+from torchao.quantization.quant_api import Int8WeightOnlyConfig, UIntXWeightOnlyConfig
 
 from gen_qwen_edit_2511.logger import get_logger
 from gen_qwen_edit_2511.models import JobInput, LoraConfig
@@ -23,7 +28,6 @@ QUANTIZE_TEXT_ENCODER = os.getenv("QUANTIZE_TEXT_ENCODER", "")  # qfloat8 | int8
 CONDITION_IMAGE_SIZE  = 384 * 384
 
 def _torchao_config(qtype: str):
-    from torchao.quantization.quant_api import UIntXWeightOnlyConfig, Int8WeightOnlyConfig
     configs = {
         "uint3": UIntXWeightOnlyConfig(torch.uint3),
         "uint4": UIntXWeightOnlyConfig(torch.uint4),
@@ -35,8 +39,6 @@ def _torchao_config(qtype: str):
     return configs[qtype]
 
 logging.getLogger("diffusers").setLevel(logging.ERROR)
-
-import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="peft")
 warnings.filterwarnings("ignore", category=UserWarning,    module="peft")
 
@@ -57,21 +59,20 @@ class _PipelineInstance:
         logger.info(f"[instance {self.idx}] Loading Qwen Image Edit 2511 pipeline ...")
         self.device = "cuda"
 
-        self.pipeline = QwenImageEditPlusPipeline.from_pretrained(
-            QWEN_MODEL_PATH,
-            torch_dtype=torch.bfloat16,
-            low_cpu_mem_usage=True,
-        )
+        load_kwargs: dict = {"torch_dtype": torch.bfloat16, "low_cpu_mem_usage": True}
+        if QUANTIZE_TRANSFORMER:
+            load_kwargs["quantization_config"] = PipelineQuantizationConfig(
+                quant_mapping={"transformer": TorchAoConfig(_torchao_config(QUANTIZE_TRANSFORMER))}
+            )
+            logger.info(f"[instance {self.idx}] Will quantize transformer ({QUANTIZE_TRANSFORMER}) during load ...")
+
+        self.pipeline = QwenImageEditPlusPipeline.from_pretrained(QWEN_MODEL_PATH, **load_kwargs)
 
         if QUANTIZE_TRANSFORMER:
-            logger.info(f"[instance {self.idx}] Quantizing transformer ({QUANTIZE_TRANSFORMER}) ...")
-            from torchao.quantization.quant_api import quantize_ as torchao_quantize
-            torchao_quantize(self.pipeline.transformer, _torchao_config(QUANTIZE_TRANSFORMER))
             logger.info(f"[instance {self.idx}] Transformer quantization done")
 
         if QUANTIZE_TEXT_ENCODER:
             logger.info(f"[instance {self.idx}] Quantizing text encoder ({QUANTIZE_TEXT_ENCODER}) ...")
-            from optimum.quanto import quantize as quanto_quantize, freeze as quanto_freeze, qtypes
             quanto_quantize(self.pipeline.text_encoder, weights=qtypes[QUANTIZE_TEXT_ENCODER])
             quanto_freeze(self.pipeline.text_encoder)
             logger.info(f"[instance {self.idx}] Text encoder quantization done")
