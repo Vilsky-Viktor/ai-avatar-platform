@@ -17,8 +17,22 @@ from gen_qwen_edit_2511.storage import LOCAL_LORAS_PATH
 import gen_qwen_edit_2511.utils as utils
 
 
-QWEN_MODEL_PATH      = os.getenv("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")
-CONDITION_IMAGE_SIZE = 384 * 384
+QWEN_MODEL_PATH       = os.getenv("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")
+QUANTIZE_TRANSFORMER  = os.getenv("QUANTIZE_TRANSFORMER", "")   # uint3 | uint4 | uint8 | int8
+QUANTIZE_TEXT_ENCODER = os.getenv("QUANTIZE_TEXT_ENCODER", "")  # qfloat8 | int8
+CONDITION_IMAGE_SIZE  = 384 * 384
+
+def _torchao_config(qtype: str):
+    from torchao.quantization.quant_api import UIntXWeightOnlyConfig, Int8WeightOnlyConfig
+    configs = {
+        "uint3": UIntXWeightOnlyConfig(torch.uint3),
+        "uint4": UIntXWeightOnlyConfig(torch.uint4),
+        "uint8": UIntXWeightOnlyConfig(torch.uint8),
+        "int8":  Int8WeightOnlyConfig(),
+    }
+    if qtype not in configs:
+        raise ValueError(f"Unknown QUANTIZE_TRANSFORMER value: {qtype!r}. Valid: {list(configs)}")
+    return configs[qtype]
 
 logging.getLogger("diffusers").setLevel(logging.ERROR)
 
@@ -48,6 +62,19 @@ class _PipelineInstance:
             torch_dtype=torch.bfloat16,
             low_cpu_mem_usage=True,
         )
+
+        if QUANTIZE_TRANSFORMER:
+            logger.info(f"[instance {self.idx}] Quantizing transformer ({QUANTIZE_TRANSFORMER}) ...")
+            from torchao.quantization.quant_api import quantize_ as torchao_quantize
+            torchao_quantize(self.pipeline.transformer, _torchao_config(QUANTIZE_TRANSFORMER))
+            logger.info(f"[instance {self.idx}] Transformer quantization done")
+
+        if QUANTIZE_TEXT_ENCODER:
+            logger.info(f"[instance {self.idx}] Quantizing text encoder ({QUANTIZE_TEXT_ENCODER}) ...")
+            from optimum.quanto import quantize as quanto_quantize, freeze as quanto_freeze, qtypes
+            quanto_quantize(self.pipeline.text_encoder, weights=qtypes[QUANTIZE_TEXT_ENCODER])
+            quanto_freeze(self.pipeline.text_encoder)
+            logger.info(f"[instance {self.idx}] Text encoder quantization done")
 
         logger.info(f"[instance {self.idx}] Loading model into VRAM ...")
         self.pipeline.to(device=self.device)

@@ -111,6 +111,10 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
                 },
                 model: {
                   arch: 'qwen_image_edit',
+                  quantize: true,
+                  qtype: 'uint3',
+                  quantize_te: true,
+                  qtype_te: 'qfloat8',
                 },
               }],
             },
