@@ -6,6 +6,7 @@ export type ImagePaths = {
     rightSide?: string;
     leftSide?: string;
     upperBody?: string;
+    body?: string;
 }
 
 export type IdPhotoSetPaths = {

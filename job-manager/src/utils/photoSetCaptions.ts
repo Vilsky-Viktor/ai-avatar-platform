@@ -16,7 +16,7 @@ export const generatePhotoSetCaptions = (parameters: AvatarParameters): PhotoSet
     { order: 5, caption: `${AVATAR_REFERENCE_NAME} eye-level headshot right-side 90-degree profile portrait, dark red t-shirt, gray concrete studio wall, even soft diffused studio lighting` },
     { order: 6, caption: `${AVATAR_REFERENCE_NAME} eye-level headshot left-side 90-degree profile portrait, dark brown t-shirt, gray concrete studio wall, even soft diffused studio lighting` },
     { order: 7, caption: `${AVATAR_REFERENCE_NAME} extreme close-up eye-level micro portrait, gray concrete studio wall, soft diffused studio lighting` },
-    { order: 8, caption: `${AVATAR_REFERENCE_NAME} eye-level upper body front view standing, ${isFemale ? 'white strapless top and white running shorts' : 'white shirt and white running shorts'}, gray concrete studio wall, even soft diffused studio lighting` },
+    { order: 8, caption: `${AVATAR_REFERENCE_NAME} eye-level front view standing, ${isFemale ? 'white strapless top and white running shorts' : 'white sleeveless t-shirt and white shorts'}, gray concrete studio wall, even soft diffused studio lighting` },
 
     // --- Close-up emotions (orders 9–17) ---
     { order: 9,  caption: `${AVATAR_REFERENCE_NAME} chest-up eye-level portrait, sad expression, deep slate blue sleeveless t-shirt, gray concrete studio wall, even soft diffused studio lighting` },
@@ -53,11 +53,12 @@ export const generatePhotoSetCaptions = (parameters: AvatarParameters): PhotoSet
     { order: 34, caption: `${AVATAR_REFERENCE_NAME} sitting on beach lounge chair one knee bent up, ${isFemale ? 'breezy yellow floral wrap midi dress' : 'pastel yellow shorts and Hawaiian shirt'}, beach setting, soft natural daylight` },
     { order: 35, caption: `${AVATAR_REFERENCE_NAME} sitting cross-legged outdoors barefoot, ${isFemale ? 'flowy boho pants in terracotta with cropped top' : 'relaxed dark green cargo shorts with gray t-shirt'}, park grass, early morning light` },
     { order: 36, caption: `${AVATAR_REFERENCE_NAME} standing upright outdoors, ${isFemale ? 'breezy white cover-up dress' : 'lightweight linen shorts and sleeveless white t-shirt'}, tropical path with greenery, soft natural daylight` },
+    { order: 37, caption: `${AVATAR_REFERENCE_NAME} standing on city balcony looking at camera, ${isFemale ? 'high-waisted black trousers with fitted white crop top and white sneakers' : 'slim dark navy chinos with white oxford shirt and chelsea boots'}, city skyline background, natural daylight` }, 
 
     // --- Full body and dynamic poses (orders 37–40) ---
-    { order: 37, caption: `${AVATAR_REFERENCE_NAME} walking toward camera, ${isFemale ? 'short black cocktail dress with spaghetti straps and high heels' : 'charcoal suit with white dress shirt and loafers'}, city sidewalk, overcast diffused daylight` },
-    { order: 38, caption: `${AVATAR_REFERENCE_NAME} jogging toward camera, ${isFemale ? 'minimalist all-black athleisure set' : 'all-black tracksuit'} with black sport shoes, stadium background, overcast daylight` },
-    { order: 39, caption: `${AVATAR_REFERENCE_NAME} dancing in front of camera, ${isFemale ? 'fitted black micro mini skirt with sleeveless white bodysuit and pointed-toe heels' : 'black crew-neck t-shirt with light blue jeans and white sneakers'}, city street with bars, colorful night lighting` },
-    { order: 40, caption: `${AVATAR_REFERENCE_NAME} standing on city balcony looking at camera, ${isFemale ? 'high-waisted black trousers with fitted white crop top and white sneakers' : 'slim dark navy chinos with white oxford shirt and chelsea boots'}, city skyline background, natural daylight` },
+    { order: 38, caption: `${AVATAR_REFERENCE_NAME} walking toward camera, ${isFemale ? 'short black cocktail dress with spaghetti straps and high heels' : 'charcoal suit with white dress shirt and loafers'}, city street sidewalk, overcast diffused daylight` },
+    { order: 39, caption: `${AVATAR_REFERENCE_NAME} jogging toward camera, ${isFemale ? 'minimalist all-black athleisure set' : 'all-black tracksuit'} with black sport shoes, stadium background, overcast daylight` },
+    { order: 40, caption: `${AVATAR_REFERENCE_NAME} dancing in front of camera, ${isFemale ? 'fitted black micro mini skirt with sleeveless white bodysuit and pointed-toe heels' : 'black crew-neck t-shirt with light blue jeans and white sneakers'}, city street with bars, colorful night lighting` },
+    
   ];
 };
