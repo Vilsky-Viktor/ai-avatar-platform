@@ -1,4 +1,4 @@
-FROM gcr.io/loom24-mvp/cuda128-py512-fa2-fa3-sage
+FROM gcr.io/loom24-mvp/cuda128-py512
 
 ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     MODEL_NAME="qwen-edit-2511" \
