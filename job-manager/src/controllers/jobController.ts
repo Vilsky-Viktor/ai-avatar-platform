@@ -34,7 +34,7 @@ import { AvatarLoras } from '../types/avatar';
 
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
-const TRAIN_LORA_QWEN_EDIT_2511_TOPIC = process.env.TRAIN_LORA_QWEN_EDIT_2511_TOPIC || 'train-lora-qwen-edit-2511';
+const AI_TOOLKIT_TOPIC = process.env.AI_TOOLKIT_TOPIC || 'ai-toolkit';
 
 export const getByGroupId = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -84,20 +84,49 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
         training: {
           mediaPaths,
           prompts,
-          numSteps: mediaPaths.length * 170,
-          rank: 32,
-          loraAlpha: 32,
-          learningRate: 2e-4,
-          gradientAccumulationSteps: 1,
-          clipGradNorm: 0.5,
+          toolkit: {
+            job: 'extension',
+            config: {
+              process: [{
+                type: 'sd_trainer',
+                device: 'cuda:0',
+                network: { type: 'lora', linear: 32, linear_alpha: 32 },
+                save: { dtype: 'float16', save_every: 500, max_step_saves_to_keep: 2 },
+                datasets: [{ caption_ext: 'txt', resolution: [1328], caption_dropout_rate: 0.05 }],
+                train: {
+                  batch_size: 1,
+                  steps: mediaPaths.length * 100,
+                  gradient_accumulation: 1,
+                  train_unet: true,
+                  train_text_encoder: false,
+                  gradient_checkpointing: true,
+                  noise_scheduler: 'flowmatch',
+                  optimizer: 'adamw8bit',
+                  lr: 2e-4,
+                  lr_scheduler: 'constant',
+                  dtype: 'bf16',
+                  cache_text_embeddings: true,
+                  timestep_type: 'sigmoid',
+                },
+                model: {
+                  arch: 'qwen_image_edit',
+                  quantize: true,
+                  qtype: 'uint3',
+                  quantize_te: true,
+                  qtype_te: 'qfloat8',
+                  low_vram: true,
+                },
+              }],
+            },
+          },
         },
       },
-      metadata: { queueTopic: TRAIN_LORA_QWEN_EDIT_2511_TOPIC } as TrainingJobMetadata,
+      metadata: { queueTopic: AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
       result: { fileName: 'qwen-edit-2511-lora.safetensors' },
     };
 
     const dbJob = await createDb(userId, trainingJob);
-    await publishJob(TRAIN_LORA_QWEN_EDIT_2511_TOPIC, dbJob);
+    await publishJob(AI_TOOLKIT_TOPIC, dbJob);
 
     const loras: AvatarLoras = { qwenEdit2511Path: '' };
     return res.status(201).json(loras);

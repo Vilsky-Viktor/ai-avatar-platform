@@ -133,14 +133,7 @@ export type InferenceJobMetadata = {
 export type TrainingConfig = {
   mediaPaths: string[];
   prompts: string[];
-  numSteps: number;
-  width?: number;
-  height?: number;
-  rank: number;
-  loraAlpha: number;
-  learningRate: number;
-  gradientAccumulationSteps?: number;
-  clipGradNorm?: number;
+  toolkit: Record<string, any>;
 }
 
 export type TrainingJobInput = {
