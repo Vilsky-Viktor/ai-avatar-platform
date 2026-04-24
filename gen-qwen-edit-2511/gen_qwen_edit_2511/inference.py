@@ -23,8 +23,8 @@ import gen_qwen_edit_2511.utils as utils
 
 
 QWEN_MODEL_PATH       = os.getenv("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")
-QUANTIZE_TRANSFORMER  = os.getenv("QUANTIZE_TRANSFORMER", "")   # uint3 | uint4 | uint8 | int8
-QUANTIZE_TEXT_ENCODER = os.getenv("QUANTIZE_TEXT_ENCODER", "")  # qfloat8 | int8
+QUANTIZE_TRANSFORMER  = os.getenv("QUANTIZE_TRANSFORMER", "false")   # false | uint3 | uint4 | uint8 | int8
+QUANTIZE_TEXT_ENCODER = os.getenv("QUANTIZE_TEXT_ENCODER", "false")  # false | qfloat8 | int8
 CONDITION_IMAGE_SIZE  = 384 * 384
 
 def _torchao_config(qtype: str):
@@ -60,7 +60,7 @@ class _PipelineInstance:
         self.device = "cuda"
 
         load_kwargs: dict = {"torch_dtype": torch.bfloat16, "low_cpu_mem_usage": True}
-        if QUANTIZE_TRANSFORMER:
+        if QUANTIZE_TRANSFORMER != "false":
             load_kwargs["quantization_config"] = PipelineQuantizationConfig(
                 quant_mapping={"transformer": TorchAoConfig(_torchao_config(QUANTIZE_TRANSFORMER))}
             )
@@ -68,10 +68,10 @@ class _PipelineInstance:
 
         self.pipeline = QwenImageEditPlusPipeline.from_pretrained(QWEN_MODEL_PATH, **load_kwargs)
 
-        if QUANTIZE_TRANSFORMER:
+        if QUANTIZE_TRANSFORMER != "false":
             logger.info(f"[instance {self.idx}] Transformer quantization done")
 
-        if QUANTIZE_TEXT_ENCODER:
+        if QUANTIZE_TEXT_ENCODER != "false":
             logger.info(f"[instance {self.idx}] Quantizing text encoder ({QUANTIZE_TEXT_ENCODER}) ...")
             quanto_quantize(self.pipeline.text_encoder, weights=qtypes[QUANTIZE_TEXT_ENCODER])
             quanto_freeze(self.pipeline.text_encoder)

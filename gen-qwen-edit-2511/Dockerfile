@@ -9,8 +9,8 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     TORCH_HOME="/workspace/models/torch_cache" \
     ADAFACE_MODEL_DIR="/workspace/models/adaface" \
     ADAFACE_ARCHITECTURE="ir_101" \
-    QUANTIZE_TRANSFORMER="" \
-    QUANTIZE_TEXT_ENCODER=""
+    QUANTIZE_TRANSFORMER="false" \
+    QUANTIZE_TEXT_ENCODER="false"
 
 WORKDIR /app
 

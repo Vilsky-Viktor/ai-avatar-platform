@@ -24,10 +24,6 @@ export const buildQwenImageEditToolkitConfig = (numImages: number, resolution: n
       },
       model: {
         arch: 'qwen_image_edit',
-        quantize: true,
-        qtype: 'uint3',
-        quantize_te: true,
-        qtype_te: 'qfloat8',
       },
     }],
   },
