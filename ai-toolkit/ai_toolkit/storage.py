@@ -13,7 +13,7 @@ from ai_toolkit.logger import logger
 
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "loom24-mvp.firebasestorage.app")
 BUCKET_MODELS_PATH = "models"
-LOCAL_MODELS_PATH = Path(os.environ.get("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")).parent
+LOCAL_MODELS_BASE = Path(os.environ.get("LOCAL_MODELS_BASE", "/workspace/models"))
 MEDIA_CACHE_DIR = Path(os.environ.get("MEDIA_CACHE_DIR", "/workspace/media_cache"))
 MEDIA_CACHE_TTL = int(os.environ.get("MEDIA_CACHE_TTL_SECONDS", "3600"))
 LORA_OUTPUT_DIR = Path(os.environ.get("LORA_OUTPUT_DIR", "/workspace/lora_output"))
@@ -100,7 +100,7 @@ def download_model(model_name: str):
         if blob.name.endswith("/"):
             continue
         relative = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
-        local_path = LOCAL_MODELS_PATH / relative
+        local_path = LOCAL_MODELS_BASE / relative
 
         if local_path.exists() and local_path.stat().st_size == blob.size:
             continue
@@ -110,6 +110,44 @@ def download_model(model_name: str):
         logger.info(f"Downloaded {blob.name}")
 
     logger.info(f"Sync for {model_name} complete")
+
+
+def sync_models():
+    """
+    True sync of models/ folder from GCS to local disk:
+    - Downloads files that are missing or have a different size.
+    - Removes local files that no longer exist in the bucket.
+    """
+    logger.info(f"Syncing models folder from bucket: {BUCKET_NAME}")
+
+    bucket = _get_gcs().bucket(BUCKET_NAME)
+    blobs = [b for b in bucket.list_blobs(prefix=f"{BUCKET_MODELS_PATH}/") if not b.name.endswith("/")]
+
+    if not blobs:
+        raise RuntimeError(f"No blobs found at gs://{BUCKET_NAME}/{BUCKET_MODELS_PATH}/")
+
+    # Build set of expected local paths
+    expected: set[Path] = set()
+    for blob in blobs:
+        relative = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
+        local_path = LOCAL_MODELS_BASE / relative
+        expected.add(local_path)
+
+        if local_path.exists() and local_path.stat().st_size == blob.size:
+            continue
+
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(local_path))
+        logger.info(f"Downloaded {blob.name}")
+
+    # Remove local files no longer in the bucket
+    if LOCAL_MODELS_BASE.exists():
+        for local_file in LOCAL_MODELS_BASE.rglob("*"):
+            if local_file.is_file() and local_file not in expected:
+                local_file.unlink()
+                logger.info(f"Removed {local_file}")
+
+    logger.info("Models folder sync complete")
 
 
 def write_dataset(images: list[Image.Image], prompts: list[str], dataset_dir: Path, resolution: int = 1024) -> Path:

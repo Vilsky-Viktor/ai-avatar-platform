@@ -1,8 +1,7 @@
 FROM gcr.io/loom24-mvp/cuda128-py512
 
 ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
-    MODEL_NAME="qwen-edit-2511" \
-    QWEN_MODEL_PATH="/workspace/models/qwen-edit-2511" \
+    LOCAL_MODELS_BASE="/workspace/models" \
     HF_HOME="/workspace/models" \
     TORCH_HOME="/workspace/models/torch_cache" \
     AI_TOOLKIT_PATH="/workspace/ai-toolkit" \

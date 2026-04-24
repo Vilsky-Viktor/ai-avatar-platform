@@ -233,10 +233,9 @@ if __name__ == "__main__":
     logger.info(f"Message concurrency: {MESSAGE_CONCURRENCY}")
 
     try:
-        storage.download_models(MODEL_NAME)
-        storage.download_models("adaface")
+        storage.sync_models()
     except Exception as e:
-        logger.error(f"Failed to download models: {e}", exc_info=True)
+        logger.error(f"Failed to sync models: {e}", exc_info=True)
         raise
 
     if MESSAGE_CONCURRENCY == 1:

@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class TrainingConfig(BaseModel):
+    modelName: str = "qwen-edit-2511"
     mediaPaths: list[str] = []
     prompts: list[str] = []
     toolkit: dict[str, Any] = Field(default_factory=dict)

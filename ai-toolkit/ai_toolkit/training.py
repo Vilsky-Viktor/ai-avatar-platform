@@ -6,11 +6,11 @@ from pathlib import Path
 from ai_toolkit.logger import logger
 
 AI_TOOLKIT_PATH = os.environ.get("AI_TOOLKIT_PATH", "/workspace/ai-toolkit")
-QWEN_MODEL_PATH = os.environ.get("QWEN_MODEL_PATH", "/workspace/models/qwen-edit-2511")
+LOCAL_MODELS_BASE = os.environ.get("LOCAL_MODELS_BASE", "/workspace/models")
 LORA_OUTPUT_NAME = "lora"
 
 
-def run_training(toolkit_config: dict, job_id: str, out_dir: Path, images_dir: Path, control_dir: Path):
+def run_training(toolkit_config: dict, job_id: str, out_dir: Path, images_dir: Path, control_dir: Path, model_name: str):
     config = copy.deepcopy(toolkit_config)
 
     cfg = config.setdefault("config", {})
@@ -23,7 +23,7 @@ def run_training(toolkit_config: dict, job_id: str, out_dir: Path, images_dir: P
             ds["control_path"] = str(control_dir)
         model = proc.setdefault("model", {})
         if not model.get("name_or_path"):
-            model["name_or_path"] = QWEN_MODEL_PATH
+            model["name_or_path"] = str(Path(LOCAL_MODELS_BASE) / model_name)
 
     if AI_TOOLKIT_PATH not in sys.path:
         sys.path.insert(0, AI_TOOLKIT_PATH)

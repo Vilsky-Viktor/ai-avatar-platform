@@ -192,6 +192,43 @@ def download_models(model_name):
     logger.info(f"Sync for {model_name} complete")
 
 
+def sync_models():
+    """
+    True sync of models/ folder from GCS to local disk:
+    - Downloads files that are missing or have a different size.
+    - Removes local files that no longer exist in the bucket.
+    """
+    local_base_dir = Path(LOCAL_MODELS_PATH)
+    logger.info(f"Syncing models folder from bucket: {BUCKET_NAME}")
+
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blobs = [b for b in bucket.list_blobs(prefix=f"{BUCKET_MODELS_PATH}/") if not b.name.endswith("/")]
+
+    if not blobs:
+        raise RuntimeError(f"No blobs found at gs://{BUCKET_NAME}/{BUCKET_MODELS_PATH}/")
+
+    expected: set[Path] = set()
+    for blob in blobs:
+        relative_path = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
+        local_path = local_base_dir / relative_path
+        expected.add(local_path)
+
+        if local_path.exists() and local_path.stat().st_size == blob.size:
+            continue
+
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(local_path))
+        logger.info(f"Downloaded {blob.name}")
+
+    if local_base_dir.exists():
+        for local_file in local_base_dir.rglob("*"):
+            if local_file.is_file() and local_file not in expected:
+                local_file.unlink()
+                logger.info(f"Removed {local_file}")
+
+    logger.info("Models folder sync complete")
+
+
 def load_input_images(image_paths: list[str]) -> list[Image.Image]:
     global _last_eviction_time
     now = time.time()

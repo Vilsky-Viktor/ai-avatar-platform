@@ -82,6 +82,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
       input: {
         checkDependencies: false,
         training: {
+          modelName: 'qwen-edit-2511',
           mediaPaths,
           prompts,
           toolkit: {

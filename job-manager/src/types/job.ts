@@ -131,6 +131,7 @@ export type InferenceJobMetadata = {
 // ── Training ─────────────────────────────────────────────────────────────────
 
 export type TrainingConfig = {
+  modelName: string;
   mediaPaths: string[];
   prompts: string[];
   toolkit: Record<string, any>;

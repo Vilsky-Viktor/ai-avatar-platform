@@ -16,7 +16,6 @@ from ai_toolkit.models import Job
 logger = log.get_logger(__name__)
 
 MESSAGE_CONCURRENCY = int(os.environ.get("MESSAGE_CONCURRENCY", "1"))
-MODEL_NAME = os.environ.get("MODEL_NAME", "qwen-edit-2511")
 
 
 def _publish_error(job: Job, message: str):
@@ -71,6 +70,9 @@ def make_process_job(semaphore: threading.Semaphore):
                 message.ack()
                 return
 
+            logger.info(f"Downloading model {training_cfg.modelName} ...")
+            storage.download_model(training_cfg.modelName)
+
             logger.info(f"Downloading {len(media_paths)} training images ...")
             raw = storage.download_images(media_paths)
 
@@ -100,7 +102,7 @@ def make_process_job(semaphore: threading.Semaphore):
                 try:
                     resolution = training_cfg.toolkit["config"]["process"][0]["datasets"][0]["resolution"][0]
                     images_dir, control_dir = storage.write_dataset(images, aligned_prompts, dataset_dir, resolution)
-                    training.run_training(training_cfg.toolkit, job.id, out_dir, images_dir, control_dir)
+                    training.run_training(training_cfg.toolkit, job.id, out_dir, images_dir, control_dir, training_cfg.modelName)
                 except Exception as e:
                     logger.error(f"Training failed: {e}", exc_info=True)
                     storage.cleanup_lora_output_dir(job.id)
@@ -167,9 +169,9 @@ def main():
     logger.info(f"Starting ai-toolkit service (concurrency={MESSAGE_CONCURRENCY})")
 
     try:
-        storage.download_model(MODEL_NAME)
+        storage.sync_models()
     except Exception as e:
-        logger.error(f"Failed to download model: {e}", exc_info=True)
+        logger.error(f"Failed to sync models folder on startup: {e}", exc_info=True)
         raise
 
     if MESSAGE_CONCURRENCY == 1:
