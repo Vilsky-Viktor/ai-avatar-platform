@@ -28,6 +28,7 @@ import {
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { getAvatarById } from '../services/avatarService';
 import { buildPhotoSetJobs } from '../utils/jobBuilder';
+import { buildQwenImageEditToolkitConfig } from '../utils/qwenImageEditTrainingConfig';
 import uuid from 'uuid';
 import imageRatios from '../types/imageRatios';
 import { AvatarLoras } from '../types/avatar';
@@ -71,6 +72,8 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const captions = generatePhotoSetCaptions(jobRequest.parameters);
     const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
     const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
+    const resolution = completedJobs[0].input.inference.width as number;
+
     const trainingJob: TrainingJob = {
       groupId: jobRequest.groupId,
       userId,
@@ -85,40 +88,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
           modelName: 'qwen-edit-2511',
           mediaPaths,
           prompts,
-          toolkit: {
-            job: 'extension',
-            config: {
-              process: [{
-                type: 'sd_trainer',
-                device: 'cuda:0',
-                network: { type: 'lora', linear: 32, linear_alpha: 32 },
-                save: { dtype: 'float16', save_every: 500, max_step_saves_to_keep: 2 },
-                datasets: [{ caption_ext: 'txt', resolution: [1328], caption_dropout_rate: 0.05 }],
-                train: {
-                  batch_size: 1,
-                  steps: mediaPaths.length * 100,
-                  gradient_accumulation: 1,
-                  train_unet: true,
-                  train_text_encoder: false,
-                  gradient_checkpointing: true,
-                  noise_scheduler: 'flowmatch',
-                  optimizer: 'adamw8bit',
-                  lr: 2e-4,
-                  lr_scheduler: 'constant',
-                  dtype: 'bf16',
-                  cache_text_embeddings: true,
-                  timestep_type: 'sigmoid',
-                },
-                model: {
-                  arch: 'qwen_image_edit',
-                  quantize: true,
-                  qtype: 'uint3',
-                  quantize_te: true,
-                  qtype_te: 'qfloat8',
-                },
-              }],
-            },
-          },
+          toolkit: buildQwenImageEditToolkitConfig(mediaPaths.length, resolution),
         },
       },
       metadata: { queueTopic: AI_TOOLKIT_TOPIC } as TrainingJobMetadata,

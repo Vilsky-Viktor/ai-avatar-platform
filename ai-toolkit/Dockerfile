@@ -10,7 +10,8 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
 # Clone AI toolkit and install its requirements
 RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 RUN git clone https://github.com/ostris/ai-toolkit.git /workspace/ai-toolkit
-RUN pip install --no-cache-dir -r /workspace/ai-toolkit/requirements_base.txt
+RUN pip install --no-cache-dir uv
+RUN uv pip install --system --no-cache-dir -r /workspace/ai-toolkit/requirements_base.txt
 
 WORKDIR /app
 COPY requirements.txt .
