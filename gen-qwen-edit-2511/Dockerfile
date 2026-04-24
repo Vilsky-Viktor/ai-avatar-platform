@@ -13,6 +13,8 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     QUANTIZE_TEXT_ENCODER=""
 
 WORKDIR /app
+RUN pip install --no-cache-dir torchao==0.10.0 optimum-quanto==0.2.4
+
 COPY gen_qwen_edit_2511 ./gen_qwen_edit_2511
 
 COPY entrypoint.sh /entrypoint.sh
