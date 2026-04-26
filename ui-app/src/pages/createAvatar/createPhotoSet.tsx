@@ -31,7 +31,7 @@ function CreatePhotoSetPage() {
     const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
     const jobsRef = useRef<(InferenceJob | null)[]>([]);
 
-    const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
     const initialized = useRef<boolean>(false);
 
     useEffect(() => {
@@ -78,19 +78,6 @@ function CreatePhotoSetPage() {
         }
     }
 
-    useEffect(() => {
-        if (!fullscreenSrc) return;
-
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-            setFullscreenSrc(null);
-            }
-        };
-
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
-    }, [fullscreenSrc]);
-
     const initPage = async () => {
         if (initialized.current) return;
         initialized.current = true;
@@ -100,8 +87,8 @@ function CreatePhotoSetPage() {
 
         const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
 
-        if (fetchedJobs.length === NUM_ID_PHOTOS + NUM_PHOTO_SET_PHOTOS) {
-            const onlyPhotoSetJobs = fetchedJobs.slice(NUM_ID_PHOTOS) as InferenceJob[];
+        if (fetchedJobs.length >= NUM_PHOTO_SET_PHOTOS) {
+            const onlyPhotoSetJobs = fetchedJobs.filter((job: InferenceJob) => job.order! > NUM_ID_PHOTOS);
             const enrichedJobs = await Promise.all(
                 onlyPhotoSetJobs.map(async (job: InferenceJob) => {
                     const mediaUrl = job.result?.mediaPath
@@ -203,13 +190,13 @@ function CreatePhotoSetPage() {
                 </div>
             ) : (
                 <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {jobs.map((job, idx) => (
                             <PhotoCard
                                 key={idx}
                                 job={job}
                                 idx={idx}
-                                onPhotoClick={setFullscreenSrc}
+                                onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
                                 onRegenerate={restartJob}
                                 canRestart={!stepLocked()}
                                 showOrder={true}
@@ -227,7 +214,7 @@ function CreatePhotoSetPage() {
                 finish={false}
             />
 
-            <FullscreenModal src={fullscreenSrc} onClose={() => setFullscreenSrc(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
         </>
     );
 }

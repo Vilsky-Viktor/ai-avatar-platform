@@ -163,7 +163,8 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
       front: `${avatarMediaPath}/001-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
       rightQuarter: `${avatarMediaPath}/003-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
       leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
-      body: `${avatarMediaPath}/008-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+      upperBody: `${avatarMediaPath}/008-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+      body: `${avatarMediaPath}/009-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
     }
   }
 
@@ -270,7 +271,8 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
         leftQuarter: `${avatarMediaPath}/004-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
         rightSide: `${avatarMediaPath}/005-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
         leftSide: `${avatarMediaPath}/006-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
-        body: `${avatarMediaPath}/008-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        upperBody: `${avatarMediaPath}/008-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
+        body: `${avatarMediaPath}/009-training-photo-set-${jobRequest.groupId}-${trainingDimensions}.png`,
       }
     }
 

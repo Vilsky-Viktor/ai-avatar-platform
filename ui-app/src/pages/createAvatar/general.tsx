@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepper';
-import { User, ChevronDown } from 'lucide-react';
+import { User } from 'lucide-react';
 import { createAvatar, getAvatarById } from '../../services/apiGateway';
 import { AvatarTypes, type Avatar } from '../../types/avatar';
 import { AvatarGender } from '../../types/avatar';
-import { getAvatarData, initialAvatarData, initialNewAvatarData, saveAvatarData } from '../../utils/avatarCreation';
+import { getAvatarData, initialAvatarData, saveAvatarData } from '../../utils/avatarCreation';
 import { type NewAvatarData  } from "../../types/avatarCreation";
 import BottomDock from '../../components/createAvatar/BottomDock'
-import { AVATAR_PARAMETER_OPTIONS } from "../../utils/avatarCreation";
 import { scrollToTop } from '../../utils/scroller';
 
 
@@ -74,9 +73,9 @@ function GeneralPage() {
 
         const nameFilled = avatar.name.trim().length > 2;
         const typeFilled = avatar.type;
-        const paramsFilled = avatar.parameters.gender && avatar.parameters.height && avatar.parameters.body && avatar.parameters.bodyHair && avatar.parameters.bustSize;
+        const genderFilled = avatar.parameters.gender;
         
-        return nameFilled && typeFilled && paramsFilled;
+        return nameFilled && typeFilled && genderFilled;
     };
     
     const stepLocked = () => {
@@ -190,38 +189,6 @@ function GeneralPage() {
                                     );
                                 })}
                             </div>
-                        </div>
-
-                        <div className="hidden md:grid md:grid-cols-2 rounded-3xl gap-8 mt-4">
-                            {[
-                                { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
-                                { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].body },
-                                { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
-                                { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },
-                            ].map((field) => (
-                                <div key={field.key} className={`group flex flex-col gap-0.5 ${stepLocked() ? 'opacity-50' : 'opacity-100'}`}>
-                                    <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
-                                        {field.label}
-                                    </label>
-
-                                    <div className="relative">
-                                        <select
-                                            value={avatar.parameters[field.key as keyof typeof avatar.parameters]}
-                                            disabled={stepLocked()}
-                                            onChange={(e) => setParameter(field.key, e.target.value)}
-                                            className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
-                                        >
-                                            <option value="" disabled>Select</option>
-                                            {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
-
-                                        </select>
-
-                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
-                                            <ChevronDown size={16} strokeWidth={2.5} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 </div>

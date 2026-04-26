@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { handleCancel } from '../../utils/avatarCreation';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, X, Check } from 'lucide-react';
+import CancelAvatarDialog from './CancelAvatarDialog';
 
 type Props = {
     avatarId: string;
@@ -14,7 +15,7 @@ type Props = {
 function BottomDock({ avatarId, canProceed, nextStep, previousStep, finish }: Props) {
     const [nextLoading, setNextLoading] = useState(false);
     const [cancelLoading, setCancelLoading] = useState(false);
-    const dialogRef = useRef<HTMLDialogElement>(null);
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
     const navigate = useNavigate();
 
     const next = async () => {
@@ -28,47 +29,12 @@ function BottomDock({ avatarId, canProceed, nextStep, previousStep, finish }: Pr
 
     const confirmCancel = async () => {
         await handleCancel(avatarId, setCancelLoading, navigate);
-        dialogRef.current?.close();
+        setCancelDialogOpen(false);
     };
 
     return (
         <>
-            {/* Confirmation dialog */}
-            <dialog ref={dialogRef} className="modal modal-bottom sm:modal-middle">
-                <div className="modal-box bg-base-100 border border-base-content/5 rounded-2xl p-8 max-w-sm">
-                    <div className="flex flex-col gap-5">
-                        <div className="flex flex-col gap-2">
-                            <h3 className="text-base font-semibold tracking-tight">Cancel avatar creation?</h3>
-                            <p className="text-sm text-base-content/40 leading-relaxed">
-                                All progress will be lost and the avatar will be deleted.
-                            </p>
-                        </div>
-                        <div className="flex gap-3 justify-end">
-                            <button
-                                className="btn btn-ghost text-base-content/50 hover:text-base-content tracking-wide"
-                                onClick={() => dialogRef.current?.close()}
-                                disabled={cancelLoading}
-                            >
-                                Keep going
-                            </button>
-                            <button
-                                className="btn btn-error btn-outline tracking-wide"
-                                onClick={confirmCancel}
-                                disabled={cancelLoading}
-                            >
-                                {cancelLoading
-                                    ? <span className="loading loading-spinner loading-sm" />
-                                    : <X size={15} strokeWidth={2.5} />
-                                }
-                                {cancelLoading ? 'Cancelling...' : 'Cancel'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <form method="dialog" className="modal-backdrop">
-                    <button disabled={cancelLoading}>close</button>
-                </form>
-            </dialog>
+            <CancelAvatarDialog isOpen={cancelDialogOpen} cancelLoading={cancelLoading} onClose={() => setCancelDialogOpen(false)} onConfirm={confirmCancel} />
 
             {/* Dock */}
             <div className="fixed bottom-0 left-0 right-0 z-50 bg-base-100/80 backdrop-blur-md border-t border-base-content/5 py-5">
@@ -77,7 +43,7 @@ function BottomDock({ avatarId, canProceed, nextStep, previousStep, finish }: Pr
                     {/* Left — Cancel */}
                     <button
                         className="flex items-center gap-3 px-7 py-4 rounded-xl text-base font-semibold uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-error/70 transition-colors duration-300"
-                        onClick={() => dialogRef.current?.showModal()}
+                        onClick={() => setCancelDialogOpen(true)}
                         disabled={cancelLoading}
                     >
                         <X size={17} strokeWidth={2} />

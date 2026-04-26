@@ -27,7 +27,7 @@ function AvatarPage() {
     const [numModels, setNumModels] = useState(0);
     const [numImages, setNumImages] = useState(0);
     const [numVideos, setNumVideos] = useState(0);
-    const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
     const [createMediaOpen, setCreateMediaOpen] = useState(false);
     const [generateImageOpen, setGenerateImageOpen] = useState(false);
     const [bgBlurred, setBgBlurred] = useState(false);
@@ -79,13 +79,6 @@ function AvatarPage() {
             }
         }
     }
-
-    useEffect(() => {
-        if (!fullscreenSrc) return;
-        const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreenSrc(null); };
-        window.addEventListener('keydown', fn);
-        return () => window.removeEventListener('keydown', fn);
-    }, [fullscreenSrc]);
 
     const initPage = async () => {
         const fetchedAvatar = await fetchAvatar();
@@ -162,10 +155,10 @@ function AvatarPage() {
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <CreateMediaCard onClick={openCreateMedia} />
                             {jobs.filter((j) => j.status !== JobStatuses.completed).map((j, idx) => (
-                                <PhotoCard key={idx} job={j} idx={idx} onPhotoClick={setFullscreenSrc} />
+                                <PhotoCard key={idx} job={j} idx={idx} onPhotoClick={(src, rect) => setFullscreen({ src, rect })} />
                             ))}
                             {media.map((m, idx) => (
-                                <PhotoCard key={idx} media={m} idx={idx} onPhotoClick={setFullscreenSrc} />
+                                <PhotoCard key={idx} media={m} idx={idx} onPhotoClick={(src, rect) => setFullscreen({ src, rect })} />
                             ))}
                         </div>
                     </div>
@@ -174,7 +167,7 @@ function AvatarPage() {
 
             {bgBlurred && <div className="fixed inset-0 z-[9998] bg-black/20 pointer-events-none" />}
 
-            <FullscreenModal src={fullscreenSrc} onClose={() => setFullscreenSrc(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
 
             <CreateMediaModal
                 isOpen={createMediaOpen}

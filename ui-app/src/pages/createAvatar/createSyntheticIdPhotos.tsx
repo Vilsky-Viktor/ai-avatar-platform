@@ -21,7 +21,7 @@ import type { QuerySnapshot } from 'firebase/firestore';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { listenToCollectionByGroupId } from '../../services/db';
 import { scrollToTop, scrollToBottom } from '../../utils/scroller';
-
+import PillSelect from '../../components/PillSelect';
 
 function CreateSyntheticIdPhotosPage() {
     const navigate = useNavigate();
@@ -34,7 +34,10 @@ function CreateSyntheticIdPhotosPage() {
     const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
     const jobsRef = useRef<(InferenceJob | null)[]>([]);
 
-    const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ general: true });
+
+    const toggleSection = (key: string) => setOpenSections(prev => ({ [key]: !prev[key] }));
 
     useEffect(() => {
         scrollToTop();
@@ -47,19 +50,6 @@ function CreateSyntheticIdPhotosPage() {
     useEffect(() => {
         saveAvatarData(newAvatarData);
     }, [newAvatarData]);
-
-    useEffect(() => {
-        if (!fullscreenSrc) return;
-
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-            setFullscreenSrc(null);
-            }
-        };
-
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
-    }, [fullscreenSrc]);
 
     useEffect(() => {
         if (!jobsCreated()) return;
@@ -99,11 +89,37 @@ function CreateSyntheticIdPhotosPage() {
 
     const initPage = async () => {
         const existingAvatar = await getAvatarById(newAvatarData.avatarId);
-        setAvatar(existingAvatar);
+        const gender = existingAvatar.parameters.gender;
+        const defaults: Record<string, string> = {
+            ethnicity: 'northern european',
+            age: '20s',
+            height: 'average',
+            attractiveness: gender === 'female' ? 'beautiful' : 'handsome',
+            body: 'average',
+            face: 'oval',
+            hairStyle: gender === 'female' ? 'long straight' : 'short cut',
+            hairColor: 'dark brown',
+            skinColor: 'fair',
+            bustSize: 'medium',
+            bodyHair: 'none',
+            skin: 'smooth',
+            eyes: 'dark brown',
+            eyeLashes: 'medium natural',
+            eyeBrows: 'medium natural',
+            ears: 'attached',
+            nose: 'medium straight',
+            lips: 'full',
+            facialHair: gender === 'female' ? 'none' : 'clean-shaven',
+        };
+        const params = { ...existingAvatar.parameters };
+        for (const [key, val] of Object.entries(defaults)) {
+            if (!params[key as keyof typeof params]) (params as Record<string, string>)[key] = val;
+        }
+        setAvatar({ ...existingAvatar, parameters: params });
 
         if (newAvatarData.groupId) {
             const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
-            const onlyIdPhotoJobs = fetchedJobs.slice(0, NUM_ID_PHOTOS);
+            const onlyIdPhotoJobs = fetchedJobs.filter((job: InferenceJob) => job.order! <= NUM_ID_PHOTOS);
             const enrichedJobs = await Promise.all(
                 (onlyIdPhotoJobs as InferenceJob[]).map(async (job: InferenceJob) => {
                     const mediaUrl = job.result?.mediaPath
@@ -209,7 +225,7 @@ function CreateSyntheticIdPhotosPage() {
     }
 
     const parametersFilled = () => {
-        return Object.values(avatar.parameters).every((value) => value !== '');
+        return Object.values(avatar.parameters).every(v => v !== '');
     }
 
     const canProceed = () => {
@@ -251,43 +267,81 @@ function CreateSyntheticIdPhotosPage() {
                 </div>
             ) : (
                 <div className="mx-auto px-4 pt-12 mb-50">
-                    <div className="grid grid-cols-3 gap-8">
-                        {[
-                            { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
-                            { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
-                            { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
-                            { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].attractiveness },
-                            { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].face },
-                            { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].hairStyle },
-                            { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS.hairColor },
-                            { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
-                            { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
-                            { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
-                            { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes }, // Fixed the typo here
-                            { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
-                            { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
-                            { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].skin },
-                            { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].facialHair },
-                        ].map((field) => (
-                            <div key={field.key} className={`group flex flex-col gap-0.5 ${stepLocked() ? 'opacity-50' : 'opacity-100'}`}>
-                                <label className="text-[10px] font-medium uppercase tracking-[0.3em] text-base-content/20">
-                                    {field.label}
-                                </label>
-
-                                <div className="relative">
-                                    <select
-                                        value={avatar.parameters[field.key as keyof typeof avatar.parameters]}
-                                        disabled={stepLocked()}
-                                        onChange={(e) => setParameter(field.key, e.target.value)}
-                                        className="w-full py-1.5 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-base font-medium tracking-tight appearance-none cursor-pointer pr-8"
-                                    >
-                                        <option value="" disabled>Select</option>
-                                        {field.opts.map(o => <option key={o} value={o}>{o}</option>)}
-
-                                    </select>
-
-                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-hover:text-primary transition-colors">
-                                        <ChevronDown size={16} strokeWidth={2.5} />
+                    <div className="flex flex-col gap-2">
+                        {([
+                            {
+                                key: 'general',
+                                label: 'General',
+                                fields: [
+                                    { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
+                                    { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
+                                    { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
+                                    { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].attractiveness },
+                                    { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].body },
+                                ],
+                            },
+                            {
+                                key: 'face',
+                                label: 'Face',
+                                fields: [
+                                    { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].face },
+                                    { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes },
+                                    { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
+                                    { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
+                                    { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
+                                    { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
+                                    { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
+                                    { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].facialHair },
+                                ],
+                            },
+                            {
+                                key: 'hair',
+                                label: 'Hair',
+                                fields: [
+                                    { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].hairStyle },
+                                    { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS.hairColor },
+                                ],
+                            },
+                            {
+                                key: 'skin',
+                                label: 'Skin & Body',
+                                fields: [
+                                    { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
+                                    { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].skin },
+                                    { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
+                                    { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },
+                                ],
+                            },
+                        ] as const).map(section => (
+                            <div key={section.key} className="flex flex-col">
+                                <button
+                                    className="flex items-center justify-between py-4 cursor-pointer group border-b border-base-content/5"
+                                    onClick={() => toggleSection(section.key)}
+                                >
+                                    <span className="text-xs font-medium uppercase tracking-[0.35em] text-base-content/60 group-hover:text-base-content/80 transition-colors">
+                                        {section.label}
+                                    </span>
+                                    <ChevronDown
+                                        size={12}
+                                        strokeWidth={2.5}
+                                        className={`text-base-content/40 group-hover:text-base-content/60 transition-transform duration-300 ${openSections[section.key] ? 'rotate-180' : ''}`}
+                                    />
+                                </button>
+                                <div className={`grid transition-all duration-300 ease-in-out ${openSections[section.key] ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                    <div className="overflow-hidden">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 py-8">
+                                            {section.fields.map(field => (
+                                                <PillSelect
+                                                    key={field.key}
+                                                    label={field.label}
+                                                    fieldKey={field.key}
+                                                    opts={field.opts}
+                                                    value={avatar.parameters[field.key as keyof typeof avatar.parameters]}
+                                                    disabled={stepLocked()}
+                                                    onChange={setParameter}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -307,13 +361,13 @@ function CreateSyntheticIdPhotosPage() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {jobs.map((job, idx) => (
                             <PhotoCard
                                 key={idx}
                                 job={job}
                                 idx={idx}
-                                onPhotoClick={setFullscreenSrc}
+                                onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
                                 onRegenerate={restartJob}
                                 canRestart={!stepLocked() && allJobsStarted() && !isFrontJob(idx)}
                                 faceMatchThresholds={{ green: 0.6, yellow: 0.55, orange: 0.5 }}
@@ -360,7 +414,7 @@ function CreateSyntheticIdPhotosPage() {
                 finish={false}
             />
 
-            <FullscreenModal src={fullscreenSrc} onClose={() => setFullscreenSrc(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
         </>
     )
 }

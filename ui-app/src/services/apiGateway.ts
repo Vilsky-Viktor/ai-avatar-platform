@@ -157,11 +157,11 @@ export const genAvatarPhoto = async (jobRequest: PhotoJobRequest): Promise<Infer
   }
 }
 
-export const getJobsByGroupId  = async (groupId: string): Promise<Job[]> => {
+export const getJobsByGroupId  = async (groupId: string): Promise<InferenceJob[]> => {
   try {
     const res = await apiClient.get(`/jobs/get/group/${groupId}`, {});
 
-    return res.data as Job[];
+    return res.data as InferenceJob[];
   } catch (error) {
     console.error("Error fetching job:", error);
     throw error;

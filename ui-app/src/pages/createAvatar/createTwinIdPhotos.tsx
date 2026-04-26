@@ -5,6 +5,7 @@ import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import PhotoCard from "../../components/PhotoCard";
 import ImageCropperModal from "../../components/createAvatar/ImageCropperModal";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
+import PillSelect from '../../components/PillSelect';
 import { type Avatar } from '../../types/avatar';
 import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getAvatarById } from '../../services/apiGateway';
 import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
@@ -17,7 +18,8 @@ import {
     getAvatarData,
     initialAvatarData,
     saveAvatarData,
-    NUM_ID_PHOTOS
+    NUM_ID_PHOTOS,
+    AVATAR_PARAMETER_OPTIONS
 } from '../../utils/avatarCreation';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { type UploadedIdPhoto, type NewAvatarData } from "../../types/avatarCreation";
@@ -41,7 +43,7 @@ function CreateTwinIdPhotosPage() {
     const jobsRef = useRef<(InferenceJob | null)[]>([]);
 
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
-    const [fullscreenSrc, setFullscreenSrc] = useState<string | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
     const [tempImage, setTempImage] = useState<string | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
@@ -66,19 +68,6 @@ function CreateTwinIdPhotosPage() {
     useEffect(() => {
         saveAvatarData(newAvatarData);
     }, [newAvatarData]);
-
-    useEffect(() => {
-        if (!fullscreenSrc) return;
-
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-            setFullscreenSrc(null);
-            }
-        };
-
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
-    }, [fullscreenSrc]);
 
     useEffect(() => {
         if (!jobsCreated()) return;
@@ -118,11 +107,20 @@ function CreateTwinIdPhotosPage() {
 
     const initPage = async () => {
         const existingAvatar = await getAvatarById(newAvatarData.avatarId);
-        setAvatar(existingAvatar);
+        const defaults: Record<string, string> = {
+            height: 'average',
+            bustSize: 'medium',
+            bodyHair: 'none',
+        };
+        const params = { ...existingAvatar.parameters };
+        for (const [key, val] of Object.entries(defaults)) {
+            if (!params[key as keyof typeof params]) (params as Record<string, string>)[key] = val;
+        }
+        setAvatar({ ...existingAvatar, parameters: params });
 
         if (newAvatarData.groupId) {
             const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
-            const onlyIdPhotoJobs = fetchedJobs.slice(0, NUM_ID_PHOTOS);
+            const onlyIdPhotoJobs = fetchedJobs.filter((job: InferenceJob) => job.order! <= NUM_ID_PHOTOS);
             const enrichedJobs = await Promise.all(
                 (onlyIdPhotoJobs as InferenceJob[]).map(async (job: InferenceJob) => {
                     const mediaUrl = job.result?.mediaPath
@@ -230,6 +228,10 @@ function CreateTwinIdPhotosPage() {
         setNewAvatarData((prev: NewAvatarData) => ({...prev, groupId}));
     }
 
+    const setParameter = (key: string, value: string) => {
+        setAvatar((avatar: Avatar) => ({...avatar, parameters: { ...avatar.parameters, [key]: value }}))
+    }
+
     const uploadToBucket = async (name: string, image: string) => {
         const mediaPath = getUploadedMediaPath(name);
         await uploadMediaToBucket(mediaPath, image);
@@ -242,6 +244,11 @@ function CreateTwinIdPhotosPage() {
     const createJobs = async () => {
         const emptyJobs = Array(NUM_ID_PHOTOS).fill(null);
         setJobs(emptyJobs);
+
+        const payload: Partial<Avatar> = {
+            parameters: avatar.parameters,
+        };
+        await updateAvatar(newAvatarData.avatarId, payload);
 
         const jobRequest: TrainingJobRequest = {
             avatarId: newAvatarData.avatarId,
@@ -273,6 +280,10 @@ function CreateTwinIdPhotosPage() {
         return uploadedPhotos.every((photo) => photo.photo || photo.mediaUrl);
     }
 
+    const parametersFilled = () => {
+        return avatar.parameters.bodyHair && avatar.parameters.height && avatar.parameters.bustSize;
+    }
+
     const generatingStarted = () => {
         return jobs.length > 0;
     }
@@ -295,7 +306,7 @@ function CreateTwinIdPhotosPage() {
         try {
             if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    mainImagePath: jobs[0]?.result?.mediaPath,
+                    mainImagePath: jobs[0]?.result?.mediaPath
                 };
                 await updateAvatar(newAvatarData.avatarId, payload);
             }
@@ -342,7 +353,25 @@ function CreateTwinIdPhotosPage() {
                         removable={!stepLocked() && !generatingStarted()}
                     />
 
-                    {photosUploaded() && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-12">
+                        {[
+                            { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
+                            { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
+                            { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },
+                        ].map(field => (
+                            <PillSelect
+                                key={field.key}
+                                label={field.label}
+                                fieldKey={field.key}
+                                opts={field.opts}
+                                value={avatar.parameters[field.key as keyof typeof avatar.parameters]}
+                                disabled={stepLocked()}
+                                onChange={setParameter}
+                            />
+                        ))}
+                    </div>
+
+                    {photosUploaded() && parametersFilled() && (
                         <div className='text-center'>
                             <button
                                 onClick={createJobs}
@@ -355,13 +384,13 @@ function CreateTwinIdPhotosPage() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {jobs.map((job, idx) => (
                             <PhotoCard
                                 key={idx}
                                 job={job}
                                 idx={idx}
-                                onPhotoClick={setFullscreenSrc}
+                                onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
                                 onRegenerate={restartJob}
                                 canRestart={!stepLocked()}
                                 showOrder={true}
@@ -380,7 +409,7 @@ function CreateTwinIdPhotosPage() {
                 finish={false}
             />
 
-            <FullscreenModal src={fullscreenSrc} onClose={() => setFullscreenSrc(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
         </>
     )
 }

@@ -18,7 +18,7 @@ type Props = {
     job?: Partial<InferenceJob> | null;
     media?: Media;
     idx: number;
-    onPhotoClick: (url: string) => void;
+    onPhotoClick: (url: string, rect: DOMRect) => void;
     onRegenerate?: (jobId: string) => void;
     canRestart?: boolean;
     showOrder?: boolean;
@@ -147,7 +147,7 @@ function PhotoCard({
         return (
             <div
                 className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
-                onClick={() => onPhotoClick(url)}
+                onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect())}
             >
                 <img
                     src={url}

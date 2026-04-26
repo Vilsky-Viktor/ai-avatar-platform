@@ -21,7 +21,7 @@ type Props = {
 
 function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, onDrop, onFileUpload, onRemovePhoto, removable }: Props) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full mt-8">
             {viewConfig.map((view, index) => {
                 const photoData = uploadedPhotos[index];
                 const imageSrc = photoData?.photo || photoData?.mediaUrl;
@@ -34,7 +34,7 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                         onDragLeave={(e) => onDragLeave(index, e)}
                         onDrop={(e) => onDrop(index, e)}
                         onClick={() => !hasPhoto && view.ref.current?.click()}
-                        className={`relative rounded-[1.5rem] border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-700 overflow-hidden
+                        className={`relative rounded-[1rem] border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-700 overflow-hidden
                             ${hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'}
                             ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
                     >
@@ -50,7 +50,7 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                             <>
                                 <img
                                     src={imageSrc!}
-                                    className="absolute inset-0 w-full h-full object-contain z-0 rounded-[1.5rem]"
+                                    className="absolute inset-0 w-full h-full object-contain z-0 rounded-[1rem]"
                                     alt={view.label}
                                 />
                                 {removable && (
