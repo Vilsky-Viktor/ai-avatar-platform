@@ -31,7 +31,7 @@ function AvatarTrainingPage() {
     const [pageLoading, setPageLoading] = useState(true);
     const [steps, setSteps] = useState<Step[]>([
         { label: 'Processing training images', description: 'Preparing media', status: 'pending' },
-        { label: 'Starting training of new life', description: 'Launching training', status: 'pending' },
+        { label: 'Starting training of the new life', description: 'Launching training', status: 'pending' },
     ]);
     const initialized = useRef<boolean>(false);
     
