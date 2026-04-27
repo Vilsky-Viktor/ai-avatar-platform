@@ -31,7 +31,7 @@ function AvatarTrainingPage() {
     const [pageLoading, setPageLoading] = useState(true);
     const [steps, setSteps] = useState<Step[]>([
         { label: 'Processing training images', description: 'Preparing media', status: 'pending' },
-        { label: 'Starting training of the new life', description: 'Launching training', status: 'pending' },
+        { label: 'Training your new life', description: 'Launching training', status: 'pending' },
     ]);
     const initialized = useRef<boolean>(false);
     
@@ -164,10 +164,10 @@ function AvatarTrainingPage() {
                             <div className="flex flex-col gap-3 mt-4">
                                 <span className="text-3xl font-light tracking-tight text-base-content">All set.</span>
                                 <span className="text-sm text-base-content/40 font-light">
-                                    Training is running in the background.
+                                    Your new life is being trained in the background.
                                 </span>
-                                <span className="text-sm text-base-content/40 font-light">
-                                    This may take up to 12 hours — feel free to check back new life tomorrow.
+                                <span className="text-sm text-base-content/25 font-light">
+                                    This may take up to 12 hours — feel free to check back tomorrow.
                                 </span>
                             </div>
                         )}
