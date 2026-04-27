@@ -167,7 +167,7 @@ function AvatarTrainingPage() {
                                     Your new life is being trained in the background.
                                 </span>
                                 <span className="text-sm text-base-content/25 font-light">
-                                    This may take up to 12 hours — feel free to check back tomorrow.
+                                    This may take up to 24 hours — feel free to check back tomorrow.
                                 </span>
                             </div>
                         )}
