@@ -16,6 +16,7 @@ from ai_toolkit.models import Job
 logger = log.get_logger(__name__)
 
 MESSAGE_CONCURRENCY = int(os.environ.get("MESSAGE_CONCURRENCY", "1"))
+TRAINING_RESOLUTION = int(os.environ.get("TRAINING_RESOLUTION", "1024"))
 
 
 def _publish_error(job: Job, message: str):
@@ -100,8 +101,8 @@ def make_process_job(semaphore: threading.Semaphore):
 
             with semaphore:
                 try:
-                    resolution = training_cfg.toolkit["config"]["process"][0]["datasets"][0]["resolution"][0]
-                    images_dir, control_dir = storage.write_dataset(images, aligned_prompts, dataset_dir, resolution)
+                    training_cfg.toolkit["config"]["process"][0]["datasets"][0]["resolution"] = [TRAINING_RESOLUTION]
+                    images_dir, control_dir = storage.write_dataset(images, aligned_prompts, dataset_dir, TRAINING_RESOLUTION)
                     training.run_training(training_cfg.toolkit, job.id, out_dir, images_dir, control_dir, training_cfg.modelName)
                 except Exception as e:
                     logger.error(f"Training failed: {e}", exc_info=True)

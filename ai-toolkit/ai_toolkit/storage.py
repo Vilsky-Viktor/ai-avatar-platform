@@ -152,9 +152,9 @@ def sync_models():
 
 def write_dataset(images: list[Image.Image], prompts: list[str], dataset_dir: Path, resolution: int = 1024) -> Path:
     """
-    Write images + caption .txt files to dataset_dir and black 1024×1024 control images
+    Write images + caption .txt files to dataset_dir and black resolution×resolution control images
     to a control/ subfolder (required for Qwen Image Edit 2511 in AI toolkit).
-    Returns the control directory path.
+    Returns (images_dir, control_dir).
     """
     images_dir = dataset_dir / "images"
     control_dir = dataset_dir / "control"
@@ -164,7 +164,7 @@ def write_dataset(images: list[Image.Image], prompts: list[str], dataset_dir: Pa
     black = Image.new("RGB", (resolution, resolution), (0, 0, 0))
     for i, (img, prompt) in enumerate(zip(images, prompts)):
         stem = f"{i:04d}"
-        img.save(str(images_dir / f"{stem}.png"))
+        img.resize((resolution, resolution), Image.LANCZOS).save(str(images_dir / f"{stem}.png"))
         (images_dir / f"{stem}.txt").write_text(prompt, encoding="utf-8")
         black.save(str(control_dir / f"{stem}.png"))
 
