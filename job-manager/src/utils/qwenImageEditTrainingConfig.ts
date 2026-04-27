@@ -1,4 +1,4 @@
-export const buildQwenImageEditToolkitConfig = (numImages: number, resolution: number) => ({
+export const buildQwenImageEditToolkitConfig = (numImages: number) => ({
   job: 'extension',
   config: {
     process: [{
@@ -6,7 +6,7 @@ export const buildQwenImageEditToolkitConfig = (numImages: number, resolution: n
       device: 'cuda:0',
       network: { type: 'lora', linear: 32, linear_alpha: 32 },
       save: { dtype: 'float16', save_every: 500, max_step_saves_to_keep: 2 },
-      datasets: [{ caption_ext: 'txt', resolution: [resolution], caption_dropout_rate: 0.05 }],
+      datasets: [{ caption_ext: 'txt', resolution: [1024], caption_dropout_rate: 0.05 }],
       train: {
         batch_size: 1,
         steps: numImages * 100,

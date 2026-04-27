@@ -161,6 +161,10 @@ def write_dataset(images: list[Image.Image], prompts: list[str], dataset_dir: Pa
     images_dir.mkdir(parents=True, exist_ok=True)
     control_dir.mkdir(parents=True, exist_ok=True)
 
+    sample = images[0] if images else None
+    if sample and sample.size != (resolution, resolution):
+        logger.info(f"Resizing {len(images)} images from {sample.size[0]}x{sample.size[1]} to {resolution}x{resolution}")
+
     black = Image.new("RGB", (resolution, resolution), (0, 0, 0))
     for i, (img, prompt) in enumerate(zip(images, prompts)):
         stem = f"{i:04d}"

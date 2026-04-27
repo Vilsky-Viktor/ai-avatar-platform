@@ -88,7 +88,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
           modelName: 'qwen-edit-2511',
           mediaPaths,
           prompts,
-          toolkit: buildQwenImageEditToolkitConfig(mediaPaths.length, resolution),
+          toolkit: buildQwenImageEditToolkitConfig(mediaPaths.length),
         },
       },
       metadata: { queueTopic: AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
