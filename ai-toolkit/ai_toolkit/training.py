@@ -5,7 +5,7 @@ from pathlib import Path
 
 from ai_toolkit.logger import logger
 
-AI_TOOLKIT_PATH = os.environ.get("AI_TOOLKIT_PATH", "/workspace/ai-toolkit")
+AI_TOOLKIT_PATH = os.environ.get("AI_TOOLKIT_PATH", "/opt/ai-toolkit")
 LOCAL_MODELS_BASE = os.environ.get("LOCAL_MODELS_BASE", "/workspace/models")
 LORA_OUTPUT_NAME = "lora"
 
