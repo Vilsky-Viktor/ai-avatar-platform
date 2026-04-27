@@ -30,8 +30,8 @@ function AvatarTrainingPage() {
     const [loras, setLoras] = useState({} as AvatarLoras);
     const [pageLoading, setPageLoading] = useState(true);
     const [steps, setSteps] = useState<Step[]>([
-        { label: 'Processing photos', description: 'Preparing media', status: 'pending' },
-        { label: 'Starting training', description: 'Launching training', status: 'pending' },
+        { label: 'Processing training images', description: 'Preparing media', status: 'pending' },
+        { label: 'Starting training of new life', description: 'Launching training', status: 'pending' },
     ]);
     const initialized = useRef<boolean>(false);
     
@@ -119,7 +119,7 @@ function AvatarTrainingPage() {
                     <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
                 </div>
             ) : (
-                <div className="flex justify-center pt-20 pb-50">
+                <div className="max-w-3xl mx-auto px-4 pt-20 mb-50">
                     <div className="flex flex-col gap-10">
                         {steps.map((step, i) => (
                             <div key={i} className="flex items-center gap-8">
@@ -161,10 +161,13 @@ function AvatarTrainingPage() {
                         ))}
 
                         {canProceed() && (
-                            <div className="flex flex-col gap-2 mt-4">
+                            <div className="flex flex-col gap-3 mt-4">
                                 <span className="text-3xl font-light tracking-tight text-base-content">All set.</span>
-                                <span className="text-[11px] uppercase tracking-[0.25em] text-base-content/30">
-                                    Training runs in the background
+                                <span className="text-sm text-base-content/40 font-light">
+                                    Training is running in the background.
+                                </span>
+                                <span className="text-sm text-base-content/40 font-light">
+                                    This may take up to 12 hours — feel free to check back new life tomorrow.
                                 </span>
                             </div>
                         )}
