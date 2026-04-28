@@ -343,6 +343,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
         checkDependencies: false,
         inference: {
           prompt: `${AVATAR_REFERENCE_NAME} ${jobRequest.prompt}`,
+          mediaPaths: jobRequest.referenceImagePaths || [],
           numSteps: 8,
           guidanceScale: 1.0,
           width,

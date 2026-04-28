@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Sparkles, ImagePlus } from 'lucide-react';
 import type { Avatar } from '../../types/avatar';
 
 type Ratio = '9:16' | '3:4' | '1:1' | '4:3' | '16:9';
@@ -16,22 +16,48 @@ type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatar?: Avatar;
-    onGenerate: (prompt: string, ratio: Ratio) => Promise<void>;
+    onGenerate: (prompt: string, ratio: Ratio, referenceImages: File[]) => Promise<void>;
 };
 
 function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
     const [ratio, setRatio] = useState<Ratio>('9:16');
     const [loading, setLoading] = useState(false);
+    const [referenceImages, setReferenceImages] = useState<File[]>([]);
+    const [previews, setPreviews] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => { if (!isOpen) setPrompt(''); }, [isOpen]);
+    useEffect(() => {
+        if (!isOpen) {
+            setPrompt('');
+            setReferenceImages([]);
+            setPreviews([]);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        previews.forEach(url => URL.revokeObjectURL(url));
+        const urls = referenceImages.map(f => URL.createObjectURL(f));
+        setPreviews(urls);
+        return () => urls.forEach(url => URL.revokeObjectURL(url));
+    }, [referenceImages]);
 
     if (!isOpen) return null;
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files ?? []);
+        setReferenceImages(prev => [...prev, ...files].slice(0, 3));
+        e.target.value = '';
+    };
+
+    const removeImage = (idx: number) => {
+        setReferenceImages(prev => prev.filter((_, i) => i !== idx));
+    };
 
     const handleGenerate = async () => {
         if (!prompt.trim()) return;
         setLoading(true);
-        await onGenerate(prompt.trim(), ratio);
+        await onGenerate(prompt.trim(), ratio, referenceImages);
         setLoading(false);
     };
 
@@ -69,6 +95,43 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                     rows={6}
                     className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                 />
+
+                {/* Reference images */}
+                <div className="flex items-center gap-3">
+                    {previews.map((src, idx) => (
+                        <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-base-content/10 shrink-0">
+                            <img src={src} className="w-full h-full object-cover" />
+                            <button
+                                onClick={() => removeImage(idx)}
+                                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center cursor-pointer hover:bg-error transition-colors"
+                            >
+                                <X size={11} className="text-white" />
+                            </button>
+                        </div>
+                    ))}
+                    {referenceImages.length < 3 && (
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-16 h-16 rounded-xl border border-dashed border-base-content/20 flex flex-col items-center justify-center gap-1 text-base-content/30 hover:border-primary/50 hover:text-primary transition-all cursor-pointer shrink-0"
+                        >
+                            <ImagePlus size={20} strokeWidth={1.5} />
+                            <span className="text-[9px] uppercase tracking-widest">Ref</span>
+                        </button>
+                    )}
+                    {referenceImages.length === 0 && (
+                        <span className="text-[11px] text-base-content/25 uppercase tracking-[0.15em]">
+                            Optional reference images (up to 3)
+                        </span>
+                    )}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
+                </div>
 
                 <div className="flex gap-3">
                     {RATIOS.map(r => (

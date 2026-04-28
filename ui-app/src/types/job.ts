@@ -109,4 +109,5 @@ export type PhotoJobRequest = {
   avatarId: string;
   ratio: string;
   prompt: string;
+  referenceImagePaths?: string[];
 }

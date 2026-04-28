@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
 import { getAvatarBySlug, genAvatarPhoto, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
-import { getMediaUrlFromPath } from '../services/storage';
+import { getMediaUrlFromPath, uploadMediaToBucket, deleteMediaFromBucket } from '../services/storage';
 import type { Avatar } from '../types/avatar';
 import PhotoCard from '../components/PhotoCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
@@ -12,7 +12,7 @@ import { type InferenceJob, type Job, type PhotoJobRequest, JobStatuses, JobTarg
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
 import { useApp } from '../providers/ContextProvider';
-import { scrollToTop, scrollToBottom } from '../utils/scroller';
+import { scrollToTop } from '../utils/scroller';
 
 function AvatarPage() {
     const { user } = useApp();
@@ -82,16 +82,31 @@ function AvatarPage() {
         scrollToTop();
     };
 
-    const handleGenerateImage = async (prompt: string, ratio: string) => {
-        const jobRequest = {
+    const handleGenerateImage = async (prompt: string, ratio: string, imageFiles: File[]) => {
+        const uploadedPaths: string[] = [];
+
+        for (const file of imageFiles) {
+            const ext = file.name.split('.').pop() ?? 'jpg';
+            const path = `media/${user?.id}-user/uploads/${crypto.randomUUID()}.${ext}`;
+            const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            const storedPath = await uploadMediaToBucket(path, base64);
+            uploadedPaths.push(storedPath);
+        }
+
+        const jobRequest: PhotoJobRequest = {
             prompt,
+            referenceImagePaths: uploadedPaths,
             ratio,
-            avatarId: avatar.id,
-        } as PhotoJobRequest;
+            avatarId: avatar.id!,
+        };
 
         const job = await genAvatarPhoto(jobRequest);
         pushJob(job);
-
         closeGenerateImage();
     };
 
