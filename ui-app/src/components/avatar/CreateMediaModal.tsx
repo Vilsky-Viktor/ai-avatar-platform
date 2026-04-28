@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Image, Video, X } from 'lucide-react';
+import { Image, Video, X, Images } from 'lucide-react';
 
 const TILE = 44;
-const COLS = 13;
+const COLS = 18;
 const ROWS = 10;
 const W = COLS * TILE;
 const H = ROWS * TILE;
@@ -15,9 +15,10 @@ type Props = {
     onClose: () => void;
     onImage?: () => void;
     onVideo?: () => void;
+    onPhotoSet?: () => void;
 };
 
-function CreateMediaModal({ isOpen, onClose, onImage, onVideo }: Props) {
+function CreateMediaModal({ isOpen, onClose, onImage, onVideo, onPhotoSet }: Props) {
     const [modalState, setModalState] = useState<ModalState>('idle');
     const [tilesGathering, setTilesGathering] = useState(false);
     const [tiles, setTiles] = useState<Tile[]>([]);
@@ -135,7 +136,14 @@ function CreateMediaModal({ isOpen, onClose, onImage, onVideo }: Props) {
                             className="group flex flex-col items-center gap-5 px-16 py-12 rounded-2xl border border-base-content/10 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer"
                         >
                             <Image size={56} strokeWidth={1} className="text-base-content/30 group-hover:text-primary transition-colors duration-300" />
-                            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/40 group-hover:text-base-content transition-colors">Image</span>
+                            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/40 group-hover:text-base-content transition-colors">Photo</span>
+                        </button>
+                        <button
+                            onClick={onPhotoSet}
+                            className="group flex flex-col items-center gap-5 px-16 py-12 rounded-2xl border border-base-content/10 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer"
+                        >
+                            <Images size={56} strokeWidth={1} className="text-base-content/30 group-hover:text-primary transition-colors duration-300" />
+                            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/40 group-hover:text-base-content transition-colors">Photo set</span>
                         </button>
                         <button
                             onClick={onVideo}

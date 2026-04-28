@@ -38,7 +38,6 @@ services:
       - USER_URL=http://user:3100
       - AVATAR_URL=http://avatar:3200
       - JOB_MANAGER_URL=http://job-manager:3300
-      - MEDIA_URL=http://media:3400
       - VOICE_URL=http://voice:3600
 
   user:
@@ -82,7 +81,6 @@ services:
       - USERS_COLLECTION_NAME=users
       - AVATARS_COLLECTION_NAME=avatars
       - JOB_MANAGER_URL=http://job-manager:3300
-      - MEDIA_URL=http://media:3400
 
   job-manager:
     <<: *default-dns
@@ -124,31 +122,7 @@ services:
       - PROJECT_ID=loom24-mvp
       - AVATAR_URL=http://avatar:3200
       - JOB_MANAGER_URL=http://job-manager:3300
-      - MEDIA_URL=http://media:3400
       - SUBSCRIPTION_ID=ai-model-result-sub
-
-  media:
-    <<: *default-dns
-    networks:
-      - app-net
-    build:
-      context: ./media
-    ports:
-      - "3400:3400"
-    volumes:
-      - ./media:/app
-      - /app/node_modules
-      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
-    environment:
-      - PORT=3400
-      - NODE_ENV=development
-      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
-      - PROJECT_ID=loom24-mvp
-      - DB_NAME=ai-avatar-db
-      - BUCKET_NAME=loom24-mvp.firebasestorage.app
-      - MEDIA_COLLECTION_NAME=media
-      - AVATAR_URL=http://avatar:3200
-      - JOB_MANAGER_URL=http://job-manager:3300
 
   runpod:
     <<: *default-dns
@@ -191,7 +165,6 @@ services:
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
-      - MEDIA_COLLECTION_NAME=voices
 
   llm-request:
     <<: *default-dns

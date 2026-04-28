@@ -45,6 +45,16 @@ export const getByGroupId = async (userId: string, groupId: string): Promise<Job
     return snapshot.docs.map(doc => doc.data() as Job);
 }
 
+export const getByAvatarId = async (userId: string, avatarId: string): Promise<Job[]> => {
+    const snapshot = await db.collection(JOBS_COLLECTION_NAME)
+        .where("userId", "==", userId)
+        .where("avatarId", "==", avatarId)
+        .orderBy("order", "asc")
+        .get();
+
+    return snapshot.docs.map(doc => doc.data() as Job);
+}
+
 export const create = async (userId: string, job: Omit<Job, 'id'>): Promise<Job> => {
     const [dbJob] = await createMany(userId, [job]);
     return dbJob;

@@ -8,6 +8,10 @@ router.get(
     '/get/group/:groupId',
     createProxyHandler('get', (req) => `${BASE}/get/group/${req.params.groupId}`, 'Get by group ID')
 )
+router.get(
+    '/get/avatar/:avatarId',
+    createProxyHandler('get', (req) => `${BASE}/get/avatar/${req.params.avatarId}`, 'Get by avatar ID')
+)
 router.post(
     '/gen-training-photo-set',
     createProxyHandler('post', () => `${BASE}/gen-training-photo-set`, 'Create training photo set')
@@ -35,6 +39,10 @@ router.post(
 router.post(
     '/train-loras/',
     createProxyHandler('post', () => `${BASE}/train-loras`, 'Train LORAs')
+);
+router.delete(
+    '/delete-by-id/:id',
+    createProxyHandler('post', (req) => `${BASE}/delete-by-id/${req.params.id}`, 'Delete job')
 );
 
 export default router;

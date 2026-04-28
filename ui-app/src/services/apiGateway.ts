@@ -4,7 +4,6 @@ import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
 import type { Avatar, AvatarGender, AvatarLoras } from '../types/avatar';
 import type { Job, TrainingJobRequest, PhotoJobRequest, InferenceJob } from '../types/job';
-import type { Media } from '../types/media';
 import type { Voice } from '../types/voice';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
@@ -163,7 +162,18 @@ export const getJobsByGroupId  = async (groupId: string): Promise<InferenceJob[]
 
     return res.data as InferenceJob[];
   } catch (error) {
-    console.error("Error fetching job:", error);
+    console.error("Error fetching jobs:", error);
+    throw error;
+  }
+}
+
+export const getJobsByAvatarId  = async (avatarId: string): Promise<InferenceJob[]> => {
+  try {
+    const res = await apiClient.get(`/jobs/get/avatar/${avatarId}`, {});
+
+    return res.data as InferenceJob[];
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
     throw error;
   }
 }
@@ -179,33 +189,13 @@ export const restartJobById = async (jobId: string): Promise<Job> => {
   }
 }
 
-export const getMediaByAvatarId = async (avatarId: string): Promise<Media[]> => {
+export const deleteJobById = async (jobId: string): Promise<Job> => {
   try {
-    const res = await apiClient.get(`/media/get/avatar/${avatarId}`);
-    return res.data as Media[];
-  } catch (error) {
-    console.error("Error fetching media:", error);
-    throw error;
-  }
-}
+    const res = await apiClient.post(`/jobs/delete-by-id/${jobId}`, {});
 
-export const createMedia = async (media: Media): Promise<Media> => {
-  try {
-    const res = await apiClient.post('/media/create', media);
-
-    return res.data as Media;
+    return res.data as Job;
   } catch (error) {
-    console.error("Error creating media:", error);
-    throw error;
-  }
-}
-
-export const createTrainingMedia = async (groupId: string): Promise<Media[]> => {
-  try {
-    const res = await apiClient.post(`/media/create-training/${groupId}`);
-    return res.data as Media[];
-  } catch (error) {
-    console.error("Error creating training media:", error);
+    console.error("Error deleting job:", error);
     throw error;
   }
 }

@@ -19,6 +19,7 @@ import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../
 import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
+  getByAvatarId as getByAvatarIdDb,
   create as createDb,
   createMany as createManyDb,
   update as updateDb,
@@ -48,6 +49,21 @@ export const getByGroupId = async (req: Request, res: Response, next: NextFuncti
     return res.status(201).json(jobs);
   } catch (error) {
     req.log.info(`Failed to get jobs by group ID ${groupId} for ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+export const getByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const avatarId = req.params.avatarId as string;
+
+  req.log.info(`Get jobs by avatar ID ${avatarId} for user ${userId}`);
+
+  try {
+    const jobs = await getByAvatarIdDb(userId, avatarId);
+    return res.status(201).json(jobs);
+  } catch (error) {
+    req.log.info(`Failed to get jobs by avatar ID ${avatarId} for ${userId}: ${error}`);
     next(error);
   }
 }
@@ -322,17 +338,21 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       mediaType: MediaTypes.image,
       target: JobTargets.avatarMedia,
       status: JobStatuses.pending,
-      maxRuns: 1,
+      maxRuns: 5,
       input: {
         checkDependencies: false,
         inference: {
           prompt: `${AVATAR_REFERENCE_NAME} ${jobRequest.prompt}`,
-          numSteps: 50,
-          guidanceScale: 4.0,
+          numSteps: 8,
+          guidanceScale: 1.0,
           width,
           height,
         },
-        loras: [{ path: loraPath, scale: 1.0 }],
+        faceRecognition: { enabled: true, mediaPaths: [avatar.mainImagePath!], threshold: { min: 0.95 }},
+        loras: [
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
+          { path: loraPath, scale: 1.0 }
+        ],
       },
       metadata: {
         queueTopic: GEN_QWEN_EDIT_2511_TOPIC,

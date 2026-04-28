@@ -1,27 +1,26 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
-import { getAvatarBySlug, getMediaByAvatarId, genAvatarPhoto } from '../services/apiGateway';
+import { getAvatarBySlug, genAvatarPhoto, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath } from '../services/storage';
 import type { Avatar } from '../types/avatar';
-import type { Media } from '../types/media';
 import PhotoCard from '../components/PhotoCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
 import CreateMediaCard from '../components/avatar/CreateMediaCard';
 import CreateMediaModal from '../components/avatar/CreateMediaModal';
 import GenerateImageModal from '../components/avatar/GenerateImageModal';
-import { type InferenceJob, type PhotoJobRequest, JobStatuses } from '../types/job';
+import { type InferenceJob, type Job, type PhotoJobRequest, JobStatuses, JobTargets, MediaType } from '../types/job';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
 import { useApp } from '../providers/ContextProvider';
+import { scrollToTop, scrollToBottom } from '../utils/scroller';
 
 function AvatarPage() {
     const { user } = useApp();
     const { slug } = useParams<{ slug: string }>();
 
     const [avatar, setAvatar] = useState({} as Avatar);
-    const [media, setMedia] = useState([] as Media[]);
 
-    const [jobs, setJobs] = useState([] as InferenceJob[]);
+    const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
     const jobsRef = useRef<(InferenceJob | null)[]>([]);
 
     const [numModels, setNumModels] = useState(0);
@@ -70,10 +69,6 @@ function AvatarPage() {
             const oldJob = currentJobs[jobIndex];
 
             if (oldJob && oldJob?.status !== job.status) {
-                if (job.status === JobStatuses.completed) {
-                    await fetchMedia(job.avatarId);
-                }
-
                 console.log(`job updated ${job.id} - "${oldJob.status}" status to status "${job.status}"`)
                 setJob(jobIndex, job);
             }
@@ -82,7 +77,9 @@ function AvatarPage() {
 
     const initPage = async () => {
         const fetchedAvatar = await fetchAvatar();
-        await fetchMedia(fetchedAvatar.id!);
+        await fetchJobs(fetchedAvatar.id!);
+        setPageLoading(false);
+        scrollToTop();
     };
 
     const handleGenerateImage = async (prompt: string, ratio: string) => {
@@ -105,23 +102,38 @@ function AvatarPage() {
         return fetchedAvatar
     }
 
-    const fetchMedia = async (avatarId: string) => {
-        const fetchedMedia = await getMediaByAvatarId(avatarId);
-        const enrichedMedia = await Promise.all(
-            fetchedMedia.map(async (item) => ({ ...item, url: await getMediaUrlFromPath(item.path).catch(() => undefined) }))
-        );
-        setMedia(enrichedMedia);
-        setNumImages(fetchedMedia.reduce((c: number, m: Media) => m.type === 'image' ? c + 1 : c, 0));
-        setNumVideos(fetchedMedia.reduce((c: number, m: Media) => m.type === 'video' ? c + 1 : c, 0));
-        setPageLoading(false);
+    const fetchJobs = async (avatarId: string) => {
+        const jobs = await getJobsByAvatarId(avatarId);
+        const filteredJobs = jobs.filter((job: InferenceJob) => [JobTargets.avatarMedia, JobTargets.trainingPhotoSet].includes(job.target));
+        setJobs(filteredJobs);
+
+        setNumImages(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.image ? acc + 1 : acc, 0));
+        setNumVideos(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.video ? acc + 1 : acc, 0));
     }
 
-    const pushJob = (job: InferenceJob) => {
-        setJobs((prev: InferenceJob[]) => [...prev, job]);
+    const restartJob = async (jobId: string) => {
+        const listIdx = jobs.findIndex(j => j?.id === jobId);
+        if (listIdx === -1) return;
+
+        setJob(listIdx, null);
+
+        const restartedJob = await restartJobById(jobId);
+        setJob(listIdx, restartedJob as InferenceJob);
+    }
+
+    const deleteJob = async (jobId: string) => {
+        await deleteJobById(jobId);
+
+        const updatedJobs = jobs.filter((job: Job | null) => job?.id !== jobId);
+        setJobs(updatedJobs);
+    }
+
+    const pushJob = (job: InferenceJob | null) => {
+        setJobs((prev: (InferenceJob | null)[]) => [...prev, job]);
     };
 
-    const setJob = (listIdx: number, job: InferenceJob) => {
-        setJobs((prev: InferenceJob[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
+    const setJob = (listIdx: number, job: InferenceJob | null) => {
+        setJobs((prev: (InferenceJob | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
     return (
@@ -154,11 +166,17 @@ function AvatarPage() {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <CreateMediaCard onClick={openCreateMedia} />
-                            {jobs.filter((j) => j.status !== JobStatuses.completed).map((j, idx) => (
-                                <PhotoCard key={idx} job={j} idx={idx} onPhotoClick={(src, rect) => setFullscreen({ src, rect })} />
-                            ))}
-                            {media.map((m, idx) => (
-                                <PhotoCard key={idx} media={m} idx={idx} onPhotoClick={(src, rect) => setFullscreen({ src, rect })} />
+                            {jobs.map((job, idx) => (
+                                <PhotoCard 
+                                    key={idx} 
+                                    job={job} 
+                                    idx={idx} 
+                                    onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
+                                    onRegenerate={restartJob}
+                                    onDelete={deleteJob}
+                                    canDelete={job?.target === JobTargets.avatarMedia}
+                                    canRestart={job?.target === JobTargets.avatarMedia}
+                                />
                             ))}
                         </div>
                     </div>

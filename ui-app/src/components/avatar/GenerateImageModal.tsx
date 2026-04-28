@@ -39,7 +39,7 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
             <div className="absolute inset-0 bg-transparent" onClick={onClose} />
             <div
-                className="relative bg-base-100 rounded-3xl flex flex-col gap-7 p-10 w-[600px]"
+                className="relative bg-base-100 rounded-3xl flex flex-col gap-7 p-10 w-[720px]"
                 style={{ animation: 'panel-reveal 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards' }}
             >
                 {/* Border sweep */}

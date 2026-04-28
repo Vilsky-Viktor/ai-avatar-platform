@@ -5,7 +5,6 @@ import express from 'express';
 import userRoutes from './routes/users';
 import avatarRoutes from './routes/avatars';
 import jobRoutes from './routes/jobs';
-import mediaRoutes from './routes/media';
 import voiceRoutes from './routes/voices';
 import { errorHandler } from './middlewares/errorHandler';
 import { validateAuth } from './middlewares/auth';
@@ -28,7 +27,6 @@ app.use(express.json());
 app.use('/users', validateAuth, userRoutes);
 app.use('/avatars', validateAuth, avatarRoutes);
 app.use('/jobs', validateAuth, jobRoutes);
-app.use('/media', validateAuth, mediaRoutes);
 app.use('/voices', validateAuth, voiceRoutes);
 
 app.use(errorHandler);

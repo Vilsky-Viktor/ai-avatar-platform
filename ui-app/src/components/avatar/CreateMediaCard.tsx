@@ -20,8 +20,8 @@ const CreateMediaCard = ({ onClick }: Props) => {
                     </div>
                 </div>
                 <div className="space-y-0.5 text-center">
-                    <span className="block text-xs font-semibold uppercase tracking-[0.25em] text-base-content/40 group-hover:text-base-content transition-colors">Create Media</span>
-                    <span className="block text-[9px] font-medium uppercase tracking-[0.15em] text-base-content/20 group-hover:text-primary/70 transition-colors">Generate new content</span>
+                    <span className="block text-sm font-semibold uppercase tracking-[0.25em] text-base-content/40 group-hover:text-base-content transition-colors">Create Media</span>
+                    <span className="block text-[11px] font-medium uppercase tracking-[0.15em] text-base-content/20 group-hover:text-primary/70 transition-colors">Generate new content</span>
                 </div>
             </div>
             <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />

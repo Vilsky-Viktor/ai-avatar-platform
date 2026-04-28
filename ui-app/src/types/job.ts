@@ -1,7 +1,10 @@
 import type { FirestoreTimestamp } from "./firestore";
 import type { AvatarParameters, AvatarTypes } from "./avatar";
-import type { MediaType } from "./media";
-export type { MediaType };
+
+export enum MediaType {
+  image = 'image',
+  video = 'video'
+}
 
 export enum JobTargets {
   trainingPhotoSet = 'trainingPhotoSet',

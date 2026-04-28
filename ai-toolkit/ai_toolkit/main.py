@@ -115,6 +115,7 @@ def make_process_job(semaphore: threading.Semaphore):
                 logger.info(f"Uploading LoRA to gs://{dest} ...")
                 try:
                     storage.upload_lora(out_dir, dest)
+                    logger.info(f"LoRA uploaded successfully → gs://{dest}")
                 except Exception as e:
                     logger.error(f"Upload failed: {e}", exc_info=True)
                     _publish_error(job, str(e))

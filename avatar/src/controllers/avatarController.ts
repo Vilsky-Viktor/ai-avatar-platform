@@ -9,7 +9,7 @@ import {
   getBySlug as getBySlugDb,
 } from '../repositories/avatar';
 import { deleteJobsByAvatarId, deleteJobsByUserId } from '../services/jobService';
-import { deleteMediaByAvatarId } from '../services/mediaService';
+import { removeAvatarMediaFolder } from '../services/storage';
 
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -100,7 +100,7 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
   try {
     await Promise.all([
       deleteJobsByAvatarId(userId, id),
-      deleteMediaByAvatarId(userId, id)
+      removeAvatarMediaFolder(userId, id)
     ]);
 
     await deleteByAvatarIdDb(userId, id);
