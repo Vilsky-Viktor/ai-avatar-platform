@@ -1,4 +1,4 @@
-import { MoreVertical, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { type Avatar } from '../../types/avatar';
 import { useApp } from '../../providers/ContextProvider';
 import { ThemeColor } from '../../types/settings';
@@ -40,44 +40,12 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
   return (
     <div className="group card bg-base-100 w-full h-[450px] shadow-md transition-all duration-300 relative rounded-2xl overflow-hidden active:scale-[0.99] hover:bg-base-200 cursor-pointer">
       
-      {/* 3-DOT MENU - Absolute positioned top right */}
-      <div className="absolute top-5 right-5 z-[60]">
-        <div className="dropdown dropdown-end group/menu"> 
-          <label 
-            tabIndex={0} 
-            className="
-                btn btn-circle btn-ghost btn-sm 
-                bg-base-100/20 backdrop-blur-md border border-white/10 
-                hover:bg-base-100/60 hover:border-white/20
-                text-base-content transition-all duration-300
-                group-hover/menu:rotate-90 group-hover/menu:scale-110
-            "
-          >
-            <MoreVertical size={18} className="transition-transform duration-500" />
-          </label>
-          
-          <ul tabIndex={0} className="
-            dropdown-content z-[100] menu p-2 shadow-2xl 
-            bg-base-100/95 backdrop-blur-xl rounded-xl w-52 
-            border border-base-content/5 mt-2
-            animate-in fade-in zoom-in-95 duration-200 origin-top-right
-          ">
-            {/* DELETE ITEM */}
-            <li className="animate-in slide-in-from-top-2 duration-300 delay-150">
-                <button 
-                    onClick={(e) => {
-                        e.stopPropagation(); 
-                        onDelete?.(avatar.id!);
-                    }}
-                    className="flex items-center justify-between text-error hover:bg-error/10 transition-colors py-3 group/del"
-                >
-                    <span className="text-xs font-semibold tracking-[0.1em]">Delete Avatar</span>
-                    <Trash2 size={14} className="opacity-40 group-hover/del:opacity-100 transition-opacity" />
-                </button>
-            </li>
-          </ul>
-        </div>
-      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete?.(avatar.id!); }}
+        className="absolute top-4 right-4 z-[60] w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+      >
+        <Trash2 size={15} className="text-white" />
+      </button>
 
       {/* Main Card Interaction Area */}
       <button

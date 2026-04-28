@@ -10,12 +10,12 @@
       ]
     },
     {
-      "collectionGroup": "media",
+      "collectionGroup": "jobs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "avatarId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "order", "order": "ASCENDING" }
       ]
     }
   ],

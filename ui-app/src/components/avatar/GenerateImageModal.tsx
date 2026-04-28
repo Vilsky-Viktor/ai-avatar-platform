@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Sparkles, ImagePlus } from 'lucide-react';
+import { X, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import type { Avatar } from '../../types/avatar';
 
 type Ratio = '9:16' | '3:4' | '1:1' | '4:3' | '16:9';
@@ -12,6 +12,8 @@ const RATIOS: { value: Ratio; w: number; h: number }[] = [
     { value: '16:9', w: 32, h: 18 },
 ];
 
+const EMPTY_SLOTS: [null, null, null] = [null, null, null];
+
 type Props = {
     isOpen: boolean;
     onClose: () => void;
@@ -23,41 +25,48 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
     const [ratio, setRatio] = useState<Ratio>('9:16');
     const [loading, setLoading] = useState(false);
-    const [referenceImages, setReferenceImages] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<string[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [slots, setSlots] = useState<(File | null)[]>([...EMPTY_SLOTS]);
+    const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
+    const fileInputRefs = [
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+        useRef<HTMLInputElement>(null),
+    ];
 
     useEffect(() => {
         if (!isOpen) {
             setPrompt('');
-            setReferenceImages([]);
-            setPreviews([]);
+            setSlots([...EMPTY_SLOTS]);
+            setPreviews([null, null, null]);
         }
     }, [isOpen]);
 
     useEffect(() => {
-        previews.forEach(url => URL.revokeObjectURL(url));
-        const urls = referenceImages.map(f => URL.createObjectURL(f));
+        previews.forEach(url => url && URL.revokeObjectURL(url));
+        const urls = slots.map(f => f ? URL.createObjectURL(f) : null);
         setPreviews(urls);
-        return () => urls.forEach(url => URL.revokeObjectURL(url));
-    }, [referenceImages]);
+        return () => urls.forEach(url => url && URL.revokeObjectURL(url));
+    }, [slots]);
 
     if (!isOpen) return null;
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files ?? []);
-        setReferenceImages(prev => [...prev, ...files].slice(0, 3));
+    const handleFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setSlots(prev => prev.map((s, i) => i === idx ? file : s));
         e.target.value = '';
     };
 
-    const removeImage = (idx: number) => {
-        setReferenceImages(prev => prev.filter((_, i) => i !== idx));
+    const removeSlot = (idx: number) => {
+        setSlots(prev => prev.map((s, i) => i === idx ? null : s));
     };
 
+    const canGenerate = () => prompt.trim().length >= 5 && !loading;
+
     const handleGenerate = async () => {
-        if (!prompt.trim()) return;
+        if (!canGenerate()) return;
         setLoading(true);
-        await onGenerate(prompt.trim(), ratio, referenceImages);
+        await onGenerate(prompt.trim(), ratio, slots.filter((f): f is File => f !== null));
         setLoading(false);
     };
 
@@ -65,7 +74,7 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
             <div className="absolute inset-0 bg-transparent" onClick={onClose} />
             <div
-                className="relative bg-base-100 rounded-3xl flex flex-col gap-7 p-10 w-[720px]"
+                className="relative bg-base-100 rounded-3xl flex flex-col gap-7 p-10 w-[580px]"
                 style={{ animation: 'panel-reveal 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards' }}
             >
                 {/* Border sweep */}
@@ -98,39 +107,36 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
 
                 {/* Reference images */}
                 <div className="flex items-center gap-3">
-                    {previews.map((src, idx) => (
-                        <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-base-content/10 shrink-0">
-                            <img src={src} className="w-full h-full object-cover" />
-                            <button
-                                onClick={() => removeImage(idx)}
-                                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center cursor-pointer hover:bg-error transition-colors"
-                            >
-                                <X size={11} className="text-white" />
-                            </button>
+                    {slots.map((_slot, idx) => (
+                        <div key={idx} className="group relative w-40 h-40 rounded-xl overflow-hidden border border-base-content/10 shrink-0">
+                            {previews[idx] ? (
+                                <>
+                                    <img src={previews[idx]!} className="w-full h-full object-cover" />
+                                    <button
+                                        onClick={() => removeSlot(idx)}
+                                        className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                                    >
+                                        <Trash2 size={15} className="text-white" />
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => fileInputRefs[idx].current?.click()}
+                                    className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
+                                >
+                                    <ImagePlus size={28} strokeWidth={1.5} />
+                                    <span className="text-[11px] uppercase tracking-widest">Reference</span>
+                                </button>
+                            )}
+                            <input
+                                ref={fileInputRefs[idx]}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => handleFileChange(idx, e)}
+                            />
                         </div>
                     ))}
-                    {referenceImages.length < 3 && (
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-16 h-16 rounded-xl border border-dashed border-base-content/20 flex flex-col items-center justify-center gap-1 text-base-content/30 hover:border-primary/50 hover:text-primary transition-all cursor-pointer shrink-0"
-                        >
-                            <ImagePlus size={20} strokeWidth={1.5} />
-                            <span className="text-[9px] uppercase tracking-widest">Ref</span>
-                        </button>
-                    )}
-                    {referenceImages.length === 0 && (
-                        <span className="text-[11px] text-base-content/25 uppercase tracking-[0.15em]">
-                            Optional reference images (up to 3)
-                        </span>
-                    )}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleFileChange}
-                    />
                 </div>
 
                 <div className="flex gap-3">
@@ -156,7 +162,7 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                 <div className="flex justify-end">
                     <button
                         onClick={handleGenerate}
-                        disabled={!prompt.trim() && loading}
+                        disabled={!canGenerate()}
                         className="group flex items-center gap-3 px-7 py-3 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <Sparkles size={16} className="group-hover:animate-pulse" />

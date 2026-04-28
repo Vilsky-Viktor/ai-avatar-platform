@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
 import { getAvatarBySlug, genAvatarPhoto, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
-import { getMediaUrlFromPath, uploadMediaToBucket, deleteMediaFromBucket } from '../services/storage';
+import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '../types/avatar';
 import PhotoCard from '../components/PhotoCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
@@ -120,6 +120,13 @@ function AvatarPage() {
     const fetchJobs = async (avatarId: string) => {
         const jobs = await getJobsByAvatarId(avatarId);
         const filteredJobs = jobs.filter((job: InferenceJob) => [JobTargets.avatarMedia, JobTargets.trainingPhotoSet].includes(job.target));
+
+        await Promise.all(filteredJobs.map(async (job: InferenceJob) => {
+            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
+                job.result.mediaUrl = await getMediaUrlFromPath(job.result.mediaPath);
+            }
+        }));
+
         setJobs(filteredJobs);
 
         setNumImages(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.image ? acc + 1 : acc, 0));
