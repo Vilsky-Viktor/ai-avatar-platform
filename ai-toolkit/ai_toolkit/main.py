@@ -94,13 +94,18 @@ def make_process_job(semaphore: threading.Semaphore):
             job.status = "generating"
             mq.publish_status(job.model_dump())
 
-            dest = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/loras/{job.result.fileName}"
+            process_cfg = training_cfg.toolkit["config"]["process"][0]
+            lr = process_cfg["train"]["lr"]
+            lora_rank = process_cfg["network"]["linear"]
+            resolution = process_cfg["datasets"][0]["resolution"][0]
+            arch = process_cfg["model"]["arch"]
+            folder_name = f"{arch}-{lr}-{lora_rank}-{resolution}"
+            dest_prefix = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/loras/{folder_name}"
             out_dir = storage.make_lora_output_dir(job.id)
             dataset_dir = storage.make_dataset_dir(job.id)
 
             with semaphore:
                 try:
-                    resolution = training_cfg.toolkit["config"]["process"][0]["datasets"][0]["resolution"][0]
                     images_dir, control_dir = storage.write_dataset(images, aligned_prompts, dataset_dir, resolution)
                     training.run_training(training_cfg.toolkit, job.id, out_dir, images_dir, control_dir, training_cfg.modelName)
                 except Exception as e:
@@ -112,10 +117,10 @@ def make_process_job(semaphore: threading.Semaphore):
                 finally:
                     storage.cleanup_dataset_dir(job.id)
 
-                logger.info(f"Uploading LoRA to gs://{dest} ...")
+                logger.info(f"Uploading LoRA checkpoints to gs://{dest_prefix}/ ...")
                 try:
-                    storage.upload_lora(out_dir, dest)
-                    logger.info(f"LoRA uploaded successfully → gs://{dest}")
+                    n = storage.upload_lora_checkpoints(out_dir, dest_prefix)
+                    logger.info(f"{n} checkpoint(s) uploaded → gs://{dest_prefix}/")
                 except Exception as e:
                     logger.error(f"Upload failed: {e}", exc_info=True)
                     _publish_error(job, str(e))
@@ -124,9 +129,9 @@ def make_process_job(semaphore: threading.Semaphore):
                     storage.cleanup_lora_output_dir(job.id)
 
             job.status = "completed"
-            job.result.mediaPath = dest
+            job.result.mediaPath = dest_prefix
             mq.publish_status(job.model_dump())
-            logger.info(f"Job completed — LoRA at {dest}")
+            logger.info(f"Job completed — LoRA checkpoints at {dest_prefix}")
 
         except Exception as e:
             logger.error(f"Unexpected error processing job: {e}", exc_info=True)

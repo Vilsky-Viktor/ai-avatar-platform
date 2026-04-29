@@ -331,7 +331,12 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
 
   try {
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
+
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
+    const idPhotos = idPhotoJobs
+      .filter(job => [1,2,3,4,5,6].includes(job.order!))
+      .map((job: InferenceJob) => job.result?.mediaPath!);
+
     const loraPath = avatar.loras.qwenEdit2511Path;
 
     const job: InferenceJob = {
@@ -353,7 +358,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
         },
         faceRecognition: { 
           enabled: true, 
-          mediaPaths: idPhotoJobs.map((job: InferenceJob) => job.result?.mediaPath!), 
+          mediaPaths: idPhotos, 
           threshold: { min: 0.95 }
         },
         loras: [

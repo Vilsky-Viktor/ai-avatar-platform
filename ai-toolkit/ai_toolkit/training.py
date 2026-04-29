@@ -2,7 +2,7 @@ import copy
 import os
 import sys
 from pathlib import Path
-
+from toolkit.job import run_job
 from ai_toolkit.logger import logger
 
 AI_TOOLKIT_PATH = os.environ.get("AI_TOOLKIT_PATH", "/opt/ai-toolkit")
@@ -28,7 +28,6 @@ def run_training(toolkit_config: dict, job_id: str, out_dir: Path, images_dir: P
     if AI_TOOLKIT_PATH not in sys.path:
         sys.path.insert(0, AI_TOOLKIT_PATH)
 
-    from toolkit.job import run_job
     logger.info(f"Starting AI toolkit training (output: {out_dir})")
     run_job(config)
     logger.info("AI toolkit training completed")
