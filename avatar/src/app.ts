@@ -8,7 +8,8 @@ import logger from './logger';
 
 admin.initializeApp({
     projectId: process.env.PROJECT_ID,
-    credential: admin.credential.applicationDefault()
+    credential: admin.credential.applicationDefault(),
+    storageBucket: process.env.BUCKET_NAME
 });
 
 import avatarRoutes from './routes/avatars';

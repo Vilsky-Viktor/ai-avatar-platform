@@ -3,7 +3,6 @@ import logger from './logger';
 import { updateJob } from './services/jobManagerService'
 import { Job, JobStatuses, JobTargets } from './types/job';
 import { updateAvatar } from './services/avatarService';
-import { createMediaFromJob } from './services/mediaService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'ai-model-result-sub';
@@ -21,10 +20,6 @@ function listenForResults() {
       job = JSON.parse(message.data.toString()) as Job;
 
       logger.info({ jobId: job.id, status: job.status, msgId: message.id }, 'Received message');
-
-      if (job.target === JobTargets.avatarMedia && job.status === JobStatuses.completed) {
-        await createMediaFromJob(job.userId, job);
-      }
 
       await updateJob(job);
 

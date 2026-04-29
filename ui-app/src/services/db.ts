@@ -1,5 +1,6 @@
 import { doc, collection, query, where, onSnapshot, DocumentSnapshot, QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { db } from "../firebase";
+import { JobStatuses, JobTargets } from '../types/job';
 
 export const listenToDocChanges = (
     collectionId: string, 
@@ -44,7 +45,8 @@ export const listenToCollectionByAvatarId = (
     const q = query(
         collection(db, collectionId),
         where("avatarId", "==", avatarId),
-        where("userId", "==", userId)
+        where("userId", "==", userId),
+        where("target", "==", JobTargets.avatarMedia)
     );
 
     let unsubscribe = onSnapshot(q, callback, (error) => {

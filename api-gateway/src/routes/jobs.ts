@@ -42,7 +42,7 @@ router.post(
 );
 router.delete(
     '/delete-by-id/:id',
-    createProxyHandler('post', (req) => `${BASE}/delete-by-id/${req.params.id}`, 'Delete job')
+    createProxyHandler('delete', (req) => `${BASE}/delete-by-id/${req.params.id}`, 'Delete job')
 );
 
 export default router;

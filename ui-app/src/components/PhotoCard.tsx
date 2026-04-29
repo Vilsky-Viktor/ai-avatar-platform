@@ -165,7 +165,7 @@ function PhotoCard({
 
                 {canRestart && onRegenerate && (
                     <button
-                        className="absolute top-1 right-10 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-primary transition-all cursor-pointer"
+                        className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-primary transition-all cursor-pointer"
                         onClick={(e) => { e.stopPropagation(); jobId && onRegenerate(jobId); }}
                     >
                         <RefreshCcw size={18} className="text-white spin-once-on-hover" />
@@ -173,7 +173,7 @@ function PhotoCard({
                 )}
                 {canDelete && onDelete && (
                     <button
-                        className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                        className="absolute top-1 right-10 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
                         onClick={(e) => { e.stopPropagation(); jobId && onDelete(jobId); }}
                     >
                         <Trash2 size={15} className="text-white" />

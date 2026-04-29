@@ -191,7 +191,7 @@ export const restartJobById = async (jobId: string): Promise<Job> => {
 
 export const deleteJobById = async (jobId: string): Promise<Job> => {
   try {
-    const res = await apiClient.post(`/jobs/delete-by-id/${jobId}`, {});
+    const res = await apiClient.delete(`/jobs/delete-by-id/${jobId}`, {});
 
     return res.data as Job;
   } catch (error) {

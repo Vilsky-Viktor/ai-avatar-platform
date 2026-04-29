@@ -42,9 +42,7 @@ function AvatarPage() {
     useEffect(() => {
         if (!jobs.length) return;
 
-        const avatarId = jobs[0]?.avatarId!;
-
-        const unsubscribe = listenToCollectionByAvatarId('jobs', user?.id!, avatarId, async (querySnap: QuerySnapshot) => {
+        const unsubscribe = listenToCollectionByAvatarId('jobs', user?.id!, avatar.id!, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
         })
 
@@ -129,12 +127,12 @@ function AvatarPage() {
 
         setJobs(filteredJobs);
 
-        setNumImages(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.image ? acc + 1 : acc, 0));
-        setNumVideos(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.video ? acc + 1 : acc, 0));
+        setNumImages(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
+        setNumVideos(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
     }
 
     const restartJob = async (jobId: string) => {
-        const listIdx = jobs.findIndex(j => j?.id === jobId);
+        const listIdx = jobs.findIndex(job => job?.id === jobId);
         if (listIdx === -1) return;
 
         setJob(listIdx, null);
@@ -151,7 +149,7 @@ function AvatarPage() {
     }
 
     const pushJob = (job: InferenceJob | null) => {
-        setJobs((prev: (InferenceJob | null)[]) => [...prev, job]);
+        setJobs((prev: (InferenceJob | null)[]) => [job, ...prev]);
     };
 
     const setJob = (listIdx: number, job: InferenceJob | null) => {

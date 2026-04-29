@@ -25,6 +25,7 @@ import {
   update as updateDb,
   deleteById as deleteByIdDb,
   deleteByAvatarId as deleteByAvatarIdDb,
+  getAvatarIdPhotos as getAvatarIdPhotosDb
 } from '../repositories/job';
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { getAvatarById } from '../services/avatarService';
@@ -330,6 +331,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
 
   try {
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
+    const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const loraPath = avatar.loras.qwenEdit2511Path;
 
     const job: InferenceJob = {
@@ -338,7 +340,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       mediaType: MediaTypes.image,
       target: JobTargets.avatarMedia,
       status: JobStatuses.pending,
-      maxRuns: 5,
+      maxRuns: 3,
       input: {
         checkDependencies: false,
         inference: {
@@ -349,9 +351,13 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
           width,
           height,
         },
-        faceRecognition: { enabled: true, mediaPaths: [avatar.mainImagePath!], threshold: { min: 0.95 }},
+        faceRecognition: { 
+          enabled: true, 
+          mediaPaths: idPhotoJobs.map((job: InferenceJob) => job.result?.mediaPath!), 
+          threshold: { min: 0.95 }
+        },
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
+          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
           { path: loraPath, scale: 1.0 }
         ],
       },
