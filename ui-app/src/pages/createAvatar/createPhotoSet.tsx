@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { JobStatuses, type InferenceJob, type TrainingJobRequest } from "../../types/job";
 import { genTrainingPhotoSet, restartJobById, updateAvatar, getAvatarById, getJobsByGroupId } from "../../services/apiGateway";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
-import PhotoCard from "../../components/PhotoCard";
+import MediaCard from "../../components/MediaCard";
 import {
     initialAvatarData,
     getAvatarData,
@@ -192,7 +192,7 @@ function CreatePhotoSetPage() {
                 <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {jobs.map((job, idx) => (
-                            <PhotoCard
+                            <MediaCard
                                 key={idx}
                                 job={job}
                                 idx={idx}

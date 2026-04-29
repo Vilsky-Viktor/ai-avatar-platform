@@ -1,5 +1,7 @@
 import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { JobStatuses, type InferenceJob } from '../types/job';
+import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
 
 type FaceMatchThresholds = {
     green: number;
@@ -25,7 +27,7 @@ type Props = {
     faceMatchThresholds?: FaceMatchThresholds;
 };
 
-function PhotoCard({
+function MediaCard({
     job,
     idx,
     onPhotoClick,
@@ -36,6 +38,8 @@ function PhotoCard({
     showOrder = false,
     faceMatchThresholds = DEFAULT_THRESHOLDS,
 }: Props) {
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
     if (!job) {
         return (
             <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
@@ -174,10 +178,16 @@ function PhotoCard({
                 {canDelete && onDelete && (
                     <button
                         className="absolute top-1 right-10 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); jobId && onDelete(jobId); }}
+                        onClick={(e) => { e.stopPropagation(); jobId && setConfirmDeleteId(jobId); }}
                     >
                         <Trash2 size={15} className="text-white" />
                     </button>
+                )}
+                {confirmDeleteId && onDelete && (
+                    <DeleteMediaModal
+                        onConfirm={() => { onDelete(confirmDeleteId); setConfirmDeleteId(null); }}
+                        onCancel={() => setConfirmDeleteId(null)}
+                    />
                 )}
 
                 {bestFaceMatch > 0 && (
@@ -197,4 +207,4 @@ function PhotoCard({
     return null;
 }
 
-export default PhotoCard;
+export default MediaCard;

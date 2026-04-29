@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
-import PhotoCard from "../../components/PhotoCard";
+import MediaCard from "../../components/MediaCard";
 import ImageCropperModal from "../../components/createAvatar/ImageCropperModal";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
 import PillSelect from '../../components/PillSelect';
@@ -386,7 +386,7 @@ function CreateTwinIdPhotosPage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {jobs.map((job, idx) => (
-                            <PhotoCard
+                            <MediaCard
                                 key={idx}
                                 job={job}
                                 idx={idx}

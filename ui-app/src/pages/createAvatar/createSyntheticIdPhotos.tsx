@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import { ChevronDown } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
-import PhotoCard from "../../components/PhotoCard";
+import MediaCard from "../../components/MediaCard";
 import { type Avatar } from '../../types/avatar';
 import { updateAvatar, restartJobById, genTrainingSyntheticIdPhotos, genTrainingSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId } from '../../services/apiGateway';
 import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
@@ -363,7 +363,7 @@ function CreateSyntheticIdPhotosPage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {jobs.map((job, idx) => (
-                            <PhotoCard
+                            <MediaCard
                                 key={idx}
                                 job={job}
                                 idx={idx}
