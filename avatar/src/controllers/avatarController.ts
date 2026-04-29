@@ -99,11 +99,10 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
 
   try {
     await Promise.all([
+      deleteByAvatarIdDb(userId, id),
       deleteJobsByAvatarId(userId, id),
       removeAvatarMediaFolder(userId, id)
     ]);
-
-    await deleteByAvatarIdDb(userId, id);
     
     return res.status(200).json({'result': 'ok'});
   } catch (error) {
