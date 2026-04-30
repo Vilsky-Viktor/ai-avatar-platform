@@ -177,7 +177,7 @@ def write_dataset(images: list[Image.Image], prompts: list[str], dataset_dir: Pa
 
 
 def upload_lora_checkpoints(local_dir: Path, dest_prefix: str) -> int:
-    """Upload the last 8 .safetensors checkpoints from local_dir to GCS.
+    """Upload all .safetensors checkpoints from local_dir to GCS.
 
     Each file is uploaded to {dest_prefix}/{num_steps}.safetensors where num_steps
     is the integer step count parsed from the checkpoint filename.
@@ -193,7 +193,7 @@ def upload_lora_checkpoints(local_dir: Path, dest_prefix: str) -> int:
         m = re.search(r"(\d+)\.safetensors$", p.name)
         return int(m.group(1)) if m else 0
 
-    checkpoints = sorted(safetensors_files, key=_step)[-8:]
+    checkpoints = sorted(safetensors_files, key=_step)
 
     bucket = _get_gcs().bucket(BUCKET_NAME)
     for ckpt in checkpoints:

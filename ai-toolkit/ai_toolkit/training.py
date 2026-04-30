@@ -1,33 +1,68 @@
 import copy
+import multiprocessing
 import os
 import sys
+import traceback
 from pathlib import Path
-from toolkit.job import run_job
+
 from ai_toolkit.logger import logger
 
 AI_TOOLKIT_PATH = os.environ.get("AI_TOOLKIT_PATH", "/opt/ai-toolkit")
 LOCAL_MODELS_BASE = os.environ.get("LOCAL_MODELS_BASE", "/workspace/models")
 LORA_OUTPUT_NAME = "lora"
 
+if AI_TOOLKIT_PATH not in sys.path:
+    sys.path.insert(0, AI_TOOLKIT_PATH)
+
+from toolkit.job import run_job  # type: ignore[import]
+
+
+def _training_subprocess(
+    toolkit_config: dict,
+    out_dir_str: str,
+    images_dir_str: str,
+    control_dir_str: str,
+    model_name: str,
+    error_queue: "multiprocessing.Queue[str | None]",
+):
+    """Runs inside a subprocess so the CUDA context is fully released on exit."""
+    try:
+        config = copy.deepcopy(toolkit_config)
+        cfg = config.setdefault("config", {})
+        cfg["name"] = LORA_OUTPUT_NAME
+
+        for proc in cfg.get("process", []):
+            proc["training_folder"] = out_dir_str
+            for ds in proc.get("datasets", []):
+                ds["folder_path"] = images_dir_str
+                ds["control_path"] = control_dir_str
+            model = proc.setdefault("model", {})
+            if not model.get("name_or_path"):
+                model["name_or_path"] = str(Path(LOCAL_MODELS_BASE) / model_name)
+
+        run_job(config)
+        error_queue.put(None)
+    except Exception:
+        error_queue.put(traceback.format_exc())
+        sys.exit(1)
+
 
 def run_training(toolkit_config: dict, job_id: str, out_dir: Path, images_dir: Path, control_dir: Path, model_name: str):
-    config = copy.deepcopy(toolkit_config)
+    ctx = multiprocessing.get_context("spawn")
+    error_queue: multiprocessing.Queue = ctx.Queue()
 
-    cfg = config.setdefault("config", {})
-    cfg["name"] = LORA_OUTPUT_NAME
+    p = ctx.Process(
+        target=_training_subprocess,
+        args=(toolkit_config, str(out_dir), str(images_dir), str(control_dir), model_name, error_queue),
+    )
 
-    for proc in cfg.get("process", []):
-        proc["training_folder"] = str(out_dir)
-        for ds in proc.get("datasets", []):
-            ds["folder_path"] = str(images_dir)
-            ds["control_path"] = str(control_dir)
-        model = proc.setdefault("model", {})
-        if not model.get("name_or_path"):
-            model["name_or_path"] = str(Path(LOCAL_MODELS_BASE) / model_name)
+    logger.info(f"Starting training subprocess (output: {out_dir})")
+    p.start()
+    p.join()
 
-    if AI_TOOLKIT_PATH not in sys.path:
-        sys.path.insert(0, AI_TOOLKIT_PATH)
+    error_msg = error_queue.get() if not error_queue.empty() else None
 
-    logger.info(f"Starting AI toolkit training (output: {out_dir})")
-    run_job(config)
-    logger.info("AI toolkit training completed")
+    if p.exitcode != 0:
+        raise RuntimeError(error_msg or f"Training subprocess exited with code {p.exitcode}")
+
+    logger.info("Training subprocess completed, GPU memory released")

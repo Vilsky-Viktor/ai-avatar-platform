@@ -7,11 +7,11 @@ export const buildQwenImageEditToolkitConfig = (numImages: number) => ({
       type: 'sd_trainer',
       device: 'cuda:0',
       network: { type: 'lora', linear: 64, linear_alpha: 64 },
-      save: { dtype: 'float16', save_every: 500, max_step_saves_to_keep: 8 },
+      save: { dtype: 'float16', save_every: 500, max_step_saves_to_keep: 9 },
       datasets: [{ caption_ext: 'txt', resolution: [1328], caption_dropout_rate: 0.05 }],
       train: {
         batch_size: 1,
-        steps: numImages * 150,
+        steps: Math.max(numImages * 150, 6000),
         gradient_accumulation: 1,
         train_unet: true,
         train_text_encoder: false,
