@@ -71,21 +71,9 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-            <div className="absolute inset-0 bg-transparent" onClick={onClose} />
-            <div
-                className="relative bg-base-100 rounded-3xl flex flex-col gap-7 p-10 w-[580px]"
-                style={{ animation: 'panel-reveal 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards' }}
-            >
-                {/* Border sweep */}
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent pointer-events-none"
-                     style={{ animation: 'border-lr 0.35s ease 0.15s both' }} />
-                <div className="absolute top-0 right-0 w-[2px] h-full bg-gradient-to-b from-transparent via-primary/50 to-transparent pointer-events-none"
-                     style={{ animation: 'border-tb 0.35s ease 0.4s both' }} />
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent pointer-events-none"
-                     style={{ animation: 'border-rl 0.35s ease 0.65s both' }} />
-                <div className="absolute top-0 left-0 w-[2px] h-full bg-gradient-to-b from-transparent via-primary/50 to-transparent pointer-events-none"
-                     style={{ animation: 'border-bt 0.35s ease 0.9s both' }} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
+            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-7 p-10 w-[580px] animate-modal-card">
 
                 <button
                     onClick={onClose}

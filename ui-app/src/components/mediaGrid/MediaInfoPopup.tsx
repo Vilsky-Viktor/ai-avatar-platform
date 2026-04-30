@@ -48,9 +48,9 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
     };
     
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div
-                className="absolute inset-0 bg-base-300/60 backdrop-blur-sm animate-modal-backdrop"
+                className="absolute inset-0 bg-base-300/60 animate-modal-backdrop"
                 onClick={onClose}
             />
             <div className="relative bg-base-100 w-full max-w-xl rounded-[2.5rem] shadow-2xl border border-base-content/5 p-8 animate-modal-card">
