@@ -36,17 +36,16 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'clean-shaven, no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with highly detailed realistic skin. Wearing ${isFemale ? 'white strapless top' : 'white sleeveless shirt with top undone buttons'}. Direct eye contact looking straight at the camera, completely neutral expression, natural eyes, relaxed completely closed mouth without smile. Gray concrete color wall. Even soft diffused daylight. Sharp focus on face and facial details. Hyperrealistic, ultrarealistic photo`,
+          prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'clean-shaven, no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with highly detailed realistic skin. Wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Direct eye contact looking straight at the camera, completely neutral expression, natural eyes, relaxed completely closed mouth without smile. Gray concrete color wall. Even soft diffused daylight. Sharp focus on face and facial details. Hyperrealistic, ultrarealistic photo`,
           negativePrompt: 'cut off shoulders, missing shoulders, cropped head, cut off haircut, cut off hair, cut off head, blurry face, low quality, distorted face, wrong ethnicity, smile, open mouth, teeth visible, makeup, oversaturated, unrealistic skin, plastic skin, head tilt',
           mediaPaths: [],
-          numSteps: 40,
+          numSteps: 50,
           width: trainingRatio[0],
           height: trainingRatio[1],
           guidanceScale: 4.0,
         },
         faceRecognition: { enabled: false},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Hyper-Realistic-Portrait", scale: 0.5 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
@@ -60,19 +59,18 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         inference: {
           prompt: `Exact same person from input images. Gentle smile showing teeth. Change outfit to dark gray sleeveless t-shirt`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
-          numSteps: 8,
+          numSteps: 50,
           width: trainingRatio[0],
           height: trainingRatio[1],
-          guidanceScale: 1.0,
+          guidanceScale: 4.0,
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.7 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
+      maxRuns: 2,
       order: 2,
     },
     {
@@ -89,7 +87,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.65 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
@@ -113,7 +111,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.65 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
@@ -137,7 +135,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.65 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
@@ -161,7 +159,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: 0.65 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
@@ -178,26 +176,25 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
           prompt: `Tight crop around the head including haircut, face fills 90% of the frame. Shoulders and neck are cut off on the edges of the frame. Remove clothes`,
           negativePrompt: 'shoulders visible, disproportion, low quality, blurry, distorted face, changed identity, low resolution, compression artifacts',
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!],
-          numSteps: 8,
+          numSteps: 50,
           width: trainingRatio[0],
           height: trainingRatio[1],
-          guidanceScale: 1.0,
+          guidanceScale: 4.0,
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.9 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontExtremeCloseUpView' },
-      maxRuns: 5,
+      maxRuns: 2,
       order: 7,
     },
     {
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Waist-up portrait of subject in input images. Exact same person from input images. ${body} body type, ${bodyHair !== 'none' ? `${bodyHair} hair on hands and legs` : 'no body hair'}, ${bustSize} chest, ${height} height. Waring white running shorts and ${isFemale ? 'white strapless top' : 'white tank top'}. Gray concrete color wall`,
+          prompt: `Waist-up portrait of subject in input images. Exact same person from input images. ${body} body type, ${bodyHair !== 'none' ? `${bodyHair} hair on hands` : 'no body hair'}, ${bustSize} chest, ${height} height. Wearing white pants and ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Gray concrete color wall`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: trainingRatio[0],
@@ -206,7 +203,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.87 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 1.0 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
@@ -219,7 +216,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Full body front view of subject in input images. Barefoot. Exact same person from input images. ${bodyHair !== 'none' ? `${bodyHair} hair on legs` : 'no body hair'}. Gray concrete color wall`,
+          prompt: `Full body front view of subject in input images. Barefoot. Exact same person from input images. Gray concrete color wall`,
           mediaPaths: [idPhotoSet.generated.upperBody!, idPhotoSet.generated.upperBody!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: trainingRatio[0],
@@ -228,7 +225,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!], threshold: { min: 0.85 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.8 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
         ],
@@ -263,7 +260,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.97 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -284,7 +281,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.frontSmile!], threshold: { min: 0.97 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -306,7 +303,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.rightQuarter!], threshold: { min: 0.95 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
         ],
@@ -330,7 +327,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.leftQuarter!], threshold: { min: 0.95 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
         ],
@@ -354,7 +351,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.rightQuarter!], threshold: { min: 0.85 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
         ],
@@ -378,7 +375,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.leftQuarter!], threshold: { min: 0.85 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.55 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
         ],
@@ -399,9 +396,9 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
           height: trainingRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.97 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.96 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontExtremeCloseUpView' },
@@ -412,16 +409,16 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Waist-up portrait of subject in input images. Exact same person from input images. Looking directly at camera. Exact same skin color from image 1. ${bodyHair !== 'none' ? `${bodyHair} hair on hands and legs` : 'no body hair'}, ${bustSize} chest, ${height} height. Waring white running shorts and ${isFemale ? 'white strapless top' : 'white polo with open buttons'}`,
+          prompt: `Waist-up portrait of subject in input images. Exact same person from input images. Looking directly at camera. Exact same skin color from image 1. ${bodyHair !== 'none' ? `${bodyHair} hair on hands` : 'no body hair'}, ${bustSize} chest, ${height} height. Wearing white pants and ${isFemale ? 'white strapless top' : 'white polo with open buttons'}`,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: trainingRatio[0],
           height: trainingRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.95 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.96 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontUpperBodyView'},
@@ -432,16 +429,16 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
       input: {
         checkDependencies: true,
         inference: {
-          prompt: `Full body front view of subject in input images. Barefoot. Exact same person from input images. Looking directly at camera. Exact same skin color from image 3. ${bodyHair !== 'none' ? `${bodyHair} hair on legs` : 'no body hair'}, ${height} height`,
+          prompt: `Full body front view of subject in input images. Barefoot. Exact same person from input images. Looking directly at camera. Exact same skin color from image 3. ${height} height`,
           mediaPaths: [idPhotoSet.generated.upperBody!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
           numSteps: 8,
           width: trainingRatio[0],
           height: trainingRatio[1],
           guidanceScale: 1.0,
         },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.93 }},
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.94 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16", scale: 0.5 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontFullBodyView'},

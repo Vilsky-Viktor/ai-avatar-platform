@@ -40,7 +40,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       mediaType: MediaTypes.image,
       target: JobTargets.avatarMedia,
       status: JobStatuses.pending,
-      maxRuns: 3,
+      maxRuns: 5,
       input: {
         checkDependencies: false,
         inference: {
