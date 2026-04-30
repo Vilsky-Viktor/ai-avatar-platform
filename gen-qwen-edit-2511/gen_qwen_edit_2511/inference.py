@@ -52,7 +52,7 @@ class _PipelineInstance:
         self.idx = idx
         self.pipeline = None
         self.device = None
-        self._lora_cache: dict[str, float] = {}
+        self._lora_cache: dict[tuple[str, str | None], float] = {}
 
     @utils.timeit
     def load(self):
@@ -87,43 +87,47 @@ class _PipelineInstance:
     def clear_cache(self):
         torch.cuda.empty_cache()
 
-    def _adapter_name(self, path: str) -> str:
-        return path.replace("/", "__").replace(".", "_")
+    def _cache_key(self, lora: LoraConfig) -> tuple[str, str | None]:
+        return (lora.path, lora.filename)
+
+    def _adapter_name(self, path: str, filename: str | None = None) -> str:
+        key = f"{path}__{filename}" if filename else path
+        return key.replace("/", "__").replace(".", "_")
 
     @utils.timeit
     def sync_loras(self, loras: list[LoraConfig]):
-        incoming: dict[str, float] = {lora.path: lora.scale for lora in loras}
+        incoming: dict[tuple[str, str | None], float] = {self._cache_key(lora): lora.scale for lora in loras}
 
-        to_remove = [path for path in self._lora_cache if path not in incoming]
-        to_update = [path for path in self._lora_cache if path in incoming and incoming[path] != self._lora_cache[path]]
-        to_load   = [lora for lora in loras if lora.path not in self._lora_cache]
+        to_remove = [key for key in self._lora_cache if key not in incoming]
+        to_update = [key for key in self._lora_cache if key in incoming and incoming[key] != self._lora_cache[key]]
+        to_load   = [lora for lora in loras if self._cache_key(lora) not in self._lora_cache]
 
         if not to_remove and not to_update and not to_load:
             logger.info(f"[instance {self.idx}] LoRA cache hit — all adapters already loaded with correct scales")
             return
 
         if to_remove:
-            logger.info(f"[instance {self.idx}] Removing {len(to_remove)} stale LoRA(s): {[Path(n).name for n in to_remove]}")
-            self.pipeline.delete_adapters([self._adapter_name(p) for p in to_remove])
-            for path in to_remove:
-                del self._lora_cache[path]
+            logger.info(f"[instance {self.idx}] Removing {len(to_remove)} stale LoRA(s): {[Path(k[0]).name for k in to_remove]}")
+            self.pipeline.delete_adapters([self._adapter_name(*key) for key in to_remove])
+            for key in to_remove:
+                del self._lora_cache[key]
 
         for lora in to_load:
             local_path   = str(Path(LOCAL_LORAS_PATH) / lora.path)
-            adapter_name = self._adapter_name(lora.path)
-            logger.info(f"[instance {self.idx}]   [load] {Path(lora.path).name} scale={lora.scale}")
+            adapter_name = self._adapter_name(lora.path, lora.filename)
+            logger.info(f"[instance {self.idx}]   [load] {Path(lora.path).name} file={lora.filename} scale={lora.scale}")
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=RuntimeWarning, module="peft")
                 warnings.filterwarnings("ignore", category=UserWarning,    module="peft")
                 self.pipeline.load_lora_weights(local_path, adapter_name=adapter_name, weight_name=lora.filename)
-            self._lora_cache[lora.path] = lora.scale
+            self._lora_cache[self._cache_key(lora)] = lora.scale
 
         if to_update:
-            logger.info(f"[instance {self.idx}] Updating scale for {len(to_update)} LoRA(s): {[Path(n).name for n in to_update]}")
-            for path in to_update:
-                self._lora_cache[path] = incoming[path]
+            logger.info(f"[instance {self.idx}] Updating scale for {len(to_update)} LoRA(s): {[Path(k[0]).name for k in to_update]}")
+            for key in to_update:
+                self._lora_cache[key] = incoming[key]
 
-        active_names  = [self._adapter_name(lora.path) for lora in loras]
+        active_names  = [self._adapter_name(lora.path, lora.filename) for lora in loras]
         active_scales = [lora.scale for lora in loras]
         self.pipeline.set_adapters(active_names, adapter_weights=active_scales)
         logger.info(f"[instance {self.idx}] LoRAs synced — {len(active_names)} active: {[Path(lora.path).name for lora in loras]}")
@@ -133,7 +137,7 @@ class _PipelineInstance:
         if not self._lora_cache:
             return
         try:
-            self.pipeline.delete_adapters([self._adapter_name(p) for p in self._lora_cache])
+            self.pipeline.delete_adapters([self._adapter_name(*key) for key in self._lora_cache])
             self.pipeline.unload_lora_weights()
             self._lora_cache = {}
             logger.info(f"[instance {self.idx}] LoRAs fully cleared")

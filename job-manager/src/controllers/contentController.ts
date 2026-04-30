@@ -57,7 +57,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
           threshold: { min: 0.95 },
         },
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16', scale: 0.5 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
           { path: avatar.loras.qwenEdit2511.path, scale: 1.0, filename: avatar.loras.qwenEdit2511.filename },
         ],
       },
