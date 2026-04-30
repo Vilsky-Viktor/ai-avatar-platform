@@ -88,9 +88,6 @@ def make_process_job(semaphore: threading.Semaphore):
             aligned_prompts = list(aligned_prompts)
             logger.info(f"Downloaded {len(images)}/{len(media_paths)} images successfully")
 
-            # Ack early — training takes many minutes; holding the lease risks redelivery
-            message.ack()
-
             job.status = "generating"
             mq.publish_status(job.model_dump())
 
@@ -103,6 +100,9 @@ def make_process_job(semaphore: threading.Semaphore):
             dest_prefix = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/loras/{folder_name}"
             out_dir = storage.make_lora_output_dir(job.id)
             dataset_dir = storage.make_dataset_dir(job.id)
+
+            # Ack early — training takes many minutes; holding the lease risks redelivery
+            message.ack()
 
             with semaphore:
                 try:

@@ -10,6 +10,19 @@ html {
 @theme {
   /* This overrides the default 'font-sans' used by Tailwind */
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --animate-modal-backdrop: modal-backdrop 0.2s ease forwards;
+  --animate-modal-card: modal-card 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes modal-backdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-card {
+  from { opacity: 0; transform: scale(0.50) translateY(24px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 
 @keyframes tw-cursor-blink {

@@ -1,7 +1,8 @@
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2 } from 'lucide-react';
+import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text } from 'lucide-react';
 import { useState } from 'react';
 import { JobStatuses, type InferenceJob } from '../types/job';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
+import MediaInfoPopup from './mediaGrid/MediaInfoPopup';
 
 type FaceMatchThresholds = {
     green: number;
@@ -20,7 +21,7 @@ type Props = {
     idx: number;
     onPhotoClick: (url: string, rect: DOMRect) => void;
     onRegenerate?: (jobId: string) => void;
-    onDelete?: (jobId: string) => void;
+    onDelete?: (jobId: string) => void | Promise<void>;
     canRestart?: boolean;
     canDelete?: boolean;
     showOrder?: boolean;
@@ -39,6 +40,20 @@ function MediaCard({
     faceMatchThresholds = DEFAULT_THRESHOLDS,
 }: Props) {
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [infoVisible, setInfoVisible] = useState(false);
+    const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
+
+    const handleConfirmDelete = async () => {
+        if (!confirmDeleteId || !onDelete) return;
+        setIsDeleting(true);
+        try {
+            await onDelete(confirmDeleteId);
+        } finally {
+            setIsDeleting(false);
+            setConfirmDeleteId(null);
+        }
+    };
 
     if (!job) {
         return (
@@ -149,6 +164,22 @@ function MediaCard({
             : 'bg-red-400';
 
         return (
+            <>
+            {confirmDeleteId && onDelete && (
+                <DeleteMediaModal
+                    isDeleting={isDeleting}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={() => setConfirmDeleteId(null)}
+                />
+            )}
+            {infoVisible && (
+                <MediaInfoPopup
+                    naturalSize={naturalSize}
+                    ratio={job.metadata?.ratio}
+                    prompt={job.input?.inference?.prompt}
+                    onClose={() => setInfoVisible(false)}
+                />
+            )}
             <div
                 className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
                 onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect())}
@@ -157,6 +188,10 @@ function MediaCard({
                     src={url}
                     alt={`Avatar photo ${idx + 1}`}
                     className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                    onLoad={(e) => {
+                        const img = e.currentTarget;
+                        setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
+                    }}
                 />
 
                 {showOrder && (
@@ -167,28 +202,31 @@ function MediaCard({
                     </div>
                 )}
 
-                {canRestart && onRegenerate && (
+                <div className="absolute top-1 right-1 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    {canRestart && onRegenerate && (
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); jobId && onRegenerate(jobId); }}
+                        >
+                            <RefreshCcw size={20} className="text-white spin-once-on-hover" />
+                        </button>
+                    )}
                     <button
-                        className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-primary transition-all cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); jobId && onRegenerate(jobId); }}
+                        className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); setInfoVisible(v => !v); }}
                     >
-                        <RefreshCcw size={18} className="text-white spin-once-on-hover" />
+                        <Text size={20} className="text-white" />
                     </button>
-                )}
-                {canDelete && onDelete && (
-                    <button
-                        className="absolute top-1 right-10 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); jobId && setConfirmDeleteId(jobId); }}
-                    >
-                        <Trash2 size={15} className="text-white" />
-                    </button>
-                )}
-                {confirmDeleteId && onDelete && (
-                    <DeleteMediaModal
-                        onConfirm={() => { onDelete(confirmDeleteId); setConfirmDeleteId(null); }}
-                        onCancel={() => setConfirmDeleteId(null)}
-                    />
-                )}
+                    {canDelete && onDelete && (
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); jobId && setConfirmDeleteId(jobId); }}
+                        >
+                            <Trash2 size={20} className="text-white" />
+                        </button>
+                    )}
+                    
+                </div>
 
                 {bestFaceMatch > 0 && (
                     <div className="absolute bottom-1 right-1 z-10">
@@ -201,6 +239,7 @@ function MediaCard({
                     </div>
                 )}
             </div>
+            </>
         );
     }
 

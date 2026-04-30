@@ -45,6 +45,22 @@ export type InferenceJobResult = {
   fileName?: string;
 }
 
+export type InferenceConfig = {
+  prompt?: string;
+  prompts?: string[];
+  negativePrompt?: string;
+  mediaPaths?: string[];
+  guidanceScale?: number;
+  numSteps: number;
+  width?: number;
+  height?: number;
+  seed?: number;
+}
+
+export type InferenceJobInput = {
+  inference: InferenceConfig;
+}
+
 export type InferenceJobMetadata = {
   dimensions?: string;
   ratio?: string;
@@ -62,6 +78,7 @@ export type InferenceJob = {
   target: JobTargets;
   status?: JobStatuses;
   maxRuns: number;
+  input: InferenceJobInput;
   result?: InferenceJobResult;
   metadata?: InferenceJobMetadata;
   createdAt?: FirestoreTimestamp;

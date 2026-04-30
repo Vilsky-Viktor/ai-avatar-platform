@@ -1,18 +1,19 @@
 import { AlertTriangle, Trash2 } from 'lucide-react';
 
 type Props = {
+    isDeleting: boolean;
     onConfirm: () => void;
     onCancel: () => void;
 };
 
-function DeleteMediaModal({ onConfirm, onCancel }: Props) {
+function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-base-300/60 backdrop-blur-sm animate-in fade-in duration-300"
-                onClick={onCancel}
+                className="absolute inset-0 bg-base-300/60 backdrop-blur-sm animate-modal-backdrop"
+                onClick={() => !isDeleting && onCancel()}
             />
-            <div className="relative bg-base-100 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-base-content/5 p-10 animate-in zoom-in-95 duration-300">
+            <div className="relative bg-base-100 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-base-content/5 p-10 animate-modal-card">
                 <div className="flex flex-col items-center text-center">
                     <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mb-6">
                         <AlertTriangle className="text-error" size={32} />
@@ -24,13 +25,15 @@ function DeleteMediaModal({ onConfirm, onCancel }: Props) {
                     <div className="flex flex-col w-full gap-3">
                         <button
                             onClick={onConfirm}
+                            disabled={isDeleting}
                             className="btn btn-error btn-lg rounded-2xl w-full uppercase tracking-widest text-xs"
                         >
-                            <Trash2 size={16} className="mr-2" />
+                            {isDeleting ? <span className="loading loading-spinner" /> : <Trash2 size={16} className="mr-2" />}
                             Delete Photo
                         </button>
                         <button
                             onClick={onCancel}
+                            disabled={isDeleting}
                             className="btn btn-ghost btn-lg rounded-2xl w-full uppercase tracking-widest text-xs opacity-50 hover:opacity-100"
                         >
                             Cancel

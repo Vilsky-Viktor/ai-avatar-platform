@@ -12,10 +12,10 @@ function DeleteAvatarModal({ avatar, isDeleting, onConfirm, onCancel }: Props) {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-base-300/60 backdrop-blur-sm animate-in fade-in duration-300"
+                className="absolute inset-0 bg-base-300/60 backdrop-blur-sm animate-modal-backdrop"
                 onClick={() => !isDeleting && onCancel()}
             />
-            <div className="relative bg-base-100 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-base-content/5 p-10 animate-in zoom-in-95 duration-300">
+            <div className="relative bg-base-100 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-base-content/5 p-10 animate-modal-card">
                 <div className="flex flex-col items-center text-center">
                     <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mb-6">
                         <AlertTriangle className="text-error" size={32} />
