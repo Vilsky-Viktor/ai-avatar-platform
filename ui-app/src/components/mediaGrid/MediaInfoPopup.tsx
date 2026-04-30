@@ -1,4 +1,4 @@
-import { Info, Maximize2, LayoutTemplate, MessageSquare } from 'lucide-react';
+import { Maximize2, LayoutTemplate, MessageSquare } from 'lucide-react';
 
 type Props = {
     naturalSize?: { w: number; h: number } | null;
