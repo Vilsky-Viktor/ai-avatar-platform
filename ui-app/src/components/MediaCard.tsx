@@ -201,7 +201,15 @@ function MediaCard({
                     </div>
                 )}
 
-                <div className="absolute top-1 right-1 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    {canDelete && onDelete && (
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); jobId && setConfirmDeleteId(jobId); }}
+                        >
+                            <Trash2 size={20} className="text-white" />
+                        </button>
+                    )}
                     {canRestart && onRegenerate && (
                         <button
                             className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
@@ -211,24 +219,16 @@ function MediaCard({
                         </button>
                     )}
                     <button
-                        className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer"
+                        className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-info transition-colors cursor-pointer"
                         onClick={(e) => { e.stopPropagation(); setInfoVisible(v => !v); }}
                     >
                         <Text size={20} className="text-white" />
                     </button>
-                    {canDelete && onDelete && (
-                        <button
-                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); jobId && setConfirmDeleteId(jobId); }}
-                        >
-                            <Trash2 size={20} className="text-white" />
-                        </button>
-                    )}
                     
                 </div>
 
                 {bestFaceMatch > 0 && (
-                    <div className="absolute bottom-1 right-1 z-10">
+                    <div className="absolute bottom-2 right-2 z-10">
                         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
                             <span className="font-bold">
                                 {(bestFaceMatch * 100).toFixed(0)}%
