@@ -6,7 +6,7 @@ export const buildQwenImageEditToolkitConfig = (numImages: number) => ({
     process: [{
       type: 'sd_trainer',
       device: 'cuda:0',
-      network: { type: 'lora', linear: 32, linear_alpha: 32 },
+      network: { type: 'lora', linear: 64, linear_alpha: 64 },
       save: { dtype: 'float16', save_every: 1000, max_step_saves_to_keep: 3 },
       datasets: [{ caption_ext: 'txt', resolution: [1312], caption_dropout_rate: 0.05 }],
       train: {
@@ -18,7 +18,7 @@ export const buildQwenImageEditToolkitConfig = (numImages: number) => ({
         gradient_checkpointing: true,
         noise_scheduler: 'flowmatch',
         optimizer: 'adamw8bit',
-        lr: 2e-4,
+        lr: 1e-4,
         lr_scheduler: 'constant',
         dtype: 'bf16',
         cache_text_embeddings: true,

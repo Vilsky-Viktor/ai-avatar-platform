@@ -42,7 +42,7 @@ def make_process_job(semaphore: threading.Semaphore):
 
         try:
             if not semaphore.acquire(blocking=False):
-                logger.info("Semaphore busy — nacking for redelivery by another pod")
+                logger.info("Semaphore busy — nacking for redelivery")
                 message.nack()
                 return
             semaphore_acquired = True
