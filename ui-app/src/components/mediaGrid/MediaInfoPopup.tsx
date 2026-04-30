@@ -46,13 +46,13 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
                 <div className="flex flex-col gap-2">
                     {naturalSize && (
                         <InfoRow
-                            icon={<Maximize2 size={20} className="text-base-content/50" />}
+                            icon={<Maximize2 size={22} className="text-base-content/50" />}
                             label="Size"
                             value={`${naturalSize.w} × ${naturalSize.h}`}
                         />
                     )}
                     <InfoRow
-                        icon={<LayoutTemplate size={20} className="text-base-content/50" />}
+                        icon={<LayoutTemplate size={22} className="text-base-content/50" />}
                         label="Ratio"
                         value={ratio ?? '—'}
                     />
@@ -65,7 +65,7 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
                     )}
                     {prompt && (
                         <InfoRow
-                            icon={<MessageSquare size={20} className="text-base-content/50" />}
+                            icon={<MessageSquare size={22} className="text-base-content/50" />}
                             label="Prompt"
                             value={prompt}
                         />
