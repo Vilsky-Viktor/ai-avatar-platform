@@ -177,32 +177,21 @@ def write_dataset(images: list[Image.Image], prompts: list[str], dataset_dir: Pa
 
 
 def upload_lora_checkpoints(local_dir: Path, dest_prefix: str) -> int:
-    """Upload all .safetensors checkpoints from local_dir to GCS.
+    """Upload all .safetensors files from local_dir to GCS preserving original filenames.
 
-    Each file is uploaded to {dest_prefix}/{num_steps}.safetensors where num_steps
-    is the integer step count parsed from the checkpoint filename.
     Returns the number of files uploaded.
     """
-    import re
-
     safetensors_files = list(local_dir.rglob("*.safetensors"))
     if not safetensors_files:
         raise RuntimeError(f"No .safetensors files found in {local_dir}")
 
-    def _step(p: Path) -> int:
-        m = re.search(r"(\d+)\.safetensors$", p.name)
-        return int(m.group(1)) if m else 0
-
-    checkpoints = sorted(safetensors_files, key=_step)
-
     bucket = _get_gcs().bucket(BUCKET_NAME)
-    for ckpt in checkpoints:
-        num_steps = _step(ckpt)
-        blob_path = f"{dest_prefix}/{num_steps}.safetensors"
+    for ckpt in safetensors_files:
+        blob_path = f"{dest_prefix}/{ckpt.name}"
         bucket.blob(blob_path).upload_from_filename(str(ckpt))
         logger.info(f"Uploaded {ckpt.name} → gs://{BUCKET_NAME}/{blob_path}")
 
-    return len(checkpoints)
+    return len(safetensors_files)
 
 
 def make_lora_output_dir(job_id: str) -> Path:
