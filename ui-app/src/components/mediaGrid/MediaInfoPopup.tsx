@@ -1,4 +1,5 @@
-import { Maximize2, LayoutTemplate, MessageSquare, ScanFace } from 'lucide-react';
+import { Maximize2, LayoutTemplate, MessageSquare, ScanFace, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import type { InferenceJob } from '../../types/job';
 import { AVATAR_REFERENCE_NAME } from '../../utils/prompt';
 
@@ -12,18 +13,20 @@ type RowProps = {
     icon: React.ReactNode;
     label: string;
     value: string;
+    action?: React.ReactNode;
 };
 
-function InfoRow({ icon, label, value }: RowProps) {
+function InfoRow({ icon, label, value, action }: RowProps) {
     return (
         <div className="flex items-start gap-4 p-4 rounded-2xl bg-base-200/60">
             <div className="w-9 h-9 rounded-xl bg-base-100 flex items-center justify-center shrink-0 shadow-sm">
                 {icon}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-base-content/40 mb-0.5">{label}</p>
                 <p className="text-sm text-base-content leading-relaxed break-words">{value}</p>
             </div>
+            {action && <div className="shrink-0 self-center">{action}</div>}
         </div>
     );
 }
@@ -35,6 +38,14 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
         ? rawPrompt.slice(AVATAR_REFERENCE_NAME.length + 1)
         : rawPrompt;
     const bestFaceMatch = job.result?.bestFaceMatch;
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        if (!prompt) return;
+        navigator.clipboard.writeText(prompt);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
     
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -42,7 +53,7 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
                 className="absolute inset-0 bg-base-300/60 backdrop-blur-sm animate-modal-backdrop"
                 onClick={onClose}
             />
-            <div className="relative bg-base-100 w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-base-content/5 p-8 animate-modal-card">
+            <div className="relative bg-base-100 w-full max-w-xl rounded-[2.5rem] shadow-2xl border border-base-content/5 p-8 animate-modal-card">
                 <div className="flex flex-col gap-2">
                     {naturalSize && (
                         <InfoRow
@@ -68,6 +79,14 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
                             icon={<MessageSquare size={22} className="text-base-content/50" />}
                             label="Prompt"
                             value={prompt}
+                            action={
+                                <button
+                                    onClick={handleCopy}
+                                    className="w-8 h-8 rounded-xl flex items-center justify-center text-base-content/40 hover:text-base-content hover:bg-base-300 transition-colors cursor-pointer"
+                                >
+                                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                                </button>
+                            }
                         />
                     )}
                 </div>
