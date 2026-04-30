@@ -6,6 +6,7 @@ import { updateAvatar } from './services/avatarService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'ai-model-result-sub';
+const LORA_DEFAULT_FILENAME = process.env.LORA_DEFAULT_FILENAME || '6000.safetensors';
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
@@ -27,7 +28,7 @@ function listenForResults() {
         await updateAvatar(
           job.userId,
           job.avatarId,
-          { 'loras.qwenEdit2511': { path: job.result?.mediaPath!, filename: '6000.safetensors' } }
+          { 'loras.qwenEdit2511': { path: job.result?.mediaPath!, filename: LORA_DEFAULT_FILENAME } }
         );
       }
 

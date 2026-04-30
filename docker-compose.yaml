@@ -124,6 +124,7 @@ services:
       - AVATAR_URL=http://avatar:3200
       - JOB_MANAGER_URL=http://job-manager:3300
       - SUBSCRIPTION_ID=ai-model-result-sub
+      - LORA_DEFAULT_FILENAME=6000.safetensors
 
   runpod:
     <<: *default-dns
