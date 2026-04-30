@@ -174,9 +174,8 @@ function MediaCard({
             )}
             {infoVisible && (
                 <MediaInfoPopup
+                    job={job}
                     naturalSize={naturalSize}
-                    ratio={job.metadata?.ratio}
-                    prompt={job.input?.inference?.prompt}
                     onClose={() => setInfoVisible(false)}
                 />
             )}

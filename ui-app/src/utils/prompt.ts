@@ -1,0 +1,1 @@
+export const AVATAR_REFERENCE_NAME = '<loom24>';

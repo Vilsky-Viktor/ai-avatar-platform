@@ -1,9 +1,10 @@
-import { Maximize2, LayoutTemplate, MessageSquare } from 'lucide-react';
+import { Maximize2, LayoutTemplate, MessageSquare, ScanFace } from 'lucide-react';
+import type { InferenceJob } from '../../types/job';
+import { AVATAR_REFERENCE_NAME } from '../../utils/prompt';
 
 type Props = {
+    job: Partial<InferenceJob>;
     naturalSize?: { w: number; h: number } | null;
-    ratio?: string;
-    prompt?: string;
     onClose: () => void;
 };
 
@@ -27,7 +28,14 @@ function InfoRow({ icon, label, value }: RowProps) {
     );
 }
 
-function MediaInfoPopup({ naturalSize, ratio, prompt, onClose }: Props) {
+function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
+    const ratio = job.metadata?.ratio;
+    const rawPrompt = job.input?.inference?.prompt;
+    const prompt = rawPrompt?.startsWith(`${AVATAR_REFERENCE_NAME} `)
+        ? rawPrompt.slice(AVATAR_REFERENCE_NAME.length + 1)
+        : rawPrompt;
+    const bestFaceMatch = job.result?.bestFaceMatch;
+    
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
@@ -48,6 +56,13 @@ function MediaInfoPopup({ naturalSize, ratio, prompt, onClose }: Props) {
                         label="Ratio"
                         value={ratio ?? '—'}
                     />
+                    {bestFaceMatch != null && bestFaceMatch > 0 && (
+                        <InfoRow
+                            icon={<ScanFace size={20} className="text-base-content/50" />}
+                            label="Face Match"
+                            value={`${(bestFaceMatch * 100).toFixed(0)}%`}
+                        />
+                    )}
                     {prompt && (
                         <InfoRow
                             icon={<MessageSquare size={20} className="text-base-content/50" />}
