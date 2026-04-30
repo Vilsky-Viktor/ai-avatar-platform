@@ -122,7 +122,7 @@ def make_process_job(semaphore: threading.Semaphore):
 
             try:
                 images_dir, control_dir = storage.write_dataset(images, aligned_prompts, dataset_dir, resolution)
-                training.run_training(training_cfg.toolkit, job.id, out_dir, images_dir, control_dir, training_cfg.modelName)
+                training.run_training(training_cfg.toolkit, out_dir, images_dir, control_dir, training_cfg.modelName)
             except Exception as e:
                 logger.error(f"Training failed after {_fmt_elapsed(job_start)}: {e}", exc_info=True)
                 storage.cleanup_lora_output_dir(job.id)
