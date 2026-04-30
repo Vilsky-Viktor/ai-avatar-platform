@@ -34,8 +34,6 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       .filter(job => [1, 2, 3, 4, 5, 6].includes(job.order!))
       .map((job: InferenceJob) => job.result?.mediaPath!);
 
-    const loraPath = avatar.loras.qwenEdit2511Path;
-
     const job: InferenceJob = {
       userId,
       avatarId: jobRequest.avatarId,
@@ -60,7 +58,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
         },
         loras: [
           { path: 'models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16', scale: 0.5 },
-          { path: loraPath, scale: 1.0 },
+          { path: avatar.loras.qwenEdit2511.path, scale: 1.0, filename: avatar.loras.qwenEdit2511.filename },
         ],
       },
       metadata: {

@@ -33,8 +33,13 @@ export type AvatarParameters = {
   height: string;
 }
 
+export type LoraConfig = {
+  path: string;
+  filename: string;
+}
+
 export type AvatarLoras = {
-  qwenEdit2511Path: string;
+  qwenEdit2511: LoraConfig;
 }
 
 export type Avatar = {

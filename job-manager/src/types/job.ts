@@ -1,5 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { AvatarParameters, AvatarTypes } from './avatar';
+import { qwenEdit2511 } from './imageRatios';
 
 export enum MediaTypes {
   image = 'image',
@@ -190,8 +191,6 @@ export type TrainingJobRequest = {
   avatarId: string;
   parameters: AvatarParameters;
 }
-
-import { qwenEdit2511 } from './imageRatios';
 
 export type ImageRatio = keyof typeof qwenEdit2511;
 

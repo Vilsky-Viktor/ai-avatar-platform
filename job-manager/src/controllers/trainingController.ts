@@ -74,7 +74,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const dbJob = await createDb(userId, trainingJob);
     await publishJob(AI_TOOLKIT_TOPIC, dbJob);
 
-    const loras: AvatarLoras = { qwenEdit2511Path: '' };
+    const loras: AvatarLoras = { qwenEdit2511: { path: '', filename: '' } };
     return res.status(201).json(loras);
   } catch (error) {
     req.log.info(`Failed to create jobs to train LORAs with group ID ${jobRequest.groupId} for ${userId}: ${error}`);

@@ -27,7 +27,7 @@ function listenForResults() {
         await updateAvatar(
           job.userId,
           job.avatarId,
-          { 'loras.qwenEdit2511Path': job.result?.mediaPath! }
+          { 'loras.qwenEdit2511': { path: job.result?.mediaPath!, filename: '6000.safetensors' } }
         );
       }
 

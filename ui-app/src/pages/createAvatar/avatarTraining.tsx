@@ -59,11 +59,11 @@ function AvatarTrainingPage() {
         } else {
             setStepStatus(1, 'loading');
             try {
-                const loraPaths = await trainLoras({avatarId: newAvatarData.avatarId, groupId: newAvatarData.groupId, parameters: avatar.parameters});
-                setLoras(loraPaths);
+                const loraConfigs = await trainLoras({avatarId: newAvatarData.avatarId, groupId: newAvatarData.groupId, parameters: avatar.parameters});
+                setLoras(loraConfigs);
 
                 const payload: Partial<Avatar> = {
-                    loras: loraPaths, 
+                    loras: loraConfigs, 
                 };
 
                 await updateAvatar(newAvatarData.avatarId, payload);
