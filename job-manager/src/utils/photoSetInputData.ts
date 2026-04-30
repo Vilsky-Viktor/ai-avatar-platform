@@ -352,7 +352,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           guidanceScale: 1.0,
         },
         faceDirection: { enabled: true, direction: Directions.right },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: AvatarTypes.twin ? 0.94 : 0.85 } },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 } },
         loras: [
           { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
@@ -376,7 +376,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
           guidanceScale: 1.0,
         },
         faceDirection: { enabled: true, direction: Directions.left },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: AvatarTypes.twin ? 0.94 : 0.85 } },
+        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 } },
         loras: [
           { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
           { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
@@ -611,7 +611,7 @@ export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avata
         faceRecognition: {
           enabled: true,
           mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.93 : 0.85 }
+          threshold: { min: AvatarTypes.twin ? 0.94 : 0.85 }
         },
         loras: [
           { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
