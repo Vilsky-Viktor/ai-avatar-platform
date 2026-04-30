@@ -2,6 +2,7 @@ import json
 import multiprocessing
 import os
 import threading
+import time
 
 from google.cloud import pubsub_v1
 
@@ -18,6 +19,13 @@ logger = log.get_logger(__name__)
 MESSAGE_CONCURRENCY = int(os.environ.get("MESSAGE_CONCURRENCY", "1"))
 
 
+def _fmt_elapsed(start: float) -> str:
+    total = int(time.monotonic() - start)
+    h, rem = divmod(total, 3600)
+    m, s = divmod(rem, 60)
+    return f"{h:02d}:{m:02d}:{s:02d}"
+
+
 def _publish_error(job: Job, message: str):
     job.status = "error"
     job.result.errorMessage = message
@@ -30,8 +38,16 @@ def _publish_error(job: Job, message: str):
 def make_process_job(semaphore: threading.Semaphore):
     def process_job(message: pubsub_v1.subscriber.message.Message):
         job: Job | None = None
+        semaphore_acquired = False
 
         try:
+            if not semaphore.acquire(blocking=False):
+                logger.info("Semaphore busy — nacking for redelivery by another pod")
+                message.nack()
+                return
+            semaphore_acquired = True
+            job_start = time.monotonic()
+
             try:
                 job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
             except Exception as parse_err:
@@ -104,34 +120,33 @@ def make_process_job(semaphore: threading.Semaphore):
             # Ack early — training takes many minutes; holding the lease risks redelivery
             message.ack()
 
-            with semaphore:
-                try:
-                    images_dir, control_dir = storage.write_dataset(images, aligned_prompts, dataset_dir, resolution)
-                    training.run_training(training_cfg.toolkit, job.id, out_dir, images_dir, control_dir, training_cfg.modelName)
-                except Exception as e:
-                    logger.error(f"Training failed: {e}", exc_info=True)
-                    storage.cleanup_lora_output_dir(job.id)
-                    storage.cleanup_dataset_dir(job.id)
-                    _publish_error(job, str(e))
-                    return
-                finally:
-                    storage.cleanup_dataset_dir(job.id)
+            try:
+                images_dir, control_dir = storage.write_dataset(images, aligned_prompts, dataset_dir, resolution)
+                training.run_training(training_cfg.toolkit, job.id, out_dir, images_dir, control_dir, training_cfg.modelName)
+            except Exception as e:
+                logger.error(f"Training failed after {_fmt_elapsed(job_start)}: {e}", exc_info=True)
+                storage.cleanup_lora_output_dir(job.id)
+                storage.cleanup_dataset_dir(job.id)
+                _publish_error(job, str(e))
+                return
+            finally:
+                storage.cleanup_dataset_dir(job.id)
 
-                logger.info(f"Uploading LoRA checkpoints to gs://{dest_prefix}/ ...")
-                try:
-                    n = storage.upload_lora_checkpoints(out_dir, dest_prefix)
-                    logger.info(f"{n} checkpoint(s) uploaded → gs://{dest_prefix}/")
-                except Exception as e:
-                    logger.error(f"Upload failed: {e}", exc_info=True)
-                    _publish_error(job, str(e))
-                    return
-                finally:
-                    storage.cleanup_lora_output_dir(job.id)
+            logger.info(f"Uploading LoRA checkpoints to gs://{dest_prefix}/ ...")
+            try:
+                n = storage.upload_lora_checkpoints(out_dir, dest_prefix)
+                logger.info(f"{n} checkpoint(s) uploaded → gs://{dest_prefix}/")
+            except Exception as e:
+                logger.error(f"Upload failed after {_fmt_elapsed(job_start)}: {e}", exc_info=True)
+                _publish_error(job, str(e))
+                return
+            finally:
+                storage.cleanup_lora_output_dir(job.id)
 
             job.status = "completed"
             job.result.mediaPath = dest_prefix
             mq.publish_status(job.model_dump())
-            logger.info(f"Job completed — LoRA checkpoints at {dest_prefix}")
+            logger.info(f"Job completed in {_fmt_elapsed(job_start)} — LoRA checkpoints at {dest_prefix}")
 
         except Exception as e:
             logger.error(f"Unexpected error processing job: {e}", exc_info=True)
@@ -144,6 +159,8 @@ def make_process_job(semaphore: threading.Semaphore):
             else:
                 message.nack()
         finally:
+            if semaphore_acquired:
+                semaphore.release()
             clear_job_id()
 
     return process_job
