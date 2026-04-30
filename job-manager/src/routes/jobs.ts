@@ -1,18 +1,7 @@
 import { Router } from 'express';
-import {
-  getByGroupId,
-  getByAvatarId,
-  genTrainingPhotoSet,
-  genTrainingSyntheticFrontIdPhoto,
-  genTrainingSyntheticIdPhotos,
-  genTrainingTwinIdPhotos,
-  genAvatarPhoto,
-  restart,
-  trainLoras,
-  update,
-  deleteById,
-  deleteByAvatarId,
-} from '../controllers/jobController';
+import { getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId } from '../controllers/jobController';
+import { trainLoras, genTrainingPhotoSet, genTrainingSyntheticFrontIdPhoto, genTrainingSyntheticIdPhotos, genTrainingTwinIdPhotos } from '../controllers/trainingController';
+import { genAvatarPhoto } from '../controllers/contentController';
 
 const router = Router();
 
