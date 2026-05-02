@@ -31,7 +31,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
 
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
-      // .filter(job => [1, 2, 3, 4, 5, 6].includes(job.order!))
+      .filter(job => [1, 2, 3, 4, 5, 6].includes(job.order!))
       .map((job: InferenceJob) => job.result?.mediaPath!);
 
     const job: InferenceJob = {
@@ -40,7 +40,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       mediaType: MediaTypes.image,
       target: JobTargets.avatarMedia,
       status: JobStatuses.pending,
-      maxRuns: 5,
+      maxRuns: 3,
       input: {
         checkDependencies: false,
         inference: {
@@ -59,7 +59,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
         loras: [
           { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
           { path: avatar.loras.qwenEdit2511.path, scale: 1.0, filename: avatar.loras.qwenEdit2511.filename },
-          { path: "models/qwen-edit-2511/loras/qwen-image-realism-lora/flymy_realism.safetensors", scale: 1.0 },
+          // { path: "models/qwen-edit-2511/loras/qwen-image-realism-lora/flymy_realism.safetensors", scale: 1.0 },
         ],
       },
       metadata: {

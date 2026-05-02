@@ -186,6 +186,7 @@ function MediaCard({
                 <img
                     src={url}
                     alt={`Avatar photo ${idx + 1}`}
+                    loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
                     onLoad={(e) => {
                         const img = e.currentTarget;

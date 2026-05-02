@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { getAvatarBySlug, genAvatarPhoto, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '../types/avatar';
-import MediaCard from '../components/MediaCard';
+import LazyMediaCard from '../components/LazyMediaCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
 import CreateMediaCard from '../components/avatar/CreateMediaCard';
 import CreateMediaModal from '../components/avatar/CreateMediaModal';
@@ -186,8 +186,9 @@ function AvatarPage() {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <CreateMediaCard onClick={openCreateMedia} />
+
                             {jobs.map((job, idx) => (
-                                <MediaCard
+                                <LazyMediaCard
                                     key={idx} 
                                     job={job} 
                                     idx={idx} 
