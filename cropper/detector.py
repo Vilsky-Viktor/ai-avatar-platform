@@ -69,11 +69,11 @@ def crop_headshot(image: Image.Image, target_w: int, target_h: int) -> Image.Ima
 
     # For profile/quarter views add extra padding on the nose side so the
     # forehead (which has no landmark) is not clipped. Frontal view gets symmetric base padding.
-    PAD_SIDE        = 0.20
-    PAD_TOP         = 0.25
+    PAD_SIDE        = 0.21
+    PAD_TOP         = 0.50
     PAD_BOTTOM      = 0.12
-    TURN_SCALE_SIDE = 0.40  # extra horizontal padding toward the nose side
-    TURN_SCALE_TOP  = 0.70  # extra top padding — crown sits higher above ear in profile
+    TURN_SCALE_SIDE = 0.30  # extra horizontal padding toward the nose side
+    TURN_SCALE_TOP  = 0.30  # extra top padding — crown sits higher above ear in profile
 
     left   = min_x - span_x * (PAD_SIDE + TURN_SCALE_SIDE * max(0.0, -face_turn))
     right  = max_x + span_x * (PAD_SIDE + TURN_SCALE_SIDE * max(0.0,  face_turn))

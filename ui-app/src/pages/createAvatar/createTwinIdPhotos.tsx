@@ -25,7 +25,7 @@ import { listenToCollectionByGroupId } from '../../services/db';
 import { scrollToTop, scrollToBottom } from '../../utils/scroller';
 
 
-const CROP_SIZE: [number, number] = [1328, 1328]
+const CROP_SIZE: [number, number] = [1312, 1312]
 
 
 function CreateTwinIdPhotosPage() {
