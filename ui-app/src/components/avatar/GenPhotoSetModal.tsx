@@ -11,17 +11,17 @@ const PHOTO_SETS: PhotoSetOption[] = [
     {
         id: 'whatsapp-stickers',
         name: 'Whatsapp Stickers',
-        description: 'Generate Whatsapp stickers of your avatar with different emotions',
+        description: 'Generate Whatsapp stickers of your avatar with different emotions: sad, angry, smiling, laughing, disgusted, contempt, shy, scared, sleepy, confused, confident, surprised, anxious',
     },
     {
         id: 'around-the-world',
         name: 'Around the World',
-        description: 'Generate photos of your avatar in different locations around the world',
+        description: 'Generate photos of your avatar in different locations around the world: France, Italy, Egypt, Israel, Thailand, Ethiopia, Turkey, Russia, USA, Mexico',
     },
     {
         id: 'outfit-styles',
         name: 'Outfit Styles',
-        description: 'Generate photos of your avatar wearing different outfit styles',
+        description: 'Generate photos of your avatar wearing different outfit styles: business formal, smart casual, sport elegant, streetwear, casual chic, athleisure, business casual, evening glam, bohemian, minimalist, old money, preppy, vintage, edgy/rock, beachwear',
     },
 ];
 
@@ -38,7 +38,7 @@ function GenPhotoSetModal({ isOpen, onClose, onGenerate }: Props) {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
-            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-3 p-10 w-[580px] animate-modal-card">
+            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-3 p-10 w-[720px] animate-modal-card">
 
                 <button
                     onClick={onClose}
@@ -47,14 +47,14 @@ function GenPhotoSetModal({ isOpen, onClose, onGenerate }: Props) {
                     <X size={25} />
                 </button>
 
-                <div className='mt-10 overflow-y-auto max-h-[356px] flex flex-col gap-3 pr-1'>
+                <div className='mt-10 overflow-y-auto max-h-[500px] flex flex-col gap-3 pr-1'>
                     {PHOTO_SETS.map((set) => (
                         <div
                             key={set.id}
                             className="flex items-center justify-between gap-6 px-6 py-5 rounded-2xl border border-base-content/10 hover:border-primary/30 hover:bg-primary/[0.02] transition-all duration-200 shrink-0"
                         >
                             <div className="flex flex-col gap-1 min-w-0">
-                                <span className="text-sm font-semibold tracking-wide text-base-content">
+                                <span className="text-md tracking-wide text-base-content">
                                     {set.name}
                                 </span>
                                 <span className="text-[12px] text-base-content/40 leading-relaxed">
