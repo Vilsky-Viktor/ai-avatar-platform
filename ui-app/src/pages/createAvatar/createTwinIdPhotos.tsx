@@ -9,7 +9,7 @@ import { type Avatar } from '../../types/avatar';
 import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getAvatarById, cropHeadshot } from '../../services/apiGateway';
 import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
-import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
+import { uploadMediaToBucket, getMediaUrlFromPath, deleteMediaFromBucket } from '../../services/storage';
 import { 
     initialUploadedIdPhotoSet,
     getAvatarData,
@@ -42,6 +42,8 @@ function CreateTwinIdPhotosPage() {
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
     const [croppingIndices, setCroppingIndices] = useState<number[]>([]);
+    const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
+    const [generateClicked, setGenerateClicked] = useState(false);
 
     const uploadedPhotosConfig = [
         { label: 'Front', name: 'front', ref: useRef<HTMLInputElement>(null) },
@@ -153,6 +155,19 @@ function CreateTwinIdPhotosPage() {
         });
     };
 
+    const removePhotoAtIndex = (index: number) => {
+        const name = uploadedPhotosConfig[index].name;
+        setUploadedPhotos(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], photo: null, mediaUrl: undefined };
+            return next;
+        });
+        Promise.all([
+            deleteMediaFromBucket(getRawMediaPath(name)).catch(() => {}),
+            deleteMediaFromBucket(getUploadedMediaPath(name)).catch(() => {}),
+        ]);
+    };
+
     const setDraggingAtIndex = (index: number, isDragging: boolean) => {
         setUploadedPhotos((prev) => {
             const next = [...prev];
@@ -169,6 +184,7 @@ function CreateTwinIdPhotosPage() {
         if (!file.type.startsWith('image/')) return;
 
         setCroppingIndices(prev => [...prev, index]);
+        setSlotErrors(prev => { const next = { ...prev }; delete next[index]; return next; });
 
         try {
             const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -184,8 +200,9 @@ function CreateTwinIdPhotosPage() {
             const { path: croppedPath } = await cropHeadshot(rawPath, CROP_SIZE[0], CROP_SIZE[1]);
             const downloadUrl = await getMediaUrlFromPath(croppedPath);
             updatePhotoAtIndex(index, downloadUrl);
-        } catch (error) {
-            console.error('Failed to crop and upload photo:', error);
+        } catch (error: any) {
+            const message = error?.response?.data?.detail ?? 'Failed to process photo';
+            setSlotErrors(prev => ({ ...prev, [index]: message }));
         } finally {
             setCroppingIndices(prev => prev.filter(i => i !== index));
         }
@@ -234,6 +251,7 @@ function CreateTwinIdPhotosPage() {
     }
 
     const createJobs = async () => {
+        setGenerateClicked(true);
         const emptyJobs = Array(NUM_ID_PHOTOS).fill(null);
         setJobs(emptyJobs);
 
@@ -330,9 +348,10 @@ function CreateTwinIdPhotosPage() {
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         onFileUpload={handleFileUpload}
-                        onRemovePhoto={(index) => updatePhotoAtIndex(index, null)}
-                        removable={!stepLocked() && !generatingStarted()}
+                        onRemovePhoto={removePhotoAtIndex}
+                        removable={!generateClicked}
                         croppingIndices={croppingIndices}
+                        slotErrors={slotErrors}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-12">

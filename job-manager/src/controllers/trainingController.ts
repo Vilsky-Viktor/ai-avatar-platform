@@ -179,10 +179,10 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
   const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
   const idPhotoSet: IdPhotoSetPaths = {
     uploaded: {
-      front: `${avatarMediaPath}/uploaded/front-${trainingDimensions}.png`,
-      frontSmile: `${avatarMediaPath}/uploaded/frontSmile-${trainingDimensions}.png`,
-      rightQuarter: `${avatarMediaPath}/uploaded/rightQuarter-${trainingDimensions}.png`,
-      leftQuarter: `${avatarMediaPath}/uploaded/leftQuarter-${trainingDimensions}.png`,
+      front: `${avatarMediaPath}/uploaded/front-cropped-${trainingDimensions}.png`,
+      frontSmile: `${avatarMediaPath}/uploaded/frontSmile-cropped-${trainingDimensions}.png`,
+      rightQuarter: `${avatarMediaPath}/uploaded/rightQuarter-cropped-${trainingDimensions}.png`,
+      leftQuarter: `${avatarMediaPath}/uploaded/leftQuarter-cropped-${trainingDimensions}.png`,
     },
     generated: {
       front: `${avatarMediaPath}/001-training-photo-set-${groupId}-${trainingDimensions}.png`,

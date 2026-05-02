@@ -1,4 +1,4 @@
-import { User, Trash2 } from 'lucide-react';
+import { User, Trash2, Loader2, Sparkles, CircleOff } from 'lucide-react';
 import type { RefObject } from 'react';
 import type { UploadedIdPhoto } from '../../types/avatarCreation';
 
@@ -18,9 +18,10 @@ type Props = {
     onRemovePhoto: (index: number) => void;
     removable?: boolean;
     croppingIndices?: number[];
+    slotErrors?: Record<number, string>;
 };
 
-function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, onDrop, onFileUpload, onRemovePhoto, removable, croppingIndices }: Props) {
+function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, onDrop, onFileUpload, onRemovePhoto, removable, croppingIndices, slotErrors }: Props) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full mt-8">
             {viewConfig.map((view, index) => {
@@ -28,18 +29,18 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                 const imageSrc = photoData?.photo || photoData?.mediaUrl;
                 const hasPhoto = !!imageSrc;
                 const isCropping = croppingIndices?.includes(index) ?? false;
+                const slotError = slotErrors?.[index];
 
                 return (
                     <div
                         key={index}
-                        onDragOver={(e) => !isCropping && onDragOver(index, e)}
-                        onDragLeave={(e) => !isCropping && onDragLeave(index, e)}
-                        onDrop={(e) => !isCropping && onDrop(index, e)}
+                        onDragOver={(e) => !isCropping && !slotError && onDragOver(index, e)}
+                        onDragLeave={(e) => !isCropping && !slotError && onDragLeave(index, e)}
+                        onDrop={(e) => !isCropping && !slotError && onDrop(index, e)}
                         onClick={() => !hasPhoto && !isCropping && view.ref.current?.click()}
                         className={`relative rounded-[1rem] border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-700 overflow-hidden
-                            ${hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'}
-                            ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}
-                            ${isCropping ? 'cursor-not-allowed' : ''}`}
+                            ${isCropping ? 'border-primary/20 bg-primary/[0.02] cursor-not-allowed' : slotError ? 'border-error/20 bg-error/[0.02] cursor-pointer hover:border-error/40' : hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'}
+                            ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
                     >
                         <input
                             type="file"
@@ -50,9 +51,26 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                         />
 
                         {isCropping ? (
-                            <div className="flex flex-col items-center gap-3">
-                                <span className="loading loading-spinner loading-lg text-primary" />
-                                <span className="text-[11px] font-medium uppercase tracking-widest text-base-content/40">Cropping…</span>
+                            <div className="flex flex-col items-center gap-6">
+                                <div className="relative">
+                                    <Loader2 size={60} strokeWidth={1} className="text-primary animate-spin" />
+                                    <Sparkles size={20} className="absolute -top-3 -right-3 text-primary animate-pulse" />
+                                </div>
+                                <div className="text-center">
+                                    <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">Cropping</span>
+                                    <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">Processing image</p>
+                                </div>
+                            </div>
+                        ) : slotError ? (
+                            <div className="flex flex-col items-center gap-6 px-4">
+                                <div className="relative">
+                                    <CircleOff size={50} strokeWidth={1} className="text-error/60 animate-pulse" />
+                                </div>
+                                <div className="text-center">
+                                    <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-error">Not detected</span>
+                                    <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">{slotError}</p>
+                                    <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/30 mt-2">Click to try again</p>
+                                </div>
                             </div>
                         ) : hasPhoto ? (
                             <>
@@ -91,7 +109,7 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                             </div>
                         )}
 
-                        {!hasPhoto && !isCropping && (
+                        {!hasPhoto && !isCropping && !slotError && (
                             <>
                                 <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
                                 <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />

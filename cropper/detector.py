@@ -40,7 +40,7 @@ def crop_headshot(image: Image.Image, target_w: int, target_h: int) -> Image.Ima
     results = _get_pose().process(img_array)
 
     if not results.pose_landmarks:
-        return _fallback_crop(img_rgb, target_w, target_h)
+        raise ValueError("No face or shoulders detected in this image")
 
     lm = results.pose_landmarks.landmark
     visible = [
@@ -50,7 +50,7 @@ def crop_headshot(image: Image.Image, target_w: int, target_h: int) -> Image.Ima
     ]
 
     if len(visible) < _MIN_LANDMARKS:
-        return _fallback_crop(img_rgb, target_w, target_h)
+        raise ValueError("Not enough facial landmarks detected — please use a clear front or quarter-view photo")
 
     xs = [p[0] for p in visible]
     ys = [p[1] for p in visible]
@@ -72,8 +72,8 @@ def crop_headshot(image: Image.Image, target_w: int, target_h: int) -> Image.Ima
     PAD_SIDE        = 0.20
     PAD_TOP         = 0.25
     PAD_BOTTOM      = 0.12
-    TURN_SCALE_SIDE = 0.30  # extra horizontal padding toward the nose side
-    TURN_SCALE_TOP  = 0.60  # extra top padding — crown sits higher above ear in profile
+    TURN_SCALE_SIDE = 0.40  # extra horizontal padding toward the nose side
+    TURN_SCALE_TOP  = 0.70  # extra top padding — crown sits higher above ear in profile
 
     left   = min_x - span_x * (PAD_SIDE + TURN_SCALE_SIDE * max(0.0, -face_turn))
     right  = max_x + span_x * (PAD_SIDE + TURN_SCALE_SIDE * max(0.0,  face_turn))
@@ -113,21 +113,3 @@ def _fit_to_ratio(
     bottom = min(float(img_h), bottom)
 
     return int(left), int(top), int(right), int(bottom)
-
-
-def _fallback_crop(image: Image.Image, target_w: int, target_h: int) -> Image.Image:
-    """Top-biased center crop when no pose is detected."""
-    w, h         = image.size
-    target_ratio = target_w / target_h
-    current_ratio = w / h
-
-    if current_ratio > target_ratio:
-        new_w = int(h * target_ratio)
-        left  = (w - new_w) // 2
-        image = image.crop((left, 0, left + new_w, h))
-    else:
-        new_h = int(w / target_ratio)
-        top   = max(0, (h - new_h) // 4)  # bias toward top for portraits
-        image = image.crop((0, top, w, top + new_h))
-
-    return image.resize((target_w, target_h), Image.LANCZOS)

@@ -28,6 +28,8 @@ def crop_headshot_route(req: CropRequest) -> dict:
         path = crop_headshot_to_bucket(req.image_path, req.width, req.height)
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
