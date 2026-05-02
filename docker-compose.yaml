@@ -39,6 +39,7 @@ services:
       - AVATAR_URL=http://avatar:3200
       - JOB_MANAGER_URL=http://job-manager:3300
       - VOICE_URL=http://voice:3600
+      - CROPPER_URL=http://cropper:3800
 
   user:
     <<: *default-dns

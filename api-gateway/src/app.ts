@@ -6,6 +6,7 @@ import userRoutes from './routes/users';
 import avatarRoutes from './routes/avatars';
 import jobRoutes from './routes/jobs';
 import voiceRoutes from './routes/voices';
+import cropperRoutes from './routes/cropper';
 import { errorHandler } from './middlewares/errorHandler';
 import { validateAuth } from './middlewares/auth';
 import authRoutes from './routes/auth';
@@ -30,6 +31,7 @@ app.use('/users', validateAuth, userRoutes);
 app.use('/avatars', validateAuth, avatarRoutes);
 app.use('/jobs', validateAuth, jobRoutes);
 app.use('/voices', validateAuth, voiceRoutes);
+app.use('/cropper', validateAuth, cropperRoutes);
 
 app.use(errorHandler);
 
