@@ -17,6 +17,11 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
+export const linkGoogleAccount = async (googleIdToken: string): Promise<{ customToken: string }> => {
+  const res = await apiClient.post('/auth/link-google', { googleIdToken });
+  return res.data;
+};
+
 export const syncUser = async (user: FirebaseUser): Promise<User> => {
   try {
     const userInfo: User = {

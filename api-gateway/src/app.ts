@@ -8,6 +8,7 @@ import jobRoutes from './routes/jobs';
 import voiceRoutes from './routes/voices';
 import { errorHandler } from './middlewares/errorHandler';
 import { validateAuth } from './middlewares/auth';
+import authRoutes from './routes/auth';
 import admin from 'firebase-admin';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
@@ -24,6 +25,7 @@ app.use(pinoHttp({ logger, autoLogging: false }));
 app.use(cors());
 app.use(express.json());
 
+app.use('/auth', authRoutes);
 app.use('/users', validateAuth, userRoutes);
 app.use('/avatars', validateAuth, avatarRoutes);
 app.use('/jobs', validateAuth, jobRoutes);

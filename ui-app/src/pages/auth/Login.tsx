@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, signInWithCustomToken, GoogleAuthProvider, linkWithCredential } from "firebase/auth";
 import { auth } from '../../firebase';
-import { syncUser } from '../../services/apiGateway';
+import { syncUser, linkGoogleAccount } from '../../services/apiGateway';
 import Loading from '../../components/Loading';
 import { ScanFace, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { scrollToTop } from '../../utils/scroller';
@@ -53,8 +53,26 @@ function LoginPage() {
             const { user } = await signInWithPopup(auth, provider);
             await syncUser(user);
             navigate('/');
-        } catch (error) {
-            setError('Google sign-in failed.');
+        } catch (error: any) {
+            if (error.code === 'auth/account-exists-with-different-credential') {
+                const cred = GoogleAuthProvider.credentialFromError(error);
+                const googleIdToken = (cred as any)?.idToken;
+                if (cred && googleIdToken) {
+                    try {
+                        const { customToken } = await linkGoogleAccount(googleIdToken);
+                        const { user } = await signInWithCustomToken(auth, customToken);
+                        await linkWithCredential(user, cred);
+                        await syncUser(user);
+                        navigate('/');
+                    } catch {
+                        setError('Failed to link Google account. Please try again.');
+                    }
+                } else {
+                    setError('Google sign-in failed.');
+                }
+            } else {
+                setError('Google sign-in failed.');
+            }
         } finally {
             setLoading(false);
         }
@@ -65,7 +83,7 @@ function LoginPage() {
             {loading ? <Loading /> : (
                 <div className="min-h-screen w-full flex flex-col items-center justify-center bg-base-100 selection:bg-primary/20 font-sans">
                     <div className="w-full max-w-[400px] px-8 py-10">
-                        
+
                         <div className="flex items-center justify-center gap-3 mb-12 group cursor-default">
                             <div className="p-2.5 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-all duration-500">
                                 <ScanFace size={32} className="text-primary" strokeWidth={1.5} />
@@ -89,22 +107,22 @@ function LoginPage() {
 
                         <form onSubmit={handlePlainLogin} className="space-y-6">
                             <div className="space-y-1">
-                                <input 
-                                    type="email" 
+                                <input
+                                    type="email"
                                     placeholder="Email Address"
-                                    className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20" 
-                                    value={email} 
-                                    onChange={(e) => setEmail(e.target.value)} 
+                                    className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
                                 <div className="relative group">
-                                    <input 
-                                        type={showPassword ? "text" : "password"} 
+                                    <input
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="Password"
-                                        className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20" 
-                                        value={password} 
-                                        onChange={(e) => setPassword(e.target.value)} 
+                                        className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                     />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-base-content/30 hover:text-primary transition-colors"
@@ -114,10 +132,10 @@ function LoginPage() {
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={!isFormValid()}
-                                className="btn btn-primary w-full h-12 rounded-xl border-none text-base font-bold normal-case shadow-[0_8px_16px_-6px_rgba(var(--p),0.4)] hover:shadow-[0_12px_20px_-6px_rgba(var(--p),0.5)] hover:-translate-y-0.5 transition-all duration-300 mt-2 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed disabled:transform-none" 
+                                className="btn btn-primary w-full h-12 rounded-xl border-none text-base font-bold normal-case shadow-[0_8px_16px_-6px_rgba(var(--p),0.4)] hover:shadow-[0_12px_20px_-6px_rgba(var(--p),0.5)] hover:-translate-y-0.5 transition-all duration-300 mt-2 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed disabled:transform-none"
                             >
                                 Continue
                             </button>
@@ -130,9 +148,9 @@ function LoginPage() {
                                 <div className="flex-grow border-t border-base-content/5"></div>
                             </div>
 
-                            <button 
+                            <button
                                 type="button"
-                                className="btn btn-ghost w-full h-12 rounded-xl border border-base-content/10 bg-base-100 hover:bg-base-200 transition-all duration-300 gap-2" 
+                                className="btn btn-ghost w-full h-12 rounded-xl border border-base-content/10 bg-base-100 hover:bg-base-200 transition-all duration-300 gap-2"
                                 onClick={handleGoogleLogin}
                             >
                                 <svg width="18" height="18" viewBox="0 0 48 48">
@@ -147,7 +165,7 @@ function LoginPage() {
 
                         <footer className="mt-8">
                             <p className="text-xs text-base-content/30 font-medium">
-                                No account? 
+                                No account?
                                 <Link to="/auth/registration" className="ml-2 text-base-content/60 font-bold border-b border-base-content/10 hover:border-primary hover:text-primary transition-all duration-300">
                                     Create one
                                 </Link>

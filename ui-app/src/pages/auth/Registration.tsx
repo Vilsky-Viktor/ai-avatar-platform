@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithPopup, signInWithCustomToken, GoogleAuthProvider, updateProfile, linkWithCredential } from "firebase/auth";
 import { auth } from '../../firebase';
-import { syncUser } from '../../services/apiGateway';
+import { syncUser, linkGoogleAccount } from '../../services/apiGateway';
 import Loading from '../../components/Loading';
 import { ScanFace, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { scrollToTop } from '../../utils/scroller';
@@ -15,10 +15,10 @@ function RegistrationPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
-    
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -29,7 +29,7 @@ function RegistrationPage() {
     const isFormValid = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const passRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{7,}$/;
-        
+
         return (
             name.trim().length > 0 &&
             emailRegex.test(email) &&
@@ -41,7 +41,7 @@ function RegistrationPage() {
     const handlePlainRegistration = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!isFormValid()) return;
-        
+
         setError('');
         try {
             setLoading(true);
@@ -52,7 +52,7 @@ function RegistrationPage() {
             navigate('/');
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
-                setError('This email is already in use.');
+                setError('This email is already registered. Sign in instead, or use Google if you registered with Google.');
             } else {
                 setError('Registration failed. Please try again.');
             }
@@ -69,8 +69,26 @@ function RegistrationPage() {
             const { user } = await signInWithPopup(auth, provider);
             await syncUser(user);
             navigate('/');
-        } catch (error) {
-            setError('Google registration failed.');
+        } catch (error: any) {
+            if (error.code === 'auth/account-exists-with-different-credential') {
+                const cred = GoogleAuthProvider.credentialFromError(error);
+                const googleIdToken = (cred as any)?.idToken;
+                if (cred && googleIdToken) {
+                    try {
+                        const { customToken } = await linkGoogleAccount(googleIdToken);
+                        const { user } = await signInWithCustomToken(auth, customToken);
+                        await linkWithCredential(user, cred);
+                        await syncUser(user);
+                        navigate('/');
+                    } catch {
+                        setError('Failed to link Google account. Please try again.');
+                    }
+                } else {
+                    setError('Google sign-in failed.');
+                }
+            } else {
+                setError('Google registration failed.');
+            }
         } finally {
             setLoading(false);
         }
@@ -81,7 +99,7 @@ function RegistrationPage() {
             {loading ? <Loading /> : (
                 <div className="min-h-screen w-full flex flex-col items-center justify-center bg-base-100 selection:bg-primary/20 font-sans">
                     <div className="w-full max-w-[400px] px-8 py-10">
-                        
+
                         <div className="flex items-center justify-center gap-3 mb-12 group cursor-default">
                             <div className="p-2.5 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-all duration-500">
                                 <ScanFace size={32} className="text-primary" strokeWidth={1.5} />
@@ -105,30 +123,30 @@ function RegistrationPage() {
 
                         <form onSubmit={handlePlainRegistration} className="space-y-4">
                             <div className="space-y-1">
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     placeholder="Full Name"
-                                    className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20" 
-                                    value={name} 
-                                    onChange={(e) => setName(e.target.value)} 
+                                    className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
                                 />
-                                <input 
-                                    type="email" 
+                                <input
+                                    type="email"
                                     placeholder="Email"
-                                    className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20" 
-                                    value={email} 
-                                    onChange={(e) => setEmail(e.target.value)} 
+                                    className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
-                                
+
                                 <div className="relative group">
-                                    <input 
-                                        type={showPassword ? "text" : "password"} 
+                                    <input
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="Password"
-                                        className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20" 
-                                        value={password} 
-                                        onChange={(e) => setPassword(e.target.value)} 
+                                        className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                     />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-base-content/30 hover:text-primary transition-colors"
@@ -138,14 +156,14 @@ function RegistrationPage() {
                                 </div>
 
                                 <div className="relative group">
-                                    <input 
-                                        type={showConfirmPassword ? "text" : "password"} 
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
                                         placeholder="Confirm password"
-                                        className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20" 
-                                        value={passwordConfirmation} 
-                                        onChange={(e) => setPasswordConfirmation(e.target.value)} 
+                                        className="w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-300 outline-none text-base placeholder:text-base-content/20"
+                                        value={passwordConfirmation}
+                                        onChange={(e) => setPasswordConfirmation(e.target.value)}
                                     />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                         className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-base-content/30 hover:text-primary transition-colors"
@@ -155,13 +173,13 @@ function RegistrationPage() {
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={!isFormValid()}
                                 className="
                                     btn btn-primary w-full h-12 rounded-xl border-none text-base font-bold normal-case mt-4
-                                    shadow-[0_8px_16px_-6px_rgba(var(--p),0.4)] 
-                                    hover:shadow-[0_12px_20px_-6px_rgba(var(--p),0.5)] 
+                                    shadow-[0_8px_16px_-6px_rgba(var(--p),0.4)]
+                                    hover:shadow-[0_12px_20px_-6px_rgba(var(--p),0.5)]
                                     hover:-translate-y-0.5 transition-all duration-300
                                     disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed disabled:transform-none
                                 "
@@ -177,9 +195,9 @@ function RegistrationPage() {
                                 <div className="flex-grow border-t border-base-content/5"></div>
                             </div>
 
-                            <button 
+                            <button
                                 type="button"
-                                className="btn btn-ghost w-full h-12 rounded-xl border border-base-content/10 bg-base-100 hover:bg-base-200 gap-2 transition-all duration-300" 
+                                className="btn btn-ghost w-full h-12 rounded-xl border border-base-content/10 bg-base-100 hover:bg-base-200 gap-2 transition-all duration-300"
                                 onClick={handleGoogleRegistration}
                             >
                                 <svg width="18" height="18" viewBox="0 0 48 48">
@@ -194,7 +212,7 @@ function RegistrationPage() {
 
                         <footer className="mt-8 text-left">
                             <p className="text-xs text-base-content/30 tracking-tight font-medium">
-                                Already have an account? 
+                                Already have an account?
                                 <Link to="/auth/login" className="ml-2 text-base-content/60 font-bold border-b border-base-content/10 hover:border-primary hover:text-primary transition-all duration-300">
                                     Login
                                 </Link>
