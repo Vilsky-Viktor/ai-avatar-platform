@@ -7,7 +7,8 @@ import LazyMediaCard from '../components/LazyMediaCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
 import CreateMediaCard from '../components/avatar/CreateMediaCard';
 import CreateMediaModal from '../components/avatar/CreateMediaModal';
-import GenerateImageModal from '../components/avatar/GenerateImageModal';
+import GenImageModal from '../components/avatar/GenImageModal';
+import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import { type InferenceJob, type Job, type PhotoJobRequest, JobStatuses, JobTargets, MediaType } from '../types/job';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
@@ -29,6 +30,7 @@ function AvatarPage() {
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
     const [createMediaOpen, setCreateMediaOpen] = useState(false);
     const [generateImageOpen, setGenerateImageOpen] = useState(false);
+    const [photoSetOpen, setPhotoSetOpen] = useState(false);
     const [bgBlurred, setBgBlurred] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
 
@@ -36,6 +38,8 @@ function AvatarPage() {
     const closeCreateMedia = () => { setBgBlurred(false); setCreateMediaOpen(false); };
     const openGenerateImage = () => { setCreateMediaOpen(false); setGenerateImageOpen(true); };
     const closeGenerateImage = () => { setBgBlurred(false); setGenerateImageOpen(false); };
+    const openPhotoSet = () => { setCreateMediaOpen(false); setPhotoSetOpen(true); };
+    const closePhotoSet = () => { setBgBlurred(false); setPhotoSetOpen(false); };
 
     useEffect(() => { initPage(); }, []);
 
@@ -212,12 +216,18 @@ function AvatarPage() {
                 isOpen={createMediaOpen}
                 onClose={closeCreateMedia}
                 onImage={openGenerateImage}
+                onPhotoSet={openPhotoSet}
             />
-            <GenerateImageModal
+            <GenImageModal
                 isOpen={generateImageOpen}
                 onClose={closeGenerateImage}
                 avatar={avatar}
                 onGenerate={handleGenerateImage}
+            />
+            <GenPhotoSetModal
+                isOpen={photoSetOpen}
+                onClose={closePhotoSet}
+                onGenerate={(id: string) => console.log('photo set selected:', id)}
             />
         </>
     );

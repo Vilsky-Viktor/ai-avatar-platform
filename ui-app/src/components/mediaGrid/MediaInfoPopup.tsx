@@ -1,5 +1,6 @@
 import { Maximize2, LayoutTemplate, MessageSquare, ScanFace, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import type { InferenceJob } from '../../types/job';
 import { AVATAR_REFERENCE_NAME } from '../../utils/prompt';
 
@@ -32,6 +33,7 @@ function InfoRow({ icon, label, value, action }: RowProps) {
 }
 
 function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
+    useScrollLock();
     const ratio = job.metadata?.ratio;
     const rawPrompt = job.input?.inference?.prompt;
     const prompt = rawPrompt?.startsWith(`${AVATAR_REFERENCE_NAME} `)

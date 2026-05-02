@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import type { Avatar } from '../../types/avatar';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Ratio = '9:16' | '3:4' | '1:1' | '4:3' | '16:9';
 
@@ -21,7 +22,7 @@ type Props = {
     onGenerate: (prompt: string, ratio: Ratio, referenceImages: File[]) => Promise<void>;
 };
 
-function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
+function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
     const [ratio, setRatio] = useState<Ratio>('9:16');
     const [loading, setLoading] = useState(false);
@@ -48,6 +49,7 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
         return () => urls.forEach(url => url && URL.revokeObjectURL(url));
     }, [slots]);
 
+    useScrollLock(isOpen);
     if (!isOpen) return null;
 
     const handleFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,4 +165,4 @@ function GenerateImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     );
 }
 
-export default GenerateImageModal;
+export default GenImageModal;

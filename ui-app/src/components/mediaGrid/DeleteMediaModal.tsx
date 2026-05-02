@@ -1,4 +1,5 @@
 import { AlertTriangle, Trash2 } from 'lucide-react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {
     isDeleting: boolean;
@@ -7,6 +8,7 @@ type Props = {
 };
 
 function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
+    useScrollLock();
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div

@@ -1,5 +1,6 @@
 import { X, Minus, Plus, Check } from 'lucide-react';
 import Cropper, { type Point, type Area } from 'react-easy-crop';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {
     tempImage: string | null;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 function ImageCropperModal({ tempImage, crop, zoom, setCrop, setZoom, onCropAreaChange, onClose, onApply }: Props) {
+    useScrollLock(!!tempImage);
     if (!tempImage) return null;
 
     return (

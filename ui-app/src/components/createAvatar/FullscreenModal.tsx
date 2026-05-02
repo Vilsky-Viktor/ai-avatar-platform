@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {
     src: string | null;
@@ -19,6 +20,8 @@ function FullscreenModal({ src, rect, onClose }: Props) {
     useEffect(() => {
         if (src) setVisible(true);
     }, [src]);
+
+    useScrollLock(!!src);
 
     useEffect(() => {
         if (!src) return;

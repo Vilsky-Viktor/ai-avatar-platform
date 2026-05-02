@@ -1,4 +1,5 @@
 import { Image, Video, X, Images } from 'lucide-react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {
     isOpen: boolean;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 function CreateMediaModal({ isOpen, onClose, onImage, onVideo, onPhotoSet }: Props) {
+    useScrollLock(isOpen);
     if (!isOpen) return null;
 
     return (
