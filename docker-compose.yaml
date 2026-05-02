@@ -186,3 +186,18 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
+
+  cropper:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./cropper
+    ports:
+      - "3800:3800"
+    volumes:
+      - ./cropper:/app
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
