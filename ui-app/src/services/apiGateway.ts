@@ -17,6 +17,11 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
+export const cropHeadshot = async (imagePath: string, width: number, height: number): Promise<{ path: string }> => {
+  const res = await apiClient.post('/cropper/crop-headshot', { image_path: imagePath, width, height });
+  return res.data;
+};
+
 export const linkGoogleAccount = async (googleIdToken: string): Promise<{ customToken: string }> => {
   const res = await apiClient.post('/auth/link-google', { googleIdToken });
   return res.data;

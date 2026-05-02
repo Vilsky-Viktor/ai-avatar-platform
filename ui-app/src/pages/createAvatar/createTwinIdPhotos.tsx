@@ -1,18 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
-import ImageCropperModal from "../../components/createAvatar/ImageCropperModal";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
 import PillSelect from '../../components/PillSelect';
 import { type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getAvatarById } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getAvatarById, cropHeadshot } from '../../services/apiGateway';
 import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
-import { type Point, type Area } from 'react-easy-crop';
-import { getCroppedImg } from '../../utils/imageUtils';
 import { 
     initialUploadedIdPhotoSet,
     getAvatarData,
@@ -44,11 +41,7 @@ function CreateTwinIdPhotosPage() {
 
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
-    const [tempImage, setTempImage] = useState<string | null>(null);
-    const [activeIndex, setActiveIndex] = useState<number | null>(null);
-    const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-    const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [croppingIndices, setCroppingIndices] = useState<number[]>([]);
 
     const uploadedPhotosConfig = [
         { label: 'Front', name: 'front', ref: useRef<HTMLInputElement>(null) },
@@ -149,7 +142,7 @@ function CreateTwinIdPhotosPage() {
     }
 
     const getUploadedMediaPath = (name: string) => {
-        return `media/${user?.id}-user/avatars/${newAvatarData.avatarId}-avatar/images/uploaded/${name}-${CROP_SIZE[0]}x${CROP_SIZE[1]}.png`;
+        return `media/${user?.id}-user/avatars/${newAvatarData.avatarId}-avatar/images/uploaded/${name}-cropped-${CROP_SIZE[0]}x${CROP_SIZE[1]}.png`;
     }
 
     const updatePhotoAtIndex = (index: number, photo: string | null) => {
@@ -168,37 +161,41 @@ function CreateTwinIdPhotosPage() {
         });
     };
 
-    const onFileSelected = (index: number, file: File) => {
-        if (!file.type.startsWith('image/')) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-            setTempImage(reader.result as string);
-            setActiveIndex(index);
-            setZoom(1);
-            setCrop({ x: 0, y: 0 });
-        };
-        reader.readAsDataURL(file);
+    const getRawMediaPath = (name: string) => {
+        return `media/${user?.id}-user/avatars/${newAvatarData.avatarId}-avatar/images/uploaded/${name}.png`;
     };
 
-    const handleCropComplete = useCallback(async () => {
-        if (tempImage && activeIndex !== null && croppedAreaPixels) {
-            const croppedResult = await getCroppedImg(tempImage, croppedAreaPixels, CROP_SIZE);
-            updatePhotoAtIndex(activeIndex, croppedResult);
-            closeEditor();
-            await uploadToBucket(uploadedPhotosConfig[activeIndex].name, croppedResult);
-        }
-    }, [tempImage, activeIndex, croppedAreaPixels]);
+    const onFileSelected = async (index: number, file: File) => {
+        if (!file.type.startsWith('image/')) return;
 
-    const closeEditor = () => {
-        setTempImage(null);
-        setActiveIndex(null);
+        setCroppingIndices(prev => [...prev, index]);
+
+        try {
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            const rawPath = getRawMediaPath(uploadedPhotosConfig[index].name);
+            await uploadMediaToBucket(rawPath, dataUrl);
+
+            const { path: croppedPath } = await cropHeadshot(rawPath, CROP_SIZE[0], CROP_SIZE[1]);
+            const downloadUrl = await getMediaUrlFromPath(croppedPath);
+            updatePhotoAtIndex(index, downloadUrl);
+        } catch (error) {
+            console.error('Failed to crop and upload photo:', error);
+        } finally {
+            setCroppingIndices(prev => prev.filter(i => i !== index));
+        }
     };
 
     const handleFileUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             onFileSelected(index, file);
-            e.target.value = ''; 
+            e.target.value = '';
         }
     };
 
@@ -215,7 +212,7 @@ function CreateTwinIdPhotosPage() {
     const handleDrop = (index: number, e: React.DragEvent) => {
         e.preventDefault();
         setDraggingAtIndex(index, false);
-        if (uploadedPhotos[index]?.photo) return;
+        if (uploadedPhotos[index]?.photo || croppingIndices.includes(index)) return;
         const file = e.dataTransfer.files?.[0];
         if (file) onFileSelected(index, file);
     };
@@ -230,11 +227,6 @@ function CreateTwinIdPhotosPage() {
 
     const setParameter = (key: string, value: string) => {
         setAvatar((avatar: Avatar) => ({...avatar, parameters: { ...avatar.parameters, [key]: value }}))
-    }
-
-    const uploadToBucket = async (name: string, image: string) => {
-        const mediaPath = getUploadedMediaPath(name);
-        await uploadMediaToBucket(mediaPath, image);
     }
 
     const jobsCreated = () => {
@@ -331,17 +323,6 @@ function CreateTwinIdPhotosPage() {
                 </div>
             ) : (
                 <div className="mx-auto px-4 pt-12 mb-50">
-                    <ImageCropperModal
-                        tempImage={tempImage}
-                        crop={crop}
-                        zoom={zoom}
-                        setCrop={setCrop}
-                        setZoom={setZoom}
-                        onCropAreaChange={(_, pixels) => setCroppedAreaPixels(pixels)}
-                        onClose={closeEditor}
-                        onApply={handleCropComplete}
-                    />
-
                     <PhotoUploadGrid
                         viewConfig={uploadedPhotosConfig}
                         uploadedPhotos={uploadedPhotos}
@@ -351,6 +332,7 @@ function CreateTwinIdPhotosPage() {
                         onFileUpload={handleFileUpload}
                         onRemovePhoto={(index) => updatePhotoAtIndex(index, null)}
                         removable={!stepLocked() && !generatingStarted()}
+                        croppingIndices={croppingIndices}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-12">

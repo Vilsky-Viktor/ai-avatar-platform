@@ -17,26 +17,29 @@ type Props = {
     onFileUpload: (index: number, e: React.ChangeEvent<HTMLInputElement>) => void;
     onRemovePhoto: (index: number) => void;
     removable?: boolean;
+    croppingIndices?: number[];
 };
 
-function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, onDrop, onFileUpload, onRemovePhoto, removable }: Props) {
+function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, onDrop, onFileUpload, onRemovePhoto, removable, croppingIndices }: Props) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full mt-8">
             {viewConfig.map((view, index) => {
                 const photoData = uploadedPhotos[index];
                 const imageSrc = photoData?.photo || photoData?.mediaUrl;
                 const hasPhoto = !!imageSrc;
+                const isCropping = croppingIndices?.includes(index) ?? false;
 
                 return (
                     <div
                         key={index}
-                        onDragOver={(e) => onDragOver(index, e)}
-                        onDragLeave={(e) => onDragLeave(index, e)}
-                        onDrop={(e) => onDrop(index, e)}
-                        onClick={() => !hasPhoto && view.ref.current?.click()}
+                        onDragOver={(e) => !isCropping && onDragOver(index, e)}
+                        onDragLeave={(e) => !isCropping && onDragLeave(index, e)}
+                        onDrop={(e) => !isCropping && onDrop(index, e)}
+                        onClick={() => !hasPhoto && !isCropping && view.ref.current?.click()}
                         className={`relative rounded-[1rem] border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-700 overflow-hidden
                             ${hasPhoto ? 'border-primary/20 bg-base-200' : 'border-base-content/15 bg-transparent cursor-pointer hover:border-primary/40'}
-                            ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
+                            ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}
+                            ${isCropping ? 'cursor-not-allowed' : ''}`}
                     >
                         <input
                             type="file"
@@ -46,7 +49,12 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                             onChange={(e) => onFileUpload(index, e)}
                         />
 
-                        {hasPhoto ? (
+                        {isCropping ? (
+                            <div className="flex flex-col items-center gap-3">
+                                <span className="loading loading-spinner loading-lg text-primary" />
+                                <span className="text-[11px] font-medium uppercase tracking-widest text-base-content/40">Cropping…</span>
+                            </div>
+                        ) : hasPhoto ? (
                             <>
                                 <img
                                     src={imageSrc!}
@@ -83,7 +91,7 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                             </div>
                         )}
 
-                        {!hasPhoto && (
+                        {!hasPhoto && !isCropping && (
                             <>
                                 <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
                                 <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
