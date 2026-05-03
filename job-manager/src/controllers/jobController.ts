@@ -9,6 +9,7 @@ import {
   deleteByAvatarId as deleteByAvatarIdDb,
 } from '../repositories/job';
 import { publishJob } from '../services/messageQueue';
+import { deleteBlob } from '../services/storageService';
 
 export const getByGroupId = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -97,7 +98,15 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
   req.log.info(`Delete job ${id} for user ${userId}`);
 
   try {
+    const job = await getByIdDb(userId, id);
+    const mediaPath = job?.result?.mediaPath;
+
     await deleteByIdDb(userId, id);
+
+    if (mediaPath) {
+      await deleteBlob(mediaPath);
+    }
+
     return res.status(200).json({ result: 'ok' });
   } catch (error) {
     req.log.info(`Failed to delete job ${id} for user ${userId}: ${error}`);

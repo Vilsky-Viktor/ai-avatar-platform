@@ -95,6 +95,13 @@ function MediaCard({
     if (status === JobStatuses.pending) {
         return (
             <>
+            {confirmDeleteId && onDelete && (
+                <DeleteMediaModal
+                    isDeleting={isDeleting}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={() => setConfirmDeleteId(null)}
+                />
+            )}
             {infoVisible && <MediaInfoPopup job={job} naturalSize={null} onClose={() => setInfoVisible(false)} />}
             <div className="group flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
                 <div className="flex flex-col items-center gap-6">
@@ -110,7 +117,17 @@ function MediaCard({
                         </p>
                     </div>
                 </div>
-                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">{infoButton}</div>
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    {canDelete && onDelete && (
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
+                            onClick={() => jobId && setConfirmDeleteId(jobId)}
+                        >
+                            <Trash2 size={20} className="text-white" />
+                        </button>
+                    )}
+                    {infoButton}
+                </div>
             </div>
             </>
         );
