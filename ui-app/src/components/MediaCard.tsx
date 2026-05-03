@@ -1,6 +1,7 @@
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text } from 'lucide-react';
+import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload } from 'lucide-react';
 import { useState } from 'react';
 import { JobStatuses, type InferenceJob } from '../types/job';
+import { downloadMediaFromBucket } from '../services/storage';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
 import MediaInfoPopup from './mediaGrid/MediaInfoPopup';
 
@@ -41,6 +42,7 @@ function MediaCard({
 }: Props) {
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [infoVisible, setInfoVisible] = useState(false);
     const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
 
@@ -124,6 +126,14 @@ function MediaCard({
 
     if (status === JobStatuses.error) {
         return (
+            <>
+            {confirmDeleteId && onDelete && (
+                <DeleteMediaModal
+                    isDeleting={isDeleting}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={() => setConfirmDeleteId(null)}
+                />
+            )}
             <div className="flex relative rounded-[1rem] border border-error/20 bg-error/[0.02] flex flex-col items-center justify-center aspect-square">
                 <div className="flex flex-col items-center gap-6">
                     <div className="relative">
@@ -138,15 +148,26 @@ function MediaCard({
                         </p>
                     </div>
                 </div>
-                {canRestart && onRegenerate && (
-                    <button
-                        className="absolute top-1 right-1 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
-                        onClick={() => jobId && onRegenerate(jobId)}
-                    >
-                        <RefreshCcw size={18} className="text-white spin-once-on-hover" />
-                    </button>
-                )}
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                    {canDelete && onDelete && (
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
+                            onClick={() => jobId && setConfirmDeleteId(jobId)}
+                        >
+                            <Trash2 size={20} className="text-white" />
+                        </button>
+                    )}
+                    {canRestart && onRegenerate && (
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
+                            onClick={() => jobId && onRegenerate(jobId)}
+                        >
+                            <RefreshCcw size={20} className="text-white spin-once-on-hover" />
+                        </button>
+                    )}
+                </div>
             </div>
+            </>
         );
     }
 
@@ -204,32 +225,65 @@ function MediaCard({
 
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                     {canDelete && onDelete && (
-                        <button
-                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); jobId && setConfirmDeleteId(jobId); }}
-                        >
-                            <Trash2 size={20} className="text-white" />
-                        </button>
+                        <div className="tooltip tooltip-bottom" data-tip="Delete">
+                            <button
+                                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); jobId && setConfirmDeleteId(jobId); }}
+                            >
+                                <Trash2 size={20} className="text-white" />
+                            </button>
+                        </div>
                     )}
+                    <div className="tooltip tooltip-bottom" data-tip="Download">
+                        <button
+                            disabled={isDownloading}
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer disabled:cursor-not-allowed"
+                            onClick={async (e) => {
+                                e.stopPropagation();
+                                const mediaPath = job.result?.mediaPath;
+                                if (!mediaPath) return;
+                                setIsDownloading(true);
+                                try {
+                                    const blob = await downloadMediaFromBucket(mediaPath);
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = blobUrl;
+                                    a.download = `${jobId ?? 'photo'}.${blob.type.split('/')[1] || 'jpg'}`;
+                                    a.click();
+                                    URL.revokeObjectURL(blobUrl);
+                                } finally {
+                                    setIsDownloading(false);
+                                }
+                            }}
+                        >
+                            {isDownloading
+                                ? <span className="loading loading-spinner loading-xs text-white" />
+                                : <CloudDownload size={20} className="text-white" />
+                            }
+                        </button>
+                    </div>
                     {canRestart && onRegenerate && (
-                        <button
-                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); jobId && onRegenerate(jobId); }}
-                        >
-                            <RefreshCcw size={20} className="text-white spin-once-on-hover" />
-                        </button>
+                        <div className="tooltip tooltip-bottom" data-tip="Regenerate">
+                            <button
+                                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); jobId && onRegenerate(jobId); }}
+                            >
+                                <RefreshCcw size={20} className="text-white spin-once-on-hover" />
+                            </button>
+                        </div>
                     )}
-                    <button
-                        className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-info transition-colors cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); setInfoVisible(v => !v); }}
-                    >
-                        <Text size={20} className="text-white" />
-                    </button>
-                    
+                    <div className="tooltip tooltip-bottom" data-tip="Info">
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-info transition-colors cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); setInfoVisible(v => !v); }}
+                        >
+                            <Text size={20} className="text-white" />
+                        </button>
+                    </div>
                 </div>
 
                 {bestFaceMatch > 0 && (
-                    <div className="absolute bottom-2 right-2 z-10">
+                    <div className="absolute bottom-2 right-2 z-10 tooltip tooltip-left" data-tip="Face match">
                         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
                             <span className="font-bold">
                                 {(bestFaceMatch * 100).toFixed(0)}%

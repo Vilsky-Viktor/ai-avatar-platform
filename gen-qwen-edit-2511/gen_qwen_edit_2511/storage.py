@@ -122,34 +122,34 @@ def ensure_lora_downloaded(lora_path: str) -> str:
 
     lora_file_extenstions = {".safetensors", ".bin", ".pt", ".ckpt"}
     is_file_path = Path(lora_path).suffix in lora_file_extenstions
-    cached = local_path.is_file() if is_file_path else (local_path.is_dir() and any(local_path.iterdir()))
-    if cached:
+
+    # Fast path only for single-file LoRAs — directory LoRAs always sync to catch
+    # new checkpoints added to the bucket after the initial download.
+    if is_file_path and local_path.is_file():
         logger.info(f"LoRA already cached: {lora_path}")
         return str(local_path)
 
     lock_path = local_path.parent / f".{local_path.name}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(lock_path), timeout=300):
-        # Double-check after acquiring — another thread may have downloaded it
-        cached = local_path.is_file() if is_file_path else (local_path.is_dir() and any(local_path.iterdir()))
-        if cached:
-            logger.info(f"LoRA already cached (downloaded by concurrent thread): {lora_path}")
-            return str(local_path)
-
-        logger.info(f"Downloading LoRA from bucket: {lora_path}")
-        bucket = storage_client.bucket(BUCKET_NAME)
-
-        # Single file path (e.g. .safetensors)
         if is_file_path:
+            if local_path.is_file():
+                logger.info(f"LoRA already cached (downloaded by concurrent thread): {lora_path}")
+                return str(local_path)
+            logger.info(f"Downloading LoRA from bucket: {lora_path}")
+            bucket = storage_client.bucket(BUCKET_NAME)
             blob = bucket.blob(lora_path)
             if not blob.exists():
                 raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
             local_path.parent.mkdir(parents=True, exist_ok=True)
             blob.download_to_filename(str(local_path))
+            logger.info(f"LoRA download complete: {lora_path}")
         else:
+            bucket = storage_client.bucket(BUCKET_NAME)
             blobs = list(bucket.list_blobs(prefix=lora_path.rstrip("/") + "/"))
             if not blobs:
                 raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
+            downloaded = 0
             for blob in blobs:
                 if blob.name.endswith("/"):
                     continue
@@ -159,8 +159,11 @@ def ensure_lora_downloaded(lora_path: str) -> str:
                     continue
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 blob.download_to_filename(str(dest))
-
-        logger.info(f"LoRA download complete: {lora_path}")
+                downloaded += 1
+            if downloaded:
+                logger.info(f"LoRA sync complete: {lora_path} ({downloaded} file(s) downloaded)")
+            else:
+                logger.info(f"LoRA already up-to-date: {lora_path}")
 
     return str(local_path)
 

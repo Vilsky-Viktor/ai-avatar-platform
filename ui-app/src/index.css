@@ -38,3 +38,7 @@ html {
 .spin-once-on-hover:hover {
   animation: spin-once 0.5s ease-in-out;
 }
+
+.tooltip:hover::before {
+  opacity: 0.7;
+}

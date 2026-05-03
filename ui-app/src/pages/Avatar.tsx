@@ -50,6 +50,9 @@ function AvatarPage() {
             await listener(querySnap);
         })
 
+        setNumImages(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaType.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
+        setNumVideos(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaType.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
+
         return () => unsubscribe();
     }, [jobs]);
 
@@ -130,9 +133,6 @@ function AvatarPage() {
         }));
 
         setJobs(filteredJobs);
-
-        setNumImages(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
-        setNumVideos(filteredJobs.reduce((acc: number, job: Job) => job.mediaType === MediaType.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
     }
 
     const restartJob = async (jobId: string) => {

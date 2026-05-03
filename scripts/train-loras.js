@@ -1,6 +1,6 @@
 const JOB_MANAGER_URL = 'http://localhost:3300';
 const USER_ID = 'FYEhNio4qvVGifcp43R4cogOoLw2';
-const AVATAR_ID = 'FYEhNio4qvVGifcp43R4cogOoLw2';
+const AVATAR_ID = '0mQQOxYy0EIZeMLwZ9yZ';
 const GROUP_ID = '1103aeaa-c149-4d66-9368-74d385f508c4';
 
 const res = await fetch(`${JOB_MANAGER_URL}/train-loras`, {
