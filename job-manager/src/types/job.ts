@@ -95,7 +95,6 @@ export type FaceDirection = {
 
 export type InferenceConfig = {
   prompt?: string;
-  prompts?: string[];
   negativePrompt?: string;
   mediaPaths?: string[];
   guidanceScale?: number;
