@@ -1,5 +1,6 @@
 import type { FirestoreTimestamp } from "./firestore";
 import type { AvatarParameters, AvatarTypes } from "./avatar";
+import type { PhotoSetType } from "./image";
 
 export enum MediaType {
   image = 'image',
@@ -66,6 +67,7 @@ export type InferenceJobMetadata = {
   ratio?: string;
   angle?: string;
   shotType?: string;
+  userPrompt: string;
 }
 
 export type InferenceJob = {
@@ -127,4 +129,9 @@ export type PhotoJobRequest = {
   ratio: string;
   prompt: string;
   referenceImagePaths?: string[];
+}
+
+export type PhotoSetJobRequest = {
+  avatarId: string;
+  type: PhotoSetType;
 }

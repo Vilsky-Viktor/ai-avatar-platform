@@ -10,19 +10,19 @@ import {
   TrainingJobMetadata,
 } from '../types/job';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { generateTrainingPhotoSetData } from '../utils/photoSetInputData';
-import { generatePhotoSetCaptions } from '../utils/photoSetCaptions';
-import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/idPhotoInputData';
+import { generateTrainingPhotoSetData } from '../utils/trainingPhotoSetInputData';
+import { generatePhotoSetCaptions } from '../utils/trainingPhotoSetCaptions';
+import { genTrainingTwinIdPhotoData, genTrainingSyntheticIdPhotoData } from '../utils/trainingIdPhotoInputData';
 import {
   getByGroupId as getByGroupIdDb,
   create as createDb,
   createMany as createManyDb,
 } from '../repositories/job';
 import { publishJob, publishJobs } from '../services/messageQueue';
-import { buildPhotoSetJobs } from '../utils/jobBuilder';
+import { buildTrainingPhotoSetJobs } from '../utils/jobBuilder';
 import { buildQwenImageEditToolkitConfig } from '../utils/qwenImageEditTrainingConfig';
 import uuid from 'uuid';
-import imageRatios from '../types/imageRatios';
+import imageRatios from '../types/image';
 import { AvatarLoras } from '../types/avatar';
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
@@ -155,7 +155,7 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
       maxRuns: 3,
     };
 
-    const jobs = buildPhotoSetJobs(baseJob, inputsWithoutFront, jobRequest.groupId!);
+    const jobs = buildTrainingPhotoSetJobs(baseJob, inputsWithoutFront, jobRequest.groupId!);
     const dbJobs = await createManyDb(userId, jobs);
     await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
 
@@ -206,7 +206,7 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
       maxRuns: 3,
     };
 
-    const jobs = buildPhotoSetJobs(baseJob, inputs, groupId);
+    const jobs = buildTrainingPhotoSetJobs(baseJob, inputs, groupId);
     const dbJobs = await createManyDb(userId, jobs);
     await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
 
@@ -254,7 +254,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
       maxRuns: 3,
     };
 
-    const jobs = buildPhotoSetJobs(baseJob, inputs, jobRequest.groupId!);
+    const jobs = buildTrainingPhotoSetJobs(baseJob, inputs, jobRequest.groupId!);
     const dbJobs = await createManyDb(userId, jobs);
     await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
 

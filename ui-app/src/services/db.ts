@@ -38,7 +38,8 @@ export const listenToCollectionByAvatarId = (
     collectionId: string,
     userId: string,
     avatarId: string,
-    callback: (snapshot: QuerySnapshot<DocumentData>) => void
+    callback: (snapshot: QuerySnapshot<DocumentData>) => void,
+    targets: JobTargets[] = [JobTargets.avatarMedia]
 ) => {
     if (!userId) throw new Error("User must be authenticated");
 
@@ -46,7 +47,7 @@ export const listenToCollectionByAvatarId = (
         collection(db, collectionId),
         where("avatarId", "==", avatarId),
         where("userId", "==", userId),
-        where("target", "==", JobTargets.avatarMedia)
+        where("target", "in", targets)
     );
 
     let unsubscribe = onSnapshot(q, callback, (error) => {

@@ -1,3 +1,4 @@
+export type PhotoSetType = 'whatsapp-stickers' | 'around-the-world' | 'outfit-styles' | 'luxury-life';
 
 export const ratios = {
     'square': '1:1',

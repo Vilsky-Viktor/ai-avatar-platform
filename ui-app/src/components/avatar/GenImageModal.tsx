@@ -1,17 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import type { Avatar } from '../../types/avatar';
+import { type Ratio, RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
-
-type Ratio = '9:16' | '3:4' | '1:1' | '4:3' | '16:9';
-
-const RATIOS: { value: Ratio; w: number; h: number }[] = [
-    { value: '9:16', w: 18, h: 32 },
-    { value: '3:4',  w: 21, h: 28 },
-    { value: '1:1',  w: 26, h: 26 },
-    { value: '4:3',  w: 28, h: 21 },
-    { value: '16:9', w: 32, h: 18 },
-];
 
 const EMPTY_SLOTS: [null, null, null] = [null, null, null];
 
@@ -86,13 +77,12 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
 
                 <textarea
                     autoFocus
-                    style={{ marginTop: '2rem' }}
                     value={prompt}
                     onChange={e => setPrompt(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
                     placeholder={`Describe the image you want to generate with ${avatar?.name ?? 'your avatar'}...`}
                     rows={6}
-                    className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
+                    className="mt-8 w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                 />
 
                 {/* Reference images */}

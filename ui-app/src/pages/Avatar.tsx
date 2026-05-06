@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
-import { getAvatarBySlug, genAvatarPhoto, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
+import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '../types/avatar';
 import LazyMediaCard from '../components/LazyMediaCard';
@@ -9,11 +9,12 @@ import CreateMediaCard from '../components/avatar/CreateMediaCard';
 import CreateMediaModal from '../components/avatar/CreateMediaModal';
 import GenImageModal from '../components/avatar/GenImageModal';
 import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
-import { type InferenceJob, type Job, type PhotoJobRequest, JobStatuses, JobTargets, MediaType } from '../types/job';
+import { type InferenceJob, type Job, type PhotoJobRequest, type PhotoSetJobRequest, JobStatuses, JobTargets, MediaType } from '../types/job';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
 import { useApp } from '../providers/ContextProvider';
 import { scrollToTop } from '../utils/scroller';
+import type { PhotoSetType } from '../types/image';
 
 function AvatarPage() {
     const { user } = useApp();
@@ -111,9 +112,20 @@ function AvatarPage() {
         };
 
         const job = await genAvatarPhoto(jobRequest);
-        pushJob(job);
+        pushJobs([job]);
         closeGenerateImage();
     };
+
+    const handleGeneratePhotoset = async (type: PhotoSetType) => {
+        const jobRequest: PhotoSetJobRequest = {
+            avatarId: avatar.id!,
+            type
+        };
+
+        const jobs = await genAvatarPhotoSet(jobRequest);
+        pushJobs(jobs);
+        closePhotoSet();
+    }
 
     const fetchAvatar = async (): Promise<Avatar> => {
         const fetchedAvatar = await getAvatarBySlug(slug!);
@@ -124,7 +136,9 @@ function AvatarPage() {
 
     const fetchJobs = async (avatarId: string) => {
         const jobs = await getJobsByAvatarId(avatarId);
-        const filteredJobs = jobs.filter((job: InferenceJob) => [JobTargets.avatarMedia, JobTargets.trainingPhotoSet].includes(job.target));
+        const filteredJobs = jobs.filter((job: InferenceJob) => [
+            JobTargets.avatarMedia, JobTargets.trainingPhotoSet
+        ].includes(job.target));
 
         await Promise.all(filteredJobs.map(async (job: InferenceJob) => {
             if (job.status === JobStatuses.completed && job.result?.mediaPath) {
@@ -152,8 +166,8 @@ function AvatarPage() {
         setJobs(updatedJobs);
     }
 
-    const pushJob = (job: InferenceJob | null) => {
-        setJobs((prev: (InferenceJob | null)[]) => [job, ...prev]);
+    const pushJobs = (jobs: (InferenceJob | null)[]) => {
+        setJobs((prev: (InferenceJob | null)[]) => [...jobs, ...prev]);
     };
 
     const setJob = (listIdx: number, job: InferenceJob | null) => {
@@ -199,8 +213,8 @@ function AvatarPage() {
                                     onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
                                     onRegenerate={restartJob}
                                     onDelete={deleteJob}
-                                    canDelete={job?.target === JobTargets.avatarMedia}
-                                    canRestart={job?.target === JobTargets.avatarMedia}
+                                    canDelete={job?.target! === JobTargets.avatarMedia}
+                                    canRestart={job?.target! === JobTargets.avatarMedia}
                                 />
                             ))}
                         </div>
@@ -227,7 +241,7 @@ function AvatarPage() {
             <GenPhotoSetModal
                 isOpen={photoSetOpen}
                 onClose={closePhotoSet}
-                onGenerate={(id: string) => console.log('photo set selected:', id)}
+                onGenerate={handleGeneratePhotoset}
             />
         </>
     );

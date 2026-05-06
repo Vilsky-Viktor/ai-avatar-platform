@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import type { PhotoSetType } from '../../types/image';
 
 type PhotoSetOption = {
-    id: string;
+    id: PhotoSetType;
     name: string;
     description: string;
 };
@@ -10,8 +12,8 @@ type PhotoSetOption = {
 const PHOTO_SETS: PhotoSetOption[] = [
     {
         id: 'whatsapp-stickers',
-        name: 'Whatsapp Stickers',
-        description: 'Generate Whatsapp stickers of your avatar with different emotions: sad, angry, smiling, laughing, disgusted, contempt, shy, scared, sleepy, confused, confident, surprised, anxious',
+        name: 'WhatsApp Stickers',
+        description: 'Generate Whatsapp stickers of your avatar with different emotions: sad, angry, laughing, disgusted, shy, scared, sleepy, confused, surprised, anxious',
     },
     {
         id: 'around-the-world',
@@ -23,15 +25,21 @@ const PHOTO_SETS: PhotoSetOption[] = [
         name: 'Outfit Styles',
         description: 'Generate photos of your avatar wearing different outfit styles: business formal, smart casual, sport elegant, streetwear, casual chic, athleisure, business casual, evening glam, bohemian, minimalist, old money, preppy, vintage, edgy/rock, beachwear',
     },
+    {
+        id: 'luxury-life',
+        name: 'Luxury life',
+        description: 'Generate photos of your luxury life: car, private get, fancy restorant, villa, resort, brand store, skyscrapper office',
+    },
 ];
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
-    onGenerate: (photoSetId: string) => void;
+    onGenerate: (type: PhotoSetType) => Promise<void>;
 };
 
 function GenPhotoSetModal({ isOpen, onClose, onGenerate }: Props) {
+    const [loadingId, setLoadingId] = useState<PhotoSetType | null>(null);
     useScrollLock(isOpen);
     if (!isOpen) return null;
 
@@ -62,10 +70,17 @@ function GenPhotoSetModal({ isOpen, onClose, onGenerate }: Props) {
                                 </span>
                             </div>
                             <button
-                                onClick={() => onGenerate(set.id)}
-                                className="group shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer"
+                                disabled={loadingId !== null}
+                                onClick={async () => {
+                                    setLoadingId(set.id);
+                                    try { await onGenerate(set.id); } finally { setLoadingId(null); }
+                                }}
+                                className="group shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Sparkles size={14} className="group-hover:animate-pulse" />
+                                {loadingId === set.id
+                                    ? <span className="loading loading-spinner loading-xs" />
+                                    : <Sparkles size={14} className="group-hover:animate-pulse" />
+                                }
                                 <span className="text-[11px] font-semibold uppercase tracking-[0.2em]">Generate</span>
                             </button>
                         </div>

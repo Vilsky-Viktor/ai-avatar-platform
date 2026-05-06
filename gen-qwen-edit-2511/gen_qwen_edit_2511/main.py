@@ -100,8 +100,6 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             in_range = False  # whether any image fell within [min, max]
             all_imgs: list[tuple[float, object]] = []  # direction-passing images (face_match, img)
 
-            recognition_count = 0  # runs where face recognition was actually performed
-
             for run_idx in range(max_runs):
                 logger.info(f"---------- Run #{run_idx + 1}/{max_runs} ----------")
 
@@ -112,8 +110,6 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
                     if not direction_ok:
                         logger.info(f"Direction check failed, skipping image")
                         continue
-
-                recognition_count += 1
 
                 if job_input.faceRecognition.enabled:
                     face_match = fr.check_face_match(img, id_photos)
@@ -128,10 +124,6 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
                         if face_match > best_match:
                             best_match = face_match
                             best_img = img
-
-                        if recognition_count == 1 and face_match < MIN_FACE_MATCH:
-                            logger.info(f"First recognized run face match too low ({face_match} < {MIN_FACE_MATCH}), stopping early")
-                            break
 
                         if face_match >= threshold.min:
                             in_range = True

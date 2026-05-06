@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { AvatarParameters, AvatarTypes } from './avatar';
-import { qwenEdit2511 } from './imageRatios';
+import { PhotoSetType, qwenEdit2511 } from './image';
 
 export enum MediaTypes {
   image = 'image',
@@ -127,6 +127,7 @@ export type InferenceJobMetadata = {
   angle?: string;
   shotType?: string;
   queueTopic?: string;
+  userPrompt?: string;
 }
 
 // ── Training ─────────────────────────────────────────────────────────────────
@@ -199,4 +200,9 @@ export type PhotoJobRequest = {
   ratio: ImageRatio;
   prompt: string;
   referenceImagePaths?: string[];
+}
+
+export type PhotoSetJobRequest = {
+  avatarId: string;
+  type: PhotoSetType;
 }

@@ -1,815 +1,948 @@
-import { AvatarParameters, AvatarTypes } from '../types/avatar';
-import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
-import { InferenceJob, FaceExpressionTypes, Directions } from '../types/job';
-import imageRatios from '../types/imageRatios';
+import { FaceExpressionTypes, InferenceJob } from "../types/job"
+import { qwenEdit2511 } from "../types/image"
+import { AVATAR_REFERENCE_NAME } from '../utils/trainingPhotoSetCaptions';
+import { AvatarParameters, LoraConfig } from "../types/avatar";
 
-export const generateTrainingPhotoSetData = (parameters: AvatarParameters, avatarType: AvatarTypes, idPhotoSet: IdPhotoSetPaths): Partial<InferenceJob>[] => {
-  const { gender } = parameters;
 
-  const trainingRatio = imageRatios.qwenEdit2511['1:1'];
-  const trainingDimensions = `${trainingRatio[0]}x${trainingRatio[1]}`;
+export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[], parameters: AvatarParameters): Partial<InferenceJob>[] => {
+    const squareSize = qwenEdit2511['1:1'];
+    const squareDimention = `${squareSize[0]}x${squareSize[1]}`;
 
-  const isFemale = gender === 'female';
-  const emotionNumFrontRepetitions = avatarType === AvatarTypes.twin ? 3 : 2;
+    return [
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing dark gray t-shirt. Dark gray concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.sad, scale: 1.2 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 1,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing crimson red t-shirt. Crimson red concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.angry, scale: 0.7 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 2,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing mustard yellow t-shirt. Mustard yellow concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0, 
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 1.0 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 3,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `Mouth is slightly open. wearing teal t-shirt. Teal concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.surprised, scale: 0.9 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 4,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing burnt orange t-shirt. Burnt orange concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.anxious, scale: 1.0 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 5,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing dusty coral t-shirt. Dusty coral concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.shy, scale: 0.6 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 6,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing dusty lavender t-shirt. Dusty lavender concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.sleepy, scale: 1.0 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 7,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing dark violet t-shirt. Dark violet concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.fear, scale: 1.4 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 8,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing muted mustard t-shirt. Muted mustard concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.confused, scale: 1.5 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 9,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `wearing olive green t-shirt. Olive green concrete wall`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: squareSize[0],
+                    height: squareSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.disgust, scale: 1.0 },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
+                    { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
+                    { path: lora.path, scale: 0.95, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: squareDimention, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
+            maxRuns: 3,
+            order: 10,
+        },
+    ]
+}
 
-  return [
-    // =================================================================
-    // CLOSE-UP EMOTIONS
-    // =================================================================
+export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], parameters: AvatarParameters): Partial<InferenceJob>[] => {
+    const { gender } = parameters;
+    const isFemale = gender === 'female';
 
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to deep slate blue sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.sad, scale: 0.9 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.9 : 0.8,
-          max: 0.96
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 10,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to crimson red sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.angry, scale: 0.65 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.88 : 0.8,
-          max: 0.96
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 11,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to warm peach sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.55 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.95 : 0.8,
-          max: 0.97
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 12,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to bright yellow sleeveless t-shirt. Exact same teeth from input images`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.frontSmile),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.85 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.frontSmile!], threshold: {
-          min: AvatarTypes.twin ? 0.94 : 0.9,
-          max: 0.97
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 13,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to electric teal sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.surprised, scale: 0.57 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.92 : 0.9,
-          max: 0.96
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 14,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to burnt orange sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.anxious, scale: 0.7 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.89 : 0.85,
-          max: 0.96
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 15,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to soft rose sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.shy, scale: 0.7 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.92 : 0.8,
-          max: 0.96
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 16,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to dusty lavender sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.sleepy, scale: 0.6 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.92 : 0.85,
-          max: 0.96
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 17,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Change outfit to dark violet sleeveless t-shirt`,
-          mediaPaths: Array(emotionNumFrontRepetitions).fill(idPhotoSet.generated.front),
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-        },
-        faceExpression: { enabled: true, type: FaceExpressionTypes.fear, scale: 0.6 },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: {
-          min: AvatarTypes.twin ? 0.89 : 0.8,
-          max: 0.96
-        }},
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: AvatarTypes.twin ? 0.7 : 1.0, },
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
-      maxRuns: 5,
-      order: 18,
-    },
+    const portraitSize = qwenEdit2511['3:4'];
+    const portraitDimention = `${portraitSize[0]}x${portraitSize[1]}`;
 
-    // =================================================================
-    // BEST chest-up PORTRAITS (most diverse lighting/outfit combos)
-    // =================================================================
+    return [
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing business formal style ${isFemale ? 'tailored navy blazer over a white silk blouse, matching navy pencil skirt, sheer tights, and black patent leather stiletto pumps with a pointed toe' : 'tailored charcoal gray two-piece suit, crisp white dress shirt, dark silk tie, and polished black calfskin cap-toe oxford shoes with subtle brogue detailing'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 1,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing smart casual style ${isFemale ? 'a fitted cream knit sweater, dark slim-fit trousers, and camel suede Chelsea ankle boots with an elastic side panel and a low stacked heel' : 'a navy blazer over a light blue button-down shirt, dark chinos, and suede loafers'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 2,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing sport elegant style ${isFemale ? 'a fitted black athletic top, matching high-waisted leggings, a tailored cream longline cardigan, and clean white leather low-profile sneakers with a thin sole' : 'a fitted black performance polo, slim tapered jogger trousers, a lightweight gray bomber jacket, and clean white leather minimalist sneakers with a thin profile'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 3,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing streetwear style ${isFemale ? 'an oversized graphic hoodie, baggy cargo pants, a crossbody bag, and chunky triple-white platform sneakers with a thick rubber sole' : 'an oversized hoodie, baggy cargo pants, and chunky off-white sneakers'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 4,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing casual chic style ${isFemale ? 'a fitted white t-shirt tucked into high-waisted dark jeans, a tailored beige blazer draped over the shoulders, delicate gold jewelry, and ivory suede pointed-toe mule slides' : 'a fitted white t-shirt, dark well-fitted jeans, a tailored beige blazer, and suede loafers'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 5,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing athleisure style ${isFemale ? 'a fitted gray sports bra under a cropped oversized hoodie, matching gray high-waisted leggings, and slate gray technical running sneakers with neon green sole accents' : 'a fitted gray performance t-shirt, an unzipped gray track jacket, matching gray jogger sweatpants, and charcoal gray performance running sneakers with electric blue heel accents'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 6,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing business casual style ${isFemale ? 'a tucked-in light blue button-down blouse, tailored beige trousers, a thin leather belt, and blush nude leather pointed-toe flats with a delicate bow detail' : 'a light blue button-down shirt, beige chinos, a brown leather belt, and chestnut brown leather double monk strap shoes'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 7,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing evening glam style ${isFemale ? 'a fitted floor-length black sequin gown with a subtle slit, statement diamond earrings, a delicate clutch, and black satin strappy stiletto sandals with crystal embellishments on the straps' : 'a sharply tailored black tuxedo, a crisp white dress shirt, a black silk bow tie, a black silk pocket square, and polished black patent leather cap-toe oxfords with a mirror-gloss finish'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 8,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing bohemian style ${isFemale ? 'a flowing cream maxi dress with floral embroidery and lace details, layered beaded necklaces, a wide-brim tan straw hat, and rust-colored suede ankle boots with embroidered folk patterns and tassel lacing' : 'a loose cream linen button-down shirt with rolled sleeves, beige drawstring linen trousers, a layered wooden bead necklace, and dark espresso huarache sandals with hand-woven suede straps and a natural jute sole'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 9,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing minimalist style ${isFemale ? 'a fitted plain white crewneck t-shirt, tailored straight-leg black trousers, a thin silver chain necklace, and clean white leather pointed-toe flats with a barely-there sole' : 'a fitted plain white crewneck t-shirt, tailored straight-leg black trousers, and clean matte black leather loafers with a slim profile and squared toe'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 10,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing old money style ${isFemale ? 'a cream cable-knit cashmere sweater draped over the shoulders of a crisp white collared shirt, tailored beige pleated trousers, a delicate pearl necklace, and deep burgundy leather penny loafers with a gold coin detail' : 'a navy cashmere sweater over a crisp white collared shirt, tailored beige pleated trousers, a brown leather belt, and dark tan suede whole-cut penny loafers'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 11,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing preppy style ${isFemale ? 'a navy blazer with gold buttons over a white polo shirt, a pleated red and navy tartan plaid skirt, white knee-high socks, and caramel and white two-tone spectator penny loafers' : 'a navy blazer with gold buttons over a white polo shirt, beige chinos, a brown leather belt, and boat shoes with white rubber soles'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 12,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing vintage style ${isFemale ? 'a fitted red polka dot swing dress with a cinched waist and full skirt, a silk neck scarf, vintage cat-eye sunglasses, and cherry red patent leather kitten heel pumps' : 'a fitted white t-shirt tucked into high-waisted dark blue cuffed jeans, a brown leather belt, hair styled with pomade, and two-tone leather wingtip brogues'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 13,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing edgy rock style ${isFemale ? 'a black fitted band t-shirt, a black leather biker jacket with silver hardware, ripped black skinny jeans, layered silver chain necklaces, and black leather lace-up platform combat boots with silver buckle straps and a chunky lugged sole' : 'a black graphic band t-shirt, a black leather biker jacket with silver hardware, ripped black skinny jeans, a studded black leather belt, and black leather lace-up combat boots with a thick rubber sole and silver toe caps'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 14,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing, wearing beachwear style ${isFemale ? 'a white triangle bikini top, a flowing sheer white sarong tied at the hip, a wide-brim straw sun hat, and ivory braided raffia flat sandals with thin ankle-tie straps' : 'tropical patterned short-sleeve shirt, white swim trunks, and navy blue rubber flip flops with rope-textured straps'}. Gray wall background, light wooden floor, gray armchair on the right and standing mirror on the left`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
+            maxRuns: 3,
+            order: 15,
+        }, 
+    ]
+}
 
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front chest-up portrait. Exact same body to head proportions as in image 1. Change outfit to ${isFemale ? 'flowy sage green midi dress with subtle puff sleeves' : 'a rust-colored linen shirt'}. Change background to park with a lake. Change light to soft golden hour`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontChestUpView' },
-      maxRuns: 5,
-      order: 19,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front chest-up portrait. Deep in thought, pensive expression, gaze directed upward. Exact same body to head proportions as in image 1. Change outfit to ${isFemale ? 'a chunky cream cable-knit sweater' : 'a soft taupe merino wool crewneck'}. Change background to cozy living room setting. Change light to soft warm candlelight`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontChestUpView' },
-      maxRuns: 5,
-      order: 20,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front chest-up portrait. Confident expression, direct stare to camera, relaxed jaw, lips lightly pressed together. Exact same body to head proportions as in image 1. Change outfit to ${isFemale ? 'a tailored pale blue Oxford shirt' : 'a modern business casual light gray button-down with micro-check pattern, light blue tie'}. Change background to modern indoor office environment. Change light to white bright office lighting`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.9 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontChestUpView' },
-      maxRuns: 5,
-      order: 21,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front chest-up portrait. Exact same body to head proportions as in image 1. Change outfit to fitted dark charcoal turtleneck. Change background to deep dark studio background. Change light to soft low-key light from the front, gently illuminating the face with natural shadow falloff toward the edges`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.front!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.9 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontChestUpView' },
-      maxRuns: 7,
-      order: 22,
-    },
-
-    // =================================================================
-    // CHEST-UP ANGULAR & DYNAMIC HEAD COVERAGE
-    // =================================================================
-
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Quarter chest-up portrait, shoulders on the edge of the frame. Change outfit to ${isFemale ? 'a cozy oversized oatmeal cardigan' : 'a soft gray zip-up hoodie'}. Change background to loft style living room interior. Change light to soft indoor lamp light`,
-          mediaPaths: [idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!, idPhotoSet.generated.rightQuarter!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceDirection: { enabled: true, direction: Directions.right },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '45:0', shotType: 'leftQuarterChestUpView' },
-      maxRuns: 5,
-      order: 23,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Quarter chest-up portrait, shoulders on the edge of the frame. Change outfit to ${isFemale ? 'a relaxed beige trench coat over a cream turtleneck' : 'a camel overcoat layered over a white crewneck'}. Change background to indoor cafe with a bar. Change light to soft natural daylight from ceiling to floor windows on the right`,
-          mediaPaths: [idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!, idPhotoSet.generated.leftQuarter!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceDirection: { enabled: true, direction: Directions.left },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '45:0', shotType: 'leftQuarterChestUpView' },
-      maxRuns: 5,
-      order: 24,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Side chest-up portrait, nose tip at mid-frame vertically. Change outfit to ${isFemale ? 'a light pink windbreaker' : 'a light blue windbreaker'}. Change background to urban street. Change light to very early evening`,
-          mediaPaths: [idPhotoSet.generated.rightSide!, idPhotoSet.generated.rightSide!, idPhotoSet.generated.rightSide!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceDirection: { enabled: true, direction: Directions.right },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightSide!], threshold: { min: AvatarTypes.twin ? 0.9 : 0.85 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '90:0', shotType: 'rightSideChestUpView' },
-      maxRuns: 7,
-      order: 25,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Side chest-up portrait, nose tip at mid-frame vertically. Change outfit to ${isFemale ? 'a metallic silver cropped jacket' : 'a sleek black puffer vest over hoodie'}. Change background to urban street. Change light to very early evening`,
-          mediaPaths: [idPhotoSet.generated.leftSide!, idPhotoSet.generated.leftSide!, idPhotoSet.generated.leftSide!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceDirection: { enabled: true, direction: Directions.left },
-        faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftSide!], threshold: { min: AvatarTypes.twin ? 0.9 : 0.85 } },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '90:0', shotType: 'leftSideChestUpView' },
-      maxRuns: 7,
-      order: 26,
-    },
-
-    // =================================================================
-    // UPPER-BODY SHOTS
-    // =================================================================
-
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front full body shot. Change outfit to ${isFemale ? 'a soft beige cashmere turtleneck sweater with high-waisted cream wool trousers' : 'an olive green henley shirt with dark charcoal slim-fit chinos'}. Change background to indoor cozy living room, softly blurred. Change light to warm natural window light from the front-right, soft shadows on right side`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.94 : 0.85 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView' },
-      maxRuns: 5,
-      order: 27,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front upper body shot. Change outfit to ${isFemale ? 'a silky emerald green camisole with delicate straps and a fitted black midi skirt' : 'a fitted black turtleneck under a charcoal overcoat with tailored charcoal wool trousers'}. Change background to blurred rooftop city night background. Change light to evening warm tungsten light`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView' },
-      maxRuns: 5,
-      order: 28,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front upper body shot, sitting at the work desk, looking towards camera. Change outfit to ${isFemale ? 'a tailored pinstripe blazer in soft gray over white tee and pants' : 'a modern slim-fit navy blazer with white dress shirt and navy pants'}. Change background to co-working space background with people working, gray cement walls style, industrial aesthetic, wooden minimalist desk and Apple Mackbook on it on the left side. Change light to office bright white light`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView' },
-      maxRuns: 5,
-      order: 29,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Front upper body shot, standing casually. Change outfit to ${isFemale ? 'black racing-style crop jacket, gray crop top underneath' : 'black racing jacket with subtle contrast stitching, clean gray t-shirt underneath'}. Change background to garage with a fleet of luxury mix of sport and business cars. Change light to parking indoor lighting`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView' },
-      maxRuns: 5,
-      order: 30,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Sitting, hands on sides supporting body. Change outfit to ${isFemale ? 'pink fitted racerback crop tank top, light gray fleece sweat shorts with elastic waistband' : 'relaxed gray joggers, white t-shirt'}. Change background to king size bed in the hotel room. Change light to simple hotel interior soft light`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.95 : 0.83 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView' },
-      maxRuns: 5,
-      order: 31,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Laying on abdomen, upper body slightly lifted and supported by both elbows, legs are visible on the background, hands are resting palms down, looking towards camera. Change outfit to ${isFemale ? 'a stylish soft sleep pink pajama' : 'gray modal lounge shorts, t-shirt'}. Change background to bed in the bedroom. Change light to soft romantic bedroom light`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.95 : 0.8 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView' },
-      maxRuns: 5,
-      order: 32,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Upper body extreme low-angle shot, looking directly at camera. Change outfit to blue jeans and light gray polo. Change background to blue sky with white clouds. Change light to soft diffused daylight`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.94 : 0.85 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:30', shotType: 'frontUppperBodyView' },
-      maxRuns: 5,
-      order: 33,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Upper body extreme high-angle overhead shot, looking up towards camera. Change outfit to white shorts, light gray t-shirt. Change background to sahara desert. Change light to sunny weather`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.92 : 0.8 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:30', shotType: 'frontUppperBodyView', },
-      maxRuns: 5,
-      order: 34,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Sitting, direct stare to camera, one knee bent upwards. Change outfit to ${isFemale ? 'a breezy yellow floral wrap midi dress with short puff sleeves and v-neckline' : 'pastel yellow shorts and hawaiian shirt'}. Change background to lounge chair on the beach. Change light to soft daylight`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.95 : 0.8 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView'},
-      maxRuns: 5,
-      order: 35,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Sitting cross-legged, relaxed pose. Change outfit to ${isFemale ? 'flowy boho pants in terracotta and cropped top' : 'relaxed-fit dark green cargo shorts and gray tee'}, barefoot. Change background to park grass. Change light to early morning`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.92 : 0.8 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView'},
-      maxRuns: 5,
-      order: 36,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Upper body standing. Change outfit to ${isFemale ? 'a breezy white cover-up dress' : 'lightweight linen shorts and sleeveless white t-shirt'}. Change background to tropical path. Change light to soft daylight`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!],
-          threshold: { min: AvatarTypes.twin ? 0.95 : 0.85 }
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 0.7 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontUppperBodyView'},
-      maxRuns: 5,
-      order: 37,
-    },
+export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: string[], parameters: AvatarParameters): Partial<InferenceJob>[] => {
+    const { gender } = parameters;
+    const isFemale = gender === 'female';
     
-    // =================================================================
-    // FULL-BODY & EXTREME POSES (maximum pose/lighting/clothing diversity)
-    // =================================================================
+    const portraitSize = qwenEdit2511['3:4'];
+    const portraitDimention = `${portraitSize[0]}x${portraitSize[1]}`;
 
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Walking, looking directly towards camera. Change outfit to ${isFemale ? 'a short black cocktail dress with spaghetti straps, high heels' : 'a charcoal suit with white dress shirt, no tie, loafers'}. Change background to city street sidewalk background`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
+    return [
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a chic beige trench coat over a striped top, slim jeans' : 'a navy wool coat over a white shirt, dark trousers'}. In front of the Eiffel Tower in Paris`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 1,
         },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.upperBody!, idPhotoSet.generated.front!],
-          threshold: { min: AvatarTypes.twin ? 0.9 : 0.8 }
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'an elegant white linen sundress with a tan leather belt' : 'a light blue linen shirt, beige chinos'}. In front of the Colosseum in Rome, Italy`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 2,
         },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 1.0 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView'},
-      maxRuns: 7,
-      order: 38,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Jogging towards camera, looking directly towards camera. Change outfit to ${isFemale ? 'minimalist all-black athleisure set' : 'modern all-black tracksuit with clean lines, t-shirt'} and black Nike sport shoes. Change background to stadium`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a flowy beige maxi dress, a wide-brim straw hat' : 'a beige linen shirt, khaki trousers, and a wide-brim hat'}. In front of the Pyramids of Giza in Egypt, with desert sand and camels in the background`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 3,
         },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.upperBody!, idPhotoSet.generated.front!],
-          threshold: { min: AvatarTypes.twin ? 0.9 : 0.8 }
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a casual white linen blouse, light blue jeans' : 'a white t-shirt, beige cargo shorts'}. Jerusalem old city background, Israel`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 4,
         },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 1.0 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView'},
-      maxRuns: 7,
-      order: 39,
-    },
-    {
-      input: {
-        checkDependencies: true,
-        inference: {
-          prompt: `Dancing, looking directly towards camera. Change outfit to ${isFemale ? 'a fitted black micro mini skirt, sleeveless white bodysuit, black pointed-toe heels' : 'a black crew-neck tee, light blue jeans, white minimalist sneakers'}. Change background to street full of bars`,
-          mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!, idPhotoSet.generated.body!],
-          numSteps: 8,
-          width: trainingRatio[0],
-          height: trainingRatio[1],
-          guidanceScale: 1.0,
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a tropical floral sundress' : 'a light tropical short-sleeve shirt, beige shorts'}. In front of temple in Bangkok, Thailand`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 5,
         },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: [idPhotoSet.generated.body!, idPhotoSet.generated.upperBody!, idPhotoSet.generated.front!],
-          threshold: { min: AvatarTypes.twin ? 0.91 : 0.8 }
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a flowing earth-toned dress with a light scarf' : 'a beige linen shirt, light trousers, and a light scarf'}. In front of the rock-hewn churches of Lalibela in Ethiopia`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 6,
         },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2509-Relight", scale: 1.0 },
-          ...(AvatarTypes.synthetic ? [{ path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 }] : []),
-        ],
-      },
-      metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontFullBodyView' },
-      maxRuns: 7,
-      order: 40,
-    },
-  ];
-};
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a long boho-style dress with a light shawl' : 'a white linen shirt, beige trousers'}. In front of the Hagia Sophia in Istanbul, Turkey`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 7,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a wool coat, knitted scarf' : 'a heavy wool coat, dark scarf'}. In Red Square, Moscow, Russia, with light snow on the ground`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 8,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a denim jacket, white t-shirt, blue jeans' : 'a casual gray hoodie, blue jeans'}. In Times Square, New York City, USA, with bright billboards in the background`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 9,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} standing, looking at camera. Wearing ${isFemale ? 'a colorful embroidered blouse, denim shorts' : 'a white embroidered linen shirt, beige shorts'}. In front of the Chichen Itza pyramid in Mexico`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 3,
+            order: 10,
+        },
+    ]
+}
 
+export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], parameters: AvatarParameters): Partial<InferenceJob>[] => {
+    const { gender } = parameters;
+    const isFemale = gender === 'female';
+    
+    const portraitSize = qwenEdit2511['3:4'];
+    const portraitDimention = `${portraitSize[0]}x${portraitSize[1]}`;
+
+    return [
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} sitting in a luxurious car interior, leather seats, ambient lighting. Wearing ${isFemale ? 'a sleek black turtleneck under a tailored camel wool coat, a delicate gold chain necklace, and a small Hermès Kelly bag resting on the lap' : 'a fitted deep navy turtleneck, a sharp charcoal cashmere overcoat'}`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 5,
+            order: 1,
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} sitting in a private jet, cream leather seat, oval window on the left showing blue sky. Wearing ${isFemale ? 'a caramel cashmere wrap cardigan over a cream silk blouse, tailored wide-leg ivory trousers, a gold Cartier Love bracelet on the wrist, and a Hermès Birkin bag visible beside the seat' : 'a fitted off-white linen shirt with the top two buttons open, tailored sand-colored trousers'}`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 5,
+            order: 2
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} sitting at a candlelit table in a fine dining restaurant, crystal glassware and white tablecloth in front, hands under the table, soft warm lighting. Wearing ${isFemale ? 'a deep emerald green silk halter dress, a delicate diamond drop necklace, diamond stud earrings, and a small black Chanel clutch resting on the table' : 'a sharply tailored midnight navy double-breasted suit, a crisp white dress shirt open at the collar, a silk pocket square'}`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 5,
+            order: 3
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing at the yard of luxury villa. Wearing ${isFemale ? 'a flowing white linen wide-leg pantsuit with a deep V-neckline, layered delicate gold necklaces, a Louis Vuitton Neverfull tote over the shoulder, and white strappy flat sandals' : 'a fitted white linen shirt with rolled sleeves, tailored off-white linen trousers worn with no socks, tan suede espadrille loafers'}`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 5,
+            order: 4
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} reclining on a sunbed at an overwater bungalow resort, turquoise ocean and palm trees in the background, tropical cocktail on the side table. Wearing ${isFemale ? 'a luxurious coral silk slip dress, and layered delicate gold necklaces' : 'a crisp white open-collar linen shirt, tailored light blue linen shorts'}`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 5,
+            order: 5
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} full body standing inside a Louis Vuitton flagship boutique, iconic monogram displays and warm gold lighting in the background. Wearing ${isFemale ? 'a tailored ivory blazer over a black silk camisole, high-waisted black wide-leg trousers, black strappy heeled sandals, and a Louis Vuitton Speedy 25 bag held in the hand' : 'a fitted black ribbed turtleneck, tailored dark charcoal slim-fit trousers, polished black Chelsea boots, and a Louis Vuitton Keepall bag held in the hand'}`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 5,
+            order: 6
+        },
+        {
+            input: {
+                checkDependencies: false,
+                inference: {
+                    prompt: `${AVATAR_REFERENCE_NAME} upper body view, sitting at work desk in a minimalist skyscraper office, floor-to-ceiling city skyline windows behind, closed-lid Macbook laptop on the table, looking towards camera. Wearing ${isFemale ? 'a perfectly tailored slate gray blazer over a white silk blouse, diamond stud earrings, and delicate reading glasses resting on the desk' : 'a fitted charcoal bespoke suit with a crisp white dress shirt, no tie'}`,
+                    mediaPaths: [],
+                    numSteps: 8,
+                    width: portraitSize[0],
+                    height: portraitSize[1],
+                    guidanceScale: 1.0,
+                },
+                faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
+                loras: [
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+                    { path: lora.path, scale: 1.0, filename: lora.filename },
+                ],
+            },
+            metadata: { dimensions: portraitDimention, ratio: '1:1', angle: '0:0', shotType: 'frontUpperBodyView' },
+            maxRuns: 5,
+            order: 7
+        },
+    ]
+}

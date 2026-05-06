@@ -1,8 +1,9 @@
 import { InferenceJob } from '../types/job';
+import uuid from 'uuid';
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
 
-export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partial<InferenceJob>[], groupId: string): InferenceJob[] {
+export function buildTrainingPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partial<InferenceJob>[], groupId: string): InferenceJob[] {
   return inputs.map(customInput => {
     const inference = customInput.input?.inference;
     return {
@@ -19,3 +20,24 @@ export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partia
     } as InferenceJob;
   });
 }
+
+export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partial<InferenceJob>[]): InferenceJob[] {
+  return inputs.map(customInput => {
+    const name = uuid.v4();
+    const inference = customInput.input?.inference;
+
+    return {
+      ...baseJob,
+      order: customInput.order,
+      maxRuns: customInput.maxRuns ?? baseJob.maxRuns,
+      input: customInput.input,
+      metadata: customInput.metadata
+        ? { ...customInput.metadata, queueTopic: GEN_QWEN_EDIT_2511_TOPIC }
+        : baseJob.metadata,
+      result: {
+        fileName: `${name}-${inference?.width}x${inference?.height}.png`,
+      },
+    } as InferenceJob;
+  });
+}
+

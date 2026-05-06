@@ -3,7 +3,7 @@ import { auth } from '../firebase';
 import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
 import type { Avatar, AvatarGender, AvatarLoras } from '../types/avatar';
-import type { Job, TrainingJobRequest, PhotoJobRequest, InferenceJob } from '../types/job';
+import type { Job, TrainingJobRequest, PhotoJobRequest, InferenceJob, PhotoSetJobRequest } from '../types/job';
 import type { Voice } from '../types/voice';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
@@ -162,6 +162,17 @@ export const genAvatarPhoto = async (jobRequest: PhotoJobRequest): Promise<Infer
     return res.data as InferenceJob;
   } catch (error) {
     console.error("Error creating job to generate avatar photo:", error);
+    throw error;
+  }
+}
+
+export const genAvatarPhotoSet = async (jobRequest: PhotoSetJobRequest): Promise<InferenceJob[]> => {
+  try {
+    const res = await apiClient.post('/jobs/gen-avatar-photo-set', jobRequest);
+
+    return res.data as InferenceJob[];
+  } catch (error) {
+    console.error("Error creating job to generate avatar photo set:", error);
     throw error;
   }
 }

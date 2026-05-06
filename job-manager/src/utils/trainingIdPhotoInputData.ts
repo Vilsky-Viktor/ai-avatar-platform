@@ -1,7 +1,7 @@
 import { AvatarParameters } from '../types/avatar';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
 import { InferenceJob, Directions } from '../types/job';
-import imageRatios from '../types/imageRatios';
+import imageRatios from '../types/image';
 
 export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<InferenceJob>[] => {
   const {

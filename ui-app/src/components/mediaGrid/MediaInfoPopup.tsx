@@ -35,10 +35,7 @@ function InfoRow({ icon, label, value, action }: RowProps) {
 function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
     useScrollLock();
     const ratio = job.metadata?.ratio;
-    const rawPrompt = job.input?.inference?.prompt;
-    const prompt = rawPrompt?.startsWith(`${AVATAR_REFERENCE_NAME} `)
-        ? rawPrompt.slice(AVATAR_REFERENCE_NAME.length + 1)
-        : rawPrompt;
+    const prompt = job.metadata?.userPrompt;
     const bestFaceMatch = job.result?.bestFaceMatch;
     const [copied, setCopied] = useState(false);
 
@@ -80,7 +77,7 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
                         <InfoRow
                             icon={<MessageSquare size={22} className="text-base-content/50" />}
                             label="Prompt"
-                            value={prompt}
+                            value={prompt ?? '-'}
                             action={
                                 <button
                                     onClick={handleCopy}
