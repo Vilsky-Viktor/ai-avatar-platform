@@ -32,6 +32,14 @@ function listenForResults() {
         );
       }
 
+      if (job.target === JobTargets.wan22A14bLora && job.status === JobStatuses.completed) {
+        await updateAvatar(
+          job.userId,
+          job.avatarId,
+          { 'loras.wan22A14b': { path: job.result?.mediaPath!, filename: LORA_DEFAULT_FILENAME } }
+        );
+      }
+
       message.ack();
     } catch (err: any) {
       if (err?.response?.status === 404) {

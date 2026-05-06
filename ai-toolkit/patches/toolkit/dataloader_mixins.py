@@ -1981,6 +1981,7 @@ class LatentCachingMixin:
                             control_latent = self.sd.encode_images(ctrl).squeeze(0)
                             if to_disk:
                                 state_dict['control_latent'] = control_latent.clone().detach().cpu()
+                                print_acc(f" - Cached control latent for {os.path.basename(file_item.path)}")
                             file_item.control_tensor = None
 
                     if is_video:

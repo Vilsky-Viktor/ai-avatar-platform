@@ -21,6 +21,7 @@ import {
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { buildTrainingPhotoSetJobs } from '../utils/jobBuilder';
 import { buildQwenImageEditToolkitConfig } from '../utils/qwenImageEditTrainingConfig';
+import { buildWan22A14bToolkitConfig } from '../utils/wan22A14bTrainingConfig';
 import uuid from 'uuid';
 import imageRatios from '../types/image';
 import { AvatarLoras } from '../types/avatar';
@@ -50,7 +51,7 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
     const resolution = completedJobs[0].input.inference.width as number;
 
-    const trainingJob: TrainingJob = {
+    const qwenJob: TrainingJob = {
       groupId: jobRequest.groupId,
       userId,
       avatarId: jobRequest.avatarId,
@@ -71,10 +72,40 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
       result: { fileName: 'qwen-edit-2511-lora.safetensors' },
     };
 
-    const dbJob = await createDb(userId, trainingJob);
-    await publishJob(AI_TOOLKIT_TOPIC, dbJob);
+    const wanJob: TrainingJob = {
+      groupId: jobRequest.groupId,
+      userId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.image,
+      target: JobTargets.wan22A14bLora,
+      status: JobStatuses.pending,
+      maxRuns: 1,
+      input: {
+        checkDependencies: false,
+        training: {
+          modelName: 'wan22-a14b',
+          mediaPaths,
+          prompts,
+          toolkit: buildWan22A14bToolkitConfig(mediaPaths.length),
+        },
+      },
+      metadata: { queueTopic: AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
+      result: { fileName: 'wan22-a14b-lora.safetensors' },
+    };
 
-    const loras: AvatarLoras = { qwenEdit2511: { path: '', filename: '' } };
+    const [dbQwenJob, dbWanJob] = await Promise.all([
+      createDb(userId, qwenJob),
+      createDb(userId, wanJob),
+    ]);
+    await Promise.all([
+      publishJob(AI_TOOLKIT_TOPIC, dbQwenJob),
+      publishJob(AI_TOOLKIT_TOPIC, dbWanJob),
+    ]);
+
+    const loras: AvatarLoras = {
+      qwenEdit2511: { path: '', filename: '' },
+      wan22A14b: { path: '', filename: '' },
+    };
     return res.status(201).json(loras);
   } catch (error) {
     req.log.info(`Failed to create jobs to train LORAs with group ID ${jobRequest.groupId} for ${userId}: ${error}`);
