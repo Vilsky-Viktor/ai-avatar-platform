@@ -1,5 +1,4 @@
 import os
-import sys
 
 import numpy as np
 import torch
@@ -8,26 +7,21 @@ from omegaconf import OmegaConf
 from PIL import Image
 from transformers import AutoTokenizer
 
-current_file_path = os.path.abspath(__file__)
-project_roots = [os.path.dirname(current_file_path), os.path.dirname(os.path.dirname(current_file_path)), os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))]
-for project_root in project_roots:
-    sys.path.insert(0, project_root) if project_root not in sys.path else None
-
-from videox_fun.dist import set_multi_gpus_devices, shard_model
-from videox_fun.models import (AutoencoderKLWan, AutoencoderKLWan3_8, AutoTokenizer, CLIPModel,
-                               WanT5EncoderModel, Wan2_2Transformer3DModel)
-from videox_fun.data.dataset_image_video import process_pose_file
-from videox_fun.models.cache_utils import get_teacache_coefficients
-from videox_fun.pipeline import Wan2_2FunControlPipeline, WanPipeline
-from videox_fun.utils.fp8_optimization import (convert_model_weight_to_float8,
-                                               convert_weight_dtype_wrapper,
-                                               replace_parameters_by_name)
-from videox_fun.utils.lora_utils import merge_lora, unmerge_lora
-from videox_fun.utils.utils import (filter_kwargs, get_image_latent, get_image_to_video_latent,
-                                    get_video_to_video_latent,
-                                    save_videos_grid)
-from videox_fun.utils.fm_solvers import FlowDPMSolverMultistepScheduler
-from videox_fun.utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
+from ..dist import set_multi_gpus_devices, shard_model
+from ..models import (AutoencoderKLWan, AutoencoderKLWan3_8, AutoTokenizer, CLIPModel,
+                      WanT5EncoderModel, Wan2_2Transformer3DModel)
+from ..data.dataset_image_video import process_pose_file
+from ..models.cache_utils import get_teacache_coefficients
+from ..pipeline import Wan2_2FunControlPipeline, WanPipeline
+from ..utils.fp8_optimization import (convert_model_weight_to_float8,
+                                      convert_weight_dtype_wrapper,
+                                      replace_parameters_by_name)
+from ..utils.lora_utils import merge_lora, unmerge_lora
+from ..utils.utils import (filter_kwargs, get_image_latent, get_image_to_video_latent,
+                           get_video_to_video_latent,
+                           save_videos_grid)
+from ..utils.fm_solvers import FlowDPMSolverMultistepScheduler
+from ..utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 # GPU memory mode, which can be chosen in [model_full_load, model_full_load_and_qfloat8, model_cpu_offload, model_cpu_offload_and_qfloat8, sequential_cpu_offload].
 # model_full_load means that the entire model will be moved to the GPU.

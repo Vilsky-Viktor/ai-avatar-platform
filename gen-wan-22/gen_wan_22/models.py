@@ -15,6 +15,9 @@ class InferenceConfig(BaseModel):
     numSteps: int
     width: int
     height: int
+    videoLength: int = 81
+    fps: int = 16
+    shift: float = 5.0
 
 class LoraConfig(BaseModel):
     path: str

@@ -319,6 +319,13 @@ def upload_result_image(dest_path: str, img_byte_arr):
     logger.debug(f"Uploaded to {dest_path}")
 
 
+def upload_result_video(dest_path: str, local_file: str):
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blob = bucket.blob(dest_path)
+    blob.upload_from_filename(local_file, content_type="video/mp4")
+    logger.debug(f"Uploaded video to {dest_path}")
+
+
 def save_result_image_locally(blob_path: str, img_byte_arr) -> str:
     cache_path = _get_media_cache_path(blob_path)
     cache_path.parent.mkdir(parents=True, exist_ok=True)

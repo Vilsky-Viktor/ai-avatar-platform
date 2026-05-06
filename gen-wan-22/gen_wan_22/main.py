@@ -7,11 +7,12 @@ import time
 from google.cloud import pubsub_v1
 
 import gen_wan_22.logger as log
-from gen_wan_22.logger import set_job_id, clear_job_id
+from gen_wan_22.logger import set_job_id, unset_job_id
 import gen_wan_22.db as db
 import gen_wan_22.message_queue as mq
 import gen_wan_22.storage as storage
 from gen_wan_22.models import Job
+from gen_wan_22 import inference
 
 logger = log.get_logger(__name__)
 
@@ -74,10 +75,15 @@ def make_process_job(semaphore: threading.Semaphore):
                 for lora in job_input.loras:
                     storage.ensure_lora_downloaded(lora.path)
 
-            # Ack early — training takes many minutes; holding the lease risks redelivery
+            # Ack early — generation takes many minutes; holding the lease risks redelivery
             message.ack()
 
-            # inference here
+            tmp_path = storage.LOCAL_TMP_DIR / f"{job.id}-{job.result.fileName}"
+            try:
+                inference.run_inference(job, str(tmp_path))
+                storage.upload_result_video(media_path, str(tmp_path))
+            finally:
+                tmp_path.unlink(missing_ok=True)
 
             job.status = "completed"
             job.result.mediaPath = media_path
@@ -97,7 +103,7 @@ def make_process_job(semaphore: threading.Semaphore):
         finally:
             if semaphore_acquired:
                 semaphore.release()
-            clear_job_id()
+            unset_job_id()
 
     return process_job
 

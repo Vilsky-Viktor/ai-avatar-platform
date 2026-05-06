@@ -18,11 +18,11 @@ from diffusers.models.lora import LoRACompatibleConv, LoRACompatibleLinear
 from safetensors.torch import load_file
 from transformers import T5EncoderModel
 
-from videox_fun.utils.group_offload import (_get_top_level_group_offload_hook,
-                                            _is_group_offload_enabled,
-                                            register_auto_device_hook,
-                                            safe_enable_group_offload,
-                                            safe_remove_group_offloading)
+from .group_offload import (_get_top_level_group_offload_hook,
+                           _is_group_offload_enabled,
+                           register_auto_device_hook,
+                           safe_enable_group_offload,
+                           safe_remove_group_offloading)
 
 
 class LoRAModule(torch.nn.Module):
