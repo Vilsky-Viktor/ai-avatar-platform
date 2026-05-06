@@ -103,6 +103,9 @@ export type InferenceConfig = {
   width?: number;
   height?: number;
   seed?: number;
+  videoLength?: number;
+  fps?: number;
+  shift?: number;
 }
 
 export type InferenceJobInput = {
