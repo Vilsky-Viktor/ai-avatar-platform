@@ -1,3 +1,5 @@
+import { qwenEdit2511 } from "../types/image";
+
 export const buildWan22A14bToolkitConfig = (numImages: number) => ({
   job: 'extension',
   config: {
@@ -8,7 +10,7 @@ export const buildWan22A14bToolkitConfig = (numImages: number) => ({
       save: { dtype: 'float16', save_every: 1000, max_step_saves_to_keep: 4 },
       datasets: [{
         caption_ext: 'txt',
-        resolution: [1024],
+        resolution: [qwenEdit2511['1:1TV'][0]],
         caption_dropout_rate: 0.05,
         cache_latents_to_disk: true,
         num_frames: 1,

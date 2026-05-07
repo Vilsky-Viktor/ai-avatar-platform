@@ -1,4 +1,5 @@
 import { InferenceJob } from '../types/job';
+import { AVATAR_REFERENCE_NAME } from './trainingPhotoSetCaptions';
 import uuid from 'uuid';
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
@@ -26,7 +27,7 @@ export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partia
     const name = uuid.v4();
     const inference = customInput.input?.inference;
 
-    return {
+    const job = {
       ...baseJob,
       order: customInput.order,
       maxRuns: customInput.maxRuns ?? baseJob.maxRuns,
@@ -38,6 +39,13 @@ export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partia
         fileName: `${name}-${inference?.width}x${inference?.height}.png`,
       },
     } as InferenceJob;
+
+    const rawPrompt = customInput.input?.inference.prompt ?? '';
+    job.metadata!.userPrompt = rawPrompt.startsWith(`${AVATAR_REFERENCE_NAME} `)
+      ? rawPrompt.slice(`${AVATAR_REFERENCE_NAME} `.length)
+      : rawPrompt;
+
+    return job
   });
 }
 

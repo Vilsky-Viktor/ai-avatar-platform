@@ -177,13 +177,14 @@ def write_dataset(images: list[Image.Image], prompts: list[str], dataset_dir: Pa
 
 
 def upload_lora_checkpoints(local_dir: Path, dest_prefix: str) -> int:
-    """Upload all files from local_dir to GCS preserving original filenames.
+    """Upload lora.safetensors and config.yaml from local_dir to GCS.
 
     Returns the number of files uploaded.
     """
-    files = [f for f in local_dir.rglob("*") if f.is_file()]
+    target_names = {"lora.safetensors", "config.yaml"}
+    files = [f for f in local_dir.rglob("*") if f.is_file() and f.name in target_names]
     if not files:
-        raise RuntimeError(f"No files found in {local_dir}")
+        raise RuntimeError(f"No result files found in {local_dir}")
 
     bucket = _get_gcs().bucket(BUCKET_NAME)
     for f in files:

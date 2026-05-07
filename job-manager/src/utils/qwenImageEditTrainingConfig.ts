@@ -8,7 +8,7 @@ export const buildQwenImageEditToolkitConfig = (numImages: number) => ({
       device: 'cuda:0',
       network: { type: 'lora', linear: 32, linear_alpha: 32 },
       save: { dtype: 'float16', save_every: 1000, max_step_saves_to_keep: 1 },
-      datasets: [{ caption_ext: 'txt', resolution: [qwenEdit2511['1:1T'][0]], caption_dropout_rate: 0.05, cache_latents_to_disk: true }],
+      datasets: [{ caption_ext: 'txt', resolution: [qwenEdit2511['1:1TI'][0]], caption_dropout_rate: 0.05, cache_latents_to_disk: true }],
       train: {
         batch_size: 1,
         steps: numImages * 150,

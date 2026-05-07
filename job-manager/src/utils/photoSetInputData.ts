@@ -23,7 +23,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.sad, scale: 1.0 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -46,7 +46,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.angry, scale: 0.6 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -69,7 +69,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.happy, scale: 0.9 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -89,10 +89,10 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                     height: squareSize[1],
                     guidanceScale: 1.0,
                 },
-                faceExpression: { enabled: true, type: FaceExpressionTypes.surprised, scale: 0.8 },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.surprised, scale: 0.75 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -115,7 +115,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.anxious, scale: 0.9 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -138,7 +138,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.shy, scale: 0.5 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -161,7 +161,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.sleepy, scale: 1.0 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -181,10 +181,10 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                     height: squareSize[1],
                     guidanceScale: 1.0,
                 },
-                faceExpression: { enabled: true, type: FaceExpressionTypes.fear, scale: 1.0 },
+                faceExpression: { enabled: true, type: FaceExpressionTypes.fear, scale: 1.1 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -207,7 +207,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.confused, scale: 1.5 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
@@ -230,7 +230,7 @@ export const genWhatsappStickersData = (lora: LoraConfig, idPhotoPaths: string[]
                 faceExpression: { enabled: true, type: FaceExpressionTypes.disgust, scale: 0.9 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.94 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: "models/qwen-edit-2511/loras/Qwen-PixelSmile", scale: 1.0 },
                     { path: lora.path, scale: 0.95, filename: lora.filename },
                 ],
@@ -263,7 +263,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -284,7 +284,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -305,7 +305,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -326,7 +326,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -347,7 +347,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -368,7 +368,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -389,7 +389,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -410,7 +410,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -431,7 +431,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -452,7 +452,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -473,7 +473,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -494,7 +494,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -515,7 +515,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -536,7 +536,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -557,7 +557,7 @@ export const genOutfitStylesData = (lora: LoraConfig, idPhotoPaths: string[], pa
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.9 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -589,7 +589,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -610,7 +610,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -631,7 +631,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -652,7 +652,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -673,7 +673,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -694,7 +694,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -715,7 +715,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -736,7 +736,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -757,7 +757,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -778,7 +778,7 @@ export const genTravelingAroundTheWorldData = (lora: LoraConfig, idPhotoPaths: s
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -810,7 +810,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -831,7 +831,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -852,7 +852,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -873,7 +873,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -885,7 +885,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
             input: {
                 checkDependencies: false,
                 inference: {
-                    prompt: `${AVATAR_REFERENCE_NAME} reclining on a sunbed at an overwater bungalow resort, turquoise ocean and palm trees in the background, tropical cocktail on the side table. Wearing ${isFemale ? 'a luxurious coral silk slip dress, and layered delicate gold necklaces' : 'a crisp white open-collar linen shirt, tailored light blue linen shorts'}`,
+                    prompt: `${AVATAR_REFERENCE_NAME} reclining on a sunbed at an overwater bungalow resort, looking at camera, turquoise ocean and palm trees in the background, tropical cocktail on the side table. Wearing ${isFemale ? 'a luxurious coral silk slip dress, and layered delicate gold necklaces' : 'a crisp white open-collar linen shirt, tailored light blue linen shorts'}`,
                     mediaPaths: [],
                     numSteps: 8,
                     width: portraitSize[0],
@@ -894,7 +894,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -915,7 +915,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },
@@ -936,7 +936,7 @@ export const genLuxuryLifeData = (lora: LoraConfig, idPhotoPaths: string[], para
                 },
                 faceRecognition: { enabled: true, mediaPaths: idPhotoPaths, threshold: { min: 0.92 } },
                 loras: [
-                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+                    { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
                     { path: lora.path, scale: 1.0, filename: lora.filename },
                 ],
             },

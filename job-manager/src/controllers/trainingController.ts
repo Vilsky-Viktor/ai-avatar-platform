@@ -155,7 +155,7 @@ export const genTrainingSyntheticIdPhotos = async (req: Request, res: Response, 
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: TrainingJobRequest = req.body;
 
-  const trainingRatio = imageRatios.qwenEdit2511['1:1T'];
+  const trainingRatio = imageRatios.qwenEdit2511['1:1TI'];
   const trainingDimensions = `${trainingRatio[0]}x${trainingRatio[1]}`;
 
   req.log.info(`Create synthetic ID photo jobs for user ${userId} with group ID ${jobRequest.groupId}`);
@@ -202,7 +202,7 @@ export const genTrainingTwinIdPhotos = async (req: Request, res: Response, next:
   const jobRequest: TrainingJobRequest = req.body;
   const groupId = uuid.v4();
 
-  const trainingRatio = imageRatios.qwenEdit2511['1:1T'];
+  const trainingRatio = imageRatios.qwenEdit2511['1:1TI'];
   const trainingDimensions = `${trainingRatio[0]}x${trainingRatio[1]}`;
 
   req.log.info(`Create twin ID photo jobs for user ${userId} with group ID ${groupId}`);
@@ -252,7 +252,7 @@ export const genTrainingPhotoSet = async (req: Request, res: Response, next: Nex
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: TrainingJobRequest = req.body;
 
-  const trainingRatio = imageRatios.qwenEdit2511['1:1T'];
+  const trainingRatio = imageRatios.qwenEdit2511['1:1TI'];
   const trainingDimensions = `${trainingRatio[0]}x${trainingRatio[1]}`;
 
   req.log.info(`Create Photo Set jobs for user ${userId} with group ID ${jobRequest.groupId}`);
