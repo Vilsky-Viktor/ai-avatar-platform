@@ -105,7 +105,8 @@ services:
       - JOBS_COLLECTION_NAME=jobs
       - GEN_QWEN_EDIT_2511_TOPIC=gen-qwen-edit-2511
       - GEN_WAN_22_TOPIC=gen-wan-22
-      - AI_TOOLKIT_TOPIC=ai-toolkit
+      - TRAIN_AI_TOOLKIT_TOPIC=train-ai-toolkit
+      - TRAIN_VIDEOX_FUN_TOPIC=train-videox-fun
       - RUNPOD_URL=http://runpod:3500
       - LLM_REQUEST_URL=http://llm-request:3700
 

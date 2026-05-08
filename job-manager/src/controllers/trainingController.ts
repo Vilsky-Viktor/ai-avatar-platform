@@ -21,13 +21,14 @@ import {
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { buildTrainingPhotoSetJobs } from '../utils/jobBuilder';
 import { buildQwenImageEditToolkitConfig } from '../utils/qwenImageEditTrainingConfig';
-import { buildWan22A14bToolkitConfig } from '../utils/wan22A14bTrainingConfig';
+import { buildWan22T2vA14bToolkitConfig } from '../utils/wan22TrainingConfigs';
 import uuid from 'uuid';
 import imageRatios from '../types/image';
 import { AvatarLoras } from '../types/avatar';
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
-const AI_TOOLKIT_TOPIC = process.env.AI_TOOLKIT_TOPIC || 'ai-toolkit';
+const TRAIN_AI_TOOLKIT_TOPIC = process.env.TRAIN_AI_TOOLKIT_TOPIC || 'train-ai-toolkit';
+const TRAIN_VIDEOX_FUN_TOPIC = process.env.TRAIN_VIDEOX_FUN_TOPIC || 'train-videox-fun';
 
 export const trainLoras = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -49,7 +50,6 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const captions = generatePhotoSetCaptions(jobRequest.parameters);
     const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
     const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
-    const resolution = completedJobs[0].input.inference.width as number;
 
     const qwenJob: TrainingJob = {
       groupId: jobRequest.groupId,
@@ -68,43 +68,47 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
           toolkit: buildQwenImageEditToolkitConfig(mediaPaths.length),
         },
       },
-      metadata: { queueTopic: AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
+      metadata: { queueTopic: TRAIN_AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
       result: { fileName: 'qwen-edit-2511-lora.safetensors' },
     };
 
-    const wanJob: TrainingJob = {
+    const baseWanJob = {
       groupId: jobRequest.groupId,
       userId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
-      target: JobTargets.wan22A14bLora,
       status: JobStatuses.pending,
       maxRuns: 1,
+      metadata: { queueTopic: TRAIN_VIDEOX_FUN_TOPIC } as TrainingJobMetadata,
+    };
+
+    const wan22T2vJob: TrainingJob = {
+      ...baseWanJob,
+      target: JobTargets.wan22T2vA14bLora,
       input: {
         checkDependencies: false,
         training: {
-          modelName: 'wan22-a14b',
+          modelName: 'wan-22/wan2.2-fun-a14b-inp',
           mediaPaths,
           prompts,
-          toolkit: buildWan22A14bToolkitConfig(mediaPaths.length),
+          toolkit: buildWan22T2vA14bToolkitConfig(mediaPaths.length),
         },
       },
-      metadata: { queueTopic: AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
-      result: { fileName: 'wan22-a14b-lora.safetensors' },
+      result: { fileName: 'wan22-t2v-a14b-lora.safetensors' },
     };
 
-    const [dbQwenJob, dbWanJob] = await Promise.all([
+    const [dbQwenJob, dbWan22T2vJob] = await Promise.all([
       createDb(userId, qwenJob),
-      createDb(userId, wanJob),
+      createDb(userId, wan22T2vJob),
     ]);
     await Promise.all([
-      publishJob(AI_TOOLKIT_TOPIC, dbQwenJob),
-      publishJob(AI_TOOLKIT_TOPIC, dbWanJob),
+      publishJob(TRAIN_AI_TOOLKIT_TOPIC, dbQwenJob),
+      publishJob(TRAIN_VIDEOX_FUN_TOPIC, dbWan22T2vJob),
     ]);
 
     const loras: AvatarLoras = {
       qwenEdit2511: { path: '', filename: '' },
-      wan22A14b: { path: '', filename: '' },
+      wan22T2vA14b: { path: '', filename: '' },
     };
     return res.status(201).json(loras);
   } catch (error) {
