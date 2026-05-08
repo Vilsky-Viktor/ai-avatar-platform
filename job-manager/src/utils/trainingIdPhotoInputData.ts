@@ -2,6 +2,7 @@ import { AvatarParameters } from '../types/avatar';
 import { IdPhotoSetPaths } from '../types/trainingPhotoSet';
 import { InferenceJob, Directions } from '../types/job';
 import imageRatios from '../types/image';
+import { Qwen2511Loras } from "./thirdPartyLoras";
 
 export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): Partial<InferenceJob>[] => {
   const {
@@ -46,7 +47,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         },
         faceRecognition: { enabled: false},
         loras: [
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -66,7 +67,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.7 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -87,10 +88,10 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.65 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 1.0 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '45:0', shotType: 'rightQuarterCloseUpView' },
@@ -111,10 +112,10 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.65 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 1.0 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '45:0', shotType: 'leftQuarterCloseUpView' },
@@ -135,10 +136,10 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.rightQuarter!], threshold: { min: 0.65 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 1.0 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '90:0', shotType: 'rightSideCloseUpView' },
@@ -159,10 +160,10 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.leftQuarter!], threshold: { min: 0.65 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 1.0 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '90:0', shotType: 'leftSideCloseUpView' },
@@ -183,7 +184,7 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.9 }},
         loras: [
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontExtremeCloseUpView' },
@@ -203,9 +204,9 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!], threshold: { min: 0.87 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontUpperBodyView'},
@@ -225,9 +226,9 @@ export const genTrainingSyntheticIdPhotoData = (parameters: AvatarParameters, id
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.generated.front!, idPhotoSet.generated.upperBody!], threshold: { min: 0.85 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
+          { path: Qwen2511Loras.editSkin, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontFullBodyView'},
@@ -260,7 +261,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.96 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.7 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -281,7 +282,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.frontSmile!], threshold: { min: 0.96 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.7 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'frontCloseUpView' },
@@ -303,9 +304,9 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.rightQuarter!], threshold: { min: 0.95 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.7 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '45:0', shotType: 'rightQuarterCloseUpView' },
@@ -327,9 +328,9 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.leftQuarter!], threshold: { min: 0.95 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.7 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '45:0', shotType: 'leftQuarterCloseUpView' },
@@ -351,9 +352,9 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.right },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.rightQuarter!], threshold: { min: 0.85 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.7 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '90:0', shotType: 'rightSideCloseUpView' },
@@ -375,9 +376,9 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         faceDirection: { enabled: true, direction: Directions.left },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.leftQuarter!], threshold: { min: 0.85 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-2511-Multiple-Angles-LoRA", scale: 1.0 },
-          { path: "models/qwen-edit-2511/loras/Qwen-Image-Edit-InSubject", scale: 1.0 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.7 },
+          { path: Qwen2511Loras.multipleAngles, scale: 1.0 },
+          { path: Qwen2511Loras.inSubject, scale: 1.0 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '90:0', shotType: 'leftSideCloseUpView' },
@@ -398,7 +399,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.96 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.7 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.7 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontExtremeCloseUpView' },
@@ -418,8 +419,8 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.95 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
-          { path: "models/qwen-edit-2511/loras/qwen-edit-skin", scale: 0.5 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.6 },
+          { path: Qwen2511Loras.editSkin, scale: 0.5 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontUpperBodyView'},
@@ -439,7 +440,7 @@ export const genTrainingTwinIdPhotoData = (parameters: AvatarParameters, idPhoto
         },
         faceRecognition: { enabled: true, mediaPaths: [idPhotoSet.uploaded.front!], threshold: { min: 0.93 }},
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+          { path: Qwen2511Loras.lightning8stepsV2, scale: 0.6 },
         ],
       },
       metadata: { dimensions: trainingDimensions, ratio: '1:1', angle: '0:0', shotType: 'FrontFullBodyView'},
