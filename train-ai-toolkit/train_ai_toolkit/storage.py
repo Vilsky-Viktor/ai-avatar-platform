@@ -35,6 +35,13 @@ def _get_gcs() -> storage.Client:
     return _gcs_client
 
 
+def _is_blob_up_to_date(local_path: Path, blob) -> bool:
+    if not local_path.exists():
+        return False
+    stat = local_path.stat()
+    return stat.st_size == blob.size and blob.updated.timestamp() <= stat.st_mtime
+
+
 def _is_fresh(path: Path) -> bool:
     if not path.exists():
         return False
@@ -102,7 +109,7 @@ def download_model(model_name: str):
         relative = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
         local_path = LOCAL_MODELS_BASE / relative
 
-        if local_path.exists() and local_path.stat().st_size == blob.size:
+        if _is_blob_up_to_date(local_path, blob):
             continue
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
@@ -133,7 +140,7 @@ def sync_models():
         local_path = LOCAL_MODELS_BASE / relative
         expected.add(local_path)
 
-        if local_path.exists() and local_path.stat().st_size == blob.size:
+        if _is_blob_up_to_date(local_path, blob):
             continue
 
         local_path.parent.mkdir(parents=True, exist_ok=True)

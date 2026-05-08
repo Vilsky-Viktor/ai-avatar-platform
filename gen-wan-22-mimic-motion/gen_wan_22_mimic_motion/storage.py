@@ -35,6 +35,13 @@ _last_eviction_time: float = 0.0
 _eviction_lock = threading.Lock()
 
 
+def _is_blob_up_to_date(local_path: Path, blob) -> bool:
+    if not local_path.exists():
+        return False
+    stat = local_path.stat()
+    return stat.st_size == blob.size and blob.updated.timestamp() <= stat.st_mtime
+
+
 def _get_media_cache_path(blob_path: str) -> Path:
     return LOCAL_MEDIA_CACHE_DIR / blob_path.lstrip("/")
 
@@ -123,24 +130,18 @@ def ensure_lora_downloaded(lora_path: str) -> str:
     lora_file_extenstions = {".safetensors", ".bin", ".pt", ".ckpt"}
     is_file_path = Path(lora_path).suffix in lora_file_extenstions
 
-    # Fast path only for single-file LoRAs — directory LoRAs always sync to catch
-    # new checkpoints added to the bucket after the initial download.
-    if is_file_path and local_path.is_file():
-        logger.info(f"LoRA already cached: {lora_path}")
-        return str(local_path)
-
     lock_path = local_path.parent / f".{local_path.name}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(lock_path), timeout=300):
         if is_file_path:
-            if local_path.is_file():
-                logger.info(f"LoRA already cached (downloaded by concurrent thread): {lora_path}")
+            bucket = storage_client.bucket(BUCKET_NAME)
+            blob = bucket.get_blob(lora_path)
+            if blob is None:
+                raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
+            if _is_blob_up_to_date(local_path, blob):
+                logger.info(f"LoRA already up-to-date: {lora_path}")
                 return str(local_path)
             logger.info(f"Downloading LoRA from bucket: {lora_path}")
-            bucket = storage_client.bucket(BUCKET_NAME)
-            blob = bucket.blob(lora_path)
-            if not blob.exists():
-                raise FileNotFoundError(f"No LoRA files found in bucket at: {lora_path}")
             local_path.parent.mkdir(parents=True, exist_ok=True)
             blob.download_to_filename(str(local_path))
             logger.info(f"LoRA download complete: {lora_path}")
@@ -155,7 +156,7 @@ def ensure_lora_downloaded(lora_path: str) -> str:
                     continue
                 relative = os.path.relpath(blob.name, lora_path)
                 dest = local_path / relative
-                if dest.exists() and dest.stat().st_size == blob.size:
+                if _is_blob_up_to_date(dest, blob):
                     continue
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 blob.download_to_filename(str(dest))
@@ -187,7 +188,7 @@ def download_models(model_name):
         relative_path = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
         final_dest = local_base_dir / relative_path
 
-        if final_dest.exists() and final_dest.stat().st_size == blob.size:
+        if _is_blob_up_to_date(final_dest, blob):
             continue
 
         final_dest.parent.mkdir(parents=True, exist_ok=True)
@@ -216,7 +217,7 @@ def sync_models():
         local_path = local_base_dir / relative_path
         expected.add(local_path)
 
-        if local_path.exists() and local_path.stat().st_size == blob.size:
+        if _is_blob_up_to_date(local_path, blob):
             continue
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
@@ -232,7 +233,7 @@ def sync_models():
     logger.info("Models folder sync complete")
 
 
-def load_input_videos(image_paths: list[str]) -> list[Image.Image]:
+def load_input_images(image_paths: list[str]) -> list[Image.Image]:
     global _last_eviction_time
     now = time.time()
     if now - _last_eviction_time >= EVICTION_INTERVAL_SECONDS:
@@ -317,13 +318,6 @@ def upload_result_image(dest_path: str, img_byte_arr):
     blob = bucket.blob(dest_path)
     blob.upload_from_file(img_byte_arr, content_type="image/png")
     logger.debug(f"Uploaded to {dest_path}")
-
-
-def upload_result_video(dest_path: str, local_file: str):
-    bucket = storage_client.bucket(BUCKET_NAME)
-    blob = bucket.blob(dest_path)
-    blob.upload_from_filename(local_file, content_type="video/mp4")
-    logger.debug(f"Uploaded video to {dest_path}")
 
 
 def save_result_image_locally(blob_path: str, img_byte_arr) -> str:
