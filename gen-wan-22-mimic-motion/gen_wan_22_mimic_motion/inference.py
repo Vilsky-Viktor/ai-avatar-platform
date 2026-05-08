@@ -35,6 +35,7 @@ from .videox_fun.utils.fm_solvers import FlowDPMSolverMultistepScheduler
 from .videox_fun.utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 from .models import Job
 from .logger import get_logger
+from .dwpose import generate_pose_video
 import gen_wan_22_mimic_motion.storage as storage
 
 logger = get_logger(__name__)
@@ -275,12 +276,18 @@ def run_inference(job: Job, output_path: str) -> None:
 
     local_video_path = _download_video_to_cache(video_paths[0])
 
+    logger.info(f"Running DWPose on control video: {video_paths[0]}")
+    pose_video_path = generate_pose_video(
+        local_video_path, video_length=video_length,
+        target_h=infer.height, target_w=infer.width, fps=infer.fps,
+    )
+
     inpaint_video, inpaint_video_mask, _ = get_image_to_video_latent(
         None, None, video_length=video_length, sample_size=sample_size,
     )
     ref_image_tensor = get_image_latent(pil_images[0], sample_size=sample_size)
     control_video, _, _, _ = get_video_to_video_latent(
-        local_video_path, video_length=video_length, sample_size=sample_size, fps=infer.fps,
+        pose_video_path, video_length=video_length, sample_size=sample_size, fps=infer.fps,
     )
 
     merged = _merge_all_loras(pipeline, job.input.loras, device, transformer_2) if job.input.loras else []

@@ -7,7 +7,10 @@ Generates video by mimicking the motion of a control video applied to a referenc
 
 The output video preserves the subject from the reference image and follows the motion pattern of the control video.
 
-Model: `models/wan-22/wan2.2-fun-a14b-control`
+Models required in bucket:
+- `models/wan-22/wan2.2-fun-a14b-control` — inference model
+- `models/dwpose/yolox_l.onnx` — DWPose person detector
+- `models/dwpose/dw-ll_ucoco_384.onnx` — DWPose pose estimator
 
 ## Build image
 
