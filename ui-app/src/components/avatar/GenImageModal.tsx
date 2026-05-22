@@ -66,7 +66,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
-            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-7 p-10 w-[580px] animate-modal-card">
+            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-7 p-10 w-[700px] animate-modal-card">
 
                 <button
                     onClick={onClose}
@@ -88,10 +88,10 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                 {/* Reference images */}
                 <div className="flex items-center gap-3">
                     {slots.map((_slot, idx) => (
-                        <div key={idx} className="group relative w-40 h-40 rounded-xl overflow-hidden border border-base-content/10 shrink-0">
+                        <div key={idx} className="group relative w-49 h-49 rounded-xl overflow-hidden border border-base-content/10 shrink-0">
                             {previews[idx] ? (
                                 <>
-                                    <img src={previews[idx]!} className="w-full h-full object-cover" />
+                                    <img src={previews[idx]!} className="w-full h-full object-cover object-top" />
                                     <button
                                         onClick={() => removeSlot(idx)}
                                         className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
@@ -104,7 +104,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                                     onClick={() => fileInputRefs[idx].current?.click()}
                                     className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
                                 >
-                                    <ImagePlus size={28} strokeWidth={1.5} />
+                                    <ImagePlus size={35} strokeWidth={1.5} />
                                     <span className="text-[11px] uppercase tracking-widest">Reference</span>
                                 </button>
                             )}

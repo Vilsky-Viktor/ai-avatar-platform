@@ -23,6 +23,7 @@ class LoraConfig(BaseModel):
     path: str
     scale: float = 1.0
     filename: str | None = None
+    boundary: str | None = None  # "high" → transformer_2 only, "low" → transformer only, None → both
 
 class FaceRecognitionThreshold(BaseModel):
     min: float = 0.95

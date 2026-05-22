@@ -22,7 +22,7 @@ function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
                     </div>
                     <h3 className="text-xl font-bold uppercase tracking-widest mb-2">Confirm Delete</h3>
                     <p className="text-sm text-base-content/60 leading-relaxed mb-8">
-                        Are you sure you want to delete this photo? This action cannot be undone.
+                        Are you sure you want to delete this media? This action cannot be undone.
                     </p>
                     <div className="flex flex-col w-full gap-3">
                         <button
@@ -31,7 +31,7 @@ function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
                             className="btn btn-error btn-lg rounded-2xl w-full uppercase tracking-widest text-xs"
                         >
                             {isDeleting ? <span className="loading loading-spinner" /> : <Trash2 size={16} className="mr-2" />}
-                            Delete Photo
+                            Delete Media
                         </button>
                         <button
                             onClick={onCancel}

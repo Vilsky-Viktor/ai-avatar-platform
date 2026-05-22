@@ -67,7 +67,9 @@ export type InferenceJobMetadata = {
   ratio?: string;
   angle?: string;
   shotType?: string;
-  userPrompt: string;
+  queueTopic?: string;
+  userPrompt?: string;
+  lengthSec?: number;
 }
 
 export type InferenceJob = {
@@ -129,6 +131,14 @@ export type PhotoJobRequest = {
   ratio: string;
   prompt: string;
   referenceImagePaths?: string[];
+}
+
+export type VideoJobRequest = {
+  avatarId: string;
+  ratio: string;
+  prompt: string;
+  referenceImagePaths?: string[];
+  lengthSec?: number;
 }
 
 export type PhotoSetJobRequest = {

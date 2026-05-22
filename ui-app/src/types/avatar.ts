@@ -40,7 +40,7 @@ export type LoraConfig = {
 
 export type AvatarLoras = {
   qwenEdit2511: LoraConfig;
-  wan22A14b: LoraConfig;
+  wan22T2vA14b?: LoraConfig;
 }
 
 export type Avatar = {

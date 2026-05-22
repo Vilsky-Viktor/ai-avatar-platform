@@ -40,7 +40,11 @@ def _is_blob_up_to_date(local_path: Path, blob) -> bool:
     if not local_path.exists():
         return False
     stat = local_path.stat()
-    return stat.st_size == blob.size and blob.updated.timestamp() <= stat.st_mtime
+    if stat.st_size != blob.size:
+        return False
+    if blob.updated is None:
+        return True
+    return blob.updated.timestamp() <= stat.st_mtime + 30
 
 
 def _is_fresh(path: Path) -> bool:
@@ -149,6 +153,38 @@ def upload_lora(local_path: Path, dest_blob_path: str):
     bucket = _get_gcs().bucket(BUCKET_NAME)
     bucket.blob(dest_blob_path).upload_from_filename(str(local_path))
     logger.info(f"Uploaded {local_path.name} → gs://{BUCKET_NAME}/{dest_blob_path}")
+
+
+def sync_models():
+    """Sync entire models/ folder from GCS: download missing/updated files, remove deleted ones."""
+    logger.info(f"Syncing models folder from bucket: {BUCKET_NAME}")
+
+    bucket = _get_gcs().bucket(BUCKET_NAME)
+    blobs = [b for b in bucket.list_blobs(prefix=f"{BUCKET_MODELS_PATH}/") if not b.name.endswith("/")]
+
+    if not blobs:
+        raise RuntimeError(f"No blobs found at gs://{BUCKET_NAME}/{BUCKET_MODELS_PATH}/")
+
+    expected: set[Path] = set()
+    for blob in blobs:
+        relative = os.path.relpath(blob.name, BUCKET_MODELS_PATH)
+        local_path = LOCAL_MODELS_BASE / relative
+        expected.add(local_path)
+
+        if _is_blob_up_to_date(local_path, blob):
+            continue
+
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(local_path))
+        logger.info(f"Downloaded {blob.name}")
+
+    if LOCAL_MODELS_BASE.exists():
+        for local_file in LOCAL_MODELS_BASE.rglob("*"):
+            if local_file.is_file() and local_file not in expected:
+                local_file.unlink()
+                logger.info(f"Removed {local_file}")
+
+    logger.info("Models folder sync complete")
 
 
 def make_lora_output_dir(job_id: str) -> Path:

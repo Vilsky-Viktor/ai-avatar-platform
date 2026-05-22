@@ -39,7 +39,11 @@ def _is_blob_up_to_date(local_path: Path, blob) -> bool:
     if not local_path.exists():
         return False
     stat = local_path.stat()
-    return stat.st_size == blob.size and blob.updated.timestamp() <= stat.st_mtime
+    if stat.st_size != blob.size:
+        return False
+    if blob.updated is None:
+        return True
+    return blob.updated.timestamp() <= stat.st_mtime + 30
 
 
 def _get_media_cache_path(blob_path: str) -> Path:
@@ -318,6 +322,13 @@ def upload_result_image(dest_path: str, img_byte_arr):
     blob = bucket.blob(dest_path)
     blob.upload_from_file(img_byte_arr, content_type="image/png")
     logger.debug(f"Uploaded to {dest_path}")
+
+
+def upload_result_video(dest_path: str, local_path: str):
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blob = bucket.blob(dest_path)
+    blob.upload_from_filename(local_path, content_type="video/mp4")
+    logger.debug(f"Uploaded video to {dest_path}")
 
 
 def save_result_image_locally(blob_path: str, img_byte_arr) -> str:

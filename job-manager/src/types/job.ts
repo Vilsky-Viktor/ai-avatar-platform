@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { AvatarParameters, AvatarTypes } from './avatar';
 import { PhotoSetType, qwenEdit2511 } from './image';
+import type { VideoRatio } from './image';
 
 export enum MediaTypes {
   image = 'image',
@@ -84,6 +85,7 @@ export type LoraData = {
   path: string;
   scale?: number;
   filename?: string;
+  boundary?: string; // "high" → transformer_2 only, "low" → transformer only, undefined → both
 }
 
 export type FaceDirection = {
@@ -131,6 +133,7 @@ export type InferenceJobMetadata = {
   shotType?: string;
   queueTopic?: string;
   userPrompt?: string;
+  lengthSec?: number;
 }
 
 // ── Training ─────────────────────────────────────────────────────────────────
@@ -203,6 +206,14 @@ export type PhotoJobRequest = {
   ratio: ImageRatio;
   prompt: string;
   referenceImagePaths?: string[];
+}
+
+export type VideoJobRequest = {
+  avatarId: string;
+  ratio: VideoRatio;
+  prompt: string;
+  referenceImagePaths?: string[];
+  lengthSec?: number;
 }
 
 export type PhotoSetJobRequest = {

@@ -1,6 +1,6 @@
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload } from 'lucide-react';
+import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play } from 'lucide-react';
 import { useState } from 'react';
-import { JobStatuses, type InferenceJob } from '../types/job';
+import { JobStatuses, MediaType, type InferenceJob } from '../types/job';
 import { downloadMediaFromBucket } from '../services/storage';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
 import MediaInfoPopup from './mediaGrid/MediaInfoPopup';
@@ -20,7 +20,7 @@ const DEFAULT_THRESHOLDS: FaceMatchThresholds = {
 type Props = {
     job?: Partial<InferenceJob> | null;
     idx: number;
-    onPhotoClick: (url: string, rect: DOMRect) => void;
+    onPhotoClick: (url: string, rect: DOMRect, mediaType: MediaType) => void;
     onRegenerate?: (jobId: string) => void;
     onDelete?: (jobId: string) => void | Promise<void>;
     canRestart?: boolean;
@@ -44,7 +44,7 @@ function MediaCard({
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [infoVisible, setInfoVisible] = useState(false);
-    const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
+
 
     const handleConfirmDelete = async () => {
         if (!confirmDeleteId || !onDelete) return;
@@ -102,7 +102,7 @@ function MediaCard({
                     onCancel={() => setConfirmDeleteId(null)}
                 />
             )}
-            {infoVisible && <MediaInfoPopup job={job} naturalSize={null} onClose={() => setInfoVisible(false)} />}
+            {infoVisible && <MediaInfoPopup job={job} onClose={() => setInfoVisible(false)} />}
             <div className="group flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
                 <div className="flex flex-col items-center gap-6">
                     <div className="relative">
@@ -136,7 +136,7 @@ function MediaCard({
     if (status === JobStatuses.generating) {
         return (
             <>
-            {infoVisible && <MediaInfoPopup job={job} naturalSize={null} onClose={() => setInfoVisible(false)} />}
+            {infoVisible && <MediaInfoPopup job={job} onClose={() => setInfoVisible(false)} />}
             <div className="group flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
                 <div className="flex flex-col items-center gap-6">
                     <div className="relative">
@@ -168,7 +168,7 @@ function MediaCard({
                     onCancel={() => setConfirmDeleteId(null)}
                 />
             )}
-            {infoVisible && <MediaInfoPopup job={job} naturalSize={null} onClose={() => setInfoVisible(false)} />}
+            {infoVisible && <MediaInfoPopup job={job} onClose={() => setInfoVisible(false)} />}
             <div className="group flex relative rounded-[1rem] border border-error/20 bg-error/[0.02] flex flex-col items-center justify-center aspect-square">
                 <div className="flex flex-col items-center gap-6">
                     <div className="relative">
@@ -232,24 +232,39 @@ function MediaCard({
             {infoVisible && (
                 <MediaInfoPopup
                     job={job}
-                    naturalSize={naturalSize}
                     onClose={() => setInfoVisible(false)}
                 />
             )}
             <div
                 className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
-                onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect())}
+                onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect(), job.mediaType ?? MediaType.image)}
             >
-                <img
-                    src={url}
-                    alt={`Avatar photo ${idx + 1}`}
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
-                    onLoad={(e) => {
-                        const img = e.currentTarget;
-                        setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
-                    }}
-                />
+                {job.mediaType === MediaType.video ? (
+                    <>
+                        <video
+                            src={url}
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                            className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                            onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+                            onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
+                            <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                                <Play size={18} className="text-white fill-white ml-0.5" />
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <img
+                        src={url}
+                        alt={`Avatar photo ${idx + 1}`}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                    />
+                )}
 
                 {showOrder && (
                     <div className="absolute top-1 left-1 z-10">

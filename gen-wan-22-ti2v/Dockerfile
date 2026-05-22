@@ -5,10 +5,16 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     WAN_MODEL_PATH="/workspace/models/wan-22" \
     HF_HOME="/workspace/models" \
     LOG_LEVEL="INFO" \
+    GPU_MEMORY_MODE="model_cpu_offload" \
     DIFFUSERS_ATTN_BACKEND="_sage_qk_int8_pv_fp8_cuda_sm90" \
-    TORCH_HOME="/workspace/models/torch_cache"
+    VIDEOX_ATTENTION_TYPE="SAGE_ATTENTION" \
+    TORCH_HOME="/workspace/models/torch_cache" \
+    PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 
 WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY gen_wan_22_ti2v ./gen_wan_22_ti2v
 

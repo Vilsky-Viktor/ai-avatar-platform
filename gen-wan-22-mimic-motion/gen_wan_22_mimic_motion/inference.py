@@ -26,8 +26,8 @@ from .videox_fun.utils.fp8_optimization import (
 from .videox_fun.utils.lora_utils import merge_lora, unmerge_lora
 from .videox_fun.utils.utils import (
     filter_kwargs,
-    get_image_to_video_latent,
     get_image_latent,
+    get_image_to_video_latent,
     get_video_to_video_latent,
     save_videos_grid,
 )
@@ -66,10 +66,15 @@ def _get_device() -> str:
 
 
 def _load_config(model_path: str):
-    config_path = os.path.join(model_path, "config.yaml")
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Model config not found at {config_path}.")
-    return OmegaConf.load(config_path)
+    for filename in ("config.yaml", "configuration.json"):
+        config_path = os.path.join(model_path, filename)
+        if os.path.exists(config_path):
+            cfg = OmegaConf.load(config_path)
+            if "transformer_additional_kwargs" in cfg:
+                return cfg
+    bundled = Path(__file__).parent / "videox_fun" / "config" / "model_config.yaml"
+    logger.warning(f"No VideoX-Fun config found in {model_path}, using bundled model_config.yaml")
+    return OmegaConf.load(bundled)
 
 
 def _load_transformers(model_path: str, config):
@@ -85,7 +90,7 @@ def _load_transformers(model_path: str, config):
     transformer_2 = None
     if config["transformer_additional_kwargs"].get("transformer_combination_type", "single") == "moe":
         high_noise_subpath = config["transformer_additional_kwargs"].get(
-            "transformer_high_noise_model_subpath", "transformer_2"
+            "transformer_high_noise_model_subpath", "transformer"
         )
         transformer_2 = Wan2_2Transformer3DModel.from_pretrained(
             os.path.join(model_path, high_noise_subpath),
@@ -270,7 +275,7 @@ def run_inference(job: Job, output_path: str) -> None:
 
     logger.info(f"Mode: mimic-motion | size={sample_size} | steps={infer.numSteps} | seed={seed} | frames={video_length} | fps={infer.fps}")
 
-    pil_images = storage.load_input_videos([image_paths[0]])
+    pil_images = storage.load_input_images([image_paths[0]])
     if not pil_images:
         raise RuntimeError(f"Failed to download ref image: {image_paths[0]}")
 
@@ -287,7 +292,7 @@ def run_inference(job: Job, output_path: str) -> None:
     )
     ref_image_tensor = get_image_latent(pil_images[0], sample_size=sample_size)
     control_video, _, _, _ = get_video_to_video_latent(
-        pose_video_path, video_length=video_length, sample_size=sample_size, fps=infer.fps,
+        pose_video_path, video_length=video_length, sample_size=sample_size, fps=infer.fps, ref_image=None,
     )
 
     merged = _merge_all_loras(pipeline, job.input.loras, device, transformer_2) if job.input.loras else []

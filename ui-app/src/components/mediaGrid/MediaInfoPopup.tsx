@@ -1,4 +1,4 @@
-import { Maximize2, LayoutTemplate, MessageSquare, ScanFace, Copy, Check } from 'lucide-react';
+import { Maximize2, LayoutTemplate, MessageSquare, ScanFace, Copy, Check, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import type { InferenceJob } from '../../types/job';
@@ -6,7 +6,6 @@ import { AVATAR_REFERENCE_NAME } from '../../utils/prompt';
 
 type Props = {
     job: Partial<InferenceJob>;
-    naturalSize?: { w: number; h: number } | null;
     onClose: () => void;
 };
 
@@ -32,10 +31,12 @@ function InfoRow({ icon, label, value, action }: RowProps) {
     );
 }
 
-function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
+function MediaInfoPopup({ job, onClose }: Props) {
     useScrollLock();
     const ratio = job.metadata?.ratio;
     const prompt = job.metadata?.userPrompt;
+    const dimensions = job.metadata?.dimensions;
+    const lengthSec = job.metadata?.lengthSec;
     const bestFaceMatch = job.result?.bestFaceMatch;
     const [copied, setCopied] = useState(false);
 
@@ -54,11 +55,18 @@ function MediaInfoPopup({ job, naturalSize, onClose }: Props) {
             />
             <div className="relative bg-base-100 w-full max-w-xl rounded-[2.5rem] shadow-2xl border border-base-content/5 p-8 animate-modal-card">
                 <div className="flex flex-col gap-2">
-                    {naturalSize && (
+                    {dimensions && (
                         <InfoRow
                             icon={<Maximize2 size={22} className="text-base-content/50" />}
                             label="Size"
-                            value={`${naturalSize.w} × ${naturalSize.h}`}
+                            value={dimensions.replace('x', ' × ')}
+                        />
+                    )}
+                    {lengthSec != null && (
+                        <InfoRow
+                            icon={<Clock size={22} className="text-base-content/50" />}
+                            label="Length"
+                            value={`${lengthSec} sec`}
                         />
                     )}
                     <InfoRow

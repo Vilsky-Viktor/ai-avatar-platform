@@ -48,6 +48,11 @@ TEACACHE_THRESHOLD_T2V = float(os.environ.get("TEACACHE_THRESHOLD_T2V", "0.10"))
 TEACACHE_THRESHOLD_I2V = float(os.environ.get("TEACACHE_THRESHOLD_I2V", "0.15"))
 TEACACHE_SKIP_STEPS = int(os.environ.get("TEACACHE_SKIP_STEPS", "5"))
 
+# Model was trained at 81 pixel frames = 21 latent frames (temporal_compression_ratio=4).
+# RIFLEx must be enabled for any inference that exceeds this to prevent RoPE period repetition.
+RIFLEX_TRAIN_LATENT_FRAMES = 21
+RIFLEX_K = int(os.environ.get("RIFLEX_K", "6"))
+
 _device: Optional[str] = None
 _pipeline: Optional[Wan2_2FunInpaintPipeline] = None
 _vae = None
@@ -62,10 +67,15 @@ def _get_device() -> str:
 
 
 def _load_config(model_path: str):
-    config_path = os.path.join(model_path, "config.yaml")
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Model config not found at {config_path}.")
-    return OmegaConf.load(config_path)
+    for filename in ("config.yaml", "configuration.json"):
+        config_path = os.path.join(model_path, filename)
+        if os.path.exists(config_path):
+            cfg = OmegaConf.load(config_path)
+            if "transformer_additional_kwargs" in cfg:
+                return cfg
+    bundled = Path(__file__).parent / "videox_fun" / "config" / "model_config.yaml"
+    logger.warning(f"No VideoX-Fun config found in {model_path}, using bundled model_config.yaml")
+    return OmegaConf.load(bundled)
 
 
 def _load_transformers(model_path: str, config):
@@ -81,7 +91,7 @@ def _load_transformers(model_path: str, config):
     transformer_2 = None
     if config["transformer_additional_kwargs"].get("transformer_combination_type", "single") == "moe":
         high_noise_subpath = config["transformer_additional_kwargs"].get(
-            "transformer_high_noise_model_subpath", "transformer_2"
+            "transformer_high_noise_model_subpath", "transformer"
         )
         transformer_2 = Wan2_2Transformer3DModel.from_pretrained(
             os.path.join(model_path, high_noise_subpath),
@@ -196,22 +206,28 @@ def _merge_all_loras(pipeline, loras, device: str, transformer_2) -> list:
     for lora in loras:
         local_dir = Path(LOCAL_LORAS_PATH) / lora.path
         lora_file = str(local_dir / lora.filename) if lora.filename else str(local_dir)
-        pipeline = merge_lora(pipeline, lora_file, lora.scale, device=device, dtype=WEIGHT_DTYPE)
-        if transformer_2 is not None:
+        apply_low = lora.boundary != "high"
+        apply_high = lora.boundary != "low"
+        if apply_low:
+            pipeline = merge_lora(pipeline, lora_file, lora.scale, device=device, dtype=WEIGHT_DTYPE)
+        if apply_high and transformer_2 is not None:
             pipeline = merge_lora(
                 pipeline, lora_file, lora.scale,
                 device=device, dtype=WEIGHT_DTYPE,
                 sub_transformer_name="transformer_2",
             )
-        merged.append((lora_file, lora.scale))
-        logger.info(f"Merged LoRA: {lora_file} (scale={lora.scale})")
+        merged.append((lora_file, lora.scale, lora.boundary))
+        logger.info(f"Merged LoRA: {lora_file} (scale={lora.scale}, boundary={lora.boundary})")
     return merged
 
 
 def _unmerge_all_loras(pipeline, merged: list, device: str, transformer_2):
-    for lora_file, scale in merged:
-        pipeline = unmerge_lora(pipeline, lora_file, scale, device=device, dtype=WEIGHT_DTYPE)
-        if transformer_2 is not None:
+    for lora_file, scale, boundary in merged:
+        apply_low = boundary != "high"
+        apply_high = boundary != "low"
+        if apply_low:
+            pipeline = unmerge_lora(pipeline, lora_file, scale, device=device, dtype=WEIGHT_DTYPE)
+        if apply_high and transformer_2 is not None:
             pipeline = unmerge_lora(
                 pipeline, lora_file, scale,
                 device=device, dtype=WEIGHT_DTYPE,
@@ -241,43 +257,59 @@ def run_inference(job: Job, output_path: str) -> None:
     boundary = config["transformer_additional_kwargs"].get("boundary", 0.900)
     transformer_2 = pipeline.transformer_2
     video_length = _aligned_video_length(infer.videoLength, vae.config.temporal_compression_ratio)
+    latent_frames = (video_length - 1) // vae.config.temporal_compression_ratio + 1
+    use_riflex = latent_frames > RIFLEX_TRAIN_LATENT_FRAMES
 
-    logger.info(f"Mode: {mode} | size={sample_size} | steps={infer.numSteps} | seed={seed} | frames={video_length} | fps={infer.fps}")
+    logger.info(f"Mode: {mode} | size={sample_size} | steps={infer.numSteps} | seed={seed} | frames={video_length} | latent_frames={latent_frames} | fps={infer.fps} | riflex={use_riflex}")
 
     if mode == "t2v":
         input_video, input_video_mask, _ = get_image_to_video_latent(
             None, None, video_length=video_length, sample_size=sample_size,
         )
     else:
-        pil_images = storage.load_input_videos([image_paths[0]])
+        pil_images = storage.load_input_images([image_paths[0]])
         if not pil_images:
             raise RuntimeError(f"Failed to download input image: {image_paths[0]}")
         input_video, input_video_mask, _ = get_image_to_video_latent(
-            pil_images[0], None, video_length=video_length, sample_size=sample_size,
+            [pil_images[0]], None, video_length=video_length, sample_size=sample_size,
         )
-        if TEACACHE_ENABLED:
-            pipeline.transformer.teacache_thresh = TEACACHE_THRESHOLD_I2V
+        if TEACACHE_ENABLED and pipeline.transformer.teacache is not None:
+            pipeline.transformer.teacache.rel_l1_thresh = TEACACHE_THRESHOLD_I2V
+
+    if use_riflex:
+        pipeline.transformer.enable_riflex(k=RIFLEX_K, L_test=latent_frames)
+        if transformer_2 is not None:
+            transformer_2.enable_riflex(k=RIFLEX_K, L_test=latent_frames)
 
     merged = _merge_all_loras(pipeline, job.input.loras, device, transformer_2) if job.input.loras else []
 
-    with torch.no_grad():
-        sample = pipeline(
-            infer.prompt,
-            num_frames=video_length,
-            negative_prompt=negative_prompt,
-            height=sample_size[0],
-            width=sample_size[1],
-            generator=generator,
-            guidance_scale=infer.guidanceScale,
-            num_inference_steps=infer.numSteps,
-            video=input_video,
-            mask_video=input_video_mask,
-            boundary=boundary,
-            shift=infer.shift,
-        ).videos
+    try:
+        with torch.no_grad():
+            sample = pipeline(
+                infer.prompt,
+                num_frames=video_length,
+                negative_prompt=negative_prompt,
+                height=sample_size[0],
+                width=sample_size[1],
+                generator=generator,
+                guidance_scale=infer.guidanceScale,
+                num_inference_steps=infer.numSteps,
+                video=input_video,
+                mask_video=input_video_mask,
+                boundary=boundary,
+                shift=infer.shift,
+            ).videos
+    finally:
+        if use_riflex:
+            pipeline.transformer.disable_riflex()
+            if transformer_2 is not None:
+                transformer_2.disable_riflex()
 
     if merged:
         _unmerge_all_loras(pipeline, merged, device, transformer_2)
+
+    if mode == "i2v" and TEACACHE_ENABLED and pipeline.transformer.teacache is not None:
+        pipeline.transformer.teacache.rel_l1_thresh = TEACACHE_THRESHOLD_T2V
 
     save_videos_grid(sample, output_path, fps=infer.fps)
     logger.info(f"Saved {mode} output → {output_path}")

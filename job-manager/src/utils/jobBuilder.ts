@@ -32,9 +32,11 @@ export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partia
       order: customInput.order,
       maxRuns: customInput.maxRuns ?? baseJob.maxRuns,
       input: customInput.input,
-      metadata: customInput.metadata
-        ? { ...customInput.metadata, queueTopic: GEN_QWEN_EDIT_2511_TOPIC }
-        : baseJob.metadata,
+      metadata: {
+        ...(baseJob.metadata ?? {}),
+        ...(customInput.metadata ?? {}),
+        queueTopic: GEN_QWEN_EDIT_2511_TOPIC,
+      },
       result: {
         fileName: `${name}-${inference?.width}x${inference?.height}.png`,
       },

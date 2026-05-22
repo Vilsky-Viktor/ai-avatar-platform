@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir \
     einops timm tomesd torchdiffeq torchsde decord datasets \
     scikit-image omegaconf SentencePiece albumentations \
     "imageio[ffmpeg]" "imageio[pyav]" tensorboard ftfy func_timeout \
-    xformers
+    xformers librosa
 
 WORKDIR /app
 COPY train_videox_fun ./train_videox_fun

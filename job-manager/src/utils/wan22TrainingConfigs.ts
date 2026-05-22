@@ -25,7 +25,7 @@ const baseDataset = {
   num_frames: 1,
 };
 
-export const buildWan22T2vA14bToolkitConfig = (numImages: number) => ({
+export const buildWan22T2vA14bVideoxFunConfig = (numImages: number) => ({
   job: 'extension',
   config: {
     process: [{

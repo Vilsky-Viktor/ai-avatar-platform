@@ -32,6 +32,8 @@ def run_training(
     checkpointing_steps = max_train_steps + 1
     model_path = str(Path(LOCAL_MODELS_BASE) / model_name)
 
+    train_mode = "inpaint" if "-inp" in model_name else "normal"
+
     results: dict[str, Path] = {}
     for boundary in ("high", "low"):
         boundary_output_dir = output_dir / boundary
@@ -64,7 +66,7 @@ def run_training(
             "--adam_epsilon=1e-10",
             "--vae_mini_batch=1",
             "--max_grad_norm=0.05",
-            "--train_mode=normal",
+            f"--train_mode={train_mode}",
             f"--boundary_type={boundary}",
             f"--rank={rank}",
             f"--network_alpha={network_alpha}",

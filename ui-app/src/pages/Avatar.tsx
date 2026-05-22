@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
-import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
+import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '../types/avatar';
 import LazyMediaCard from '../components/LazyMediaCard';
@@ -9,7 +9,9 @@ import CreateMediaCard from '../components/avatar/CreateMediaCard';
 import CreateMediaModal from '../components/avatar/CreateMediaModal';
 import GenImageModal from '../components/avatar/GenImageModal';
 import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
-import { type InferenceJob, type Job, type PhotoJobRequest, type PhotoSetJobRequest, JobStatuses, JobTargets, MediaType } from '../types/job';
+import GenVideoModal from '../components/avatar/GenVideoModal';
+import { type InferenceJob, type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, JobStatuses, JobTargets, MediaType } from '../types/job';
+import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
 import { useApp } from '../providers/ContextProvider';
@@ -28,9 +30,10 @@ function AvatarPage() {
     const [numModels, setNumModels] = useState(0);
     const [numImages, setNumImages] = useState(0);
     const [numVideos, setNumVideos] = useState(0);
-    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; mediaType: MediaType } | null>(null);
     const [createMediaOpen, setCreateMediaOpen] = useState(false);
     const [generateImageOpen, setGenerateImageOpen] = useState(false);
+    const [generateVideoOpen, setGenerateVideoOpen] = useState(false);
     const [photoSetOpen, setPhotoSetOpen] = useState(false);
     const [bgBlurred, setBgBlurred] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
@@ -39,6 +42,8 @@ function AvatarPage() {
     const closeCreateMedia = () => { setBgBlurred(false); setCreateMediaOpen(false); };
     const openGenerateImage = () => { setCreateMediaOpen(false); setGenerateImageOpen(true); };
     const closeGenerateImage = () => { setBgBlurred(false); setGenerateImageOpen(false); };
+    const openGenerateVideo = () => { setCreateMediaOpen(false); setGenerateVideoOpen(true); };
+    const closeGenerateVideo = () => { setBgBlurred(false); setGenerateVideoOpen(false); };
     const openPhotoSet = () => { setCreateMediaOpen(false); setPhotoSetOpen(true); };
     const closePhotoSet = () => { setBgBlurred(false); setPhotoSetOpen(false); };
 
@@ -114,6 +119,20 @@ function AvatarPage() {
         const job = await genAvatarPhoto(jobRequest);
         pushJobs([job]);
         closeGenerateImage();
+    };
+
+    const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number) => {
+        const jobRequest: VideoJobRequest = {
+            prompt,
+            ratio,
+            avatarId: avatar.id!,
+            referenceImagePaths: referenceImagePath ? [referenceImagePath] : [],
+            lengthSec,
+        };
+
+        const job = await genAvatarVideo(jobRequest);
+        pushJobs([job]);
+        closeGenerateVideo();
     };
 
     const handleGeneratePhotoset = async (type: PhotoSetType) => {
@@ -210,7 +229,7 @@ function AvatarPage() {
                                     key={idx} 
                                     job={job} 
                                     idx={idx} 
-                                    onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
+                                    onPhotoClick={(src, rect, mediaType) => setFullscreen({ src, rect, mediaType })}
                                     onRegenerate={restartJob}
                                     onDelete={deleteJob}
                                     canDelete={job?.target! === JobTargets.avatarMedia}
@@ -224,12 +243,13 @@ function AvatarPage() {
 
             {bgBlurred && <div className="fixed inset-0 z-[9998] bg-black/20 pointer-events-none" />}
 
-            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} mediaType={fullscreen?.mediaType} onClose={() => setFullscreen(null)} />
 
             <CreateMediaModal
                 isOpen={createMediaOpen}
                 onClose={closeCreateMedia}
                 onImage={openGenerateImage}
+                onVideo={openGenerateVideo}
                 onPhotoSet={openPhotoSet}
             />
             <GenImageModal
@@ -242,6 +262,13 @@ function AvatarPage() {
                 isOpen={photoSetOpen}
                 onClose={closePhotoSet}
                 onGenerate={handleGeneratePhotoset}
+            />
+            <GenVideoModal
+                isOpen={generateVideoOpen}
+                onClose={closeGenerateVideo}
+                avatar={avatar}
+                jobs={jobs.filter((j): j is InferenceJob => j !== null)}
+                onGenerate={handleGenerateVideo}
             />
         </>
     );

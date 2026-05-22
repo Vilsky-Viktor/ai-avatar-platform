@@ -22,7 +22,18 @@ export const qwenEdit2511 = {
     "2:3": [1056, 1584],
 }
 
+export const wan22Ti2v = {
+    "1:1":  [720, 720],
+    "16:9": [1280, 720],
+    "9:16": [720, 1280],
+    "4:3":  [960, 720],
+    "3:4":  [720, 960],
+}
+
+export type VideoRatio = keyof typeof wan22Ti2v;
+
 export default {
     ratios,
     qwenEdit2511,
+    wan22Ti2v,
 }

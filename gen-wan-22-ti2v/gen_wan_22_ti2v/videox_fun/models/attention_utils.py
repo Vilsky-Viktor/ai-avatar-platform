@@ -127,7 +127,7 @@ def flash_attention_naive(
     # apply attention
     if FLASH_ATTN_3_AVAILABLE:
         # Note: dropout_p, window_size are not supported in FA3 now.
-        x = flash_attn_interface.flash_attn_varlen_func(
+        _fa3_out = flash_attn_interface.flash_attn_varlen_func(
             q=q,
             k=k,
             v=v,
@@ -135,7 +135,8 @@ def flash_attention_naive(
             cu_seqlens_k=cu_seqlens_k,
             max_seqlen_q=max_seqlen_q,
             max_seqlen_k=max_seqlen_k,
-        )[0]
+        )
+        x = _fa3_out[0] if isinstance(_fa3_out, tuple) else _fa3_out
     else:
         assert FLASH_ATTN_2_AVAILABLE
         x = flash_attn.flash_attn_varlen_func(
@@ -224,7 +225,7 @@ def flash_attention(
     # apply attention
     if (version is None or version == 3) and FLASH_ATTN_3_AVAILABLE:
         # Note: dropout_p, window_size are not supported in FA3 now.
-        x = flash_attn_interface.flash_attn_varlen_func(
+        _fa3_out = flash_attn_interface.flash_attn_varlen_func(
             q=q,
             k=k,
             v=v,
@@ -238,7 +239,8 @@ def flash_attention(
             max_seqlen_k=lk,
             softmax_scale=softmax_scale,
             causal=causal,
-            deterministic=deterministic)[0].unflatten(0, (b, lq))
+            deterministic=deterministic)
+        x = (_fa3_out[0] if isinstance(_fa3_out, tuple) else _fa3_out).unflatten(0, (b, lq))
     else:
         assert FLASH_ATTN_2_AVAILABLE
         x = flash_attn.flash_attn_varlen_func(
@@ -298,7 +300,6 @@ def attention(
             warnings.warn(
                 'Padding mask is disabled when using SAGE_ATTENTION. It can have a significant impact on performance.'
             )
-
         q, k, v = convert_qkv_dtype(q, k, v)
         out = sageattn(
             q, k, v, attn_mask=attn_mask, tensor_layout="NHD", is_causal=causal, dropout_p=dropout_p)

@@ -3,6 +3,9 @@ import multiprocessing
 import os
 import threading
 import time
+import warnings
+
+warnings.filterwarnings("ignore", message="Padding mask is disabled when using SAGE_ATTENTION")
 
 from google.cloud import pubsub_v1
 
@@ -48,7 +51,7 @@ def make_process_job(semaphore: threading.Semaphore):
 
             job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
             job_input = job.input
-            media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/images/{job.result.fileName}"
+            media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/videos/{job.result.fileName}"
 
             set_job_id(job.id)
             logger.info(f"Received gen video job: avatar={job.avatarId}")
@@ -60,7 +63,7 @@ def make_process_job(semaphore: threading.Semaphore):
                 return
             
             logger.info("Loading dependency images ...")
-            reference_videos = storage.load_input_videos(job_input.inference.mediaPaths)
+            reference_videos = storage.load_input_images(job_input.inference.mediaPaths)
 
             if job_input.checkDependencies:
                 if len(reference_videos) != len(job_input.inference.mediaPaths):

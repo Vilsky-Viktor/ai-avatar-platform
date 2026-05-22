@@ -46,7 +46,7 @@ function GenPhotoSetModal({ isOpen, onClose, onGenerate }: Props) {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
-            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-3 p-10 w-[720px] animate-modal-card">
+            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-3 p-10 w-[700px] animate-modal-card">
 
                 <button
                     onClick={onClose}

@@ -21,7 +21,7 @@ import {
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { buildTrainingPhotoSetJobs } from '../utils/jobBuilder';
 import { buildQwenImageEditToolkitConfig } from '../utils/qwenImageEditTrainingConfig';
-import { buildWan22T2vA14bToolkitConfig } from '../utils/wan22TrainingConfigs';
+import { buildWan22T2vA14bVideoxFunConfig } from '../utils/wan22TrainingConfigs';
 import uuid from 'uuid';
 import imageRatios from '../types/image';
 import { AvatarLoras } from '../types/avatar';
@@ -51,26 +51,25 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
     const mediaPaths = completedJobs.map(j => j.result!.mediaPath!);
     const prompts = completedJobs.map(j => captions.find(c => c.order === j.order)?.caption ?? '');
 
-    const qwenJob: TrainingJob = {
-      groupId: jobRequest.groupId,
-      userId,
-      avatarId: jobRequest.avatarId,
-      mediaType: MediaTypes.image,
-      target: JobTargets.qwenEdit2511Lora,
-      status: JobStatuses.pending,
-      maxRuns: 1,
-      input: {
-        checkDependencies: false,
-        training: {
-          modelName: 'qwen-edit-2511',
-          mediaPaths,
-          prompts,
-          toolkit: buildQwenImageEditToolkitConfig(mediaPaths.length),
-        },
-      },
-      metadata: { queueTopic: TRAIN_AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
-      result: { fileName: 'qwen-edit-2511-lora.safetensors' },
-    };
+    // const qwenJob: TrainingJob = {
+    //   groupId: jobRequest.groupId,
+    //   userId,
+    //   avatarId: jobRequest.avatarId,
+    //   mediaType: MediaTypes.image,
+    //   target: JobTargets.qwenEdit2511Lora,
+    //   status: JobStatuses.pending,
+    //   maxRuns: 1,
+    //   input: {
+    //     checkDependencies: false,
+    //     training: {
+    //       modelName: 'qwen-edit-2511',
+    //       mediaPaths,
+    //       prompts,
+    //       toolkit: buildQwenImageEditToolkitConfig(mediaPaths.length),
+    //     },
+    //   },
+    //   metadata: { queueTopic: TRAIN_AI_TOOLKIT_TOPIC } as TrainingJobMetadata,
+    // };
 
     const baseWanJob = {
       groupId: jobRequest.groupId,
@@ -91,18 +90,20 @@ export const trainLoras = async (req: Request, res: Response, next: NextFunction
           modelName: 'wan-22/wan2.2-fun-a14b-inp',
           mediaPaths,
           prompts,
-          toolkit: buildWan22T2vA14bToolkitConfig(mediaPaths.length),
+          toolkit: buildWan22T2vA14bVideoxFunConfig(mediaPaths.length),
         },
       },
-      result: { fileName: 'wan22-t2v-a14b-lora.safetensors' },
     };
 
-    const [dbQwenJob, dbWan22T2vJob] = await Promise.all([
-      createDb(userId, qwenJob),
+    const [
+      // dbQwenJob, 
+      dbWan22T2vJob
+    ] = await Promise.all([
+      // createDb(userId, qwenJob),
       createDb(userId, wan22T2vJob),
     ]);
     await Promise.all([
-      publishJob(TRAIN_AI_TOOLKIT_TOPIC, dbQwenJob),
+      // publishJob(TRAIN_AI_TOOLKIT_TOPIC, dbQwenJob),
       publishJob(TRAIN_VIDEOX_FUN_TOPIC, dbWan22T2vJob),
     ]);
 

@@ -100,10 +100,10 @@ def make_process_job(semaphore: threading.Semaphore):
             aligned_prompts = list(aligned_prompts)
             logger.info(f"Downloaded {len(images)}/{len(media_paths)} images successfully")
 
-            process_cfg = training_cfg.toolkit["config"]["process"][0]
-            rank = process_cfg["network"]["linear"]
-            lr = process_cfg["train"]["lr"]
-            resolution = process_cfg["datasets"][0]["resolution"][0]
+            process_cfg = training_cfg.toolkit.config.process[0]
+            rank = process_cfg.network.linear
+            lr = process_cfg.train.lr
+            resolution = process_cfg.datasets[0].resolution[0]
             dest_prefix = (
                 f"media/{job.userId}-user/avatars/{job.avatarId}-avatar"
                 f"/loras/wan22-t2v-a14b-{lr}-{rank}-{resolution}"
@@ -196,6 +196,13 @@ def run_worker():
 
 def main():
     logger.info("Starting train-videox-fun service")
+
+    try:
+        storage.sync_models()
+    except Exception as e:
+        logger.error(f"Failed to sync models folder on startup: {e}", exc_info=True)
+        raise
+
     run_worker()
 
 

@@ -39,7 +39,11 @@ def _is_blob_up_to_date(local_path: Path, blob) -> bool:
     if not local_path.exists():
         return False
     stat = local_path.stat()
-    return stat.st_size == blob.size and blob.updated.timestamp() <= stat.st_mtime
+    if stat.st_size != blob.size:
+        return False
+    if blob.updated is None:
+        return True
+    return blob.updated.timestamp() <= stat.st_mtime + 30
 
 
 def _is_fresh(path: Path) -> bool:
