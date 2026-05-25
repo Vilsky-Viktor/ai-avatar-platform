@@ -16,6 +16,7 @@ type Props = {
 function MediaSelectorModal({ isOpen, onClose, jobs, onSelect, title = 'Select Reference Image' }: Props) {
     const images = jobs.filter(
         (job) => job.mediaType === MediaType.image &&
+                 job.target === JobTargets.avatarMedia &&
                  job.status === JobStatuses.completed &&
                  job.result?.mediaUrl &&
                  SUPPORTED_RATIOS.has(job.metadata?.ratio ?? '')

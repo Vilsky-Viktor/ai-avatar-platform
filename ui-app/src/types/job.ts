@@ -58,8 +58,13 @@ export type InferenceConfig = {
   seed?: number;
 }
 
+export type Upscaler = {
+  enabled: boolean;
+}
+
 export type InferenceJobInput = {
   inference: InferenceConfig;
+  upscaler?: Upscaler;
 }
 
 export type InferenceJobMetadata = {

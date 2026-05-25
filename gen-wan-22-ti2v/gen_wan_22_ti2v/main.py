@@ -3,10 +3,6 @@ import multiprocessing
 import os
 import threading
 import time
-import warnings
-
-warnings.filterwarnings("ignore", message="Padding mask is disabled when using SAGE_ATTENTION")
-
 from google.cloud import pubsub_v1
 
 import gen_wan_22_ti2v.logger as log
@@ -51,8 +47,6 @@ def make_process_job(semaphore: threading.Semaphore):
 
             job = Job.model_validate(json.loads(message.data.decode("utf-8"))["job"])
             job_input = job.input
-            media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/videos/{job.result.fileName}"
-
             set_job_id(job.id)
             logger.info(f"Received gen video job: avatar={job.avatarId}")
 
@@ -71,6 +65,13 @@ def make_process_job(semaphore: threading.Semaphore):
                     message.nack()
                     return
 
+            result_filename = job.result.fileName
+            if job_input.upscaler.enabled:
+                result_filename = result_filename.replace('.mp4', '-upscaled.mp4')
+                job.result.fileName = result_filename
+
+            media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/videos/{result_filename}"
+
             job.status = "generating"
             mq.publish_status(job.model_dump())
 
@@ -81,7 +82,7 @@ def make_process_job(semaphore: threading.Semaphore):
             # Ack early — generation takes many minutes; holding the lease risks redelivery
             message.ack()
 
-            tmp_path = storage.LOCAL_TMP_DIR / f"{job.id}-{job.result.fileName}"
+            tmp_path = storage.LOCAL_TMP_DIR / f"{job.id}-{result_filename}"
             try:
                 inference.run_inference(job, str(tmp_path))
                 storage.upload_result_video(media_path, str(tmp_path))

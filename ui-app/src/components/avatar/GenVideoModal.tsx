@@ -20,7 +20,7 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
     const [loading, setLoading] = useState(false);
     const [selectedImage, setSelectedImage] = useState<{ path: string; url: string } | null>(null);
     const [selectorOpen, setSelectorOpen] = useState(false);
-    const [lengthSec, setLengthSec] = useState<5 | 10>(5);
+    const [lengthSec, setLengthSec] = useState(2);
 
     useEffect(() => {
         if (!isOpen) {
@@ -113,21 +113,18 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex items-center gap-2 mt-5">
-                                <Clock size={25} className="text-base-content/30 shrink-0 mr-2" />
-                                {([5, 10] as const).map(s => (
-                                    <button
-                                        key={s}
-                                        onClick={() => setLengthSec(s)}
-                                        className={`px-5 py-2 rounded-xl border text-sm font-semibold uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer ${
-                                            lengthSec === s
-                                                ? 'border-primary/50 bg-primary/5 text-primary'
-                                                : 'border-base-content/10 text-base-content/30 hover:border-base-content/20 hover:text-base-content/50'
-                                        }`}
-                                    >
-                                        {s} sec
-                                    </button>
-                                ))}
+                            <div className="flex items-center gap-3 mt-5 w-full">
+                                <Clock size={18} className="text-base-content/30 shrink-0" />
+                                <input
+                                    type="range"
+                                    min={2}
+                                    max={10}
+                                    step={2}
+                                    value={lengthSec}
+                                    onChange={e => setLengthSec(Number(e.target.value))}
+                                    className="range range-primary range-xs flex-1"
+                                />
+                                <span className="text-sm font-semibold text-primary w-12 text-right shrink-0">{lengthSec} sec</span>
                             </div>
                         </div>
                     </div>

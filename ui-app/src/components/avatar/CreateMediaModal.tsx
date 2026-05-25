@@ -57,7 +57,7 @@ function CreateMediaModal({ isOpen, onClose, onImage, onVideo, onPhotoSet, onAud
                         className="group flex flex-col items-center gap-5 px-16 py-12 rounded-2xl border border-base-content/10 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer"
                     >
                         <AudioLines size={56} strokeWidth={1} className="text-base-content/30 group-hover:text-primary transition-colors duration-300" />
-                        <span className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/40 group-hover:text-base-content transition-colors">Audio</span>
+                        <span className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/40 group-hover:text-base-content transition-colors">Voice</span>
                     </button>
                 </div>
             </div>

@@ -31,7 +31,16 @@ export function buildPhotoSetJobs(baseJob: Partial<InferenceJob>, inputs: Partia
       ...baseJob,
       order: customInput.order,
       maxRuns: customInput.maxRuns ?? baseJob.maxRuns,
-      input: customInput.input,
+      input: { 
+        ...customInput.input, 
+        upscaler: {
+          enabled: true,
+          outscale: 1.55,
+          blend: 0.5,
+          tile: 400,
+          half: true,
+        }
+      },
       metadata: {
         ...(baseJob.metadata ?? {}),
         ...(customInput.metadata ?? {}),

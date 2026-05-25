@@ -9,6 +9,7 @@ import {
   InferenceJobMetadata,
   PhotoSetJobRequest,
   VideoJobRequest,
+  VideoModes,
 } from '../types/job';
 import { AVATAR_REFERENCE_NAME } from '../utils/trainingPhotoSetCaptions';
 import { 
@@ -19,17 +20,12 @@ import {
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { getAvatarById } from '../services/avatarService';
 import uuid from 'uuid';
-import imageRatios, { PhotoSetType, wan22Ti2v } from '../types/image';
+import imageRatios, { PhotoSetType, wan22Vace } from '../types/image';
 import { genOutfitStylesData, genTravelingAroundTheWorldData, genWhatsappStickersData, genLuxuryLifeData } from '../utils/photoSetInputData';
 import { buildPhotoSetJobs } from '../utils/jobBuilder';
 
 const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
-const GEN_WAN_22_TI2V_TOPIC = process.env.GEN_WAN_22_TI2V_TOPIC || 'gen-wan-22-ti2v';
-
-const WAN_22_TI2V_NUM_STEPS = 50;
-const WAN_22_TI2V_FPS = 16;
-const WAN_22_TI2V_DEFAULT_VIDEO_LENGTH = 5 * WAN_22_TI2V_FPS;
-const WAN_22_TI2V_NEGATIVE_PROMPT = 'static, motionless, frozen, slow motion, no movement, blurry, low quality, distorted';
+const GEN_WAN_22_VACE_TOPIC = process.env.GEN_WAN_22_VACE_TOPIC || 'gen-wan-22-vace';
 
 export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -70,9 +66,16 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
           threshold: { min: 0.95 },
         },
         loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.6 },
+          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
           { path: avatar.loras.qwenEdit2511.path, scale: 1.0, filename: avatar.loras.qwenEdit2511.filename },
         ],
+        upscaler: {
+          enabled: true,
+          outscale: 1.55,
+          blend: 0.5,
+          tile: 400,
+          half: true,
+        }
       },
       metadata: {
         queueTopic: GEN_QWEN_EDIT_2511_TOPIC,
@@ -154,19 +157,35 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
   try {
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
 
-    const [width, height] = wan22Ti2v[jobRequest.ratio];
+    const [width, height] = wan22Vace[jobRequest.ratio];
     const dimensions = `${width}x${height}`;
+    const videoLength = jobRequest.lengthSec! * 16;
 
-    const isI2V = jobRequest.referenceImagePaths && jobRequest.referenceImagePaths.length > 0;
-    const mediaPaths = isI2V ? [jobRequest.referenceImagePaths![0]] : [];
-    const videoLength = jobRequest.lengthSec
-      ? jobRequest.lengthSec * WAN_22_TI2V_FPS
-      : WAN_22_TI2V_DEFAULT_VIDEO_LENGTH;
+    let mediaPaths = [];
+    let mode;
 
-    const loras: LoraData[] = avatar.loras.wan22T2vA14b ? [
-      { path: avatar.loras.wan22T2vA14b.path, filename: 'high_noise_lora.safetensors', scale: 1.0, boundary: 'high' },
-      { path: avatar.loras.wan22T2vA14b.path, filename: 'low_noise_lora.safetensors', scale: 1.0, boundary: 'low' },
-    ] : [];
+    if (jobRequest.mediaPaths?.length === 0) {
+      const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
+
+      mediaPaths = idPhotoJobs
+        .filter((job: InferenceJob) => [2,3,4,8,9].includes(job.order!))
+        .map((job: InferenceJob) => job.result?.mediaPath!);
+
+      mode = VideoModes.s2v;
+    } else if (jobRequest.mediaPaths?.some(path => path.includes('.mp4'))) {
+      const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
+
+      const idPhotoPaths = idPhotoJobs
+        .filter((job: InferenceJob) => [2,3,4,8,9].includes(job.order!))
+        .map((job: InferenceJob) => job.result?.mediaPath!);
+
+      mediaPaths = [...jobRequest.mediaPaths, ...idPhotoPaths]
+
+      mode = VideoModes.v2v_control_ref;
+    } else {
+      mediaPaths = jobRequest.mediaPaths!;
+      mode = VideoModes.i2v;
+    }
 
     const job: InferenceJob = {
       userId,
@@ -179,19 +198,23 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
         checkDependencies: false,
         inference: {
           prompt: `${AVATAR_REFERENCE_NAME} ${jobRequest.prompt}`,
-          negativePrompt: WAN_22_TI2V_NEGATIVE_PROMPT,
-          guidanceScale: 6.0,
-          mediaPaths,
-          numSteps: WAN_22_TI2V_NUM_STEPS,
+          guidanceScale: 5.0,
+          numSteps: 50,
           width,
           height,
           videoLength,
-          fps: WAN_22_TI2V_FPS,
+          fps: 16,
+          shift: 12.0,
+          mode: mode,
+          vaceContextScale: 1.0,
+          mediaPaths: jobRequest.mediaPaths ?? [],
         },
-        loras,
+        loras: [],
+        upscaler: { enabled: true, scale: 2 },
+        interpolator: { enabled: true, targetFps: 24 },
       },
       metadata: {
-        queueTopic: GEN_WAN_22_TI2V_TOPIC,
+        queueTopic: GEN_WAN_22_VACE_TOPIC,
         ratio: jobRequest.ratio,
         dimensions,
         userPrompt: jobRequest.prompt,
@@ -203,8 +226,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
     };
 
     const dbJob = await createDb(userId, job);
-    await publishJob(GEN_WAN_22_TI2V_TOPIC, dbJob);
-
+    await publishJob(GEN_WAN_22_VACE_TOPIC, dbJob);
     return res.status(201).json(dbJob);
   } catch (error) {
     req.log.info(`Failed to generate avatar video for ${userId}: ${error}`);

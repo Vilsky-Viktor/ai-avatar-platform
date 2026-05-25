@@ -5,3 +5,10 @@ librosa
 einops
 decord
 imageio[ffmpeg]
+ccvfi
+rotary-embedding-torch
+mediapy
+safetensors
+modelscope
+sentencepiece
+ftfy

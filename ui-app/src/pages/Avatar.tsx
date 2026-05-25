@@ -80,7 +80,6 @@ function AvatarPage() {
             const oldJob = currentJobs[jobIndex];
 
             if (oldJob && oldJob?.status !== job.status) {
-                console.log(`job updated ${job.id} - "${oldJob.status}" status to status "${job.status}"`)
                 setJob(jobIndex, job);
             }
         }

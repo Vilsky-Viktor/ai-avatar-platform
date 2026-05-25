@@ -1,4 +1,5 @@
 const qwen2511ModelLoraPath = 'models/qwen-edit-2511/loras';
+const wan22ModelLoraPath = 'models/qwen-edit-2511/loras';
 
 export enum Qwen2511Loras {
     lightning8stepsV2 = `${qwen2511ModelLoraPath}/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors`,

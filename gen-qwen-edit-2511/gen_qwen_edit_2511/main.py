@@ -1,6 +1,7 @@
 import os
 import json
 import multiprocessing
+from pathlib import Path
 
 from google.cloud import pubsub_v1
 
@@ -12,6 +13,7 @@ import gen_qwen_edit_2511.face_recognition as face_recognition
 import gen_qwen_edit_2511.utils as utils
 import gen_qwen_edit_2511.db as db
 from gen_qwen_edit_2511.models import Job
+from gen_qwen_edit_2511.upscaler import upscale_image
 
 import gen_qwen_edit_2511.inference as inference
 
@@ -103,7 +105,7 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             for run_idx in range(max_runs):
                 logger.info(f"---------- Run #{run_idx + 1}/{max_runs} ----------")
 
-                img, _ = pipe.run_inference(job_input, reference_images)
+                img, _ = pipe.run_inference(job_input.inference, reference_images, job_input.faceExpression)
 
                 if job_input.faceDirection.enabled:
                     direction_ok = fr.check_face_direction(img, job_input.faceDirection.direction)
@@ -150,6 +152,22 @@ def process_job(message: pubsub_v1.subscriber.message.Message):
             img = best_img
             if job_input.faceRecognition.enabled:
                 job.result.bestFaceMatch = best_match
+
+            if job_input.upscaler.enabled:
+                logger.info("Upscaling image ...")
+
+                img = upscale_image(img, job_input.upscaler)
+
+                fn = job.result.fileName or ""
+                job.result.fileName = Path(fn).stem + "-upscaled" + Path(fn).suffix
+
+                if job_input.faceRecognition.enabled:
+                    upscaled_face_match = fr.check_face_match(img, id_photos)
+                    job.result.faceMatches.append(upscaled_face_match)
+
+                    best_match = upscaled_face_match
+                    job.result.bestFaceMatch = best_match
+                    logger.info(f"Upscaled face match: {upscaled_face_match}")
 
             media_path = f"media/{job.userId}-user/avatars/{job.avatarId}-avatar/images/{job.result.fileName}"
             img_payload = storage.prepare_image_payload(img)

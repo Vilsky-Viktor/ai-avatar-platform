@@ -1,6 +1,13 @@
+import gc
+import math
 import os
+import subprocess
+import cv2
+import numpy as np
+import imageio
 import torch
 from pathlib import Path
+from PIL import Image
 from typing import Optional
 
 from diffusers import FlowMatchEulerDiscreteScheduler
@@ -31,6 +38,7 @@ from .videox_fun.utils.fm_solvers import FlowDPMSolverMultistepScheduler
 from .videox_fun.utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 from .models import Job
 from .logger import get_logger
+from .utils import timeit
 import gen_wan_22_ti2v.storage as storage
 
 logger = get_logger(__name__)
@@ -53,10 +61,20 @@ TEACACHE_SKIP_STEPS = int(os.environ.get("TEACACHE_SKIP_STEPS", "5"))
 RIFLEX_TRAIN_LATENT_FRAMES = 21
 RIFLEX_K = int(os.environ.get("RIFLEX_K", "6"))
 
+# Chunked generation: clips of CLIP_FRAMES generate 2s each at 16fps (model's training length
+# was 81 frames; shorter clips concentrate motion better for I2V). Each clip's last
+# CLIP_OVERLAP frames become the reference images for the next clip.
+CLIP_FRAMES = 33   # 2s per clip at 16fps — shorter clips concentrate motion better for I2V
+CLIP_OVERLAP = int(os.environ.get("CLIP_OVERLAP", "2"))
+
+FLASHVSR_MODEL_NAME = os.environ.get("FLASHVSR_MODEL_NAME", "flash-vsr-v11")
+FLASHVSR_RUNNER = os.path.join(os.path.dirname(__file__), "flashvsr_runner.py")
+
 _device: Optional[str] = None
 _pipeline: Optional[Wan2_2FunInpaintPipeline] = None
 _vae = None
 _config = None
+_rife_model = None
 
 
 def _get_device() -> str:
@@ -235,81 +253,224 @@ def _unmerge_all_loras(pipeline, merged: list, device: str, transformer_2):
             )
 
 
+def _get_rife():
+    global _rife_model
+    if _rife_model is None:
+        from ccvfi import AutoModel, ConfigType
+        _rife_model = AutoModel.from_pretrained(pretrained_model_name=ConfigType.RIFE_IFNet_v426_heavy)
+        logger.info("RIFE model loaded")
+    return _rife_model
+
+
+@timeit
+def _interpolate_fps(input_path: str, source_fps: int, target_fps: int) -> bool:
+    tmp_2x = input_path + ".2x.mp4"
+    tmp_out = input_path + ".interp.mp4"
+    try:
+        reader = imageio.get_reader(input_path)
+        frames = [f for f in reader]
+        reader.close()
+
+        if len(frames) < 2:
+            return False
+
+        rife = _get_rife()
+        double_frames = [frames[0]]
+        for i in range(len(frames) - 1):
+            frame_bgr_i = cv2.cvtColor(frames[i], cv2.COLOR_RGB2BGR)
+            frame_bgr_next = cv2.cvtColor(frames[i + 1], cv2.COLOR_RGB2BGR)
+            mid = rife.inference_image_list(img_list=[frame_bgr_i, frame_bgr_next])[0]
+            double_frames.append(cv2.cvtColor(np.array(mid), cv2.COLOR_BGR2RGB))
+            double_frames.append(frames[i + 1])
+
+        writer = imageio.get_writer(tmp_2x, fps=source_fps * 2, codec="libx264", quality=8)
+        for frame in double_frames:
+            writer.append_data(frame)
+        writer.close()
+
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", tmp_2x, "-vf", f"fps={target_fps}", "-c:v", "libx264", "-crf", "18", "-preset", "fast", tmp_out],
+            capture_output=True, text=True,
+        )
+        Path(tmp_2x).unlink(missing_ok=True)
+        if result.returncode != 0:
+            Path(tmp_out).unlink(missing_ok=True)
+            logger.warning(f"RIFE FFmpeg resample failed: {result.stderr[-300:]}")
+            return False
+
+        os.replace(tmp_out, input_path)
+        return True
+    except Exception as e:
+        Path(tmp_2x).unlink(missing_ok=True)
+        Path(tmp_out).unlink(missing_ok=True)
+        logger.warning(f"RIFE interpolation failed: {e}")
+        return False
+
+
+@timeit
+def _upscale_video(input_path: str, scale: float) -> bool:
+    tmp_output = input_path + ".flashvsr_out.mp4"
+    model_dir = os.path.join(LOCAL_MODELS_PATH, FLASHVSR_MODEL_NAME)
+    try:
+        result = subprocess.run(
+            [
+                "python", FLASHVSR_RUNNER,
+                "--input", input_path,
+                "--output", tmp_output,
+                "--model-dir", model_dir,
+                "--scale", str(scale),
+            ],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            logger.warning(f"FlashVSR failed:\nSTDOUT: {result.stdout[-1000:]}\nSTDERR: {result.stderr[-2000:]}")
+            return False
+
+        os.replace(tmp_output, input_path)
+        return True
+    except Exception as e:
+        logger.warning(f"FlashVSR upscaling failed: {e}")
+        return False
+    finally:
+        Path(tmp_output).unlink(missing_ok=True)
+
+
+def _offload_pipeline_to_cpu() -> None:
+    if _pipeline is not None:
+        for component in _pipeline.components.values():
+            if isinstance(component, torch.nn.Module):
+                component.to("cpu")
+    if _vae is not None:
+        _vae.to("cpu")
+    gc.collect()
+    torch.cuda.empty_cache()
+    logger.info(f"GPU memory freed before FlashVSR: {torch.cuda.memory_allocated() / 1024**3:.1f} GB allocated")
+
+
 def _aligned_video_length(raw_length: int, temporal_compression_ratio: int) -> int:
     if raw_length == 1:
         return 1
     return int((raw_length - 1) // temporal_compression_ratio * temporal_compression_ratio) + 1
 
 
+def _extract_context_frames(sample, n: int) -> list:
+    frames = []
+    for i in range(-n, 0):
+        frame = sample[0, :, i, :, :]  # [C, H, W] in [0, 1]
+        frame_np = (frame.permute(1, 2, 0).float().cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
+        frames.append(Image.fromarray(frame_np))
+    return frames
+
+
+@timeit
+def _run_pipeline_clip(
+    pipeline, vae, config, infer, reference_pils: Optional[list],
+    clip_frames: int, seed: int, device: str,
+):
+    sample_size = [infer.height, infer.width]
+    boundary = config["transformer_additional_kwargs"].get("boundary", 0.900)
+    negative_prompt = infer.negativePrompt or ""
+    generator = torch.Generator(device=device).manual_seed(seed)
+
+    if reference_pils is None:
+        input_video, input_video_mask, _ = get_image_to_video_latent(
+            None, None, video_length=clip_frames, sample_size=sample_size,
+        )
+        if TEACACHE_ENABLED and pipeline.transformer.teacache is not None:
+            pipeline.transformer.teacache.rel_l1_thresh = TEACACHE_THRESHOLD_T2V
+    else:
+        input_video, input_video_mask, _ = get_image_to_video_latent(
+            reference_pils, None, video_length=clip_frames, sample_size=sample_size,
+        )
+        if TEACACHE_ENABLED and pipeline.transformer.teacache is not None:
+            pipeline.transformer.teacache.rel_l1_thresh = TEACACHE_THRESHOLD_I2V
+
+    with torch.no_grad():
+        return pipeline(
+            infer.prompt,
+            num_frames=clip_frames,
+            negative_prompt=negative_prompt,
+            height=sample_size[0],
+            width=sample_size[1],
+            generator=generator,
+            guidance_scale=infer.guidanceScale,
+            num_inference_steps=infer.numSteps,
+            video=input_video,
+            mask_video=input_video_mask,
+            boundary=boundary,
+            shift=infer.shift,
+        ).videos
+
+
 def run_inference(job: Job, output_path: str) -> None:
     infer = job.input.inference
     media_paths = infer.mediaPaths
     device = _get_device()
-    sample_size = [infer.height, infer.width]
     seed = infer.seed if infer.seed is not None else 42
-    generator = torch.Generator(device=device).manual_seed(seed)
-    negative_prompt = infer.negativePrompt or ""
 
     image_paths = [p for p in media_paths if not p.endswith(".mp4")]
     mode = "i2v" if image_paths else "t2v"
 
     pipeline, vae, config = _get_pipeline(infer.numSteps)
-    boundary = config["transformer_additional_kwargs"].get("boundary", 0.900)
     transformer_2 = pipeline.transformer_2
-    video_length = _aligned_video_length(infer.videoLength, vae.config.temporal_compression_ratio)
-    latent_frames = (video_length - 1) // vae.config.temporal_compression_ratio + 1
-    use_riflex = latent_frames > RIFLEX_TRAIN_LATENT_FRAMES
 
-    logger.info(f"Mode: {mode} | size={sample_size} | steps={infer.numSteps} | seed={seed} | frames={video_length} | latent_frames={latent_frames} | fps={infer.fps} | riflex={use_riflex}")
+    total_frames = _aligned_video_length(infer.videoLength, vae.config.temporal_compression_ratio)
+    clips_needed = math.ceil((total_frames - CLIP_FRAMES) / (CLIP_FRAMES - CLIP_OVERLAP)) + 1 if total_frames > CLIP_FRAMES else 1
 
-    if mode == "t2v":
-        input_video, input_video_mask, _ = get_image_to_video_latent(
-            None, None, video_length=video_length, sample_size=sample_size,
-        )
-    else:
+    logger.info(f"Mode: {mode} | size={[infer.height, infer.width]} | steps={infer.numSteps} | seed={seed} | total_frames={total_frames} | fps={infer.fps} | clips={clips_needed}")
+
+    initial_reference_pils = None
+    if mode == "i2v":
         pil_images = storage.load_input_images([image_paths[0]])
         if not pil_images:
             raise RuntimeError(f"Failed to download input image: {image_paths[0]}")
-        input_video, input_video_mask, _ = get_image_to_video_latent(
-            [pil_images[0]], None, video_length=video_length, sample_size=sample_size,
-        )
-        if TEACACHE_ENABLED and pipeline.transformer.teacache is not None:
-            pipeline.transformer.teacache.rel_l1_thresh = TEACACHE_THRESHOLD_I2V
-
-    if use_riflex:
-        pipeline.transformer.enable_riflex(k=RIFLEX_K, L_test=latent_frames)
-        if transformer_2 is not None:
-            transformer_2.enable_riflex(k=RIFLEX_K, L_test=latent_frames)
+        initial_reference_pils = [pil_images[0]]
 
     merged = _merge_all_loras(pipeline, job.input.loras, device, transformer_2) if job.input.loras else []
 
     try:
-        with torch.no_grad():
-            sample = pipeline(
-                infer.prompt,
-                num_frames=video_length,
-                negative_prompt=negative_prompt,
-                height=sample_size[0],
-                width=sample_size[1],
-                generator=generator,
-                guidance_scale=infer.guidanceScale,
-                num_inference_steps=infer.numSteps,
-                video=input_video,
-                mask_video=input_video_mask,
-                boundary=boundary,
-                shift=infer.shift,
-            ).videos
+        all_clips = []
+        reference_pils = initial_reference_pils
+        # All clips are CLIP_FRAMES; single-clip videos use total_frames (< CLIP_FRAMES).
+        clip_frames = CLIP_FRAMES if clips_needed > 1 else total_frames
+        for clip_idx in range(clips_needed):
+            logger.info(f"Generating clip {clip_idx + 1}/{clips_needed} ({clip_frames} frames, seed={seed})")
+            clip_sample = _run_pipeline_clip(
+                pipeline, vae, config, infer,
+                reference_pils=reference_pils,
+                clip_frames=clip_frames,
+                seed=seed,
+                device=device,
+            )
+            all_clips.append(clip_sample)
+            if clip_idx < clips_needed - 1:
+                reference_pils = _extract_context_frames(clip_sample, CLIP_OVERLAP)
+
+        if len(all_clips) == 1:
+            sample = all_clips[0]
+        else:
+            parts = [all_clips[0]] + [c[:, :, CLIP_OVERLAP:, :, :] for c in all_clips[1:]]
+            sample = torch.cat(parts, dim=2)
+
+        sample = sample[:, :, :total_frames, :, :]
     finally:
-        if use_riflex:
-            pipeline.transformer.disable_riflex()
-            if transformer_2 is not None:
-                transformer_2.disable_riflex()
+        if merged:
+            _unmerge_all_loras(pipeline, merged, device, transformer_2)
 
-    if merged:
-        _unmerge_all_loras(pipeline, merged, device, transformer_2)
-
-    if mode == "i2v" and TEACACHE_ENABLED and pipeline.transformer.teacache is not None:
+    if TEACACHE_ENABLED and pipeline.transformer.teacache is not None:
         pipeline.transformer.teacache.rel_l1_thresh = TEACACHE_THRESHOLD_T2V
 
     save_videos_grid(sample, output_path, fps=infer.fps)
+    del sample, all_clips
+
+    upscaler = job.input.upscaler
+    if upscaler.enabled:
+        logger.info(f"FlashVSR: {infer.width}x{infer.height} → {upscaler.scale}× scale")
+        _upscale_video(output_path, upscaler.scale)
+
+    interpolator = job.input.interpolator
+    if interpolator.enabled and interpolator.targetFps != infer.fps:
+        logger.info(f"RIFE: {infer.fps} FPS → {interpolator.targetFps} FPS")
+        _interpolate_fps(output_path, infer.fps, interpolator.targetFps)
+
     logger.info(f"Saved {mode} output → {output_path}")

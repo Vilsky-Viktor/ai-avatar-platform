@@ -3,6 +3,12 @@ import { AvatarParameters, AvatarTypes } from './avatar';
 import { PhotoSetType, qwenEdit2511 } from './image';
 import type { VideoRatio } from './image';
 
+export enum VideoModes {
+  i2v = 'i2v',
+  s2v = 's2v',
+  v2v_control_ref = 'v2v_control_ref'
+}
+
 export enum MediaTypes {
   image = 'image',
   video = 'video',
@@ -107,6 +113,22 @@ export type InferenceConfig = {
   videoLength?: number;
   fps?: number;
   shift?: number;
+  mode?: VideoModes;
+  vaceContextScale?: number;
+}
+
+export type Upscaler = {
+  enabled: boolean;
+  scale?: number;
+  outscale?: number;
+  blend?: number;
+  tile?: number;
+  half?: boolean;
+}
+
+export type Interpolator = {
+  enabled: boolean;
+  targetFps?: number;
 }
 
 export type InferenceJobInput = {
@@ -115,6 +137,8 @@ export type InferenceJobInput = {
   faceRecognition?: FaceRecognition;
   faceExpression?: FaceExpression;
   faceDirection?: FaceDirection;
+  upscaler?: Upscaler;
+  interpolator?: Interpolator;
   loras?: LoraData[];
 }
 
@@ -208,12 +232,14 @@ export type PhotoJobRequest = {
   referenceImagePaths?: string[];
 }
 
+export type VideoLengthSec = 2 | 4 | 6 | 8 | 10;
+
 export type VideoJobRequest = {
   avatarId: string;
   ratio: VideoRatio;
   prompt: string;
-  referenceImagePaths?: string[];
-  lengthSec?: number;
+  mediaPaths?: string[];
+  lengthSec?: VideoLengthSec;
 }
 
 export type PhotoSetJobRequest = {

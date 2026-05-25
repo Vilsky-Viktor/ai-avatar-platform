@@ -34,12 +34,20 @@ class FaceDirection(BaseModel):
     enabled: bool = False
     direction: str = "" #left or right
 
+class Upscaler(BaseModel):
+    enabled: bool = False
+    outscale: float = 1.55
+    blend: float = 0.85
+    tile: int = 400
+    half: bool = True
+
 class JobInput(BaseModel):
     checkDependencies: bool = False
     inference: InferenceConfig = Field(default_factory=InferenceConfig)
     faceRecognition: FaceRecognition = Field(default_factory=FaceRecognition)
     faceExpression: FaceExpression = Field(default_factory=FaceExpression)
     faceDirection: FaceDirection = Field(default_factory=FaceDirection)
+    upscaler: Upscaler = Field(default_factory=Upscaler)
     loras: list[LoraConfig] = []
 
 class JobResult(BaseModel):

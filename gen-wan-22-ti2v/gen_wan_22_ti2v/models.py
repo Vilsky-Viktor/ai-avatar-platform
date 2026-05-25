@@ -38,12 +38,22 @@ class FaceDirection(BaseModel):
     enabled: bool = False
     direction: str = "" #left or right
 
+class Upscaler(BaseModel):
+    enabled: bool = False
+    scale: float = 2.0
+
+class Interpolator(BaseModel):
+    enabled: bool = False
+    targetFps: int = 24
+
 class JobInput(BaseModel):
     checkDependencies: bool = False
     inference: InferenceConfig = Field(default_factory=InferenceConfig)
     faceRecognition: FaceRecognition = Field(default_factory=FaceRecognition)
     faceExpression: FaceExpression = Field(default_factory=FaceExpression)
     faceDirection: FaceDirection = Field(default_factory=FaceDirection)
+    upscaler: Upscaler = Field(default_factory=Upscaler)
+    interpolator: Interpolator = Field(default_factory=Interpolator)
     loras: list[LoraConfig] = []
 
 class JobResult(BaseModel):

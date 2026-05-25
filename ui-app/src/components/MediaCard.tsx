@@ -1,5 +1,5 @@
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play } from 'lucide-react';
-import { useState } from 'react';
+import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { JobStatuses, MediaType, type InferenceJob } from '../types/job';
 import { downloadMediaFromBucket } from '../services/storage';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
@@ -44,6 +44,19 @@ function MediaCard({
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [infoVisible, setInfoVisible] = useState(false);
+    const [elapsed, setElapsed] = useState(0);
+    const startRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (job?.status !== JobStatuses.generating) return;
+        const ts = job.updatedAt as any;
+        const startSec: number = ts?.seconds ?? ts?._seconds ?? Date.now() / 1000;
+        startRef.current = startSec;
+        setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startSec)));
+        const interval = setInterval(() =>
+            setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startRef.current!))), 1000);
+        return () => clearInterval(interval);
+    }, [job?.status]);
 
 
     const handleConfirmDelete = async () => {
@@ -136,6 +149,13 @@ function MediaCard({
     if (status === JobStatuses.generating) {
         return (
             <>
+            {confirmDeleteId && onDelete && (
+                <DeleteMediaModal
+                    isDeleting={isDeleting}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={() => setConfirmDeleteId(null)}
+                />
+            )}
             {infoVisible && <MediaInfoPopup job={job} onClose={() => setInfoVisible(false)} />}
             <div className="group flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
                 <div className="flex flex-col items-center gap-6">
@@ -147,12 +167,22 @@ function MediaCard({
                         <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
                             Generating
                         </span>
-                        <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
-                            Life is going
+                        <p className="text-[15px] font-mono font-light text-base-content/25 tracking-widest">
+                            {String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}
                         </p>
                     </div>
                 </div>
-                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">{infoButton}</div>
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    {canDelete && onDelete && (
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
+                            onClick={() => jobId && setConfirmDeleteId(jobId)}
+                        >
+                            <Trash2 size={20} className="text-white" />
+                        </button>
+                    )}
+                    {infoButton}
+                </div>
             </div>
             </>
         );
@@ -332,6 +362,14 @@ function MediaCard({
                         </button>
                     </div>
                 </div>
+
+                {job.input?.upscaler?.enabled && (
+                    <div className="absolute bottom-2 left-2 z-10">
+                        <div className="px-1 py-0.5 bg-black/40 backdrop-blur-md rounded-[0.3rem] shadow-lg text-white flex items-center justify-center">
+                            <Hd size={22} strokeWidth={1.5} className="text-white" />
+                        </div>
+                    </div>
+                )}
 
                 {bestFaceMatch > 0 && (
                     <div className="absolute bottom-2 right-2 z-10 tooltip tooltip-left" data-tip="Face match">

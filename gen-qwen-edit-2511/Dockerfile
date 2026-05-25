@@ -14,6 +14,9 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
 
 WORKDIR /app
 
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY gen_qwen_edit_2511 ./gen_qwen_edit_2511
 
 COPY entrypoint.sh /entrypoint.sh

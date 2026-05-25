@@ -17,7 +17,7 @@ from PIL import Image
 from torchao.quantization.quant_api import Int8WeightOnlyConfig, UIntXWeightOnlyConfig
 
 from gen_qwen_edit_2511.logger import get_logger
-from gen_qwen_edit_2511.models import JobInput, LoraConfig
+from gen_qwen_edit_2511.models import InferenceConfig, FaceExpression, LoraConfig
 from gen_qwen_edit_2511.storage import LOCAL_LORAS_PATH
 import gen_qwen_edit_2511.utils as utils
 
@@ -156,13 +156,9 @@ class _PipelineInstance:
             result.append(self.pipeline.image_processor.resize(img, int(target_h), int(target_w)))
         return result
 
-    def _build_expression_embeds(self, job_input: JobInput, images: list[Image.Image]):
-        expression = job_input.faceExpression.type
-        scale      = job_input.faceExpression.scale
-        context    = job_input.inference.prompt
-
-        prompt_tgt = f"Edit the person to show a {expression} expression. {context}".strip()
-        prompt_neu = f"Edit the person to show a neutral expression. {context}".strip()
+    def _build_expression_embeds(self, inference: InferenceConfig, face_expression: FaceExpression, images: list[Image.Image]):
+        prompt_tgt = f"Edit the person to show a {face_expression.type} expression. {inference.prompt}".strip()
+        prompt_neu = f"Edit the person to show a neutral expression. {inference.prompt}".strip()
 
         condition_images = self._resize_images_for_condition(images)
 
@@ -180,7 +176,7 @@ class _PipelineInstance:
                 num_images_per_prompt=1,
             )
 
-        prompt_embeds = embed_neu + scale * (embed_tgt - embed_neu)
+        prompt_embeds = embed_neu + face_expression.scale * (embed_tgt - embed_neu)
 
         if mask_tgt is None:
             mask_tgt = torch.ones(prompt_embeds.shape[:2], dtype=torch.long, device=prompt_embeds.device)
@@ -188,38 +184,38 @@ class _PipelineInstance:
         return prompt_embeds, mask_tgt
 
     @utils.timeit
-    def run_inference(self, job_input: JobInput, images: list[Image.Image]):
+    def run_inference(self, inference: InferenceConfig, images: list[Image.Image], face_expression: FaceExpression | None = None):
         if not images:
-            images = [Image.new("RGB", (job_input.inference.width, job_input.inference.height), (0, 0, 0))]
+            images = [Image.new("RGB", (inference.width, inference.height), (0, 0, 0))]
 
-        seed      = job_input.inference.seed or secrets.randbelow(2**32)
+        seed = inference.seed or secrets.randbelow(2**32)
         generator = torch.Generator(device=self.device).manual_seed(seed)
 
         logger.info(f"Using seed {seed}")
 
         with torch.no_grad():
-            if job_input.faceExpression.enabled:
-                prompt_embeds, prompt_embeds_mask = self._build_expression_embeds(job_input, images)
+            if face_expression and face_expression.enabled:
+                prompt_embeds, prompt_embeds_mask = self._build_expression_embeds(inference, face_expression, images)
                 img = self.pipeline(
                     image=images,
                     prompt_embeds=prompt_embeds,
                     prompt_embeds_mask=prompt_embeds_mask,
-                    height=job_input.inference.height,
-                    width=job_input.inference.width,
+                    height=inference.height,
+                    width=inference.width,
                     generator=generator,
                     true_cfg_scale=0,
-                    num_inference_steps=job_input.inference.numSteps,
+                    num_inference_steps=inference.numSteps,
                 ).images[0]
             else:
                 img = self.pipeline(
                     image=images,
-                    prompt=job_input.inference.prompt,
-                    negative_prompt=job_input.inference.negativePrompt if job_input.inference.negativePrompt or job_input.inference.guidanceScale > 1 else None,
-                    height=job_input.inference.height,
-                    width=job_input.inference.width,
+                    prompt=inference.prompt,
+                    negative_prompt=inference.negativePrompt if inference.negativePrompt or inference.guidanceScale > 1 else None,
+                    height=inference.height,
+                    width=inference.width,
                     generator=generator,
-                    true_cfg_scale=job_input.inference.guidanceScale,
-                    num_inference_steps=job_input.inference.numSteps,
+                    true_cfg_scale=inference.guidanceScale,
+                    num_inference_steps=inference.numSteps,
                 ).images[0]
 
         return img, seed
