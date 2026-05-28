@@ -15,6 +15,10 @@ class InferenceConfig(BaseModel):
     fps: int = 16
     shift: float = 12.0
     vaceContextScale: float = 1.0
+    enableRiflex: bool = False
+    riflexK: int = 6
+    cfgSkipRatio: float = 0.0
+    paddingInSubjectRefImages: bool = True
 
 class LoraConfig(BaseModel):
     path: str

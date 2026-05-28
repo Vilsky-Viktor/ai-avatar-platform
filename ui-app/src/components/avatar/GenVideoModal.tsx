@@ -119,7 +119,7 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
                                     type="range"
                                     min={2}
                                     max={10}
-                                    step={2}
+                                    step={1}
                                     value={lengthSec}
                                     onChange={e => setLengthSec(Number(e.target.value))}
                                     className="range range-primary range-xs flex-1"

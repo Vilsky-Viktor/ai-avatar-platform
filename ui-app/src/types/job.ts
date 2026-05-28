@@ -135,14 +135,14 @@ export type PhotoJobRequest = {
   avatarId: string;
   ratio: string;
   prompt: string;
-  referenceImagePaths?: string[];
+  mediaPaths?: string[];
 }
 
 export type VideoJobRequest = {
   avatarId: string;
   ratio: string;
   prompt: string;
-  referenceImagePaths?: string[];
+  mediaPaths?: string[];
   lengthSec?: number;
 }
 

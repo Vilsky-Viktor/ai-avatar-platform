@@ -26,6 +26,7 @@ RUN git clone --depth=1 https://github.com/OpenImagingLab/FlashVSR.git /app/flas
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir --no-build-isolation /app/block_sparse_attn && \
     python3 -c "from ccvfi import AutoModel, ConfigType; AutoModel.from_pretrained(pretrained_model_name=ConfigType.RIFE_IFNet_v426_heavy)"
 
 COPY gen_wan_22_ti2v ./gen_wan_22_ti2v

@@ -110,7 +110,7 @@ function AvatarPage() {
 
         const jobRequest: PhotoJobRequest = {
             prompt,
-            referenceImagePaths: uploadedPaths,
+            mediaPaths: uploadedPaths,
             ratio,
             avatarId: avatar.id!,
         };
@@ -125,7 +125,7 @@ function AvatarPage() {
             prompt,
             ratio,
             avatarId: avatar.id!,
-            referenceImagePaths: referenceImagePath ? [referenceImagePath] : [],
+            mediaPaths: referenceImagePath ? [referenceImagePath] : [],
             lengthSec,
         };
 

@@ -32,8 +32,8 @@ Max backoff = 600s
 |---|---|---|
 | `VACE_MODEL_NAME` | `wan2.2-vace-fun-a14b` | Model path under `LOCAL_MODELS_PATH` |
 | `GPU_MEMORY_MODE` | `model_cpu_offload` | Memory strategy (`sequential_cpu_offload`, `model_cpu_offload`, `model_cpu_offload_and_qfloat8`) |
+| `SCHEDULER` | `Flow_Unipc` | Noise scheduler (`Flow`, `Flow_Unipc`, `Flow_DPM++`). Only `Flow_Unipc` and `Flow_DPM++` respect the `shift` parameter. |
 | `TEACACHE_ENABLED` | `true` | Enable TeaCache inference acceleration |
-| `TEACACHE_THRESHOLD` | `0.10` | TeaCache residual threshold |
+| `TEACACHE_THRESHOLD` | `0.10` | TeaCache rel_l1 threshold (0.10–0.15 for 14B model) |
 | `TEACACHE_SKIP_STEPS` | `5` | Number of start steps to skip TeaCache |
-| `RIFLEX_K` | `6` | RIFLEx frequency index for long-video extrapolation (applied when video > 81 frames) |
 | `MESSAGE_CONCURRENCY` | `1` | Number of parallel workers |

@@ -5,6 +5,7 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/workspace/gcp-json-key.json" \
     HF_HOME="/workspace/models" \
     LOG_LEVEL="INFO" \
     GPU_MEMORY_MODE="model_cpu_offload" \
+    SCHEDULER="Flow" \
     DIFFUSERS_ATTN_BACKEND="_sage_qk_int8_pv_fp8_cuda_sm90" \
     VIDEOX_ATTENTION_TYPE="SAGE_ATTENTION" \
     TORCH_HOME="/workspace/models/torch_cache" \

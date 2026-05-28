@@ -54,7 +54,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
         checkDependencies: false,
         inference: {
           prompt: `${AVATAR_REFERENCE_NAME} ${jobRequest.prompt}`,
-          mediaPaths: jobRequest.referenceImagePaths || [],
+          mediaPaths: jobRequest.mediaPaths || [],
           numSteps: 8,
           guidanceScale: 1.0,
           width,
@@ -152,19 +152,19 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
   const jobRequest: VideoJobRequest = req.body;
   const fileId = uuid.v4();
 
-  req.log.info(`Generate avatar video for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}`);
+  req.log.info(`Generate avatar video for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}, length ${jobRequest.lengthSec}s`);
 
   try {
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
 
     const [width, height] = wan22Vace[jobRequest.ratio];
     const dimensions = `${width}x${height}`;
-    const videoLength = jobRequest.lengthSec! * 16;
+    const seconds = Math.max(2, Math.min(10, jobRequest.lengthSec || 2));
 
     let mediaPaths = [];
     let mode;
 
-    if (jobRequest.mediaPaths?.length === 0) {
+    if (!jobRequest.mediaPaths?.length) {
       const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
 
       mediaPaths = idPhotoJobs
@@ -172,7 +172,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
         .map((job: InferenceJob) => job.result?.mediaPath!);
 
       mode = VideoModes.s2v;
-    } else if (jobRequest.mediaPaths?.some(path => path.includes('.mp4'))) {
+    } else if (jobRequest.mediaPaths.some(path => path.includes('.mp4'))) {
       const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
 
       const idPhotoPaths = idPhotoJobs
@@ -197,20 +197,22 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       input: {
         checkDependencies: false,
         inference: {
-          prompt: `${AVATAR_REFERENCE_NAME} ${jobRequest.prompt}`,
+          prompt: `${jobRequest.prompt}. Fast movement, 24 fps`,
+          negativePrompt: 'Slow motion, slow, sluggish motion, stiff, vibrant colors, overexposed, static, blurry details, subtitles, style, artwork, painting, image, still, overall grayish, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, distorted limbs, fingers fused together, static image, cluttered background, three legs, many people in the background, walking backwards',
           guidanceScale: 5.0,
           numSteps: 50,
           width,
           height,
-          videoLength,
+          videoLength: 81,
           fps: 16,
           shift: 12.0,
           mode: mode,
-          vaceContextScale: 1.0,
-          mediaPaths: jobRequest.mediaPaths ?? [],
+          vaceContextScale: 1.00,
+          seed: 43,
+          mediaPaths,
         },
         loras: [],
-        upscaler: { enabled: true, scale: 2 },
+        upscaler: { enabled: false, scale: 2 },
         interpolator: { enabled: true, targetFps: 24 },
       },
       metadata: {
@@ -218,7 +220,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
         ratio: jobRequest.ratio,
         dimensions,
         userPrompt: jobRequest.prompt,
-        lengthSec: jobRequest.lengthSec,
+        lengthSec: seconds,
       } as InferenceJobMetadata,
       result: {
         fileName: `${fileId}-${dimensions}.mp4`,

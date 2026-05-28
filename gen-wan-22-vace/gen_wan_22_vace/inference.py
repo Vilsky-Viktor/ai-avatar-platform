@@ -1,5 +1,6 @@
 import gc
 import os
+import random
 import subprocess
 import cv2
 import numpy as np
@@ -51,14 +52,12 @@ LOCAL_LORAS_PATH = os.environ.get("LOCAL_LORAS_PATH", "/workspace/loras")
 VACE_MODEL_NAME = os.environ.get("VACE_MODEL_NAME", "wan2.2-vace-fun-a14b")
 
 GPU_MEMORY_MODE = os.environ.get("GPU_MEMORY_MODE", "sequential_cpu_offload")
+SCHEDULER = os.environ.get("SCHEDULER", "Flow")
 WEIGHT_DTYPE = torch.bfloat16
 
 TEACACHE_ENABLED = os.environ.get("TEACACHE_ENABLED", "true").lower() == "true"
 TEACACHE_THRESHOLD = float(os.environ.get("TEACACHE_THRESHOLD", "0.10"))
 TEACACHE_SKIP_STEPS = int(os.environ.get("TEACACHE_SKIP_STEPS", "5"))
-
-RIFLEX_TRAIN_LATENT_FRAMES = 21
-RIFLEX_K = int(os.environ.get("RIFLEX_K", "6"))
 
 FLASHVSR_MODEL_NAME = os.environ.get("FLASHVSR_MODEL_NAME", "flash-vsr-v11")
 FLASHVSR_RUNNER = os.path.join(os.path.dirname(__file__), "flashvsr_runner.py")
@@ -148,10 +147,12 @@ def _get_pipeline(num_steps: int):
         "Flow": FlowMatchEulerDiscreteScheduler,
         "Flow_Unipc": FlowUniPCMultistepScheduler,
         "Flow_DPM++": FlowDPMSolverMultistepScheduler,
-    }["Flow"]
-    scheduler = scheduler_cls(
-        **filter_kwargs(scheduler_cls, OmegaConf.to_container(config["scheduler_kwargs"]))
-    )
+    }[SCHEDULER]
+    scheduler_kwargs = OmegaConf.to_container(config["scheduler_kwargs"])
+    # UniPC and DPM++ apply shift in set_timesteps; resetting init shift to 1 prevents double application.
+    if SCHEDULER in ("Flow_Unipc", "Flow_DPM++"):
+        scheduler_kwargs = {**scheduler_kwargs, "shift": 1}
+    scheduler = scheduler_cls(**filter_kwargs(scheduler_cls, scheduler_kwargs))
 
     pipeline = Wan2_2VaceFunPipeline(
         transformer=transformer,
@@ -184,7 +185,7 @@ def _get_pipeline(num_steps: int):
     if TEACACHE_ENABLED:
         coefficients = get_teacache_coefficients(model_path)
         if coefficients is not None:
-            logger.info(f"TeaCache enabled: threshold={TEACACHE_THRESHOLD}, skip_steps={TEACACHE_SKIP_STEPS}")
+            logger.info(f"TeaCache enabled: threshold={TEACACHE_THRESHOLD} skip_steps={TEACACHE_SKIP_STEPS}")
             pipeline.transformer.enable_teacache(
                 coefficients, num_steps, TEACACHE_THRESHOLD,
                 num_skip_start_steps=TEACACHE_SKIP_STEPS, offload=False,
@@ -193,7 +194,7 @@ def _get_pipeline(num_steps: int):
                 pipeline.transformer_2.share_teacache(transformer=pipeline.transformer)
 
     _pipeline = pipeline
-    logger.info("VACE pipeline loaded")
+    logger.info(f"VACE pipeline loaded | scheduler={SCHEDULER} ({scheduler_cls.__name__})")
     return _pipeline, _vae, _config
 
 
@@ -242,8 +243,11 @@ def _get_rife():
 
 
 @timeit
-def _interpolate_fps(input_path: str, source_fps: int, target_fps: int) -> bool:
-    tmp_2x = input_path + ".2x.mp4"
+def _interpolate_fps(input_path: str, source_fps: int) -> bool:
+    # RIFE doubles the frames, then encodes at 4x source FPS (2x speed) with a palindrome
+    # (forward + reverse) to restore the original duration.
+    # E.g. 81 frames @ 16 FPS (5s) → RIFE → 162 frames → palindrome → 324 frames @ 64 FPS = 5s.
+    tmp_rife = input_path + ".rife.mp4"
     tmp_out = input_path + ".interp.mp4"
     try:
         reader = imageio.get_reader(input_path)
@@ -262,25 +266,28 @@ def _interpolate_fps(input_path: str, source_fps: int, target_fps: int) -> bool:
             double_frames.append(cv2.cvtColor(np.array(mid), cv2.COLOR_BGR2RGB))
             double_frames.append(frames[i + 1])
 
-        writer = imageio.get_writer(tmp_2x, fps=source_fps * 2, codec="libx264", quality=8)
-        for frame in double_frames:
+        palindrome_frames = double_frames + double_frames[::-1]
+        output_fps = source_fps * 4
+
+        writer = imageio.get_writer(tmp_rife, fps=output_fps, codec="libx264", quality=8)
+        for frame in palindrome_frames:
             writer.append_data(frame)
         writer.close()
 
         result = subprocess.run(
-            ["ffmpeg", "-y", "-i", tmp_2x, "-vf", f"fps={target_fps}", "-c:v", "libx264", "-crf", "18", "-preset", "fast", tmp_out],
+            ["ffmpeg", "-y", "-i", tmp_rife, "-c:v", "libx264", "-crf", "18", "-preset", "fast", tmp_out],
             capture_output=True, text=True,
         )
-        Path(tmp_2x).unlink(missing_ok=True)
+        Path(tmp_rife).unlink(missing_ok=True)
         if result.returncode != 0:
             Path(tmp_out).unlink(missing_ok=True)
-            logger.warning(f"RIFE FFmpeg resample failed: {result.stderr[-300:]}")
+            logger.warning(f"RIFE FFmpeg encode failed: {result.stderr[-300:]}")
             return False
 
         os.replace(tmp_out, input_path)
         return True
     except Exception as e:
-        Path(tmp_2x).unlink(missing_ok=True)
+        Path(tmp_rife).unlink(missing_ok=True)
         Path(tmp_out).unlink(missing_ok=True)
         logger.warning(f"RIFE interpolation failed: {e}")
         return False
@@ -346,7 +353,7 @@ def _split_media_paths(media_paths: list) -> tuple[list, str | None]:
 def run_inference(job: Job, output_path: str) -> None:
     infer = job.input.inference
     device = _get_device()
-    seed = infer.seed if infer.seed is not None else 42
+    seed = infer.seed if infer.seed is not None else random.randint(0, 2**31 - 1)
     sample_size = [infer.height, infer.width]
 
     pipeline, vae, config = _get_pipeline(infer.numSteps)
@@ -354,16 +361,18 @@ def run_inference(job: Job, output_path: str) -> None:
     boundary = config["transformer_additional_kwargs"].get("boundary", 0.875)
 
     video_length = _aligned_video_length(infer.videoLength, vae.config.temporal_compression_ratio)
+    video_length = max(video_length, 33)
     latent_frames = (video_length - 1) // vae.config.temporal_compression_ratio + 1
-    use_riflex = latent_frames > RIFLEX_TRAIN_LATENT_FRAMES
+    use_riflex = infer.enableRiflex
 
     image_paths, control_video_path = _split_media_paths(infer.mediaPaths)
     mode = infer.mode
 
     logger.info(
         f"Mode: {mode} | size={sample_size} | steps={infer.numSteps} | seed={seed} "
-        f"| frames={video_length} | fps={infer.fps} | riflex={use_riflex}"
+        f"| frames={video_length} | latent={latent_frames} | fps={infer.fps} | shift={infer.shift} | riflex={use_riflex}"
     )
+
 
     # ── Load inputs ──────────────────────────────────────────────────────────
 
@@ -383,7 +392,7 @@ def run_inference(job: Job, output_path: str) -> None:
         if not ref_pils:
             raise RuntimeError(f"Failed to download subject reference images: {ref_paths}")
         subject_ref_images = [
-            get_image_latent(pil, sample_size=sample_size, padding=True)
+            get_image_latent(pil, sample_size=sample_size, padding=infer.paddingInSubjectRefImages)
             for pil in ref_pils
         ]
         subject_ref_images = torch.cat(subject_ref_images, dim=2)
@@ -405,7 +414,7 @@ def run_inference(job: Job, output_path: str) -> None:
     # Inpaint latents — i2v conditions on start frame, s2v/v2v_control_ref use unconditioned mask
     if mode == "i2v":
         inpaint_video, inpaint_mask, _ = get_image_to_video_latent(
-            start_pil, None, video_length=video_length, sample_size=sample_size,
+            [start_pil], None, video_length=video_length, sample_size=sample_size,
         )
     else:
         inpaint_video, inpaint_mask, _ = get_image_to_video_latent(
@@ -418,10 +427,14 @@ def run_inference(job: Job, output_path: str) -> None:
 
     # ── Generate ─────────────────────────────────────────────────────────────
 
+    pipeline.transformer.enable_cfg_skip(infer.cfgSkipRatio, infer.numSteps)
+    if transformer_2 is not None:
+        transformer_2.share_cfg_skip(transformer=pipeline.transformer)
+
     if use_riflex:
-        pipeline.transformer.enable_riflex(k=RIFLEX_K, L_test=latent_frames)
+        pipeline.transformer.enable_riflex(k=infer.riflexK, L_test=latent_frames)
         if transformer_2 is not None:
-            transformer_2.enable_riflex(k=RIFLEX_K, L_test=latent_frames)
+            transformer_2.enable_riflex(k=infer.riflexK, L_test=latent_frames)
 
     generator = torch.Generator(device=device).manual_seed(seed)
 
@@ -462,8 +475,8 @@ def run_inference(job: Job, output_path: str) -> None:
         _upscale_video(output_path, upscaler.scale)
 
     interpolator = job.input.interpolator
-    if interpolator.enabled and interpolator.targetFps != infer.fps:
-        logger.info(f"RIFE: {infer.fps} FPS → {interpolator.targetFps} FPS")
-        _interpolate_fps(output_path, infer.fps, interpolator.targetFps)
+    if interpolator.enabled:
+        logger.info(f"RIFE: {infer.fps} FPS → {infer.fps * 4} FPS palindrome (2x speed, original duration)")
+        _interpolate_fps(output_path, infer.fps)
 
     logger.info(f"Saved {infer.mode} output → {output_path}")
