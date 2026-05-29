@@ -13,7 +13,7 @@ const pubsub = new PubSub({ projectId: PROJECT_ID });
 function listenForResults() {
   const subscription = pubsub.subscription(SUBSCRIPTION_ID);
 
-  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for AI model results...');
+  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for image jobs...');
 
   const messageHandler = async (message: Message) => {
     const job = JSON.parse(message.data.toString()) as Job;

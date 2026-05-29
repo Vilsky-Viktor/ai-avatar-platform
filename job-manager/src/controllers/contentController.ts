@@ -104,7 +104,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
   
     const idPhotoSet: IdPhotoSetPaths = {
       front: idPhotos[0],
-      frontSmile: idPhotoJobs[1],
+      frontSmile: idPhotos[1],
     }
   
     const inputs = functionMapping[jobRequest.type!](userId, jobRequest.avatarId, avatar.parameters, idPhotoSet);

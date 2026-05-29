@@ -105,6 +105,25 @@ services:
       - JOBS_COLLECTION_NAME=jobs
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
 
+  ai-model-gateway:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./ai-model-gateway
+    ports:
+      - "3400:3400"
+    volumes:
+      - ./ai-model-gateway:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - PORT=3400
+      - NODE_ENV=development
+      - PROJECT_ID=loom24-mvp
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+
   voice:
     <<: *default-dns
     networks:
@@ -140,3 +159,39 @@ services:
       - PORT=3800
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+
+
+  image-generator:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./image-generator
+    volumes:
+      - ./image-generator:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - SUBSCRIPTION_ID=image-generator-sub
+      - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+
+  workflow-manager:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./workflow-manager
+    volumes:
+      - ./workflow-manager:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - SUBSCRIPTION_ID=workflow-manager-sub
+      - JOB_MANAGER_URL=http://job-manager:3300

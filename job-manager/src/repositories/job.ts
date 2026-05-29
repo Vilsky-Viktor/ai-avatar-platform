@@ -1,4 +1,4 @@
-import { InferenceJob, Job, JobStatuses, JobTargets } from '../types/job';
+import { Job, JobStatuses, JobTargets } from '../types/job';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import logger from '../logger';
 
@@ -55,15 +55,15 @@ export const getByAvatarId = async (userId: string, avatarId: string): Promise<J
     return snapshot.docs.map(doc => doc.data() as Job);
 }
 
-export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promise<InferenceJob[]> => {
+export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promise<Job[]> => {
     const snapshot = await db.collection(JOBS_COLLECTION_NAME)
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId)
-        .where("target", "==", JobTargets.trainingPhotoSet)
+        .where("target", "==", JobTargets.idPhoto)
         .where("order", "in", [1,2,3,4,5,6,7,8,9])
         .get();
 
-    return snapshot.docs.map(doc => doc.data() as InferenceJob);
+    return snapshot.docs.map(doc => doc.data() as Job);
 }
 
 export const create = async (userId: string, job: Omit<Job, 'id'>): Promise<Job> => {

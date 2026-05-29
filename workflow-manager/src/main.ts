@@ -12,7 +12,7 @@ const pubsub = new PubSub({ projectId: PROJECT_ID });
 function listenForResults() {
   const subscription = pubsub.subscription(SUBSCRIPTION_ID);
 
-  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for AI model results...');
+  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for workflow updates...');
 
   const messageHandler = async (message: Message) => {
     const job = JSON.parse(message.data.toString()) as Job;
@@ -23,24 +23,37 @@ function listenForResults() {
 
     try {
       if (job.workflow.every((step: Workflow) => step.status === JobStatuses.pending)) {
+        logger.info(`Starting a new workflow for job ${job.id}`);
         const topic = job.workflow[0].service;
 
+        job.status = JobStatuses.generating;
         job.curRun += 1;
         
         await sendJob(topic, job);
+        await updateJob(job);
       } else if (job.workflow.some((step: Workflow) => step.status === JobStatuses.error) && job.curRun !== job.maxRuns) {
         const topic = job.workflow[0].service;
+        const errorStepIdx = job.workflow.findIndex((step: Workflow) => step.status === JobStatuses.error);
+        const errorStepData = job.workflow[errorStepIdx];
+
+        logger.info(`Restarting workflow due to job ${job.id}, step: ${errorStepData.service}, error: ${errorStepData.error}`);
 
         job.curRun += 1;
-
         job.workflow = job.workflow.map((step: Workflow) => ({...step, status: JobStatuses.pending, error: ''}));
 
         await sendJob(topic, job);
+        await updateJob(job);
       } else if (job.workflow.some((step: Workflow) => step.status === JobStatuses.error) && job.curRun === job.maxRuns) {
+        const errorStepIdx = job.workflow.findIndex((step: Workflow) => step.status === JobStatuses.error);
+        const errorStepData = job.workflow[errorStepIdx];
+
+        logger.info(`Workflow failed after ${job.maxRuns} runs for job ${job.id}, step: ${errorStepData.service}, error: ${errorStepData.error}`);
+
         job.status = JobStatuses.error;
         
         await updateJob(job);
       } else if (job.workflow.every((step: Workflow) => step.status === JobStatuses.completed)) {
+        logger.info(`Workflow successfully completed for job ${job.id}`)
         job.status = JobStatuses.completed;
 
         await updateJob(job);
@@ -49,11 +62,15 @@ function listenForResults() {
         const pendingStepData = job.workflow[pendingStepIdx];
         const topic = pendingStepData.service;
 
+        logger.info(`Sending job ${job.id} to the next step ${topic}`);
+
         await sendJob(topic, job);
+        await updateJob(job);
       } else {
         logger.warn(`None of conditions met for job ${job.id}`)
       }
     } catch (error: any) {
+      logger.error(`Failed to process job ${job.id} with error: ${error}`);
       job.status = JobStatuses.error;
       await updateJob(job);
     }
