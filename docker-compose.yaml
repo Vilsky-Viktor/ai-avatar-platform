@@ -137,5 +137,6 @@ services:
       - ./cropper:/app
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
+      - PORT=3800
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
