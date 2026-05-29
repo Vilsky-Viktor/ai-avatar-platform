@@ -1,21 +1,19 @@
 import { Router } from 'express';
 import { getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId } from '../controllers/jobController';
-import { trainLoras, genTrainingPhotoSet, genTrainingSyntheticFrontIdPhoto, genTrainingSyntheticIdPhotos, genTrainingTwinIdPhotos } from '../controllers/trainingController';
+import { genSyntheticFrontIdPhoto, genSyntheticIdPhotos, genDigitalTwinIdPhotos } from '../controllers/idPhotoController';
 import { genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo } from '../controllers/contentController';
 
 const router = Router();
 
 router.get('/get/group/:groupId', getByGroupId);
 router.get('/get/avatar/:avatarId', getByAvatarId);
-router.post('/gen-training-photo-set', genTrainingPhotoSet);
-router.post('/gen-training-synthetic-front-id-photo', genTrainingSyntheticFrontIdPhoto);
-router.post('/gen-training-synthetic-id-photos', genTrainingSyntheticIdPhotos);
-router.post('/gen-training-twin-id-photos', genTrainingTwinIdPhotos);
+router.post('/gen-synthetic-front-id-photo', genSyntheticFrontIdPhoto);
+router.post('/gen-synthetic-id-photos', genSyntheticIdPhotos);
+router.post('/gen-digital-twin-id-photos', genDigitalTwinIdPhotos);
 router.post('/gen-avatar-photo', genAvatarPhoto);
 router.post('/gen-avatar-photo-set', genAvatarPhotoSet);
 router.post('/gen-avatar-video', genAvatarVideo);
 router.post('/restart/:id', restart);
-router.post('/train-loras', trainLoras);
 router.patch('/update/:id', update);
 router.delete('/delete-by-id/:id', deleteById);
 router.delete('/delete-by-avatar-id/:avatarId', deleteByAvatarId);

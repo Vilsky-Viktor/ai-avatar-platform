@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, JobStatuses } from '../types/job';
+import { Job, JobStatuses, Workflow } from '../types/job';
 import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
@@ -10,6 +10,8 @@ import {
 } from '../repositories/job';
 import { publishJob } from '../services/messageQueue';
 import { deleteBlob } from '../services/storageService';
+
+const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
 
 export const getByGroupId = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -56,17 +58,17 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
       throw Error(errorMessage);
     }
 
-    if (!job.metadata?.queueTopic) {
-      const errorMessage = `Job ${id} queue topic is undefined`;
-      req.log.error(errorMessage);
-      throw Error(errorMessage);
-    }
-
-    job.result = { fileName: job.result?.fileName };
     job.status = JobStatuses.pending;
+    
+    job.workflow.forEach((step, idx) => {
+      job.workflow[idx].error = '';
+      job.workflow[idx].status = JobStatuses.pending;
+    })
+
+    job.resultMediaPath = '';
 
     await updateDb(userId, id, job, true);
-    await publishJob(job.metadata.queueTopic, job);
+    await publishJob(WORKFLOW_MANAGER_TOPIC, job);
 
     return res.status(200).json(job);
   } catch (error) {
@@ -99,12 +101,14 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
 
   try {
     const job = await getByIdDb(userId, id);
-    const mediaPath = job?.result?.mediaPath;
+    const mediaPaths = job?.workflow
+      .filter((step: Workflow) => step.uploadPath)
+      .map((step: Workflow) => step.uploadPath);
 
     await deleteByIdDb(userId, id);
 
-    if (mediaPath) {
-      await deleteBlob(mediaPath);
+    if (mediaPaths && mediaPaths.length > 0) {
+      await Promise.all(mediaPaths.map(path => deleteBlob(path!)))
     }
 
     return res.status(200).json({ result: 'ok' });

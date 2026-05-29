@@ -1,6 +1,0 @@
-google-cloud-pubsub
-google-cloud-storage
-google-cloud-firestore
-filelock
-pydantic>=2.0.0
-Pillow

@@ -13,20 +13,16 @@ router.get(
     createProxyHandler('get', (req) => `${BASE}/get/avatar/${req.params.avatarId}`, 'Get by avatar ID')
 )
 router.post(
-    '/gen-training-photo-set',
-    createProxyHandler('post', () => `${BASE}/gen-training-photo-set`, 'Create training photo set')
+    '/gen-synthetic-front-id-photo',
+    createProxyHandler('post', () => `${BASE}/gen-synthetic-front-id-photo`, 'Create synthetic front ID photo')
 );
 router.post(
-    '/gen-training-synthetic-front-id-photo',
-    createProxyHandler('post', () => `${BASE}/gen-training-synthetic-front-id-photo`, 'Create synthetic front ID photo')
+    '/gen-synthetic-id-photos',
+    createProxyHandler('post', () => `${BASE}/gen-synthetic-id-photos`, 'Create synthetic ID photos')
 );
 router.post(
-    '/gen-training-synthetic-id-photos',
-    createProxyHandler('post', () => `${BASE}/gen-training-synthetic-id-photos`, 'Create synthetic ID photos')
-);
-router.post(
-    '/gen-training-twin-id-photos',
-    createProxyHandler('post', () => `${BASE}/gen-training-twin-id-photos`, 'Create twin ID photos')
+    '/gen-digital-twin-id-photos',
+    createProxyHandler('post', () => `${BASE}/gen-digital-twin-id-photos`, 'Create digital twin ID photos')
 );
 router.post(
     '/gen-avatar-photo',
@@ -43,10 +39,6 @@ router.post(
 router.post(
     '/restart/:id',
     createProxyHandler('post', (req) => `${BASE}/restart/${req.params.id}`, 'Restart job')
-);
-router.post(
-    '/train-loras/',
-    createProxyHandler('post', () => `${BASE}/train-loras`, 'Train LORAs')
 );
 router.delete(
     '/delete-by-id/:id',

@@ -1,40 +1,4 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { Ratios } from './ratios';
-import type { AvatarTypes, AvatarParameters } from './avatar';
-
-export type PhotoSetType = 
-  'whatsapp-stickers' | 
-  'around-the-world' | 
-  'outfit-styles' | 
-  'luxury-life';
-
-export type IdPhotoJobRequest = {
-  avatarType: AvatarTypes;
-  groupId?: string;
-  avatarId: string;
-  parameters: AvatarParameters;
-  frontIdPhotoPath: string;
-}
-
-export type PhotoJobRequest = {
-  avatarId: string;
-  ratio: Ratios;
-  prompt: string;
-  mediaPaths?: string[];
-}
-
-export type VideoJobRequest = {
-  avatarId: string;
-  ratio: Ratios;
-  prompt: string;
-  mediaPaths?: string[];
-  lengthSec?: number;
-}
-
-export type PhotoSetJobRequest = {
-  avatarId: string;
-  type: PhotoSetType;
-}
 
 export enum MediaTypes {
   image = 'image',

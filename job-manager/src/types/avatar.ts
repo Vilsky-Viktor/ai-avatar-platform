@@ -34,16 +34,6 @@ export type AvatarParameters = {
   height: string;
 }
 
-export type LoraConfig = {
-  path: string;
-  filename: string;
-}
-
-export type AvatarLoras = {
-  qwenEdit2511: LoraConfig;
-  wan22T2vA14b?: LoraConfig;
-}
-
 export type Avatar = {
   id?: string;
   userId?: string;
@@ -52,10 +42,9 @@ export type Avatar = {
   type: AvatarTypes;
   parameters: AvatarParameters;
   mainImagePath?: string;
-  voicePath?: string;
+  voiceId?: string;
   isUploadedVoice?: boolean;
   photoSetGenerated: boolean;
-  loras: AvatarLoras;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

@@ -1,7 +1,0 @@
-omegaconf
-filelock
-opencv-python-headless
-librosa
-einops
-decord
-imageio[ffmpeg]

@@ -1,17 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import {
-  InferenceJob,
-  LoraData,
+  Job,
   MediaTypes,
   JobTargets,
   JobStatuses,
   PhotoJobRequest,
-  InferenceJobMetadata,
   PhotoSetJobRequest,
   VideoJobRequest,
-  VideoModes,
+  ImageGenerator,
+  ImageUpscaler,
+  Services,
+  PhotoSetType,
+  VideoUpscaler,
+  videoGenerator,
 } from '../types/job';
-import { AVATAR_REFERENCE_NAME } from '../utils/trainingPhotoSetCaptions';
 import { 
   getAvatarIdPhotos as getAvatarIdPhotosDb, 
   create as createDb, 
@@ -20,76 +22,58 @@ import {
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { getAvatarById } from '../services/avatarService';
 import uuid from 'uuid';
-import imageRatios, { PhotoSetType, wan22Vace } from '../types/image';
 import { genOutfitStylesData, genTravelingAroundTheWorldData, genWhatsappStickersData, genLuxuryLifeData } from '../utils/photoSetInputData';
-import { buildPhotoSetJobs } from '../utils/jobBuilder';
+import { IdPhotoSetPaths } from '../types/idPhotoSet';
 
-const GEN_QWEN_EDIT_2511_TOPIC = process.env.GEN_QWEN_EDIT_2511_TOPIC || 'gen-qwen-edit-2511';
-const GEN_WAN_22_VACE_TOPIC = process.env.GEN_WAN_22_VACE_TOPIC || 'gen-wan-22-vace';
+
+const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
+
 
 export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: PhotoJobRequest = req.body;
-  const fileId = uuid.v4();
-
-  const [width, height] = imageRatios.qwenEdit2511[jobRequest.ratio];
-  const dimensions = `${width}x${height}`;
+  const imageId = uuid.v4();
 
   req.log.info(`Generate avatar photo for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}`);
 
   try {
-    const avatar = await getAvatarById(userId, jobRequest.avatarId);
-
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
-    const idPhotos = idPhotoJobs.map((job: InferenceJob) => job.result?.mediaPath!);
+    const idPhotos = idPhotoJobs.map((job: Job) => job.resultMediaPath);
 
-    const job: InferenceJob = {
+    const generatorUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/images/${imageId}.png`
+    const upscalerUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/images/${imageId}-upscaled.png`
+
+    const imageGenerator = {
+      service: Services.imageGenerator,
+      prompt: jobRequest.prompt,
+      negativePrompt: 'blurry face, low quality, distorted face, oversaturated, unrealistic skin, plastic skin',
+      imagePaths: [...jobRequest.mediaPaths!, ...idPhotos],
+      ratio: jobRequest.ratio,
+      uploadPath: generatorUploadPath,
+      status: JobStatuses.pending
+    } as ImageGenerator;
+
+    const imageUpscaler = {
+      imagePath: generatorUploadPath,
+      uploadPath: upscalerUploadPath,
+      status: JobStatuses.pending,
+    } as ImageUpscaler
+
+    const job: Job = {
       userId,
       avatarId: jobRequest.avatarId,
       mediaType: MediaTypes.image,
       target: JobTargets.avatarMedia,
       status: JobStatuses.pending,
       maxRuns: 3,
-      input: {
-        checkDependencies: false,
-        inference: {
-          prompt: `${AVATAR_REFERENCE_NAME} ${jobRequest.prompt}`,
-          mediaPaths: jobRequest.mediaPaths || [],
-          numSteps: 8,
-          guidanceScale: 1.0,
-          width,
-          height,
-        },
-        faceRecognition: {
-          enabled: true,
-          mediaPaths: idPhotos,
-          threshold: { min: 0.95 },
-        },
-        loras: [
-          { path: 'models/qwen-edit-2511/loras/Qwen-Image-Lightning-8steps-V2.0/Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors', scale: 0.5 },
-          { path: avatar.loras.qwenEdit2511.path, scale: 1.0, filename: avatar.loras.qwenEdit2511.filename },
-        ],
-        upscaler: {
-          enabled: true,
-          outscale: 1.55,
-          blend: 0.5,
-          tile: 400,
-          half: true,
-        }
-      },
-      metadata: {
-        queueTopic: GEN_QWEN_EDIT_2511_TOPIC,
-        ratio: jobRequest.ratio,
-        dimensions,
-        userPrompt: jobRequest.prompt
-      } as InferenceJobMetadata,
-      result: {
-        fileName: `${fileId}-${dimensions}.png`,
-      },
-    };
+      curRun: 0,
+      workflow: [imageGenerator, imageUpscaler],
+      metadata: { ratio: jobRequest.ratio },
+      resultMediaPath: upscalerUploadPath
+    }
 
     const dbJob = await createDb(userId, job);
-    await publishJob(GEN_QWEN_EDIT_2511_TOPIC, dbJob);
+    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -116,29 +100,44 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
 
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
-    const idPhotos = idPhotoJobs
-      .filter((job: InferenceJob) => [1,2].includes(job.order!))
-      .map((job: InferenceJob) => job.result?.mediaPath!);
-      
-    const inputs = functionMapping[jobRequest.type!](avatar.loras.qwenEdit2511, idPhotos, avatar.parameters);
+    const idPhotos = idPhotoJobs.map((job: Job) => job.resultMediaPath);
+  
+    const idPhotoSet: IdPhotoSetPaths = {
+      front: idPhotos[0],
+      frontSmile: idPhotoJobs[1],
+    }
+  
+    const inputs = functionMapping[jobRequest.type!](userId, jobRequest.avatarId, avatar.parameters, idPhotoSet);
 
-    const baseJob: Partial<InferenceJob> = {
-      groupId: groupId,
-      userId,
-      avatarId: jobRequest.avatarId,
-      mediaType: MediaTypes.image,
-      target: JobTargets.avatarMedia,
-      status: JobStatuses.pending,
-      maxRuns: 3,
-      metadata: {
-        queueTopic: GEN_QWEN_EDIT_2511_TOPIC,
-        userPrompt: '',
-      } as InferenceJobMetadata,
-    };
+    const jobs: Job[] = inputs.map((input: any) => {
+      const generatorUploadPath = input.imageGenerator.uploadPath!;
+      const dotIndex = generatorUploadPath.lastIndexOf('.');
+      const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
 
-    const jobs = buildPhotoSetJobs(baseJob, inputs);
+      const imageUpscaler = {
+        imagePath: generatorUploadPath,
+        uploadPath: upscalerUploadPath,
+        status: JobStatuses.pending,
+      } as ImageUpscaler;
+
+      return {
+        userId,
+        groupId,
+        avatarId: jobRequest.avatarId,
+        mediaType: MediaTypes.image,
+        target: JobTargets.idPhoto,
+        status: JobStatuses.pending,
+        maxRuns: 3,
+        curRun: 0,
+        order: input.order,
+        workflow: [input.imageGenerator, imageUpscaler],
+        metadata: input.metadata,
+        resultMediaPath: upscalerUploadPath
+      }
+    })
+    
     const dbJobs = await createManyDb(userId, jobs);
-    await publishJobs(GEN_QWEN_EDIT_2511_TOPIC, dbJobs);
+    await publishJobs(WORKFLOW_MANAGER_TOPIC, dbJobs);
 
     return res.status(201).json(dbJobs);
   } catch (error) {
@@ -150,85 +149,53 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
 export const genAvatarVideo = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: VideoJobRequest = req.body;
-  const fileId = uuid.v4();
+  const videoId = uuid.v4();
 
   req.log.info(`Generate avatar video for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}, length ${jobRequest.lengthSec}s`);
 
   try {
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
+    const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
+    const idPhotos = idPhotoJobs
+      .filter((job: Job) => [1,3,4,5].includes(job.order!))
+      .map((job: Job) => job.resultMediaPath);
 
-    const [width, height] = wan22Vace[jobRequest.ratio];
-    const dimensions = `${width}x${height}`;
-    const seconds = Math.max(2, Math.min(10, jobRequest.lengthSec || 2));
+    const generatorUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/videos/${videoId}.png`
+    const upscalerUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/videos/${videoId}-upscaled.png`
 
-    let mediaPaths = [];
-    let mode;
+    const videoGenerator = {
+      service: Services.videoGenerator,
+      prompt: jobRequest.prompt,
+      negativePrompt: 'blur, distort, and low quality',
+      imagePath: jobRequest.mediaPaths ? jobRequest.mediaPaths[0] : '',
+      imageRefPaths: idPhotos,
+      duration: jobRequest.lengthSec,
+      ratio: jobRequest.ratio,
+      uploadPath: generatorUploadPath,
+      status: JobStatuses.pending,
+    } as videoGenerator;
 
-    if (!jobRequest.mediaPaths?.length) {
-      const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
+    const videoUpscaler = {
+      videoPath: generatorUploadPath,
+      uploadPath: upscalerUploadPath,
+      status: JobStatuses.pending,
+    } as VideoUpscaler;
 
-      mediaPaths = idPhotoJobs
-        .filter((job: InferenceJob) => [2,3,4,8,9].includes(job.order!))
-        .map((job: InferenceJob) => job.result?.mediaPath!);
-
-      mode = VideoModes.s2v;
-    } else if (jobRequest.mediaPaths.some(path => path.includes('.mp4'))) {
-      const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
-
-      const idPhotoPaths = idPhotoJobs
-        .filter((job: InferenceJob) => [2,3,4,8,9].includes(job.order!))
-        .map((job: InferenceJob) => job.result?.mediaPath!);
-
-      mediaPaths = [...jobRequest.mediaPaths, ...idPhotoPaths]
-
-      mode = VideoModes.v2v_control_ref;
-    } else {
-      mediaPaths = jobRequest.mediaPaths!;
-      mode = VideoModes.i2v;
-    }
-
-    const job: InferenceJob = {
+    const job: Job = {
       userId,
       avatarId: jobRequest.avatarId,
-      mediaType: MediaTypes.video,
+      mediaType: MediaTypes.image,
       target: JobTargets.avatarMedia,
       status: JobStatuses.pending,
       maxRuns: 1,
-      input: {
-        checkDependencies: false,
-        inference: {
-          prompt: `${jobRequest.prompt}. Fast movement, 24 fps`,
-          negativePrompt: 'Slow motion, slow, sluggish motion, stiff, vibrant colors, overexposed, static, blurry details, subtitles, style, artwork, painting, image, still, overall grayish, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, distorted limbs, fingers fused together, static image, cluttered background, three legs, many people in the background, walking backwards',
-          guidanceScale: 5.0,
-          numSteps: 50,
-          width,
-          height,
-          videoLength: 81,
-          fps: 16,
-          shift: 12.0,
-          mode: mode,
-          vaceContextScale: 1.00,
-          seed: 43,
-          mediaPaths,
-        },
-        loras: [],
-        upscaler: { enabled: false, scale: 2 },
-        interpolator: { enabled: true, targetFps: 24 },
-      },
-      metadata: {
-        queueTopic: GEN_WAN_22_VACE_TOPIC,
-        ratio: jobRequest.ratio,
-        dimensions,
-        userPrompt: jobRequest.prompt,
-        lengthSec: seconds,
-      } as InferenceJobMetadata,
-      result: {
-        fileName: `${fileId}-${dimensions}.mp4`,
-      },
-    };
-
+      curRun: 0,
+      workflow: [videoGenerator, videoUpscaler],
+      metadata: { ratio: jobRequest.ratio },
+      resultMediaPath: upscalerUploadPath
+    }
+      
     const dbJob = await createDb(userId, job);
-    await publishJob(GEN_WAN_22_VACE_TOPIC, dbJob);
+    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
     return res.status(201).json(dbJob);
   } catch (error) {
     req.log.info(`Failed to generate avatar video for ${userId}: ${error}`);
