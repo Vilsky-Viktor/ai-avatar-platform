@@ -1,6 +1,6 @@
 import { AvatarParameters } from '../types/avatar';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
-import { Directions, ImageGenerator, Job, JobMetadata, JobStatuses, Services } from '../types/job';
+import { Directions, Flows, ImageGenerator, Job, JobMetadata, JobStatuses, Models, Services } from '../types/job';
 import { Ratios } from '../types/ratios';
 import uuid from 'uuid';
 
@@ -39,7 +39,9 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
       negativePrompt: 'cut off shoulders, missing shoulders, cropped head, cut off haircut, cut off hair, cut off head, blurry face, low quality, distorted face, wrong ethnicity, smile, open mouth, teeth visible, makeup, oversaturated, unrealistic skin, plastic skin, head tilt',
       ratio,
       uploadPath,
-      status: JobStatuses.pending
+      status: JobStatuses.pending,
+      model: Models.qwen,
+      flow: Flows.t2i,
     },
     metadata: { ratio }
   }
@@ -68,7 +70,9 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         ratio,
         imagePaths: [idPhotoSet.front!],
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 2,
@@ -85,7 +89,9 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         verticalAngle: 0,
         zoom: 5,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.qwen,
+        flow: Flows.ia2i,
       },
       metadata: { ratio },
       order: 3,
@@ -102,7 +108,9 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         verticalAngle: 0,
         zoom: 5,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.qwen,
+        flow: Flows.ia2i,
       },
       metadata: { ratio },
       order: 4,
@@ -119,7 +127,9 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         verticalAngle: 0,
         zoom: 5,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.qwen,
+        flow: Flows.ia2i,
       },
       metadata: { ratio },
       order: 5,
@@ -136,7 +146,9 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         verticalAngle: 0,
         zoom: 5,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.qwen,
+        flow: Flows.ia2i,
       },
       metadata: { ratio },
       order: 6,
@@ -150,7 +162,9 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         ratio,
         imagePaths: [idPhotoSet.front!],
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 7,
@@ -178,7 +192,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePaths: [idPhotoSet.front!],
         safetyTolerance: 2,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 1,
@@ -192,7 +208,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePaths: [idPhotoSet.frontSmile!],
         safetyTolerance: 2,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 2,
@@ -206,7 +224,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePaths: [idPhotoSet.rightQuarter!],
         safetyTolerance: 2,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 3,
@@ -220,7 +240,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePaths: [idPhotoSet.leftQuarter!],
         safetyTolerance: 2,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 4,
@@ -234,7 +256,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePaths: [idPhotoSet.rightSide!],
         safetyTolerance: 2,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 5,
@@ -248,7 +272,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePaths: [idPhotoSet.leftSide!],
         safetyTolerance: 2,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 6,
@@ -262,7 +288,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePaths: [idPhotoSet.body!],
         safetyTolerance: 2,
         uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
-        status: JobStatuses.pending
+        status: JobStatuses.pending,
+        model: Models.flux,
+        flow: Flows.ti2i,
       },
       metadata: { ratio },
       order: 7,

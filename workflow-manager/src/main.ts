@@ -1,6 +1,6 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
-import { Job, JobStatuses, Workflow } from './types/job';
+import { Job, JobStatuses, WorkflowStep } from './types/job';
 import { sendJob } from './services/messageQueue';
 import { updateJob } from './services/jobManagerService';
 
@@ -22,7 +22,7 @@ function listenForResults() {
     message.ack();
 
     try {
-      if (job.workflow.every((step: Workflow) => step.status === JobStatuses.pending)) {
+      if (job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.pending)) {
         logger.info(`Starting a new workflow for job ${job.id}`);
         const topic = job.workflow[0].service;
 
@@ -31,20 +31,20 @@ function listenForResults() {
         
         await sendJob(topic, job);
         await updateJob(job);
-      } else if (job.workflow.some((step: Workflow) => step.status === JobStatuses.error) && job.curRun !== job.maxRuns) {
+      } else if (job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun !== job.maxRuns) {
         const topic = job.workflow[0].service;
-        const errorStepIdx = job.workflow.findIndex((step: Workflow) => step.status === JobStatuses.error);
+        const errorStepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.error);
         const errorStepData = job.workflow[errorStepIdx];
 
         logger.info(`Restarting workflow due to job ${job.id}, step: ${errorStepData.service}, error: ${errorStepData.error}`);
 
         job.curRun += 1;
-        job.workflow = job.workflow.map((step: Workflow) => ({...step, status: JobStatuses.pending, error: ''}));
+        job.workflow = job.workflow.map((step: WorkflowStep) => ({...step, status: JobStatuses.pending, error: ''}));
 
         await sendJob(topic, job);
         await updateJob(job);
-      } else if (job.workflow.some((step: Workflow) => step.status === JobStatuses.error) && job.curRun === job.maxRuns) {
-        const errorStepIdx = job.workflow.findIndex((step: Workflow) => step.status === JobStatuses.error);
+      } else if (job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun === job.maxRuns) {
+        const errorStepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.error);
         const errorStepData = job.workflow[errorStepIdx];
 
         logger.info(`Workflow failed after ${job.maxRuns} runs for job ${job.id}, step: ${errorStepData.service}, error: ${errorStepData.error}`);
@@ -52,13 +52,13 @@ function listenForResults() {
         job.status = JobStatuses.error;
         
         await updateJob(job);
-      } else if (job.workflow.every((step: Workflow) => step.status === JobStatuses.completed)) {
+      } else if (job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.completed)) {
         logger.info(`Workflow successfully completed for job ${job.id}`)
         job.status = JobStatuses.completed;
 
         await updateJob(job);
-      } else if (job.workflow.some((step: Workflow) => step.status === JobStatuses.pending)) {
-        const pendingStepIdx = job.workflow.findIndex((step: Workflow) => step.status === JobStatuses.pending);
+      } else if (job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.pending)) {
+        const pendingStepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
         const pendingStepData = job.workflow[pendingStepIdx];
         const topic = pendingStepData.service;
 

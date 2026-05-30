@@ -5,8 +5,11 @@ import {
   JobTargets,
   JobStatuses,
   IdPhotoJobRequest,
-  ImageUpscaler,
+  Upscaler,
   HeadDirectionChecker,
+  Models,
+  Flows,
+  Services,
 } from '../types/job';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
 import { genDigitalTwinIdPhotoData, genSyntheticFrontIdPhtotoData, genSyntheticIdPhotoData } from '../utils/idPhotoInputData';
@@ -36,10 +39,14 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
     const dotIndex = generatorUploadPath.lastIndexOf('.');
     const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
 
-    const imageUpscaler = {
+    const upscaler: Upscaler = {
+      service: Services.upscaler,
       imagePath: generatorUploadPath,
       uploadPath: upscalerUploadPath,
-    } as ImageUpscaler
+      status: JobStatuses.pending,
+      model: Models.topaz,
+      flow: Flows.i2i,
+    };
 
     const job: Job = {
       groupId,
@@ -51,7 +58,7 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
       maxRuns: 3,
       curRun: 0,
       order: 1,
-      workflow: [input.imageGenerator, imageUpscaler],
+      workflow: [input.imageGenerator, upscaler],
       metadata: input.metadata,
       resultMediaPath: upscalerUploadPath
     }
@@ -84,15 +91,23 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
       const dotIndex = generatorUploadPath.lastIndexOf('.');
       const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
 
-      const imageUpscaler = {
+      const upscaler: Upscaler = {
+        service: Services.upscaler,
         imagePath: generatorUploadPath,
         uploadPath: upscalerUploadPath,
-      } as ImageUpscaler;
+        status: JobStatuses.pending,
+        model: Models.topaz,
+        flow: Flows.i2i,
+      };
 
-      const headDirectionChecker = {
+      const headDirectionChecker: HeadDirectionChecker = {
+        service: Services.headDirectionChecker,
         imagePath: generatorUploadPath,
-        direction: input.direction
-      } as HeadDirectionChecker;
+        direction: input.direction,
+        status: JobStatuses.pending,
+        model: Models.buffalo_l,
+        flow: Flows.i2i
+      };
 
       return {
         userId,
@@ -104,7 +119,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, headDirectionChecker, imageUpscaler],
+        workflow: [input.imageGenerator, headDirectionChecker, upscaler],
         metadata: input.metadata,
         resultMediaPath: upscalerUploadPath
       }
@@ -146,10 +161,14 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
       const dotIndex = generatorUploadPath.lastIndexOf('.');
       const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
 
-      const imageUpscaler = {
+      const upscaler: Upscaler = {
+        service: Services.upscaler,
         imagePath: generatorUploadPath,
         uploadPath: upscalerUploadPath,
-      } as ImageUpscaler;
+        status: JobStatuses.pending,
+        model: Models.topaz,
+        flow: Flows.i2i,
+      };
 
       return {
         userId,
@@ -161,7 +180,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, imageUpscaler],
+        workflow: [input.imageGenerator, upscaler],
         metadata: input.metadata,
         resultMediaPath: upscalerUploadPath
       }

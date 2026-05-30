@@ -1,6 +1,6 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
-import { ImageGenerator, Job, JobStatuses, Workflow } from './types/job';
+import { Flows, ImageGenerator, Job, JobStatuses, Models, Services, WorkflowStep } from './types/job';
 import { genQwenImage2512, genQwenImageEdit2511, genQwenImageEdit2511MultipleAngles, genFluxV2ProEdit } from './services/aiModelGatewayService';
 import { sendJob } from './services/messageQueue';
 
@@ -20,20 +20,22 @@ function listenForResults() {
 
     logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
 
-    const imageGeneratorIdx = job.workflow.findIndex((step: Workflow) => step.service === 'image-generator');
+    const imageGeneratorIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.imageGenerator);
     const imageGeneratorData = job.workflow[imageGeneratorIdx] as ImageGenerator;
 
     message.ack();
 
     try {
-      if (!imageGeneratorData.imagePaths || imageGeneratorData.imagePaths.length === 0) {
+      if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.t2i) {
         await genQwenImage2512(job.userId, imageGeneratorData);
-      } else if (imageGeneratorData.horizontalAngle || imageGeneratorData.verticalAngle || imageGeneratorData.zoom) {
+      } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ia2i) {
         await genQwenImageEdit2511MultipleAngles(job.userId, imageGeneratorData);
-      } else if (imageGeneratorData.safetyTolerance) {
+      } else if (imageGeneratorData.model === Models.flux && imageGeneratorData.flow === Flows.ti2i) {
         await genFluxV2ProEdit(job.userId, imageGeneratorData);
-      } else {
+      } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ti2i) {
         await genQwenImageEdit2511(job.userId, imageGeneratorData);
+      } else {
+        logger.warn(`Not supported model and flow`);
       }
 
       imageGeneratorData.status = JobStatuses.completed;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, JobStatuses, Workflow } from '../types/job';
+import { Job, JobStatuses, WorkflowStep } from '../types/job';
 import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
@@ -102,8 +102,8 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
   try {
     const job = await getByIdDb(userId, id);
     const mediaPaths = job?.workflow
-      .filter((step: Workflow) => step.uploadPath)
-      .map((step: Workflow) => step.uploadPath);
+      .filter((step: WorkflowStep) => step.uploadPath)
+      .map((step: WorkflowStep) => step.uploadPath);
 
     await deleteByIdDb(userId, id);
 

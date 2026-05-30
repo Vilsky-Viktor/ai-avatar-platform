@@ -8,11 +8,12 @@ import {
   PhotoSetJobRequest,
   VideoJobRequest,
   ImageGenerator,
-  ImageUpscaler,
+  Upscaler,
   Services,
   PhotoSetType,
-  VideoUpscaler,
   videoGenerator,
+  Models,
+  Flows,
 } from '../types/job';
 import { 
   getAvatarIdPhotos as getAvatarIdPhotosDb, 
@@ -43,21 +44,27 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const generatorUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/images/${imageId}.png`
     const upscalerUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/images/${imageId}-upscaled.png`
 
-    const imageGenerator = {
+    const imageGenerator: ImageGenerator = {
       service: Services.imageGenerator,
       prompt: jobRequest.prompt,
       negativePrompt: 'blurry face, low quality, distorted face, oversaturated, unrealistic skin, plastic skin',
       imagePaths: [...jobRequest.mediaPaths!, ...idPhotos],
+      safetyTolerance: 2,
       ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
-      status: JobStatuses.pending
-    } as ImageGenerator;
+      status: JobStatuses.pending,
+      model: Models.flux,
+      flow: Flows.ti2i,
+    };
 
-    const imageUpscaler = {
+    const upscaler: Upscaler = {
+      service: Services.upscaler,
       imagePath: generatorUploadPath,
       uploadPath: upscalerUploadPath,
       status: JobStatuses.pending,
-    } as ImageUpscaler
+      model: Models.topaz,
+      flow: Flows.i2i,
+    }
 
     const job: Job = {
       userId,
@@ -67,7 +74,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       maxRuns: 3,
       curRun: 0,
-      workflow: [imageGenerator, imageUpscaler],
+      workflow: [imageGenerator, upscaler],
       metadata: { ratio: jobRequest.ratio },
       resultMediaPath: upscalerUploadPath
     }
@@ -114,11 +121,14 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
       const dotIndex = generatorUploadPath.lastIndexOf('.');
       const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
 
-      const imageUpscaler = {
+      const upscaler: Upscaler = {
+        service: Services.upscaler,
         imagePath: generatorUploadPath,
         uploadPath: upscalerUploadPath,
         status: JobStatuses.pending,
-      } as ImageUpscaler;
+        model: Models.topaz,
+        flow: Flows.i2i,
+      };
 
       return {
         userId,
@@ -130,7 +140,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, imageUpscaler],
+        workflow: [input.imageGenerator, upscaler],
         metadata: input.metadata,
         resultMediaPath: upscalerUploadPath
       }
@@ -163,23 +173,28 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
     const generatorUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/videos/${videoId}.png`
     const upscalerUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/videos/${videoId}-upscaled.png`
 
-    const videoGenerator = {
+    const videoGenerator: videoGenerator = {
       service: Services.videoGenerator,
       prompt: jobRequest.prompt,
       negativePrompt: 'blur, distort, and low quality',
       imagePath: jobRequest.mediaPaths ? jobRequest.mediaPaths[0] : '',
       imageRefPaths: idPhotos,
-      duration: jobRequest.lengthSec,
+      duration: jobRequest.lengthSec!,
       ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
-    } as videoGenerator;
+      model: Models.kling,
+      flow: Flows.ti2v,
+    };
 
-    const videoUpscaler = {
+    const upscaler: Upscaler = {
+      service: Services.upscaler,
       videoPath: generatorUploadPath,
       uploadPath: upscalerUploadPath,
       status: JobStatuses.pending,
-    } as VideoUpscaler;
+      model: Models.topaz,
+      flow: Flows.v2v,
+    };
 
     const job: Job = {
       userId,
@@ -189,7 +204,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       maxRuns: 1,
       curRun: 0,
-      workflow: [videoGenerator, videoUpscaler],
+      workflow: [videoGenerator, upscaler],
       metadata: { ratio: jobRequest.ratio },
       resultMediaPath: upscalerUploadPath
     }
