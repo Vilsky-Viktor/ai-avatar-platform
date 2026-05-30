@@ -1,6 +1,6 @@
 import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { JobStatuses, MediaType, type InferenceJob } from '../types/job';
+import { JobStatuses, MediaTypes, type Job } from '../types/job';
 import { downloadMediaFromBucket } from '../services/storage';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
 import MediaInfoPopup from './mediaGrid/MediaInfoPopup';
@@ -18,9 +18,9 @@ const DEFAULT_THRESHOLDS: FaceMatchThresholds = {
 };
 
 type Props = {
-    job?: Partial<InferenceJob> | null;
+    job?: Partial<Job> | null;
     idx: number;
-    onPhotoClick: (url: string, rect: DOMRect, mediaType: MediaType) => void;
+    onPhotoClick: (url: string, rect: DOMRect, mediaType: MediaTypes) => void;
     onRegenerate?: (jobId: string) => void;
     onDelete?: (jobId: string) => void | Promise<void>;
     canRestart?: boolean;
@@ -49,14 +49,14 @@ function MediaCard({
 
     useEffect(() => {
         if (job?.status !== JobStatuses.generating) return;
-        const ts = job.updatedAt as any;
+        const ts = (job.updatedAt ?? job.createdAt) as any;
         const startSec: number = ts?.seconds ?? ts?._seconds ?? Date.now() / 1000;
         startRef.current = startSec;
         setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startSec)));
         const interval = setInterval(() =>
             setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startRef.current!))), 1000);
         return () => clearInterval(interval);
-    }, [job?.status]);
+    }, [job?.status, job?.updatedAt]);
 
 
     const handleConfirmDelete = async () => {
@@ -91,8 +91,7 @@ function MediaCard({
     }
 
     const status = job.status;
-    const url = job.result?.mediaUrl;
-    const bestFaceMatch = job.result?.bestFaceMatch ?? 0;
+    const url = job.resultMediaUrl;
     const order = job.order;
     const jobId = job.id;
 
@@ -244,12 +243,6 @@ function MediaCard({
             );
         }
 
-        const matchColor =
-            bestFaceMatch >= faceMatchThresholds.green ? 'bg-green-400'
-            : bestFaceMatch >= faceMatchThresholds.yellow ? 'bg-yellow-400'
-            : bestFaceMatch >= faceMatchThresholds.orange ? 'bg-orange-400'
-            : 'bg-red-400';
-
         return (
             <>
             {confirmDeleteId && onDelete && (
@@ -267,9 +260,9 @@ function MediaCard({
             )}
             <div
                 className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
-                onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect(), job.mediaType ?? MediaType.image)}
+                onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect(), job.mediaType ?? MediaTypes.image)}
             >
-                {job.mediaType === MediaType.video ? (
+                {job.mediaType === MediaTypes.video ? (
                     <>
                         <video
                             src={url}
@@ -321,7 +314,7 @@ function MediaCard({
                             className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer disabled:cursor-not-allowed"
                             onClick={async (e) => {
                                 e.stopPropagation();
-                                const mediaPath = job.result?.mediaPath;
+                                const mediaPath = job.resultMediaPath;
                                 if (!mediaPath) return;
                                 setIsDownloading(true);
                                 try {
@@ -363,24 +356,12 @@ function MediaCard({
                     </div>
                 </div>
 
-                {job.input?.upscaler?.enabled && (
-                    <div className="absolute bottom-2 left-2 z-10">
-                        <div className="px-1 py-0.5 bg-black/40 backdrop-blur-md rounded-[0.3rem] shadow-lg text-white flex items-center justify-center">
-                            <Hd size={22} strokeWidth={1.5} className="text-white" />
-                        </div>
-                    </div>
-                )}
 
-                {bestFaceMatch > 0 && (
-                    <div className="absolute bottom-2 right-2 z-10 tooltip tooltip-left" data-tip="Face match">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
-                            <span className="font-bold">
-                                {(bestFaceMatch * 100).toFixed(0)}%
-                            </span>
-                            <div className={`w-2 h-2 rounded-full ${matchColor}`} />
-                        </div>
+                <div className="absolute bottom-2 left-2 z-10">
+                    <div className="px-1 py-0.5 bg-black/40 backdrop-blur-md rounded-[0.3rem] shadow-lg text-white flex items-center justify-center">
+                        <Hd size={22} strokeWidth={1.5} className="text-white" />
                     </div>
-                )}
+                </div>
             </div>
             </>
         );

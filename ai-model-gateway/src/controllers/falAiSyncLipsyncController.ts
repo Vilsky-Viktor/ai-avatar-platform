@@ -7,7 +7,6 @@ import falAi from '../services/falAi';
 export const genV3 = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as v3In;
   const modelName = 'sync-lipsync/v3';
-  const userId = req.headers['x-user-id'] as string;
 
   const videoUrl = await getMediaUrlFromPath(input.videoPath);
   const audioUrl = await getMediaUrlFromPath(input.audioPath);

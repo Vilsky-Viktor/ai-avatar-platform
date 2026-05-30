@@ -44,7 +44,7 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
       imagePath: generatorUploadPath,
       uploadPath: upscalerUploadPath,
       status: JobStatuses.pending,
-      model: Models.topaz,
+      model: Models.seedvr,
       flow: Flows.i2i,
     };
 
@@ -96,7 +96,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         imagePath: generatorUploadPath,
         uploadPath: upscalerUploadPath,
         status: JobStatuses.pending,
-        model: Models.topaz,
+        model: Models.seedvr,
         flow: Flows.i2i,
       };
 
@@ -105,7 +105,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         imagePath: generatorUploadPath,
         direction: input.direction,
         status: JobStatuses.pending,
-        model: Models.faceLandmarker,
+        model: Models.buffaloL,
         flow: Flows.none
       };
 
@@ -166,7 +166,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         imagePath: generatorUploadPath,
         uploadPath: upscalerUploadPath,
         status: JobStatuses.pending,
-        model: Models.topaz,
+        model: Models.seedvr,
         flow: Flows.i2i,
       };
 

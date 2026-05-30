@@ -5,7 +5,7 @@ type HttpMethod = 'get' | 'post' | 'patch' | 'delete';
 
 const RETRY_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 500;
-const REQUEST_TIMEOUT_MS = 10000;
+const REQUEST_TIMEOUT_MS = 0;
 
 async function request<T = void>(method: HttpMethod, url: string, userId: string, body?: unknown): Promise<T> {
   const config = { headers: { 'x-user-id': userId }, timeout: REQUEST_TIMEOUT_MS };

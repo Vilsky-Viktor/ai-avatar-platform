@@ -28,14 +28,15 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
   } = parameters;
 
   const ratio = Ratios['1:1'];
+  const dimensions = '2048x2048';
   const isFemale = gender === 'female';
   const imageId = uuid.v4();
-  const uploadPath = `media/${userId}-userId/avatars/${avatarId}/images/${imageId}.png`
+  const uploadPath = `media/${userId}-user/avatars/${avatarId}-avatar/images/${imageId}.png`
 
   return {
     imageGenerator: {
       service: Services.imageGenerator,
-      prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'clean-shaven, no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin}. Wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Neutral expression. Gray studio background. Ultrarealistic and natural`,
+      prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with natural texture. Ultrarealistic and natural, neutral expression. Wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Gray studio background`,
       negativePrompt: 'cut off shoulders, missing shoulders, cropped head, cut off haircut, cut off hair, cut off head, blurry face, low quality, distorted face, wrong ethnicity, smile, open mouth, teeth visible, makeup, oversaturated, unrealistic skin, plastic skin, head tilt',
       ratio,
       uploadPath,
@@ -43,7 +44,7 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
       model: Models.qwen,
       flow: Flows.t2i,
     },
-    metadata: { ratio }
+    metadata: { ratio, dimensions }
   }
 }
 
@@ -59,6 +60,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
   } = parameters;
 
   const ratio = Ratios['1:1'];
+  const dimensions = '2048x2048';
   const isFemale = gender === 'female';
 
   return [
@@ -69,88 +71,88 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.qwen,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 2,
       direction: Directions.front
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: '',
+        prompt: 'rotated 35 degrees to the left side of the frame',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
         horizontalAngle: 45,
         verticalAngle: 0,
         zoom: 5,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.qwen,
         flow: Flows.ia2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 3,
       direction: Directions.right
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: '',
+        prompt: 'rotated 35 degrees to the right side of the frame',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
         horizontalAngle: 315,
         verticalAngle: 0,
         zoom: 5,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.qwen,
         flow: Flows.ia2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 4,
       direction: Directions.left
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: '',
+        prompt: 'rotated 90 degrees to the left side of the frame',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
         horizontalAngle: 90,
         verticalAngle: 0,
         zoom: 5,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.qwen,
         flow: Flows.ia2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 5,
       direction: Directions.right
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: '',
+        prompt: 'rotated 90 degrees to the right side of the frame',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
         horizontalAngle: 270,
         verticalAngle: 0,
         zoom: 5,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.qwen,
         flow: Flows.ia2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 6,
       direction: Directions.left
     },
@@ -161,12 +163,12 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.qwen,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 7,
       direction: Directions.front
     }
@@ -180,6 +182,7 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
   const { gender } = parameters;
 
   const ratio = Ratios['1:1'];
+  const dimensions = '2048x2048';
   const isFemale = gender === 'female';
 
   return [
@@ -191,12 +194,12 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.front!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 1,
     },
     {
@@ -207,12 +210,12 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.frontSmile!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 2,
     },
     {
@@ -223,12 +226,12 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.rightQuarter!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 3,
     },
     {
@@ -239,12 +242,12 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.leftQuarter!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 4,
     },
     {
@@ -255,12 +258,12 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.rightSide!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 5,
     },
     {
@@ -271,12 +274,12 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.leftSide!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 6,
     },
     {
@@ -287,12 +290,12 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.body!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-userId/avatars/${avatarId}/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
       },
-      metadata: { ratio },
+      metadata: { ratio, dimensions },
       order: 7,
     },
   ]

@@ -5,8 +5,8 @@ import { ChevronDown } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import { type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingSyntheticIdPhotos, genTrainingSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId } from '../../services/apiGateway';
-import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
+import { updateAvatar, restartJobById, genSyntheticIdPhotos, genSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId } from '../../services/apiGateway';
+import { JobStatuses, type Job, type IdPhotoJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { 
     AVATAR_PARAMETER_OPTIONS,
@@ -31,8 +31,8 @@ function CreateSyntheticIdPhotosPage() {
     const [avatar, setAvatar] = useState(initialAvatarData);
     const [pageLoading, setPageLoading] = useState(true);
 
-    const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
-    const jobsRef = useRef<(InferenceJob | null)[]>([]);
+    const [jobs, setJobs] = useState([] as (Job | null)[]);
+    const jobsRef = useRef<(Job | null)[]>([]);
 
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({ general: true });
@@ -69,11 +69,11 @@ function CreateSyntheticIdPhotosPage() {
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as InferenceJob;
+            const job = docSnap.data() as Job;
 
-            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
-                const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
-                job.result.mediaUrl = downloadUrl;
+            if (job.status === JobStatuses.completed && job.resultMediaPath) {
+                const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath)
+                job.resultMediaUrl = downloadUrl;
             }
 
             const currentJobs = jobsRef.current;
@@ -118,22 +118,22 @@ function CreateSyntheticIdPhotosPage() {
 
         if (newAvatarData.groupId) {
             const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
-            const onlyIdPhotoJobs = fetchedJobs.filter((job: InferenceJob) => job.order! <= NUM_ID_PHOTOS);
+            const onlyIdPhotoJobs = fetchedJobs.filter((job: Job) => job.order! <= NUM_ID_PHOTOS);
             const enrichedJobs = await Promise.all(
-                (onlyIdPhotoJobs as InferenceJob[]).map(async (job: InferenceJob) => {
-                    const mediaUrl = job.result?.mediaPath
-                        ? await getMediaUrlFromPath(job.result.mediaPath).catch(() => undefined)
+                (onlyIdPhotoJobs as Job[]).map(async (job: Job) => {
+                    const resultMediaUrl = job.resultMediaPath
+                        ? await getMediaUrlFromPath(job.resultMediaPath).catch(() => undefined)
                         : undefined;
-                    return { ...job, result: { ...job.result, mediaUrl } };
+                    return { ...job, resultMediaUrl };
                 })
             );
-            setJobs(enrichedJobs as InferenceJob[]);
+            setJobs(enrichedJobs as Job[]);
         }
         setPageLoading(false);
     }
 
-    const setJob = (listIdx: number, job: InferenceJob | null) => {
-        setJobs((prev: (InferenceJob | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
+    const setJob = (listIdx: number, job: Job | null) => {
+        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
     const setParameter = (key: string, value: string) => {
@@ -156,14 +156,14 @@ function CreateSyntheticIdPhotosPage() {
         };
         await updateAvatar(newAvatarData.avatarId, payload);
 
-        const jobRequest: TrainingJobRequest = {
+        const jobRequest: IdPhotoJobRequest = {
             avatarId: newAvatarData.avatarId,
             parameters: avatar.parameters
         }
 
         try {
-            const job = await genTrainingSyntheticFrontIdPhoto(jobRequest);
-            setJobs([job as InferenceJob]);
+            const job = await genSyntheticFrontIdPhoto(jobRequest);
+            setJobs([job as Job]);
             setGroupId(job.groupId!);
             setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
@@ -175,17 +175,18 @@ function CreateSyntheticIdPhotosPage() {
         const emptyJobs = Array(NUM_ID_PHOTOS - 1).fill(null);
         setJobs([...jobsRef.current, ...emptyJobs]);
 
-        const jobRequest: TrainingJobRequest = {
+        const jobRequest: IdPhotoJobRequest = {
             groupId: newAvatarData.groupId,
             avatarId: newAvatarData.avatarId,
-            parameters: avatar.parameters
+            parameters: avatar.parameters,
+            frontIdPhotoPath: jobs[0]?.resultMediaPath
         }
 
         try {
-            const newJobs = await genTrainingSyntheticIdPhotos(jobRequest);
+            const newJobs = await genSyntheticIdPhotos(jobRequest);
             const frontJob = jobsRef.current[0];
 
-            setJobs([frontJob, ...(newJobs as InferenceJob[])]);
+            setJobs([frontJob, ...(newJobs as Job[])]);
             setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
             console.log('Failed to create jobs for id photos')
@@ -199,7 +200,7 @@ function CreateSyntheticIdPhotosPage() {
         setJob(listIdx, null);
 
         const restartedJob = await restartJobById(jobId);
-        setJob(listIdx, restartedJob as InferenceJob);
+        setJob(listIdx, restartedJob as Job);
         setTimeout(() => scrollToBottom(), 500);
     }
 
@@ -208,7 +209,7 @@ function CreateSyntheticIdPhotosPage() {
     }
 
     const generatingCompleted = () => {
-        return jobs.length > 0 && jobs.every((job: InferenceJob | null) => job && job.status === JobStatuses.completed);
+        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
     }
 
     const isFrontJob = (idx: number) => {
@@ -241,12 +242,12 @@ function CreateSyntheticIdPhotosPage() {
         try {
             if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    mainImagePath: jobs[0]?.result?.mediaPath,
+                    mainImagePath: jobs[0]?.resultMediaPath,
                 };
                 await updateAvatar(newAvatarData.avatarId, payload);
             }
 
-            navigate('/avatar/create/photo-set');
+            navigate('/avatar/create/assign-voice');
         } catch (error) {
             console.log(`Did not manage to update avatar: ${error}`);
         }
@@ -360,7 +361,7 @@ function CreateSyntheticIdPhotosPage() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {jobs.map((job, idx) => (
                             <MediaCard
                                 key={idx}

@@ -7,7 +7,6 @@ import { downloadResultFile, uploadToBucket } from '../services/storage';
 export const genTtsElevenV3 = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as TtsElevenV3In;
   const modelName = 'elevenlabs/tts/eleven-v3';
-  const userId = req.headers['x-user-id'] as string;
 
   const payload: TtsElevenV3Out = {
     text: input.text,

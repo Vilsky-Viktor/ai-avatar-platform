@@ -8,7 +8,6 @@ import falAi from '../services/falAi';
 export const upscaleImage = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as UpscaleImageIn;
   const modelName = 'topaz/upscale/image';
-  const userId = req.headers['x-user-id'] as string;
 
   const imageUrl = await getMediaUrlFromPath(input.imagePath);
 
@@ -25,7 +24,7 @@ export const upscaleImage = async (req: Request, res: Response, next: NextFuncti
   try {
     const result = await falAi.sendRequest(modelName, payload);
     const resultData = result.data as ImageResponse;
-    const resultMediaUrl = resultData.images[0].url;
+    const resultMediaUrl = resultData.image.url;
 
     const mediaBlob = await downloadResultFile(resultMediaUrl);
     await uploadToBucket(mediaBlob, input.uploadPath);
@@ -40,7 +39,6 @@ export const upscaleImage = async (req: Request, res: Response, next: NextFuncti
 export const upscaleVideo = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as UpscaleVideoIn;
   const modelName = 'topaz/upscale/video';
-  const userId = req.headers['x-user-id'] as string;
 
   const videoUrl = await getMediaUrlFromPath(input.videoPath);
 

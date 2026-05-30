@@ -8,3 +8,6 @@ export const upscaleTopazImage = (userId: string, payload: Upscaler): Promise<vo
 
 export const upscaleTopazVideo = (userId: string, payload: Upscaler): Promise<void> =>
     client.post('/topaz/video/upscale', userId, payload);
+
+export const upscaleSeedvrImage = (userId: string, payload: Upscaler): Promise<void> =>
+    client.post('/seedvr/image/upscale', userId, payload);

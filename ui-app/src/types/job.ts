@@ -2,133 +2,11 @@ import type { FirestoreTimestamp } from "./firestore";
 import type { AvatarParameters, AvatarTypes } from "./avatar";
 import type { PhotoSetType } from "./image";
 
-export enum MediaType {
-  image = 'image',
-  video = 'video'
-}
-
-export enum JobTargets {
-  trainingPhotoSet = 'trainingPhotoSet',
-  qwenEdit2511Lora = 'qwenEdit2511Lora',
-  avatarMedia = 'avatarMedia',
-}
-
-export enum JobStatuses {
-  pending = 'pending',
-  generating = 'generating',
-  completed = 'completed',
-  error = 'error',
-}
-
-export enum FaceExpressionTypes {
-  sad = 'sad',
-  angry = 'angry',
-  confused = 'confused',
-  contempt = 'contempt',
-  confident = 'confident',
-  disgust = 'disgust',
-  fear = 'fear',
-  happy = 'happy',
-  shy = 'shy',
-  sleepy = 'sleepy',
-  surprised = 'surprised',
-  anxious = 'anxious'
-}
-
-// ── Inference ────────────────────────────────────────────────────────────────
-
-export type InferenceJobResult = {
-  mediaPath?: string;
-  mediaUrl?: string;
-  faceMatches?: number[];
-  bestFaceMatch?: number;
-  errorMessage?: string;
-  fileName?: string;
-}
-
-export type InferenceConfig = {
-  prompt?: string;
-  prompts?: string[];
-  negativePrompt?: string;
-  mediaPaths?: string[];
-  guidanceScale?: number;
-  numSteps: number;
-  width?: number;
-  height?: number;
-  seed?: number;
-}
-
-export type Upscaler = {
-  enabled: boolean;
-}
-
-export type InferenceJobInput = {
-  inference: InferenceConfig;
-  upscaler?: Upscaler;
-}
-
-export type InferenceJobMetadata = {
-  dimensions?: string;
-  ratio?: string;
-  angle?: string;
-  shotType?: string;
-  queueTopic?: string;
-  userPrompt?: string;
-  lengthSec?: number;
-}
-
-export type InferenceJob = {
-  id?: string;
-  groupId?: string;
-  order?: number;
-  userId: string;
-  avatarId: string;
-  mediaType: MediaType;
-  target: JobTargets;
-  status?: JobStatuses;
-  maxRuns: number;
-  input: InferenceJobInput;
-  result?: InferenceJobResult;
-  metadata?: InferenceJobMetadata;
-  createdAt?: FirestoreTimestamp;
-  updatedAt?: FirestoreTimestamp;
-}
-
-// ── Training ─────────────────────────────────────────────────────────────────
-
-export type TrainingJobResult = {
-  mediaPath?: string;
-  errorMessage?: string;
-  fileName?: string;
-}
-
-export type TrainingJobMetadata = {
-  queueTopic?: string;
-  numBuckets?: number;
-}
-
-export type TrainingJob = {
-  id?: string;
-  groupId?: string;
-  userId: string;
-  avatarId: string;
-  mediaType: MediaType;
-  target: JobTargets;
-  status?: JobStatuses;
-  maxRuns: number;
-  result?: TrainingJobResult;
-  metadata?: TrainingJobMetadata;
-  createdAt?: FirestoreTimestamp;
-  updatedAt?: FirestoreTimestamp;
-}
-
-export type Job = InferenceJob | TrainingJob;
-
-export type TrainingJobRequest = {
-  avatarType?: AvatarTypes;
+export type IdPhotoJobRequest = {
   groupId?: string;
   avatarId: string;
   parameters: AvatarParameters;
+  frontIdPhotoPath?: string;
 }
 
 export type PhotoJobRequest = {
@@ -149,4 +27,152 @@ export type VideoJobRequest = {
 export type PhotoSetJobRequest = {
   avatarId: string;
   type: PhotoSetType;
+}
+
+export enum MediaTypes {
+  image = 'image',
+  video = 'video',
+}
+
+export enum JobTargets {
+  idPhoto = 'idPhoto',
+  avatarMedia = 'avatarMedia',
+}
+
+export enum JobStatuses {
+  pending = 'pending',
+  generating = 'generating',
+  completed = 'completed',
+  error = 'error',
+}
+
+export enum Directions {
+  front = 'front',
+  left = 'left',
+  right = 'right',
+}
+
+export type JobMetadata = {
+  ratio?: string;
+  dimensions?: string;
+  userPrompt?: string;
+  lengthSec?: number;
+}
+
+export enum Services {
+  imageGenerator = 'image-generator',
+  videoGenerator = 'video-generator',
+  audioGenerator = 'audio-generator',
+  upscaler = 'upscaler',
+  lipSync = 'lip-sync',
+  faceMatcher = 'face-matcher',
+  headDirectionChecker = 'head-direction-checker',
+}
+
+export enum Models {
+  qwen = 'qwen',
+  flux = 'flux',
+  kling = 'kling',
+  topaz = 'topaz',
+  lipSync = 'lipSync',
+  eleven = 'eleven',
+  buffaloL = 'buffalo_l',
+  seedvr = 'seedvr',
+  none = 'none'
+}
+
+export enum Flows {
+  t2i = 't2i',
+  i2i = 'i2i',
+  ti2i = 'ti2i',
+  ia2i = 'ia2i',
+  ti2v = 'ti2v',
+  v2v = 'v2v',
+  t2a = 't2a',
+  va2v = 'va2v',
+  none = 'none',
+}
+
+export type ServiceBase = {
+  service: Services;
+  error?: string;
+  uploadPath?: string;
+  status: JobStatuses;
+  model: Models;
+  flow: Flows;
+}
+
+export type ImageGenerator = ServiceBase & {
+  prompt: string;
+  negativePrompt: string;
+  ratio: string;
+  imagePaths?: string[];
+  safetyTolerance?: number;
+  horizontalAngle?: number;
+  verticalAngle?: number;
+  zoom?: number;
+}
+
+export type videoGenerator = ServiceBase & {
+  prompt?: string;
+  negativePrompt?: string;
+  imagePath: string;
+  imageRefPaths: string[];
+  objectRefPaths?: string[] | null;
+  duration: number;
+  ratio?: string;
+}
+
+export type Upscaler = ServiceBase & {
+  imagePath?: string;
+  videoPath?: string;
+}
+
+export type AudioGenerator = ServiceBase & {
+  text: string;
+  voice: string;
+  language: string;
+}
+
+export type LipSync = ServiceBase & {
+  videoPath: string;
+  audioPath: string;
+}
+
+export type FaceMatcher = ServiceBase & {
+  imagePath: string;
+  threshold: number;
+}
+
+export type HeadDirectionChecker = ServiceBase & {
+  imagePath: string;
+  direction: Directions;
+}
+
+export type WorkflowStep = 
+  ImageGenerator | 
+  videoGenerator | 
+  Upscaler | 
+  AudioGenerator | 
+  LipSync | 
+  FaceMatcher | 
+  HeadDirectionChecker;
+
+export type Job = {
+  id?: string;
+  groupId?: string;
+  userId: string;
+  avatarId: string;
+  mediaType: MediaTypes;
+  target: JobTargets;
+  status?: JobStatuses;
+  curRun: number;
+  maxRuns: number;
+  createdAt?: FirestoreTimestamp;
+  updatedAt?: FirestoreTimestamp;
+  order?: number;
+  workflow: WorkflowStep[];
+  metadata?: JobMetadata;
+  resultMediaPath: string;
+  resultMediaUrl?: string;
 }

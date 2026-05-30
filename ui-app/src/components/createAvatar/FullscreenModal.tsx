@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import { MediaType } from '../../types/job';
+import { MediaTypes } from '../../types/job';
 
 type Props = {
     src: string | null;
     rect: DOMRect | null;
-    mediaType?: MediaType;
+    mediaType?: MediaTypes;
     onClose: () => void;
 }
 
@@ -41,7 +41,7 @@ function FullscreenModal({ src, rect, mediaType, onClose }: Props) {
 
     if (!src) return null;
 
-    const isVideo = mediaType === MediaType.video;
+    const isVideo = mediaType === MediaTypes.video;
     const finalSize = Math.min(window.innerWidth * 0.96, window.innerHeight * 0.96);
     const tileScale = rect ? rect.width / finalSize : 0.88;
     const tileDx = rect ? rect.left + rect.width / 2 - window.innerWidth / 2 : 0;

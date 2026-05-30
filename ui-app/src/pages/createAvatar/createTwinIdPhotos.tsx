@@ -6,8 +6,8 @@ import MediaCard from "../../components/MediaCard";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
 import PillSelect from '../../components/PillSelect';
 import { type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genTrainingTwinIdPhotos, getJobsByGroupId, getAvatarById, cropHeadshot } from '../../services/apiGateway';
-import { JobStatuses, type InferenceJob, type TrainingJobRequest } from '../../types/job';
+import { updateAvatar, restartJobById, genDigitalTwinIdPhotos, getJobsByGroupId, getAvatarById, cropHeadshot } from '../../services/apiGateway';
+import { JobStatuses, type Job, type IdPhotoJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { uploadMediaToBucket, getMediaUrlFromPath, deleteMediaFromBucket } from '../../services/storage';
 import { 
@@ -36,8 +36,8 @@ function CreateTwinIdPhotosPage() {
     const [avatar, setAvatar] = useState(initialAvatarData);
     const [pageLoading, setPageLoading] = useState(true);
 
-    const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
-    const jobsRef = useRef<(InferenceJob | null)[]>([]);
+    const [jobs, setJobs] = useState([] as (Job | null)[]);
+    const jobsRef = useRef<(Job | null)[]>([]);
 
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
@@ -82,11 +82,11 @@ function CreateTwinIdPhotosPage() {
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as InferenceJob;
+            const job = docSnap.data() as Job;
 
-            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
-                const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
-                job.result.mediaUrl = downloadUrl;
+            if (job.status === JobStatuses.completed && job.resultMediaPath) {
+                const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath)
+                job.resultMediaUrl = downloadUrl;
             }
 
             const currentJobs = jobsRef.current;
@@ -114,16 +114,16 @@ function CreateTwinIdPhotosPage() {
 
         if (newAvatarData.groupId) {
             const fetchedJobs = await getJobsByGroupId(newAvatarData.groupId);
-            const onlyIdPhotoJobs = fetchedJobs.filter((job: InferenceJob) => job.order! <= NUM_ID_PHOTOS);
+            const onlyIdPhotoJobs = fetchedJobs.filter((job: Job) => job.order! <= NUM_ID_PHOTOS);
             const enrichedJobs = await Promise.all(
-                (onlyIdPhotoJobs as InferenceJob[]).map(async (job: InferenceJob) => {
-                    const mediaUrl = job.result?.mediaPath
-                        ? await getMediaUrlFromPath(job.result.mediaPath).catch(() => undefined)
+                (onlyIdPhotoJobs as Job[]).map(async (job: Job) => {
+                    const resultMediaUrl = job.resultMediaPath
+                        ? await getMediaUrlFromPath(job.resultMediaPath).catch(() => undefined)
                         : undefined;
-                    return { ...job, result: { ...job.result, mediaUrl } };
+                    return { ...job, resultMediaUrl };
                 })
             );
-            setJobs(enrichedJobs as InferenceJob[]);
+            setJobs(enrichedJobs as Job[]);
         }
 
         await loadUploadedPhotoUrls();
@@ -233,8 +233,8 @@ function CreateTwinIdPhotosPage() {
         if (file) onFileSelected(index, file);
     };
 
-    const setJob = (listIdx: number, job: InferenceJob | null) => {
-        setJobs((prev: (InferenceJob | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
+    const setJob = (listIdx: number, job: Job | null) => {
+        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
     const setGroupId = (groupId: string) => {
@@ -259,14 +259,14 @@ function CreateTwinIdPhotosPage() {
         };
         await updateAvatar(newAvatarData.avatarId, payload);
 
-        const jobRequest: TrainingJobRequest = {
+        const jobRequest: IdPhotoJobRequest = {
             avatarId: newAvatarData.avatarId,
             parameters: avatar.parameters
         }
 
         try {
-            const jobs = await genTrainingTwinIdPhotos(jobRequest);
-            setJobs(jobs as InferenceJob[]);
+            const jobs = await genDigitalTwinIdPhotos(jobRequest);
+            setJobs(jobs as Job[]);
             setGroupId(jobs[0].groupId!);
             setTimeout(() => scrollToBottom(), 500);
         } catch (error) {
@@ -281,7 +281,7 @@ function CreateTwinIdPhotosPage() {
         setJob(listIdx, null);
 
         const restartedJob = await restartJobById(jobId);
-        setJob(listIdx, restartedJob as InferenceJob);
+        setJob(listIdx, restartedJob as Job);
         setTimeout(() => scrollToBottom(), 500);
     }
 
@@ -298,7 +298,7 @@ function CreateTwinIdPhotosPage() {
     }
 
     const generatingCompleted = () => {
-        return jobs.length > 0 && jobs.every((job: InferenceJob | null) => job && job.status === JobStatuses.completed);
+        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
     }
 
     const canProceed = () => {
@@ -315,7 +315,7 @@ function CreateTwinIdPhotosPage() {
         try {
             if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    mainImagePath: jobs[0]?.result?.mediaPath
+                    mainImagePath: jobs[0]?.resultMediaPath
                 };
                 await updateAvatar(newAvatarData.avatarId, payload);
             }

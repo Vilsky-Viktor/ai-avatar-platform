@@ -1,11 +1,10 @@
-import { Maximize2, LayoutTemplate, MessageSquare, ScanFace, Copy, Check, Clock } from 'lucide-react';
+import { Maximize2, LayoutTemplate, MessageSquare, Copy, Check, Clock, Hd } from 'lucide-react';
 import { useState } from 'react';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import type { InferenceJob } from '../../types/job';
-import { AVATAR_REFERENCE_NAME } from '../../utils/prompt';
+import type { Job } from '../../types/job';
 
 type Props = {
-    job: Partial<InferenceJob>;
+    job: Partial<Job>;
     onClose: () => void;
 };
 
@@ -37,7 +36,6 @@ function MediaInfoPopup({ job, onClose }: Props) {
     const prompt = job.metadata?.userPrompt;
     const dimensions = job.metadata?.dimensions;
     const lengthSec = job.metadata?.lengthSec;
-    const bestFaceMatch = job.result?.bestFaceMatch;
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -74,13 +72,11 @@ function MediaInfoPopup({ job, onClose }: Props) {
                         label="Ratio"
                         value={ratio ?? '—'}
                     />
-                    {bestFaceMatch != null && bestFaceMatch > 0 && (
-                        <InfoRow
-                            icon={<ScanFace size={20} className="text-base-content/50" />}
-                            label="Face Match"
-                            value={`${(bestFaceMatch * 100).toFixed(0)}%`}
-                        />
-                    )}
+                    <InfoRow
+                        icon={<Hd size={22} className="text-base-content/50" />}
+                        label="High Definition"
+                        value='Yes'
+                    />
                     {prompt && (
                         <InfoRow
                             icon={<MessageSquare size={22} className="text-base-content/50" />}

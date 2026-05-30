@@ -6,21 +6,22 @@ export enum Statuses {
 
 export type VideoResponse = {
     video: {
-        filename?: string;
         url: string;
-        file_size?: number;
-        content_type?: string;
     }
 }
 
-export type ImageResponse = {
+export type ImagesResponse = {
     images: {
         url: string;
-        content_type?: string;
-        height?: string;
-        width?: string;
     }[];
     prompt: string;
+}
+
+
+export type ImageResponse = {
+    image: {
+        url: string;
+    }
 }
 
 export type AudioResponse = {

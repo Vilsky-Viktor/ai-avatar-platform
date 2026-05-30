@@ -222,6 +222,7 @@ services:
     volumes:
       - ./head-direction-checker:/app
       - /app/node_modules
+      - /app/models
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
       - NODE_ENV=development
@@ -229,4 +230,5 @@ services:
       - PROJECT_ID=loom24-mvp
       - SUBSCRIPTION_ID=head-direction-checker-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
       

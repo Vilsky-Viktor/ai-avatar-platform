@@ -7,7 +7,6 @@ import falAi from '../services/falAi';
 export const genVideoV3ProImageToVideo = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as VideoV3ProImageToVideoIn;
   const modelName = 'kling-video/v3/pro/image-to-video';
-  const userId = req.headers['x-user-id'] as string;
   let objectElements = [];
 
   const imageUrl = await getMediaUrlFromPath(input.imagePath);
@@ -60,7 +59,6 @@ export const genVideoV3ProImageToVideo = async (req: Request, res: Response, nex
 export const genVideoV3ProMotionControl = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as VideoV3ProMotionControlIn;
   const modelName = 'kling-video/v3/pro/motion-control';
-  const userId = req.headers['x-user-id'] as string;
 
   const imageUrl = await getMediaUrlFromPath(input.imagePath);
   const videoUrl = await getMediaUrlFromPath(input.videoPath);

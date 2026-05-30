@@ -10,7 +10,7 @@ import CreateMediaModal from '../components/avatar/CreateMediaModal';
 import GenImageModal from '../components/avatar/GenImageModal';
 import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import GenVideoModal from '../components/avatar/GenVideoModal';
-import { type InferenceJob, type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, JobStatuses, JobTargets, MediaType } from '../types/job';
+import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, JobStatuses, JobTargets, MediaTypes } from '../types/job';
 import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
@@ -24,13 +24,13 @@ function AvatarPage() {
 
     const [avatar, setAvatar] = useState({} as Avatar);
 
-    const [jobs, setJobs] = useState([] as (InferenceJob | null)[]);
-    const jobsRef = useRef<(InferenceJob | null)[]>([]);
+    const [jobs, setJobs] = useState([] as (Job | null)[]);
+    const jobsRef = useRef<(Job | null)[]>([]);
 
     const [numModels, setNumModels] = useState(0);
     const [numImages, setNumImages] = useState(0);
     const [numVideos, setNumVideos] = useState(0);
-    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; mediaType: MediaType } | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; mediaType: MediaTypes } | null>(null);
     const [createMediaOpen, setCreateMediaOpen] = useState(false);
     const [generateImageOpen, setGenerateImageOpen] = useState(false);
     const [generateVideoOpen, setGenerateVideoOpen] = useState(false);
@@ -56,8 +56,8 @@ function AvatarPage() {
             await listener(querySnap);
         })
 
-        setNumImages(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaType.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
-        setNumVideos(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaType.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
+        setNumImages(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
+        setNumVideos(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
 
         return () => unsubscribe();
     }, [jobs]);
@@ -68,11 +68,11 @@ function AvatarPage() {
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as InferenceJob;
+            const job = docSnap.data() as Job;
 
-            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
-                const downloadUrl = await getMediaUrlFromPath(job.result.mediaPath)
-                job.result.mediaUrl = downloadUrl;
+            if (job.status === JobStatuses.completed && job.resultMediaPath) {
+                const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath)
+                job.resultMediaUrl = downloadUrl;
             }
 
             const currentJobs = jobsRef.current;
@@ -148,19 +148,18 @@ function AvatarPage() {
     const fetchAvatar = async (): Promise<Avatar> => {
         const fetchedAvatar = await getAvatarBySlug(slug!);
         setAvatar(fetchedAvatar);
-        setNumModels(Object.values(fetchedAvatar.loras).filter(Boolean).length);
         return fetchedAvatar
     }
 
     const fetchJobs = async (avatarId: string) => {
         const jobs = await getJobsByAvatarId(avatarId);
-        const filteredJobs = jobs.filter((job: InferenceJob) => [
-            JobTargets.avatarMedia, JobTargets.trainingPhotoSet
+        const filteredJobs = jobs.filter((job: Job) => [
+            JobTargets.avatarMedia
         ].includes(job.target));
 
-        await Promise.all(filteredJobs.map(async (job: InferenceJob) => {
-            if (job.status === JobStatuses.completed && job.result?.mediaPath) {
-                job.result.mediaUrl = await getMediaUrlFromPath(job.result.mediaPath);
+        await Promise.all(filteredJobs.map(async (job: Job) => {
+            if (job.status === JobStatuses.completed && job.resultMediaPath) {
+                job.resultMediaUrl = await getMediaUrlFromPath(job.resultMediaPath);
             }
         }));
 
@@ -174,7 +173,7 @@ function AvatarPage() {
         setJob(listIdx, null);
 
         const restartedJob = await restartJobById(jobId);
-        setJob(listIdx, restartedJob as InferenceJob);
+        setJob(listIdx, restartedJob as Job);
     }
 
     const deleteJob = async (jobId: string) => {
@@ -184,12 +183,12 @@ function AvatarPage() {
         setJobs(updatedJobs);
     }
 
-    const pushJobs = (jobs: (InferenceJob | null)[]) => {
-        setJobs((prev: (InferenceJob | null)[]) => [...jobs, ...prev]);
+    const pushJobs = (jobs: (Job | null)[]) => {
+        setJobs((prev: (Job | null)[]) => [...jobs, ...prev]);
     };
 
-    const setJob = (listIdx: number, job: InferenceJob | null) => {
-        setJobs((prev: (InferenceJob | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
+    const setJob = (listIdx: number, job: Job | null) => {
+        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
     return (
@@ -266,7 +265,7 @@ function AvatarPage() {
                 isOpen={generateVideoOpen}
                 onClose={closeGenerateVideo}
                 avatar={avatar}
-                jobs={jobs.filter((j): j is InferenceJob => j !== null)}
+                jobs={jobs.filter((j): j is Job => j !== null)}
                 onGenerate={handleGenerateVideo}
             />
         </>

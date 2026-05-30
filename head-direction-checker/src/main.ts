@@ -1,9 +1,17 @@
+import admin from 'firebase-admin';
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
+
+admin.initializeApp({
+  projectId: process.env.PROJECT_ID,
+  credential: admin.credential.applicationDefault(),
+  storageBucket: process.env.BUCKET_NAME,
+});
+
 import { HeadDirectionChecker, Job, JobStatuses, Services, WorkflowStep } from './types/job';
 import { sendJob } from './services/messageQueue';
 import { downloadMediaFromPath } from './services/storage';
-import { checkDirection } from './utils/mediapipeFaceLandmarker';
+import { checkDirection } from './utils/detector';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
@@ -33,15 +41,19 @@ function listenForResults() {
         const passed = await checkDirection(image, stepData.direction);
 
         if (!passed) {
+          logger.info(`Wrong head direction for job ${job.id}`);
           stepData.status = JobStatuses.error;
           stepData.error = 'wrong head direction';
         } else {
+          logger.info(`Correct head direction for job ${job.id}`);
           stepData.status = JobStatuses.completed;
           job.workflow[stepIdx] = stepData;
         }
 
         await sendJob(WORKFLOW_MANAGER_TOPIC, job);
       } catch (error: any) {
+        logger.error(`Head direction checker failed iwth error: ${error}`);
+
         stepData.status = JobStatuses.error;
         stepData.error = String(error);
         job.workflow[stepIdx] = stepData;

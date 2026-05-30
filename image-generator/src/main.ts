@@ -29,12 +29,16 @@ function listenForResults() {
 
       try {
         if (stepData.model === Models.qwen && stepData.flow === Flows.t2i) {
+          logger.info(`Using qwen image 2512 for job ${job.id}`);
           await genQwenImage2512(job.userId, stepData);
         } else if (stepData.model === Models.qwen && stepData.flow === Flows.ia2i) {
+          logger.info(`Using qwen image edit 2511 multiple angles for job ${job.id}`);
           await genQwenImageEdit2511MultipleAngles(job.userId, stepData);
         } else if (stepData.model === Models.flux && stepData.flow === Flows.ti2i) {
+          logger.info(`Using flux 2 pro edit for job ${job.id}`);
           await genFluxV2ProEdit(job.userId, stepData);
         } else if (stepData.model === Models.qwen && stepData.flow === Flows.ti2i) {
+          logger.info(`Using qwen image edit 2511 for job ${job.id}`);
           await genQwenImageEdit2511(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);

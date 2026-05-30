@@ -46,7 +46,8 @@ export enum Models {
   topaz = 'topaz',
   lipSync = 'lipSync',
   eleven = 'eleven',
-  faceLandmarker = 'faceLandmarker',
+  buffaloL = 'buffalo_l',
+  seedvr = 'seedvr',
   none = 'none'
 }
 

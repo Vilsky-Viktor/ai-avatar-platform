@@ -1,5 +1,5 @@
 import { X, Images } from 'lucide-react';
-import { MediaType, JobStatuses, JobTargets, type InferenceJob } from '../../types/job';
+import { MediaTypes, JobStatuses, JobTargets, type Job } from '../../types/job';
 import { VIDEO_RATIOS, type VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
@@ -8,25 +8,25 @@ const SUPPORTED_RATIOS = new Set<string>(VIDEO_RATIOS.map(r => r.value));
 type Props = {
     isOpen: boolean;
     onClose: () => void;
-    jobs: InferenceJob[];
+    jobs: Job[];
     onSelect: (mediaPath: string, mediaUrl: string, ratio: VideoRatio) => void;
     title?: string;
 };
 
 function MediaSelectorModal({ isOpen, onClose, jobs, onSelect, title = 'Select Reference Image' }: Props) {
     const images = jobs.filter(
-        (job) => job.mediaType === MediaType.image &&
+        (job) => job.mediaType === MediaTypes.image &&
                  job.target === JobTargets.avatarMedia &&
                  job.status === JobStatuses.completed &&
-                 job.result?.mediaUrl &&
+                 job.resultMediaUrl &&
                  SUPPORTED_RATIOS.has(job.metadata?.ratio ?? '')
     );
 
     useScrollLock(isOpen);
     if (!isOpen) return null;
 
-    const handleSelect = (job: InferenceJob) => {
-        onSelect(job.result!.mediaPath!, job.result!.mediaUrl!, job.metadata!.ratio as VideoRatio);
+    const handleSelect = (job: Job) => {
+        onSelect(job.resultMediaPath!, job.resultMediaUrl!, job.metadata!.ratio as VideoRatio);
         onClose();
     };
 
@@ -59,7 +59,7 @@ function MediaSelectorModal({ isOpen, onClose, jobs, onSelect, title = 'Select R
                                     className="group relative aspect-square rounded-xl overflow-hidden border border-base-content/10 hover:border-primary/50 transition-all cursor-pointer"
                                 >
                                     <img
-                                        src={job.result!.mediaUrl!}
+                                        src={job.resultMediaUrl!}
                                         className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-90"
                                     />
                                     <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all" />

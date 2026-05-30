@@ -6,10 +6,9 @@ import {
     initialAvatarData,
     NEW_AVATAR_DATA
 } from '../../utils/avatarCreation';
-import { getAvatarById, trainLoras, updateAvatar } from '../../services/apiGateway';
+import { getAvatarById } from '../../services/apiGateway';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { scrollToTop } from '../../utils/scroller';
-import type { Avatar, AvatarLoras } from '../../types/avatar';
 import { Check, X } from 'lucide-react';
 
 type StepStatus = 'pending' | 'loading' | 'done' | 'error';
@@ -20,15 +19,13 @@ type Step = {
     status: StepStatus;
 };
 
-function AvatarTrainingPage() {
+function FinalizePage() {
     const navigate = useNavigate();
 
     const [newAvatarData, _] = useState(() => getAvatarData());
     const [avatar, setAvatar] = useState(initialAvatarData);
-    const [loras, setLoras] = useState({} as AvatarLoras);
     const [steps, setSteps] = useState<Step[]>([
         { label: 'Processing data', description: 'Preparing media', status: 'pending' },
-        { label: 'Training your new life', description: 'Launching training', status: 'pending' },
     ]);
     const initialized = useRef<boolean>(false);
     
@@ -50,33 +47,12 @@ function AvatarTrainingPage() {
 
         const existingAvatar = await getAvatarById(newAvatarData.avatarId);
         setAvatar(existingAvatar);
-        setLoras(existingAvatar.loras || {});
 
         setStepStatus(0, 'done');
-
-        if (existingAvatar.loras && Object.keys(existingAvatar.loras).length > 0) {
-            setStepStatus(1, 'done');
-        } else {
-            setStepStatus(1, 'loading');
-            try {
-                const loraConfigs = await trainLoras({avatarId: newAvatarData.avatarId, groupId: newAvatarData.groupId, parameters: avatar.parameters});
-                setLoras(loraConfigs);
-
-                const payload: Partial<Avatar> = {
-                    loras: loraConfigs, 
-                };
-
-                await updateAvatar(newAvatarData.avatarId, payload);
-
-                setStepStatus(1, 'done');
-            } catch {
-                setStepStatus(1, 'error');
-            }
-        }
     };
 
     const canProceed = () => {
-        return Object.keys(loras).length > 0 && steps.every(s => s.status === 'done');
+        return steps.every(s => s.status === 'done');
     };
 
     const nextStep = async () => {
@@ -93,7 +69,7 @@ function AvatarTrainingPage() {
 
     return (
         <>
-            <CreateAvatarStepper step={4}/>
+            <CreateAvatarStepper step={3}/>
 
             <div className="max-w-3xl mx-auto px-4 pt-20 mb-50">
                 <div className="flex flex-col gap-10">
@@ -161,4 +137,4 @@ function AvatarTrainingPage() {
     );
 }
 
-export default AvatarTrainingPage;
+export default FinalizePage;

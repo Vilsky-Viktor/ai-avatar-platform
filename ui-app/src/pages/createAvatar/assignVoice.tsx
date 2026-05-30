@@ -7,7 +7,7 @@ import {
     getAvatarData,
     initialAvatarData
 } from '../../utils/avatarCreation';
-import { AvatarGender, type Avatar } from '../../types/avatar';
+import { AvatarGender, AvatarTypes, type Avatar } from '../../types/avatar';
 import { updateAvatar, getVoicesByGender, getAvatarById } from '../../services/apiGateway';
 import type { Voice } from '../../types/voice';
 import { uploadMediaToBucket, getMediaUrlFromPath } from '../../services/storage';
@@ -221,7 +221,7 @@ function AssignVoicePage() {
                 };
                 await updateAvatar(newAvatarData.avatarId, payload);
             }
-            navigate('/avatar/create/training');
+            navigate('/avatar/create/finalize');
         } catch (error) {
             console.log(`Did not manage to update avatar: ${error}`);
         }
@@ -232,7 +232,11 @@ function AssignVoicePage() {
     }
 
     const previousStep = () => {
-        navigate('/avatar/create/photo-set');
+        if (avatar.type === AvatarTypes.digitalTwin) {
+            navigate('/avatar/create/twin-id-photos');
+        } else {
+            navigate('/avatar/create/synthetic-id-photos');
+        }
     }
 
     const showUploadedState = avatar.isUploadedVoice || !!uploadedAudioUrl;
@@ -240,7 +244,7 @@ function AssignVoicePage() {
 
     return (
         <>
-            <CreateAvatarStepper step={3}/>
+            <CreateAvatarStepper step={2}/>
 
             {pageLoading ? (
                 <div className="flex items-center justify-center min-h-[60vh]">

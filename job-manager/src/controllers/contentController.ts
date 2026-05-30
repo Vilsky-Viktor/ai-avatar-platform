@@ -41,8 +41,8 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs.map((job: Job) => job.resultMediaPath);
 
-    const generatorUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/images/${imageId}.png`
-    const upscalerUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/images/${imageId}-upscaled.png`
+    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`
+    const upscalerUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-upscaled.png`
 
     const imageGenerator: ImageGenerator = {
       service: Services.imageGenerator,
@@ -62,7 +62,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       imagePath: generatorUploadPath,
       uploadPath: upscalerUploadPath,
       status: JobStatuses.pending,
-      model: Models.topaz,
+      model: Models.seedvr,
       flow: Flows.i2i,
     }
 
@@ -126,7 +126,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
         imagePath: generatorUploadPath,
         uploadPath: upscalerUploadPath,
         status: JobStatuses.pending,
-        model: Models.topaz,
+        model: Models.seedvr,
         flow: Flows.i2i,
       };
 
@@ -170,8 +170,8 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       .filter((job: Job) => [1,3,4,5].includes(job.order!))
       .map((job: Job) => job.resultMediaPath);
 
-    const generatorUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/videos/${videoId}.png`
-    const upscalerUploadPath = `media/${userId}-userId/avatars/${jobRequest.avatarId}/videos/${videoId}-upscaled.png`
+    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.png`
+    const upscalerUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}-upscaled.png`
 
     const videoGenerator: videoGenerator = {
       service: Services.videoGenerator,

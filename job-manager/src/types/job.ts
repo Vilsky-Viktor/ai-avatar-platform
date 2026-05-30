@@ -9,11 +9,10 @@ export type PhotoSetType =
   'luxury-life';
 
 export type IdPhotoJobRequest = {
-  avatarType: AvatarTypes;
   groupId?: string;
   avatarId: string;
   parameters: AvatarParameters;
-  frontIdPhotoPath: string;
+  frontIdPhotoPath?: string;
 }
 
 export type PhotoJobRequest = {
@@ -61,6 +60,7 @@ export enum Directions {
 
 export type JobMetadata = {
   ratio?: string;
+  dimensions?: string;
   userPrompt?: string;
   lengthSec?: number;
 }
@@ -82,7 +82,8 @@ export enum Models {
   topaz = 'topaz',
   lipSync = 'lipSync',
   eleven = 'eleven',
-  faceLandmarker = 'faceLandmarker',
+  buffaloL = 'buffalo_l',
+  seedvr = 'seedvr',
   none = 'none'
 }
 

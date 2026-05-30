@@ -1,7 +1,7 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
 import { Flows, ImageGenerator, Job, JobStatuses, Models, Services, Upscaler, WorkflowStep } from './types/job';
-import { upscaleTopazImage, upscaleTopazVideo } from './services/aiModelGatewayService';
+import { upscaleTopazImage, upscaleTopazVideo, upscaleSeedvrImage } from './services/aiModelGatewayService';
 import { sendJob } from './services/messageQueue';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
@@ -32,6 +32,8 @@ function listenForResults() {
           await upscaleTopazImage(job.userId, stepData);
         } else if (stepData.model === Models.topaz && stepData.flow === Flows.v2v) {
           await upscaleTopazVideo(job.userId, stepData);
+        } else if (stepData.model === Models.seedvr && stepData.flow === Flows.i2i) {
+          await upscaleSeedvrImage(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);
         }

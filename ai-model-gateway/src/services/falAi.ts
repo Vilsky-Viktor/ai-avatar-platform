@@ -16,8 +16,8 @@ export const sendRequest = async <Input extends Record<string, any>, Output>(mod
         input: payload,
         logs: false,
         onQueueUpdate: (update: QueueStatus) => {
-            if (update.status === Statuses.progress) {
-                update.logs.map((log) => log.message).forEach(logger.info);
+            if (update.status === Statuses.progress && update.logs) {
+                update.logs.forEach((log) => logger.info(log.message));
             }
         },
     });

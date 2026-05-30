@@ -2,8 +2,8 @@ import axios from 'axios';
 import { auth } from '../firebase';
 import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
-import type { Avatar, AvatarGender, AvatarLoras } from '../types/avatar';
-import type { Job, TrainingJobRequest, PhotoJobRequest, InferenceJob, PhotoSetJobRequest, VideoJobRequest } from '../types/job';
+import type { Avatar, AvatarGender } from '../types/avatar';
+import type { Job, IdPhotoJobRequest, PhotoJobRequest, PhotoSetJobRequest, VideoJobRequest } from '../types/job';
 import type { Voice } from '../types/voice';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
@@ -111,20 +111,9 @@ export const deleteAvatarById = async (avatarId: string): Promise<Avatar> => {
   }
 }
 
-export const genTrainingPhotoSet = async (job: TrainingJobRequest): Promise<Job[]> => {
+export const genSyntheticFrontIdPhoto = async (jobRequest: IdPhotoJobRequest): Promise<Job> => {
   try {
-    const res = await apiClient.post('/jobs/gen-training-photo-set', job);
-
-    return res.data as Job[];
-  } catch (error) {
-    console.error("Error creating photo set job:", error);
-    throw error;
-  }
-}
-
-export const genTrainingSyntheticFrontIdPhoto = async (jobRequest: TrainingJobRequest): Promise<Job> => {
-  try {
-    const res = await apiClient.post('/jobs/gen-training-synthetic-front-id-photo', jobRequest);
+    const res = await apiClient.post('/jobs/gen-synthetic-front-id-photo', jobRequest);
 
     return res.data as Job;
   } catch (error) {
@@ -133,9 +122,9 @@ export const genTrainingSyntheticFrontIdPhoto = async (jobRequest: TrainingJobRe
   }
 }
 
-export const genTrainingSyntheticIdPhotos = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
+export const genSyntheticIdPhotos = async (jobRequest: IdPhotoJobRequest): Promise<Job[]> => {
   try {
-    const res = await apiClient.post('/jobs/gen-training-synthetic-id-photos', jobRequest);
+    const res = await apiClient.post('/jobs/gen-synthetic-id-photos', jobRequest);
 
     return res.data as Job[];
   } catch (error) {
@@ -144,9 +133,9 @@ export const genTrainingSyntheticIdPhotos = async (jobRequest: TrainingJobReques
   }
 }
 
-export const genTrainingTwinIdPhotos = async (jobRequest: TrainingJobRequest): Promise<Job[]> => {
+export const genDigitalTwinIdPhotos = async (jobRequest: IdPhotoJobRequest): Promise<Job[]> => {
   try {
-    const res = await apiClient.post('/jobs/gen-training-twin-id-photos', jobRequest);
+    const res = await apiClient.post('/jobs/gen-digital-twin-id-photos', jobRequest);
 
     return res.data as Job[];
   } catch (error) {
@@ -155,55 +144,55 @@ export const genTrainingTwinIdPhotos = async (jobRequest: TrainingJobRequest): P
   }
 }
 
-export const genAvatarPhoto = async (jobRequest: PhotoJobRequest): Promise<InferenceJob> => {
+export const genAvatarPhoto = async (jobRequest: PhotoJobRequest): Promise<Job> => {
   try {
     const res = await apiClient.post('/jobs/gen-avatar-photo', jobRequest);
 
-    return res.data as InferenceJob;
+    return res.data as Job;
   } catch (error) {
     console.error("Error creating job to generate avatar photo:", error);
     throw error;
   }
 }
 
-export const genAvatarPhotoSet = async (jobRequest: PhotoSetJobRequest): Promise<InferenceJob[]> => {
+export const genAvatarPhotoSet = async (jobRequest: PhotoSetJobRequest): Promise<Job[]> => {
   try {
     const res = await apiClient.post('/jobs/gen-avatar-photo-set', jobRequest);
 
-    return res.data as InferenceJob[];
+    return res.data as Job[];
   } catch (error) {
     console.error("Error creating job to generate avatar photo set:", error);
     throw error;
   }
 }
 
-export const genAvatarVideo = async (jobRequest: VideoJobRequest): Promise<InferenceJob> => {
+export const genAvatarVideo = async (jobRequest: VideoJobRequest): Promise<Job> => {
   try {
     const res = await apiClient.post('/jobs/gen-avatar-video', jobRequest);
 
-    return res.data as InferenceJob;
+    return res.data as Job;
   } catch (error) {
     console.error("Error creating job to generate avatar video:", error);
     throw error;
   }
 }
 
-export const getJobsByGroupId  = async (groupId: string): Promise<InferenceJob[]> => {
+export const getJobsByGroupId  = async (groupId: string): Promise<Job[]> => {
   try {
     const res = await apiClient.get(`/jobs/get/group/${groupId}`, {});
 
-    return res.data as InferenceJob[];
+    return res.data as Job[];
   } catch (error) {
     console.error("Error fetching jobs:", error);
     throw error;
   }
 }
 
-export const getJobsByAvatarId  = async (avatarId: string): Promise<InferenceJob[]> => {
+export const getJobsByAvatarId  = async (avatarId: string): Promise<Job[]> => {
   try {
     const res = await apiClient.get(`/jobs/get/avatar/${avatarId}`, {});
 
-    return res.data as InferenceJob[];
+    return res.data as Job[];
   } catch (error) {
     console.error("Error fetching jobs:", error);
     throw error;
@@ -239,17 +228,6 @@ export const getVoicesByGender = async (gender: AvatarGender): Promise<Voice[]> 
     return res.data as Voice[];
   } catch (error) {
     console.error("Error fetching voices:", error);
-    throw error;
-  }
-}
-
-export const trainLoras = async (jobRequest: TrainingJobRequest): Promise<AvatarLoras> => {
-  try {
-    const res = await apiClient.post(`/jobs/train-loras`, jobRequest);
-
-    return res.data as AvatarLoras;
-  } catch (error) {
-    console.error("Error creating jobs to train LORAs:", error);
     throw error;
   }
 }

@@ -2,13 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { Accelerations, Image2512In, Image2512Out, ImageEdit2511In, ImageEdit2511MultipleAnglesIn, ImageEdit2511MultipleAnglesOut, ImageEdit2511Out } from '../types/qwen';
 import { RatioToImageSizeMapping, OutputFormats } from '../types/image';
 import { getMediaUrlFromPath, downloadResultFile, uploadToBucket } from '../services/storage';
-import { ImageResponse } from '../types/falAi';
+import { ImagesResponse } from '../types/falAi';
 import falAi from '../services/falAi';
 
 export const genImage2512 = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as Image2512In;
   const modelName = 'qwen-image-2512';
-  const userId = req.headers['x-user-id'] as string;
 
   const payload: Image2512Out = {
     prompt: input.prompt,
@@ -24,7 +23,7 @@ export const genImage2512 = async (req: Request, res: Response, next: NextFuncti
 
   try {
     const result = await falAi.sendRequest(modelName, payload);
-    const resultData = result.data as ImageResponse;
+    const resultData = result.data as ImagesResponse;
     const resultMediaUrl = resultData.images[0].url;
 
     const mediaBlob = await downloadResultFile(resultMediaUrl);
@@ -40,7 +39,6 @@ export const genImage2512 = async (req: Request, res: Response, next: NextFuncti
 export const genImageEdit2511 = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as ImageEdit2511In;
   const modelName = 'qwen-image-edit-2511';
-  const userId = req.headers['x-user-id'] as string;
 
   const imageUrls = await Promise.all(input.imagePaths.map((imagePath: string) => getMediaUrlFromPath(imagePath)));
 
@@ -59,7 +57,7 @@ export const genImageEdit2511 = async (req: Request, res: Response, next: NextFu
   
   try {
     const result = await falAi.sendRequest(modelName, payload);
-    const resultData = result.data as ImageResponse;
+    const resultData = result.data as ImagesResponse;
     const resultMediaUrl = resultData.images[0].url;
 
     const mediaBlob = await downloadResultFile(resultMediaUrl);
@@ -75,7 +73,6 @@ export const genImageEdit2511 = async (req: Request, res: Response, next: NextFu
 export const genImageEdit2511MultipleAngles = async (req: Request, res: Response, next: NextFunction) => {
   const input = req.body as ImageEdit2511MultipleAnglesIn;
   const modelName = 'qwen-image-edit-2511-multiple-angles';
-  const userId = req.headers['x-user-id'] as string;
 
   const imageUrls = await Promise.all(input.imagePaths.map((imagePath: string) => getMediaUrlFromPath(imagePath)));
 
@@ -98,7 +95,7 @@ export const genImageEdit2511MultipleAngles = async (req: Request, res: Response
 
   try {
     const result = await falAi.sendRequest(modelName, payload);
-    const resultData = result.data as ImageResponse;
+    const resultData = result.data as ImagesResponse;
     const resultMediaUrl = resultData.images[0].url;
 
     const mediaBlob = await downloadResultFile(resultMediaUrl);
