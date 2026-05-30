@@ -160,6 +160,22 @@ services:
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
 
+  workflow-manager:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./workflow-manager
+    volumes:
+      - ./workflow-manager:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - SUBSCRIPTION_ID=workflow-manager-sub
+      - JOB_MANAGER_URL=http://job-manager:3300
 
   image-generator:
     <<: *default-dns
@@ -179,19 +195,38 @@ services:
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
 
-  workflow-manager:
+  upscaler:
     <<: *default-dns
     networks:
       - app-net
     build:
-      context: ./workflow-manager
+      context: ./upscaler
     volumes:
-      - ./workflow-manager:/app
+      - ./upscaler:/app
       - /app/node_modules
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
-      - SUBSCRIPTION_ID=workflow-manager-sub
-      - JOB_MANAGER_URL=http://job-manager:3300
+      - SUBSCRIPTION_ID=upscaler-sub
+      - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+
+  head-direction-checker:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./head-direction-checker
+    volumes:
+      - ./head-direction-checker:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - SUBSCRIPTION_ID=head-direction-checker-sub
+      - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      
