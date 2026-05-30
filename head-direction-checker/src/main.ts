@@ -16,11 +16,14 @@ import { checkDirection } from './utils/detector';
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'image-generator-sub';
+const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
 function listenForResults() {
-  const subscription = pubsub.subscription(SUBSCRIPTION_ID);
+  const subscription = pubsub.subscription(SUBSCRIPTION_ID, {
+    flowControl: { maxMessages: MAX_CONCURRENT_MESSAGES },
+  });
 
   logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for head direction jobs...');
 

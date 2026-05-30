@@ -194,6 +194,7 @@ services:
       - SUBSCRIPTION_ID=image-generator-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+      - MAX_CONCURRENT_MESSAGES=10
 
   upscaler:
     <<: *default-dns
@@ -212,6 +213,7 @@ services:
       - SUBSCRIPTION_ID=upscaler-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+      - MAX_CONCURRENT_MESSAGES=10
 
   head-direction-checker:
     <<: *default-dns
@@ -231,4 +233,5 @@ services:
       - SUBSCRIPTION_ID=head-direction-checker-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - MAX_CONCURRENT_MESSAGES=10
       
