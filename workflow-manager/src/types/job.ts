@@ -46,7 +46,8 @@ export enum Models {
   topaz = 'topaz',
   lipSync = 'lipSync',
   eleven = 'eleven',
-  buffalo_l = 'buffalo_l'
+  faceLandmarker = 'faceLandmarker',
+  none = 'none'
 }
 
 export enum Flows {
@@ -57,7 +58,8 @@ export enum Flows {
   ti2v = 'ti2v',
   v2v = 'v2v',
   t2a = 't2a',
-  va2v = 'va2v'
+  va2v = 'va2v',
+  none = 'none',
 }
 
 export type ServiceBase = {

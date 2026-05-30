@@ -105,8 +105,8 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         imagePath: generatorUploadPath,
         direction: input.direction,
         status: JobStatuses.pending,
-        model: Models.buffalo_l,
-        flow: Flows.i2i
+        model: Models.faceLandmarker,
+        flow: Flows.none
       };
 
       return {

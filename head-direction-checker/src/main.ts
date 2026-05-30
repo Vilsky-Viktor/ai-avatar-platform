@@ -3,7 +3,7 @@ import logger from './logger';
 import { HeadDirectionChecker, Job, JobStatuses, Services, WorkflowStep } from './types/job';
 import { sendJob } from './services/messageQueue';
 import { downloadMediaFromPath } from './services/storage';
-import { checkDirection } from './utils/directionChecker';
+import { checkDirection } from './utils/mediapipeFaceLandmarker';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
