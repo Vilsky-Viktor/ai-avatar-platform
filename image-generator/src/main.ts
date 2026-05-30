@@ -20,34 +20,34 @@ function listenForResults() {
 
     logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
 
-    const imageGeneratorIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.imageGenerator && step.status === JobStatuses.pending);
+    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.imageGenerator && step.status === JobStatuses.pending);
 
-    if (imageGeneratorIdx >= 0) {
-      const imageGeneratorData = job.workflow[imageGeneratorIdx] as ImageGenerator;
+    if (stepIdx >= 0) {
+      const stepData = job.workflow[stepIdx] as ImageGenerator;
 
       message.ack();
 
       try {
-        if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.t2i) {
-          await genQwenImage2512(job.userId, imageGeneratorData);
-        } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ia2i) {
-          await genQwenImageEdit2511MultipleAngles(job.userId, imageGeneratorData);
-        } else if (imageGeneratorData.model === Models.flux && imageGeneratorData.flow === Flows.ti2i) {
-          await genFluxV2ProEdit(job.userId, imageGeneratorData);
-        } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ti2i) {
-          await genQwenImageEdit2511(job.userId, imageGeneratorData);
+        if (stepData.model === Models.qwen && stepData.flow === Flows.t2i) {
+          await genQwenImage2512(job.userId, stepData);
+        } else if (stepData.model === Models.qwen && stepData.flow === Flows.ia2i) {
+          await genQwenImageEdit2511MultipleAngles(job.userId, stepData);
+        } else if (stepData.model === Models.flux && stepData.flow === Flows.ti2i) {
+          await genFluxV2ProEdit(job.userId, stepData);
+        } else if (stepData.model === Models.qwen && stepData.flow === Flows.ti2i) {
+          await genQwenImageEdit2511(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);
         }
 
-        imageGeneratorData.status = JobStatuses.completed;
-        job.workflow[imageGeneratorIdx] = imageGeneratorData;
+        stepData.status = JobStatuses.completed;
+        job.workflow[stepIdx] = stepData;
 
         await sendJob(WORKFLOW_MANAGER_TOPIC, job);
       } catch (error: any) {
-        imageGeneratorData.status = JobStatuses.error;
-        imageGeneratorData.error = String(error);
-        job.workflow[imageGeneratorIdx] = imageGeneratorData;
+        stepData.status = JobStatuses.error;
+        stepData.error = String(error);
+        job.workflow[stepIdx] = stepData;
 
         await sendJob(WORKFLOW_MANAGER_TOPIC, job);
       } 
