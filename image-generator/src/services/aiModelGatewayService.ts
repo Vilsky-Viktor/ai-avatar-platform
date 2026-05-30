@@ -7,7 +7,7 @@ export const genQwenImage2512 = (userId: string, payload: ImageGenerator): Promi
     client.post('/qwen/image/2512', userId, payload);
 
 export const genQwenImageEdit2511 = (userId: string, payload: ImageGenerator): Promise<void> =>
-    client.post('/image/edit/2511', userId, payload);
+    client.post('/qwen/image/edit/2511', userId, payload);
 
 export const genQwenImageEdit2511MultipleAngles = (userId: string, payload: ImageGenerator): Promise<void> =>
     client.post('/qwen/image/edit/2511/multiple-angles', userId, payload);

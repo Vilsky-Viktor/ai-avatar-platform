@@ -20,35 +20,41 @@ function listenForResults() {
 
     logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
 
-    const imageGeneratorIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.imageGenerator);
-    const imageGeneratorData = job.workflow[imageGeneratorIdx] as ImageGenerator;
+    const imageGeneratorIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.imageGenerator && step.status === JobStatuses.pending);
 
-    message.ack();
+    if (imageGeneratorIdx >= 0) {
+      const imageGeneratorData = job.workflow[imageGeneratorIdx] as ImageGenerator;
 
-    try {
-      if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.t2i) {
-        await genQwenImage2512(job.userId, imageGeneratorData);
-      } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ia2i) {
-        await genQwenImageEdit2511MultipleAngles(job.userId, imageGeneratorData);
-      } else if (imageGeneratorData.model === Models.flux && imageGeneratorData.flow === Flows.ti2i) {
-        await genFluxV2ProEdit(job.userId, imageGeneratorData);
-      } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ti2i) {
-        await genQwenImageEdit2511(job.userId, imageGeneratorData);
-      } else {
-        logger.warn(`Not supported model and flow`);
-      }
+      message.ack();
 
-      imageGeneratorData.status = JobStatuses.completed;
-      job.workflow[imageGeneratorIdx] = imageGeneratorData;
+      try {
+        if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.t2i) {
+          await genQwenImage2512(job.userId, imageGeneratorData);
+        } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ia2i) {
+          await genQwenImageEdit2511MultipleAngles(job.userId, imageGeneratorData);
+        } else if (imageGeneratorData.model === Models.flux && imageGeneratorData.flow === Flows.ti2i) {
+          await genFluxV2ProEdit(job.userId, imageGeneratorData);
+        } else if (imageGeneratorData.model === Models.qwen && imageGeneratorData.flow === Flows.ti2i) {
+          await genQwenImageEdit2511(job.userId, imageGeneratorData);
+        } else {
+          logger.warn(`Not supported model and flow`);
+        }
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job);
-    } catch (error: any) {
-      imageGeneratorData.status = JobStatuses.error;
-      imageGeneratorData.error = String(error);
-      job.workflow[imageGeneratorIdx] = imageGeneratorData;
+        imageGeneratorData.status = JobStatuses.completed;
+        job.workflow[imageGeneratorIdx] = imageGeneratorData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job);
+        await sendJob(WORKFLOW_MANAGER_TOPIC, job);
+      } catch (error: any) {
+        imageGeneratorData.status = JobStatuses.error;
+        imageGeneratorData.error = String(error);
+        job.workflow[imageGeneratorIdx] = imageGeneratorData;
+
+        await sendJob(WORKFLOW_MANAGER_TOPIC, job);
+      } 
+    } else {
+      logger.warn(`Image generator pending step is not found for job ${job.id}`);
     }
+    
   };
 
   subscription.on('message', messageHandler);
