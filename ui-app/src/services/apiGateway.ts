@@ -17,8 +17,10 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-export const cropHeadshot = async (imagePath: string, width: number, height: number): Promise<{ path: string }> => {
-  const res = await apiClient.post('/cropper/crop-headshot', { image_path: imagePath, width, height });
+export type CropMode = 'front' | 'quarter' | 'side' | 'full_body';
+
+export const cropPerson = async (imagePath: string, mode: CropMode = 'front'): Promise<{ path: string }> => {
+  const res = await apiClient.post('/cropper/crop', { image_path: imagePath, mode });
   return res.data;
 };
 

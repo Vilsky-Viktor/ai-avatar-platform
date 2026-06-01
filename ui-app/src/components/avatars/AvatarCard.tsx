@@ -49,9 +49,9 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
 
       {/* Main Card Interaction Area */}
       <button
-        className={`w-full h-full text-left focus:outline-none overflow-hidden rounded-2xl relative ${avatar.photoSetGenerated ? 'cursor-pointer' : 'cursor-default'}`}
-        disabled={!avatar.photoSetGenerated}
-        onClick={() => avatar.photoSetGenerated && navigate(`/avatar/${avatar.slug}`)}
+        className={`w-full h-full text-left focus:outline-none overflow-hidden rounded-2xl relative ${avatar.voiceId ? 'cursor-pointer' : 'cursor-default'}`}
+        disabled={!avatar.voiceId}
+        onClick={() => avatar.voiceId && navigate(`/avatar/${avatar.slug}`)}
       >
         {/* Hover Border Highlight */}
         <div className="absolute inset-0 z-50 pointer-events-none rounded-2xl border-2 border-transparent group-hover:border-primary/40 transition-colors duration-300" />

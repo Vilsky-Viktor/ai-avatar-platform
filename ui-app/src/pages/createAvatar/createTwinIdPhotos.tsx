@@ -4,9 +4,9 @@ import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepp
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
-import PillSelect from '../../components/PillSelect';
 import { type Avatar } from '../../types/avatar';
-import { updateAvatar, restartJobById, genDigitalTwinIdPhotos, getJobsByGroupId, getAvatarById, cropHeadshot } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genDigitalTwinIdPhotos, getJobsByGroupId, getAvatarById, cropPerson } from '../../services/apiGateway';
+import type { CropMode } from '../../services/apiGateway';
 import { JobStatuses, type Job, type IdPhotoJobRequest } from '../../types/job';
 import { useApp } from '../../providers/ContextProvider';
 import { uploadMediaToBucket, getMediaUrlFromPath, deleteMediaFromBucket } from '../../services/storage';
@@ -16,16 +16,12 @@ import {
     initialAvatarData,
     saveAvatarData,
     NUM_ID_PHOTOS,
-    AVATAR_PARAMETER_OPTIONS
 } from '../../utils/avatarCreation';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { type UploadedIdPhoto, type NewAvatarData } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { listenToCollectionByGroupId } from '../../services/db';
 import { scrollToTop, scrollToBottom } from '../../utils/scroller';
-
-
-const CROP_SIZE: [number, number] = [1312, 1312]
 
 
 function CreateTwinIdPhotosPage() {
@@ -45,11 +41,14 @@ function CreateTwinIdPhotosPage() {
     const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
     const [generateClicked, setGenerateClicked] = useState(false);
 
-    const uploadedPhotosConfig = [
-        { label: 'Front', name: 'front', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Front smile', name: 'frontSmile', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Right quarter', name: 'rightQuarter', ref: useRef<HTMLInputElement>(null) },
-        { label: 'Left quarter', name: 'leftQuarter', ref: useRef<HTMLInputElement>(null) },
+    const uploadedPhotosConfig: { label: string; name: string; ref: React.RefObject<HTMLInputElement | null>; mode: CropMode }[] = [
+        { label: 'Front',         name: 'front',        ref: useRef<HTMLInputElement>(null), mode: 'front'     },
+        { label: 'Front smile',   name: 'front-smile',   ref: useRef<HTMLInputElement>(null), mode: 'front'     },
+        { label: 'Right quarter', name: 'right-quarter', ref: useRef<HTMLInputElement>(null), mode: 'quarter'   },
+        { label: 'Left quarter',  name: 'left-quarter',  ref: useRef<HTMLInputElement>(null), mode: 'quarter'   },
+        { label: 'Right side',    name: 'right-side',    ref: useRef<HTMLInputElement>(null), mode: 'side'      },
+        { label: 'Left side',     name: 'left-side',     ref: useRef<HTMLInputElement>(null), mode: 'side'      },
+        { label: 'Full body',     name: 'full-body',     ref: useRef<HTMLInputElement>(null), mode: 'full_body' },
     ];
 
     useEffect(() => {
@@ -143,7 +142,7 @@ function CreateTwinIdPhotosPage() {
     }
 
     const getUploadedMediaPath = (name: string) => {
-        return `media/${user?.id}-user/avatars/${newAvatarData.avatarId}-avatar/images/uploaded/${name}-cropped-${CROP_SIZE[0]}x${CROP_SIZE[1]}.png`;
+        return `media/${user?.id}-user/avatars/${newAvatarData.avatarId}-avatar/images/uploaded/${name}-cropped.png`;
     }
 
     const updatePhotoAtIndex = (index: number, photo: string | null) => {
@@ -193,10 +192,11 @@ function CreateTwinIdPhotosPage() {
                 reader.readAsDataURL(file);
             });
 
-            const rawPath = getRawMediaPath(uploadedPhotosConfig[index].name);
+            const config = uploadedPhotosConfig[index];
+            const rawPath = getRawMediaPath(config.name);
             await uploadMediaToBucket(rawPath, dataUrl);
 
-            const { path: croppedPath } = await cropHeadshot(rawPath, CROP_SIZE[0], CROP_SIZE[1]);
+            const { path: croppedPath } = await cropPerson(rawPath, config.mode);
             const downloadUrl = await getMediaUrlFromPath(croppedPath);
             updatePhotoAtIndex(index, downloadUrl);
         } catch (error: any) {
@@ -239,10 +239,6 @@ function CreateTwinIdPhotosPage() {
 
     const setGroupId = (groupId: string) => {
         setNewAvatarData((prev: NewAvatarData) => ({...prev, groupId}));
-    }
-
-    const setParameter = (key: string, value: string) => {
-        setAvatar((avatar: Avatar) => ({...avatar, parameters: { ...avatar.parameters, [key]: value }}))
     }
 
     const jobsCreated = () => {
@@ -320,7 +316,7 @@ function CreateTwinIdPhotosPage() {
                 await updateAvatar(newAvatarData.avatarId, payload);
             }
 
-            navigate('/avatar/create/photo-set');
+            navigate('/avatar/create/assign-voice');
         } catch (error) {
             console.log(`Did not manage to update avatar: ${error}`);
         }
@@ -353,24 +349,6 @@ function CreateTwinIdPhotosPage() {
                         slotErrors={slotErrors}
                     />
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-12">
-                        {[
-                            { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
-                            { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
-                            { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },
-                        ].map(field => (
-                            <PillSelect
-                                key={field.key}
-                                label={field.label}
-                                fieldKey={field.key}
-                                opts={field.opts}
-                                value={avatar.parameters[field.key as keyof typeof avatar.parameters]}
-                                disabled={stepLocked()}
-                                onChange={setParameter}
-                            />
-                        ))}
-                    </div>
-
                     {photosUploaded() && parametersFilled() && (
                         <div className='text-center'>
                             <button
@@ -384,7 +362,7 @@ function CreateTwinIdPhotosPage() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {jobs.map((job, idx) => (
                             <MediaCard
                                 key={idx}

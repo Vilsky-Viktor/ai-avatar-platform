@@ -110,6 +110,7 @@ export type LipSync = ServiceBase & {
 
 export type FaceMatcher = ServiceBase & {
   imagePath: string;
+  idPhotoPaths: string[];
   threshold: number;
 }
 

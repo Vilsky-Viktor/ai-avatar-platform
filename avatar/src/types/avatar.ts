@@ -43,8 +43,6 @@ export type Avatar = {
   parameters: AvatarParameters;
   mainImagePath?: string;
   voiceId?: string;
-  isUploadedVoice?: boolean;
-  photoSetGenerated: boolean;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

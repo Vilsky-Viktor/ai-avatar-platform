@@ -65,8 +65,6 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
       job.workflow[idx].status = JobStatuses.pending;
     })
 
-    job.resultMediaPath = '';
-
     await updateDb(userId, id, job, true);
     await publishJob(WORKFLOW_MANAGER_TOPIC, job);
 

@@ -1,0 +1,11 @@
+python-dotenv
+google-cloud-pubsub
+google-cloud-storage
+numpy
+scipy
+opencv-python-headless
+# CPU-only torch — replace with CUDA wheel if GPU is available
+torch
+torchvision
+insightface
+onnxruntime

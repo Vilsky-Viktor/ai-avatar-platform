@@ -4,8 +4,10 @@ export type Voice = {
     id: string;
     name: string;
     gender: AvatarGender;
-    imagePath: string;
-    audioPath: string;
-    languages: string[];
-    features: string[];
+    age: string;
+    category: string;
+    description: string;
+    language: string;
+    previewUrl: string;
+    useCase: string;
 }

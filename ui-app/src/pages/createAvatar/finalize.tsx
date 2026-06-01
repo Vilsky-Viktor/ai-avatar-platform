@@ -1,138 +1,84 @@
-import { useState, useEffect, useRef } from 'react';
-import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-    getAvatarData,
-    initialAvatarData,
-    NEW_AVATAR_DATA
-} from '../../utils/avatarCreation';
-import { getAvatarById } from '../../services/apiGateway';
-import BottomDock from '../../components/createAvatar/BottomDock';
+import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepper';
+import { NEW_AVATAR_DATA } from '../../utils/avatarCreation';
 import { scrollToTop } from '../../utils/scroller';
-import { Check, X } from 'lucide-react';
+import { Sparkles, Image, Video, Mic, ArrowRight } from 'lucide-react';
 
-type StepStatus = 'pending' | 'loading' | 'done' | 'error';
-
-type Step = {
-    label: string;
-    description: string;
-    status: StepStatus;
-};
+const CAPABILITIES = [
+    {
+        icon: Image,
+        title: 'Generate photos',
+        description: 'Create stunning photos of your avatar in any style, outfit, or setting.',
+    },
+    {
+        icon: Video,
+        title: 'Create videos',
+        description: 'Bring your avatar to life with AI-generated video clips.',
+    },
+    {
+        icon: Mic,
+        title: 'Sync voice',
+        description: 'Sync your avatar\'s videos with its voice to create natural talking content.',
+    },
+];
 
 function FinalizePage() {
     const navigate = useNavigate();
 
-    const [newAvatarData, _] = useState(() => getAvatarData());
-    const [avatar, setAvatar] = useState(initialAvatarData);
-    const [steps, setSteps] = useState<Step[]>([
-        { label: 'Processing data', description: 'Preparing media', status: 'pending' },
-    ]);
-    const initialized = useRef<boolean>(false);
-    
-
-    const setStepStatus = (index: number, status: StepStatus) => {
-        setSteps(prev => prev.map((s, i) => i === index ? { ...s, status } : s));
-    };
-
     useEffect(() => {
         scrollToTop();
-        initPage();
     }, []);
 
-    const initPage = async () => {
-        if (initialized.current) return;
-        initialized.current = true;
-
-        setStepStatus(0, 'loading');
-
-        const existingAvatar = await getAvatarById(newAvatarData.avatarId);
-        setAvatar(existingAvatar);
-
-        setStepStatus(0, 'done');
-    };
-
-    const canProceed = () => {
-        return steps.every(s => s.status === 'done');
-    };
-
-    const nextStep = async () => {
-        if (!canProceed()) return;
-
+    const handleStart = () => {
         localStorage.removeItem(NEW_AVATAR_DATA);
-
         navigate('/');
-    };
-
-    const previousStep = () => {
-        navigate('/avatar/create/assign-voice');
     };
 
     return (
         <>
-            <CreateAvatarStepper step={3}/>
+        <CreateAvatarStepper step={3}/>
+        <div className="max-w-xl mx-auto px-4 pt-16 pb-40 flex flex-col items-center">
+            <div className="w-full flex flex-col items-center gap-12 text-center">
 
-            <div className="max-w-3xl mx-auto px-4 pt-20 mb-50">
-                <div className="flex flex-col gap-10">
-                    {steps.map((step, i) => (
-                        <div key={i} className="flex items-center gap-8">
-                            {/* Checkbox */}
-                            <div className="relative shrink-0 flex items-center justify-center">
-                                {step.status === 'loading' && (
-                                    <span className="absolute w-16 h-16 rounded-2xl border border-primary/25 animate-ping" />
-                                )}
-                                <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-700
-                                    ${step.status === 'done'
-                                        ? 'border-primary bg-primary'
-                                        : step.status === 'loading'
-                                            ? 'border-primary/50'
-                                            : step.status === 'error'
-                                                ? 'border-error bg-error'
-                                                : 'border-base-content/10'
-                                    }`}
-                                >
-                                    {step.status === 'done' && <Check size={22} strokeWidth={2.5} className="text-primary-content" />}
-                                    {step.status === 'loading' && <span className="loading loading-spinner loading-md text-primary" />}
-                                    {step.status === 'error' && <X size={22} strokeWidth={2.5} className="text-error-content" />}
-                                </div>
+                {/* Icon */}
+                <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center">
+                    <Sparkles size={36} className="text-primary" strokeWidth={1.5} />
+                </div>
+
+                {/* Heading */}
+                <div className="flex flex-col gap-3">
+                    <h1 className="text-4xl font-bold tracking-tight">Your avatar is ready.</h1>
+                    <p className="text-base text-base-content/40 font-light leading-relaxed">
+                        New digital life is set. Here's what you can do with it right now.
+                    </p>
+                </div>
+
+                {/* Capabilities */}
+                <div className="w-full flex flex-col gap-4">
+                    {CAPABILITIES.map(({ icon: Icon, title, description }) => (
+                        <div key={title} className="flex items-start gap-5 p-5 rounded-2xl bg-base-100 border border-base-content/5 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
+                                <Icon size={18} className="text-primary" strokeWidth={1.5} />
                             </div>
-
-                            {/* Text */}
-                            <div className="flex flex-col gap-1.5">
-                                <span className={`text-2xl font-light tracking-tight transition-colors duration-700
-                                    ${step.status === 'error' ? 'text-error' : step.status === 'pending' ? 'text-base-content/20' : 'text-base-content'}`}
-                                >
-                                    {step.label}
-                                </span>
-                                <span className={`text-[11px] uppercase tracking-[0.25em] transition-colors duration-700
-                                    ${step.status === 'done' ? 'text-primary/50' : step.status === 'loading' ? 'text-base-content/35' : step.status === 'error' ? 'text-error/50' : 'text-base-content/15'}`}
-                                >
-                                    {step.status === 'done' ? 'Completed' : step.status === 'loading' ? step.description : step.status === 'error' ? 'Failed' : 'Waiting'}
-                                </span>
+                            <div className="flex flex-col gap-1">
+                                <span className="text-sm font-semibold tracking-tight">{title}</span>
+                                <span className="text-[12px] text-base-content/40 leading-relaxed">{description}</span>
                             </div>
                         </div>
                     ))}
-
-                    {canProceed() && (
-                        <div className="flex flex-col gap-3 mt-4">
-                            <span className="text-3xl font-light tracking-tight text-base-content">All set.</span>
-                            <span className="text-sm text-base-content/40 font-light">
-                                Your new life is being trained in the background.
-                            </span>
-                            <span className="text-sm text-base-content/25 font-light">
-                                This may take up to 24 hours — feel free to check back tomorrow.
-                            </span>
-                        </div>
-                    )}
                 </div>
-            </div>
 
-            <BottomDock
-                avatarId={newAvatarData.avatarId}
-                canProceed={canProceed}
-                nextStep={nextStep}
-                previousStep={previousStep}
-                finish={true}
-            />
+                {/* CTA */}
+                <button
+                    onClick={handleStart}
+                    className="btn btn-primary h-12 px-8 rounded-xl border-none text-base font-bold normal-case shadow-[0_8px_16px_-6px_rgba(var(--p),0.4)] hover:shadow-[0_12px_20px_-6px_rgba(var(--p),0.5)] hover:-translate-y-0.5 transition-all duration-300 gap-2"
+                >
+                    Start creating
+                    <ArrowRight size={18} />
+                </button>
+            </div>
+        </div>
         </>
     );
 }

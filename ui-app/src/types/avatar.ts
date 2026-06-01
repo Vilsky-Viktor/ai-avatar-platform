@@ -42,8 +42,6 @@ export type Avatar = {
   parameters: AvatarParameters;
   mainImagePath?: string;
   voiceId?: string;
-  isUploadedVoice?: boolean;
-  photoSetGenerated: boolean;
   updatedAt?: FirestoreTimestamp;
   createdAt?: FirestoreTimestamp
 }

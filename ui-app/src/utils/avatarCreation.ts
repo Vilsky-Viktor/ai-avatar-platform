@@ -45,6 +45,9 @@ export const initialUploadedIdPhotoSet = [
     { photo: null, isDragging: false },
     { photo: null, isDragging: false },
     { photo: null, isDragging: false },
+    { photo: null, isDragging: false },
+    { photo: null, isDragging: false },
+    { photo: null, isDragging: false },
 ]
 
 export const AVATAR_PARAMETER_OPTIONS = {

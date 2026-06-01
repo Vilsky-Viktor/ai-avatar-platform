@@ -83,6 +83,7 @@ export enum Models {
   lipSync = 'lipSync',
   eleven = 'eleven',
   buffaloL = 'buffalo_l',
+  adaface = 'adaface',
   seedvr = 'seedvr',
   none = 'none'
 }
@@ -147,6 +148,7 @@ export type LipSync = ServiceBase & {
 
 export type FaceMatcher = ServiceBase & {
   imagePath: string;
+  idPhotoPaths: string[];
   threshold: number;
 }
 

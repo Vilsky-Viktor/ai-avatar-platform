@@ -10,6 +10,7 @@ import {
   Models,
   Flows,
   Services,
+  FaceMatcher,
 } from '../types/job';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
 import { genDigitalTwinIdPhotoData, genSyntheticFrontIdPhtotoData, genSyntheticIdPhotoData } from '../utils/idPhotoInputData';
@@ -172,7 +173,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
 
       return {
         userId,
-        groupId: jobRequest.groupId,
+        groupId: groupId,
         avatarId: jobRequest.avatarId,
         mediaType: MediaTypes.image,
         target: JobTargets.idPhoto,
@@ -180,7 +181,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, upscaler],
+        workflow: [input.imageGenerator, input.faceMatcher, upscaler],
         metadata: input.metadata,
         resultMediaPath: upscalerUploadPath
       }

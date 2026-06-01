@@ -1,6 +1,6 @@
 import { AvatarParameters } from '../types/avatar';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
-import { Directions, Flows, ImageGenerator, Job, JobMetadata, JobStatuses, Models, Services } from '../types/job';
+import { Directions, FaceMatcher, Flows, ImageGenerator, Job, JobMetadata, JobStatuses, Models, Services } from '../types/job';
 import { Ratios } from '../types/ratios';
 import uuid from 'uuid';
 
@@ -177,7 +177,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
 
 
 export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): { 
-  imageGenerator: ImageGenerator, metadata: JobMetadata, order: number 
+  imageGenerator: ImageGenerator, metadata: JobMetadata, faceMatcher: FaceMatcher, order: number 
 }[] => {
   const { gender } = parameters;
 
@@ -185,19 +185,30 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
   const dimensions = '2048x2048';
   const isFemale = gender === 'female';
 
+  const uuids = Array.from({ length: 7 }, () => uuid.v4());
+
   return [
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: `Change outfit to ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Change background to gray studio background`,
+        prompt: `Change background to gray studio background`,
         negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
         ratio,
-        imagePaths: [idPhotoSet.front!],
+        imagePaths: [idPhotoSet.front!, idPhotoSet.front!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[0]}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[0]}.png`,
+        idPhotoPaths: [idPhotoSet.front!],
+        threshold: 0.95,
+        status: JobStatuses.pending,
+        model: Models.adaface,
+        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 1,
@@ -205,15 +216,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: `Change outfit to ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Change background to gray studio background`,
+        prompt: `Change background to gray studio background`,
         negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
         ratio,
-        imagePaths: [idPhotoSet.frontSmile!],
+        imagePaths: [idPhotoSet.frontSmile!, idPhotoSet.frontSmile!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[1]}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[1]}.png`,
+        idPhotoPaths: [idPhotoSet.frontSmile!],
+        threshold: 0.95,
+        status: JobStatuses.pending,
+        model: Models.adaface,
+        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 2,
@@ -221,15 +241,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: `Change outfit to ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Change background to gray studio background`,
+        prompt: `Change background to gray studio background`,
         negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
         ratio,
-        imagePaths: [idPhotoSet.rightQuarter!],
+        imagePaths: [idPhotoSet.rightQuarter!, idPhotoSet.rightQuarter!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[2]}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[2]}.png`,
+        idPhotoPaths: [idPhotoSet.rightQuarter!],
+        threshold: 0.92,
+        status: JobStatuses.pending,
+        model: Models.adaface,
+        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 3,
@@ -237,15 +266,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: `Change outfit to ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Change background to gray studio background`,
+        prompt: `Change background to gray studio background`,
         negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
         ratio,
-        imagePaths: [idPhotoSet.leftQuarter!],
+        imagePaths: [idPhotoSet.leftQuarter!, idPhotoSet.leftQuarter!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[3]}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[3]}.png`,
+        idPhotoPaths: [idPhotoSet.leftQuarter!],
+        threshold: 0.92,
+        status: JobStatuses.pending,
+        model: Models.adaface,
+        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 4,
@@ -253,15 +291,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: `Change outfit to ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Change background to gray studio background`,
+        prompt: `Change background to gray studio background`,
         negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
         ratio,
-        imagePaths: [idPhotoSet.rightSide!],
+        imagePaths: [idPhotoSet.rightSide!, idPhotoSet.rightSide!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[4]}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[4]}.png`,
+        idPhotoPaths: [idPhotoSet.rightSide!],
+        threshold: 0.85,
+        status: JobStatuses.pending,
+        model: Models.adaface,
+        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 5,
@@ -269,15 +316,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: `Change outfit to ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Change background to gray studio background`,
+        prompt: `Change background to gray studio background`,
         negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
         ratio,
-        imagePaths: [idPhotoSet.leftSide!],
+        imagePaths: [idPhotoSet.leftSide!, idPhotoSet.leftSide!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[5]}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[5]}.png`,
+        idPhotoPaths: [idPhotoSet.leftSide!],
+        threshold: 0.85,
+        status: JobStatuses.pending,
+        model: Models.adaface,
+        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 6,
@@ -285,15 +341,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: `Change outfit to ${isFemale ? 'white strapless top' : 'white polo with open buttons'}, light gray running shorts and white sneakers. Change background to gray studio background`,
+        prompt: `Change background to gray studio background`,
         negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
         ratio,
-        imagePaths: [idPhotoSet.body!],
+        imagePaths: [idPhotoSet.body!, idPhotoSet.body!],
         safetyTolerance: 2,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[6]}.png`,
         status: JobStatuses.pending,
         model: Models.flux,
         flow: Flows.ti2i,
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[6]}.png`,
+        idPhotoPaths: [idPhotoSet.body!],
+        threshold: 0.9,
+        status: JobStatuses.pending,
+        model: Models.adaface,
+        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 7,

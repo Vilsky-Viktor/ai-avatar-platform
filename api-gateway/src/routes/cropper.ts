@@ -5,8 +5,8 @@ const BASE = process.env.CROPPER_URL;
 const router = Router();
 
 router.post(
-    '/crop-headshot',
-    createProxyHandler('post', () => `${BASE}/crop-headshot`, 'Crop headshot')
+    '/crop',
+    createProxyHandler('post', () => `${BASE}/crop`, 'Crop headshot')
 );
 
 export default router;

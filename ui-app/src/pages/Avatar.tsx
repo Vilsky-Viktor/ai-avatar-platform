@@ -27,7 +27,6 @@ function AvatarPage() {
     const [jobs, setJobs] = useState([] as (Job | null)[]);
     const jobsRef = useRef<(Job | null)[]>([]);
 
-    const [numModels, setNumModels] = useState(0);
     const [numImages, setNumImages] = useState(0);
     const [numVideos, setNumVideos] = useState(0);
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; mediaType: MediaTypes } | null>(null);
@@ -154,7 +153,7 @@ function AvatarPage() {
     const fetchJobs = async (avatarId: string) => {
         const jobs = await getJobsByAvatarId(avatarId);
         const filteredJobs = jobs.filter((job: Job) => [
-            JobTargets.avatarMedia
+            JobTargets.avatarMedia, JobTargets.idPhoto
         ].includes(job.target));
 
         await Promise.all(filteredJobs.map(async (job: Job) => {
@@ -203,11 +202,6 @@ function AvatarPage() {
                         <div className="flex items-center gap-8 mb-10">
                             <h1 className="text-2xl font-medium uppercase tracking-[0.2em]">{avatar.name}</h1>
                             <div className="flex items-center gap-6 text-base-content/40">
-                                <div className="flex flex-col items-center">
-                                    <span className="text-lg font-bold text-base-content">{numModels}</span>
-                                    <span className="text-[10px] uppercase tracking-[0.2em]">Models</span>
-                                </div>
-                                <div className="w-px h-8 bg-base-content/10" />
                                 <div className="flex flex-col items-center">
                                     <span className="text-lg font-bold text-base-content">{numImages}</span>
                                     <span className="text-[10px] uppercase tracking-[0.2em]">Images</span>

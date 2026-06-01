@@ -2,7 +2,7 @@ import io
 import os
 
 from google.cloud import storage
-from PIL import Image
+from PIL import Image, ImageOps
 
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "loom24-mvp.firebasestorage.app")
 
@@ -20,7 +20,8 @@ def download_image(blob_path: str) -> Image.Image:
     bucket = _get_client().bucket(BUCKET_NAME)
     blob = bucket.blob(blob_path)
     data = blob.download_as_bytes()
-    return Image.open(io.BytesIO(data))
+    img = Image.open(io.BytesIO(data))
+    return ImageOps.exif_transpose(img)
 
 
 def upload_image(image: Image.Image, blob_path: str) -> str:

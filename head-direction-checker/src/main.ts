@@ -37,8 +37,6 @@ function listenForResults() {
     if (stepIdx >= 0) {
       const stepData = job.workflow[stepIdx] as HeadDirectionChecker;
 
-      message.ack();
-
       try {
         const image = await downloadMediaFromPath(stepData.imagePath);
         const passed = await checkDirection(image, stepData.direction);
@@ -66,6 +64,8 @@ function listenForResults() {
     } else {
       logger.warn(`Head direction checker pending step is not found for job ${job.id}`);
     }
+
+    message.ack();
   };
 
   subscription.on('message', messageHandler);
