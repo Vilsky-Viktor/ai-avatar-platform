@@ -4,13 +4,13 @@ import type { Avatar } from '../../types/avatar';
 import { type VideoRatio, VIDEO_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import MediaSelectorModal from '../mediaSelector/MediaSelectorModal';
-import type { InferenceJob } from '../../types/job';
+import type { Job } from '../../types/job';
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatar?: Avatar;
-    jobs: InferenceJob[];
+    jobs: Job[];
     onGenerate: (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number) => Promise<void>;
 };
 
@@ -117,7 +117,7 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
                                 <Clock size={18} className="text-base-content/30 shrink-0" />
                                 <input
                                     type="range"
-                                    min={2}
+                                    min={3}
                                     max={10}
                                     step={1}
                                     value={lengthSec}

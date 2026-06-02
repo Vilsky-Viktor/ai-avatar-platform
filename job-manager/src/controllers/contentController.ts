@@ -148,11 +148,10 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
   try {
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
-      .filter((job: Job) => [0,1,2,3].includes(job.order!))
+      .filter((job: Job) => [1,2,3,4].includes(job.order!))
       .map((job: Job) => job.resultMediaPath);
 
-    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.png`
-    const upscalerUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}-upscaled.png`
+    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`
 
     const videoGenerator: videoGenerator = {
       service: Services.videoGenerator,
@@ -168,26 +167,17 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       flow: Flows.ti2v,
     };
 
-    const upscaler: Upscaler = {
-      service: Services.upscaler,
-      videoPath: generatorUploadPath,
-      uploadPath: upscalerUploadPath,
-      status: JobStatuses.pending,
-      model: Models.topaz,
-      flow: Flows.v2v,
-    };
-
     const job: Job = {
       userId,
       avatarId: jobRequest.avatarId,
-      mediaType: MediaTypes.image,
+      mediaType: MediaTypes.video,
       target: JobTargets.avatarMedia,
       status: JobStatuses.pending,
       maxRuns: 1,
       curRun: 0,
-      workflow: [videoGenerator, upscaler],
-      metadata: { ratio: jobRequest.ratio },
-      resultMediaPath: upscalerUploadPath
+      workflow: [videoGenerator],
+      metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
+      resultMediaPath: generatorUploadPath
     }
       
     const dbJob = await createDb(userId, job);

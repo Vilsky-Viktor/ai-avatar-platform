@@ -14,7 +14,7 @@ export const genVideoV3ProImageToVideo = async (req: Request, res: Response, nex
 
   const element: ImageElement = {
     frontal_image_url: imageRefUrls[0],
-    reference_image_urls: [imageRefUrls[1], imageRefUrls[2], imageRefUrls[3]]
+    reference_image_urls: imageRefUrls.slice(1),
   }
 
   if (input.objectRefPaths) {
@@ -22,19 +22,18 @@ export const genVideoV3ProImageToVideo = async (req: Request, res: Response, nex
 
     const objectElement: ImageElement = {
         frontal_image_url: objectImageRefUrls[0],
-        reference_image_urls: [objectImageRefUrls[1], objectImageRefUrls[2], objectImageRefUrls[3]]
+        reference_image_urls: objectImageRefUrls.slice(1),
     }
 
     objectElements.push(objectElement)
   }
 
   const payload: VideoV3ProImageToVideoOut = {
-    prompt: `${input.prompt}. Face from @Element1`,
+    prompt: `${input.prompt}. Face identity from @Element1`,
     elements: [element, ...objectElements],
     negative_prompt: input.negativePrompt,
-    multi_prompt: null,
     start_image_url: imageUrl,
-    duration: input.duration,
+    duration: input.duration.toString(),
     generate_audio: false,
     shot_type: ShotTypes.customize,
     aspect_ratio: input.ratio,
@@ -51,7 +50,8 @@ export const genVideoV3ProImageToVideo = async (req: Request, res: Response, nex
 
     return res.status(200).json({ mediaPath: input.uploadPath });
   } catch (error: any) {
-    req.log.info(`Failed to generate with Kling V3 Pro Image To Video: ${error}`);
+    req.log.error(`Failed to generate with Kling V3 Pro Image To Video: ${error}`);
+    console.log(error.body)
     next(error);
   }
 }
@@ -66,7 +66,7 @@ export const genVideoV3ProMotionControl = async (req: Request, res: Response, ne
 
   const element: ImageElement = {
     frontal_image_url: imageRefUrls[0],
-    reference_image_urls: [imageRefUrls[1], imageRefUrls[2], imageRefUrls[3]]
+    reference_image_urls: imageRefUrls.slice(1),
   }
 
   const payload: VideoV3ProMotionControlOut = {
@@ -88,7 +88,7 @@ export const genVideoV3ProMotionControl = async (req: Request, res: Response, ne
 
     return res.status(200).json({ mediaPath: input.uploadPath });
   } catch (error: any) {
-    req.log.info(`Failed to generate with Kling V3 Pro Motion Control: ${error}`);
+    req.log.error(`Failed to generate with Kling V3 Pro Motion Control: ${error}`);
     next(error);
   }
 }

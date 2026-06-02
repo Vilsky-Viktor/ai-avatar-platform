@@ -40,7 +40,7 @@ function listenForResults() {
       throw error;
     }
 
-    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.imageGenerator && step.status === JobStatuses.pending);
+    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.videoGenerator && step.status === JobStatuses.pending);
 
     if (stepIdx >= 0) {
       const stepData = job.workflow[stepIdx] as ImageGenerator;

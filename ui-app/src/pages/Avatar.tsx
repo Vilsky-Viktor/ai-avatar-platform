@@ -10,7 +10,7 @@ import CreateMediaModal from '../components/avatar/CreateMediaModal';
 import GenImageModal from '../components/avatar/GenImageModal';
 import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import GenVideoModal from '../components/avatar/GenVideoModal';
-import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, JobStatuses, JobTargets, MediaTypes, Views, ShotTypes } from '../types/job';
+import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, JobStatuses, JobTargets, MediaTypes } from '../types/job';
 import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
@@ -91,15 +91,7 @@ function AvatarPage() {
         scrollToTop();
     };
 
-    const mirrorView = (v: Views): Views => ({
-        [Views.leftSide]:     Views.rightSide,
-        [Views.leftQuarter]:  Views.rightQuarter,
-        [Views.front]:        Views.front,
-        [Views.rightQuarter]: Views.leftQuarter,
-        [Views.rightSide]:    Views.leftSide,
-    })[v];
-
-    const handleGenerateImage = async (prompt: string, ratio: string, imageFiles: File[], view: Views, shotType: ShotTypes) => {
+    const handleGenerateImage = async (prompt: string, ratio: string, imageFiles: File[]) => {
         const uploadedPaths: string[] = [];
 
         for (const file of imageFiles) {
@@ -120,8 +112,6 @@ function AvatarPage() {
             mediaPaths: uploadedPaths,
             ratio,
             avatarId: avatar.id!,
-            view: mirrorView(view),
-            shotType,
         };
 
         const job = await genAvatarPhoto(jobRequest);

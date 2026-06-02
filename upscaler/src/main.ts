@@ -47,10 +47,13 @@ function listenForResults() {
 
       try {
         if (stepData.model === Models.topaz && stepData.flow === Flows.i2i) {
+          logger.info(`Using Topaz image upscaler for job ${job.id}`);
           await upscaleTopazImage(job.userId, stepData);
         } else if (stepData.model === Models.topaz && stepData.flow === Flows.v2v) {
+          logger.info(`Using Topaz video upscaler for job ${job.id}`);
           await upscaleTopazVideo(job.userId, stepData);
         } else if (stepData.model === Models.seedvr && stepData.flow === Flows.i2i) {
+          logger.info(`Using Seedvr image upscaler for job ${job.id}`);
           await upscaleSeedvrImage(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);

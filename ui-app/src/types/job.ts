@@ -27,8 +27,6 @@ export type PhotoJobRequest = {
   ratio: string;
   prompt: string;
   mediaPaths?: string[];
-  view: Views;
-  shotType: ShotTypes;
 }
 
 export type VideoJobRequest = {

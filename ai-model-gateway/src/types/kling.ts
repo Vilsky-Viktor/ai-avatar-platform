@@ -17,7 +17,7 @@ export type MultiPrompt = {
 
 export type ImageElement = {
     frontal_image_url: string;
-    reference_image_urls: string[]
+    reference_image_urls: string[];
 }
 
 export type VideoElement = {
@@ -38,9 +38,9 @@ export type VideoV3ProImageToVideoIn = {
 
 export type VideoV3ProImageToVideoOut = {
     prompt: string;
-    multi_prompt: MultiPrompt | null;
+    multi_prompt?: MultiPrompt | null;
     start_image_url: string;
-    duration: number;
+    duration: string;
     generate_audio: boolean;
     end_image_url?: string;
     elements: (ImageElement | VideoElement)[] | null;
