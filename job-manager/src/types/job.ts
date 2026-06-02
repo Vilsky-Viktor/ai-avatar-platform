@@ -43,6 +43,11 @@ export type VideoJobRequest = {
   lengthSec?: number;
 }
 
+export type AudioJobRequest = {
+  avatarId: string;
+  prompt: string;
+}
+
 export type PhotoSetJobRequest = {
   avatarId: string;
   type: PhotoSetType;
@@ -51,6 +56,7 @@ export type PhotoSetJobRequest = {
 export enum MediaTypes {
   image = 'image',
   video = 'video',
+  audio = 'audio'
 }
 
 export enum JobTargets {
@@ -136,7 +142,7 @@ export type ImageGenerator = ServiceBase & {
   temperature?: number;
 }
 
-export type videoGenerator = ServiceBase & {
+export type VideoGenerator = ServiceBase & {
   prompt?: string;
   negativePrompt?: string;
   imagePath: string;
@@ -155,7 +161,6 @@ export type Upscaler = ServiceBase & {
 export type AudioGenerator = ServiceBase & {
   text: string;
   voice: string;
-  language: string;
 }
 
 export type LipSync = ServiceBase & {
@@ -177,7 +182,7 @@ export type HeadDirectionChecker = ServiceBase & {
 
 export type WorkflowStep = 
   ImageGenerator | 
-  videoGenerator | 
+  VideoGenerator | 
   Upscaler | 
   AudioGenerator | 
   LipSync | 

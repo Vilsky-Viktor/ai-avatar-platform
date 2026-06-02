@@ -370,7 +370,6 @@ function CreateSyntheticIdPhotosPage() {
                                 onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
                                 onRegenerate={restartJob}
                                 canRestart={!stepLocked() && allJobsStarted() && !isFrontJob(idx)}
-                                faceMatchThresholds={{ green: 0.6, yellow: 0.55, orange: 0.5 }}
                                 showOrder={true}
                             />
                         ))}

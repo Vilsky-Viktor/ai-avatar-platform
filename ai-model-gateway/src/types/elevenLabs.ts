@@ -17,6 +17,6 @@ export type TtsElevenV3Out = {
     voice: string;
     stability: number;
     timestamps?: boolean;
-    language_code: string;
+    language_code?: string;
     apply_text_normalization: TextNormalizations;
 }

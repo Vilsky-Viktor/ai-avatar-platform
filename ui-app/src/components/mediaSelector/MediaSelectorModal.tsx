@@ -18,8 +18,7 @@ function MediaSelectorModal({ isOpen, onClose, jobs, onSelect, title = 'Select R
         (job) => job.mediaType === MediaTypes.image &&
                  job.target === JobTargets.avatarMedia &&
                  job.status === JobStatuses.completed &&
-                 job.resultMediaUrl &&
-                 SUPPORTED_RATIOS.has(job.metadata?.ratio ?? '')
+                 job.resultMediaUrl
     );
 
     useScrollLock(isOpen);
@@ -60,7 +59,7 @@ function MediaSelectorModal({ isOpen, onClose, jobs, onSelect, title = 'Select R
                                 >
                                     <img
                                         src={job.resultMediaUrl!}
-                                        className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-90"
+                                        className="w-full h-full object-cover object-top transition-all duration-300 group-hover:scale-105 group-hover:opacity-90"
                                     />
                                     <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all" />
                                     {job.metadata?.ratio && (

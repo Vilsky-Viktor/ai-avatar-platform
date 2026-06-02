@@ -85,7 +85,7 @@ export type ImageGenerator = ServiceBase & {
   temperature?: number;
 }
 
-export type videoGenerator = ServiceBase & {
+export type VideoGenerator = ServiceBase & {
   prompt?: string;
   negativePrompt?: string;
   imagePath: string;
@@ -125,7 +125,7 @@ export type HeadDirectionChecker = ServiceBase & {
 
 export type WorkflowStep = 
   ImageGenerator | 
-  videoGenerator | 
+  VideoGenerator | 
   Upscaler | 
   AudioGenerator | 
   LipSync | 

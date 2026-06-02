@@ -37,6 +37,10 @@ router.post(
     createProxyHandler('post', () => `${BASE}/gen-avatar-video`, 'Generate avatar video')
 );
 router.post(
+    '/gen-avatar-audio',
+    createProxyHandler('post', () => `${BASE}/gen-avatar-audio`, 'Generate avatar audio')
+);
+router.post(
     '/restart/:id',
     createProxyHandler('post', (req) => `${BASE}/restart/${req.params.id}`, 'Restart job')
 );

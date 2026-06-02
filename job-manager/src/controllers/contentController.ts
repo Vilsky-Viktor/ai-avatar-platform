@@ -11,9 +11,11 @@ import {
   Upscaler,
   Services,
   PhotoSetType,
-  videoGenerator,
+  VideoGenerator,
   Models,
   Flows,
+  AudioJobRequest,
+  AudioGenerator,
 } from '../types/job';
 import { 
   getAvatarIdPhotos as getAvatarIdPhotosDb, 
@@ -151,9 +153,9 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       .filter((job: Job) => [1,2,3,4].includes(job.order!))
       .map((job: Job) => job.resultMediaPath);
 
-    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`
+    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`;
 
-    const videoGenerator: videoGenerator = {
+    const videoGenerator: VideoGenerator = {
       service: Services.videoGenerator,
       prompt: jobRequest.prompt,
       negativePrompt: 'blur, distort, and low quality',
@@ -187,4 +189,48 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
     req.log.info(`Failed to generate avatar video for ${userId}: ${error}`);
     next(error);
   }
+}
+
+export const genAvatarAudio = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const jobRequest: AudioJobRequest = req.body;
+  const audioId = uuid.v4();
+
+  req.log.info(`Generate avatar audio for user ${userId}, avatar ${jobRequest.avatarId}`);
+
+  try {
+    const avatar = await getAvatarById(userId, jobRequest.avatarId);
+    const uploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/audios/${audioId}.mp3`;
+
+    const audioGenerator: AudioGenerator = {
+      service: Services.audioGenerator,
+      model: Models.eleven,
+      flow: Flows.t2a,
+      status: JobStatuses.pending,
+      text: jobRequest.prompt,
+      voice: avatar.voiceId!,
+      uploadPath
+    }
+
+    const job: Job = {
+      userId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.audio,
+      target: JobTargets.avatarMedia,
+      status: JobStatuses.pending,
+      maxRuns: 1,
+      curRun: 0,
+      workflow: [audioGenerator],
+      metadata: { userPrompt: jobRequest.prompt },
+      resultMediaPath: uploadPath
+    }
+
+    const dbJob = await createDb(userId, job);
+    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
+    return res.status(201).json(dbJob);
+  } catch (error) {
+    req.log.info(`Failed to generate avatar audio for ${userId}: ${error}`);
+    next(error);
+  }
+
 }

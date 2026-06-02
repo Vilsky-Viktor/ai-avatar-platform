@@ -12,7 +12,6 @@ export const genTtsElevenV3 = async (req: Request, res: Response, next: NextFunc
     text: input.text,
     voice: input.voice,
     stability: 0.5,
-    language_code: input.language,
     apply_text_normalization: TextNormalizations.auto
   }
 

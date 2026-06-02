@@ -1,56 +1,8 @@
-import type { FirestoreTimestamp } from "./firestore";
-import type { AvatarParameters } from "./avatar";
-import type { PhotoSetType } from "./image";
-
-export enum Views {
-  front = 'front',
-  leftQuarter = 'leftQuarter',
-  rightQuarter = 'rightQuarter',
-  leftSide = 'leftSide',
-  rightSide = 'rightSide',
-}
-
-export enum ShotTypes {
-  upperBody = 'upperBody',
-  fullBody = 'fullBody',
-}
-
-export type IdPhotoJobRequest = {
-  groupId?: string;
-  avatarId: string;
-  parameters: AvatarParameters;
-  frontIdPhotoPath?: string;
-}
-
-export type PhotoJobRequest = {
-  avatarId: string;
-  ratio: string;
-  prompt: string;
-  mediaPaths?: string[];
-}
-
-export type VideoJobRequest = {
-  avatarId: string;
-  ratio: string;
-  prompt: string;
-  mediaPaths?: string[];
-  lengthSec?: number;
-}
-
-export type AudioJobRequest = {
-  avatarId: string;
-  prompt: string;
-}
-
-export type PhotoSetJobRequest = {
-  avatarId: string;
-  type: PhotoSetType;
-}
+import { Timestamp } from 'firebase-admin/firestore';
 
 export enum MediaTypes {
   image = 'image',
   video = 'video',
-  audio = 'audio'
 }
 
 export enum JobTargets {
@@ -63,6 +15,7 @@ export enum JobStatuses {
   generating = 'generating',
   completed = 'completed',
   error = 'error',
+  canceled = 'canceled',
 }
 
 export enum Directions {
@@ -73,7 +26,6 @@ export enum Directions {
 
 export type JobMetadata = {
   ratio?: string;
-  dimensions?: string;
   userPrompt?: string;
   lengthSec?: number;
 }
@@ -96,7 +48,7 @@ export enum Models {
   lipSync = 'lipSync',
   eleven = 'eleven',
   buffaloL = 'buffalo_l',
-  seedvr = 'seedvr',
+  googleImage3Pro = 'googleImage3Pro',
   none = 'none'
 }
 
@@ -130,9 +82,10 @@ export type ImageGenerator = ServiceBase & {
   horizontalAngle?: number;
   verticalAngle?: number;
   zoom?: number;
+  temperature?: number;
 }
 
-export type videoGenerator = ServiceBase & {
+export type VideoGenerator = ServiceBase & {
   prompt?: string;
   negativePrompt?: string;
   imagePath: string;
@@ -150,7 +103,6 @@ export type Upscaler = ServiceBase & {
 export type AudioGenerator = ServiceBase & {
   text: string;
   voice: string;
-  language: string;
 }
 
 export type LipSync = ServiceBase & {
@@ -160,7 +112,9 @@ export type LipSync = ServiceBase & {
 
 export type FaceMatcher = ServiceBase & {
   imagePath: string;
+  idPhotoPaths: string[];
   threshold: number;
+  faceMatch?: number;
 }
 
 export type HeadDirectionChecker = ServiceBase & {
@@ -170,7 +124,7 @@ export type HeadDirectionChecker = ServiceBase & {
 
 export type WorkflowStep = 
   ImageGenerator | 
-  videoGenerator | 
+  VideoGenerator | 
   Upscaler | 
   AudioGenerator | 
   LipSync | 
@@ -187,11 +141,10 @@ export type Job = {
   status?: JobStatuses;
   curRun: number;
   maxRuns: number;
-  createdAt?: FirestoreTimestamp;
-  updatedAt?: FirestoreTimestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
   order?: number;
   workflow: WorkflowStep[];
   metadata?: JobMetadata;
   resultMediaPath: string;
-  resultMediaUrl?: string;
 }

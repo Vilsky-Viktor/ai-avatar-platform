@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
-import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
+import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '../types/avatar';
 import LazyMediaCard from '../components/LazyMediaCard';
@@ -10,7 +10,8 @@ import CreateMediaModal from '../components/avatar/CreateMediaModal';
 import GenImageModal from '../components/avatar/GenImageModal';
 import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import GenVideoModal from '../components/avatar/GenVideoModal';
-import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, JobStatuses, JobTargets, MediaTypes } from '../types/job';
+import GenAudioModal from '../components/avatar/GenAudioModal';
+import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, type AudioJobRequest, JobStatuses, JobTargets, MediaTypes } from '../types/job';
 import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
@@ -29,10 +30,12 @@ function AvatarPage() {
 
     const [numImages, setNumImages] = useState(0);
     const [numVideos, setNumVideos] = useState(0);
+    const [numAudios, setNumAudios] = useState(0);
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; mediaType: MediaTypes } | null>(null);
     const [createMediaOpen, setCreateMediaOpen] = useState(false);
     const [generateImageOpen, setGenerateImageOpen] = useState(false);
     const [generateVideoOpen, setGenerateVideoOpen] = useState(false);
+    const [generateAudioOpen, setGenerateAudioOpen] = useState(false);
     const [photoSetOpen, setPhotoSetOpen] = useState(false);
     const [bgBlurred, setBgBlurred] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
@@ -43,6 +46,8 @@ function AvatarPage() {
     const closeGenerateImage = () => { setBgBlurred(false); setGenerateImageOpen(false); };
     const openGenerateVideo = () => { setCreateMediaOpen(false); setGenerateVideoOpen(true); };
     const closeGenerateVideo = () => { setBgBlurred(false); setGenerateVideoOpen(false); };
+    const openGenerateAudio = () => { setCreateMediaOpen(false); setGenerateAudioOpen(true); };
+    const closeGenerateAudio = () => { setBgBlurred(false); setGenerateAudioOpen(false); };
     const openPhotoSet = () => { setCreateMediaOpen(false); setPhotoSetOpen(true); };
     const closePhotoSet = () => { setBgBlurred(false); setPhotoSetOpen(false); };
 
@@ -57,6 +62,7 @@ function AvatarPage() {
 
         setNumImages(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
         setNumVideos(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
+        setNumAudios(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.audio && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
 
         return () => unsubscribe();
     }, [jobs]);
@@ -131,6 +137,17 @@ function AvatarPage() {
         const job = await genAvatarVideo(jobRequest);
         pushJobs([job]);
         closeGenerateVideo();
+    };
+
+    const handleGenerateAudio = async (text: string) => {
+        const jobRequest: AudioJobRequest = {
+            avatarId: avatar.id!,
+            prompt: text,
+        };
+
+        const job = await genAvatarAudio(jobRequest);
+        pushJobs([job]);
+        closeGenerateAudio();
     };
 
     const handleGeneratePhotoset = async (type: PhotoSetType) => {
@@ -211,6 +228,11 @@ function AvatarPage() {
                                     <span className="text-lg font-bold text-base-content">{numVideos}</span>
                                     <span className="text-[10px] uppercase tracking-[0.2em]">Videos</span>
                                 </div>
+                                <div className="w-px h-8 bg-base-content/10" />
+                                <div className="flex flex-col items-center">
+                                    <span className="text-lg font-bold text-base-content">{numAudios}</span>
+                                    <span className="text-[10px] uppercase tracking-[0.2em]">Audios</span>
+                                </div>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -243,6 +265,7 @@ function AvatarPage() {
                 onImage={openGenerateImage}
                 onVideo={openGenerateVideo}
                 onPhotoSet={openPhotoSet}
+                onAudio={openGenerateAudio}
             />
             <GenImageModal
                 isOpen={generateImageOpen}
@@ -261,6 +284,11 @@ function AvatarPage() {
                 avatar={avatar}
                 jobs={jobs.filter((j): j is Job => j !== null)}
                 onGenerate={handleGenerateVideo}
+            />
+            <GenAudioModal
+                isOpen={generateAudioOpen}
+                onClose={closeGenerateAudio}
+                onGenerate={handleGenerateAudio}
             />
         </>
     );

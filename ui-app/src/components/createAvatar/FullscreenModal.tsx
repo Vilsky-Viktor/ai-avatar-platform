@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AudioLines } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { MediaTypes } from '../../types/job';
 
@@ -42,6 +43,7 @@ function FullscreenModal({ src, rect, mediaType, onClose }: Props) {
     if (!src) return null;
 
     const isVideo = mediaType === MediaTypes.video;
+    const isAudio = mediaType === MediaTypes.audio;
     const finalSize = Math.min(window.innerWidth * 0.96, window.innerHeight * 0.96);
     const tileScale = rect ? rect.width / finalSize : 0.88;
     const tileDx = rect ? rect.left + rect.width / 2 - window.innerWidth / 2 : 0;
@@ -76,7 +78,16 @@ function FullscreenModal({ src, rect, mediaType, onClose }: Props) {
                 ×
             </button>
 
-            {isVideo ? (
+            {isAudio ? (
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    style={mediaStyle}
+                    className="bg-base-100 rounded-2xl p-10 shadow-2xl flex flex-col items-center gap-6 w-[420px]"
+                >
+                    <AudioLines size={48} strokeWidth={1} className="text-primary" />
+                    <audio src={src} controls autoPlay className="w-full" />
+                </div>
+            ) : isVideo ? (
                 <video
                     src={src}
                     controls

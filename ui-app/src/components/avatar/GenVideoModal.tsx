@@ -93,7 +93,23 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
                         </div>
 
                         {/* Ratio + length switchers */}
-                        <div className="flex flex-col gap-3 items-end">
+                        <div className="flex flex-col gap-7 flex-1 pl-8 items-end">
+                            {/* Length slider */}
+                            <div className="flex items-center gap-3 w-full">
+                                <Clock size={18} className="text-base-content/30 shrink-0" />
+                                <input
+                                    type="range"
+                                    min={3}
+                                    max={10}
+                                    step={1}
+                                    value={lengthSec}
+                                    onChange={e => setLengthSec(Number(e.target.value))}
+                                    className="range range-primary range-xs flex-1"
+                                />
+                                <span className="text-sm font-semibold text-primary w-12 text-right shrink-0">{lengthSec} sec</span>
+                            </div>
+
+                            {/* Ratio switcher */}
                             <div className="flex gap-3">
                                 {VIDEO_RATIOS.map(r => (
                                     <button
@@ -112,19 +128,6 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
                                         <span className="text-[10px] font-semibold uppercase tracking-[0.15em]">{r.value}</span>
                                     </button>
                                 ))}
-                            </div>
-                            <div className="flex items-center gap-3 mt-5 w-full">
-                                <Clock size={18} className="text-base-content/30 shrink-0" />
-                                <input
-                                    type="range"
-                                    min={3}
-                                    max={10}
-                                    step={1}
-                                    value={lengthSec}
-                                    onChange={e => setLengthSec(Number(e.target.value))}
-                                    className="range range-primary range-xs flex-1"
-                                />
-                                <span className="text-sm font-semibold text-primary w-12 text-right shrink-0">{lengthSec} sec</span>
                             </div>
                         </div>
                     </div>

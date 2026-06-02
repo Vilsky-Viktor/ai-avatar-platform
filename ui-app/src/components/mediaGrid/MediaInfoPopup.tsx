@@ -1,7 +1,7 @@
 import { Maximize2, LayoutTemplate, MessageSquare, Copy, Check, Clock, Hd, CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import type { Job } from '../../types/job';
+import { MediaTypes, type Job } from '../../types/job';
 
 type Props = {
     job: Partial<Job>;
@@ -32,6 +32,7 @@ function InfoRow({ icon, label, value, action }: RowProps) {
 
 function MediaInfoPopup({ job, onClose }: Props) {
     useScrollLock();
+    const mediaType = job.mediaType;
     const ratio = job.metadata?.ratio;
     const prompt = job.metadata?.userPrompt;
     const dimensions = job.metadata?.dimensions;
@@ -77,16 +78,20 @@ function MediaInfoPopup({ job, onClose }: Props) {
                             value={createdAt}
                         />
                     )}
-                    <InfoRow
-                        icon={<LayoutTemplate size={22} className="text-base-content/50" />}
-                        label="Ratio"
-                        value={ratio ?? '—'}
-                    />
-                    <InfoRow
-                        icon={<Hd size={22} className="text-base-content/50" />}
-                        label="High Definition"
-                        value='Yes'
-                    />
+                    {ratio && (
+                        <InfoRow
+                            icon={<LayoutTemplate size={22} className="text-base-content/50" />}
+                            label="Ratio"
+                            value={ratio}
+                        />
+                    )}
+                    {(mediaType === MediaTypes.image || mediaType === MediaTypes.video) && (
+                        <InfoRow
+                            icon={<Hd size={22} className="text-base-content/50" />}
+                            label="High Definition"
+                            value='Yes'
+                        />
+                    )}
                     {prompt && (
                         <InfoRow
                             icon={<MessageSquare size={22} className="text-base-content/50" />}

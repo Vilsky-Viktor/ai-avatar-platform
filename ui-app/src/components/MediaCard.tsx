@@ -1,4 +1,4 @@
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd } from 'lucide-react';
+import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd, AudioLines } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { JobStatuses, MediaTypes, type Job } from '../types/job';
 import { downloadMediaFromBucket } from '../services/storage';
@@ -9,12 +9,6 @@ type FaceMatchThresholds = {
     green: number;
     yellow: number;
     orange: number;
-};
-
-const DEFAULT_THRESHOLDS: FaceMatchThresholds = {
-    green: 0.7,
-    yellow: 0.6,
-    orange: 0.55,
 };
 
 type Props = {
@@ -38,7 +32,6 @@ function MediaCard({
     canDelete = false,
     canRestart = true,
     showOrder = false,
-    faceMatchThresholds = DEFAULT_THRESHOLDS,
 }: Props) {
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -262,7 +255,34 @@ function MediaCard({
                 className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
                 onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect(), job.mediaType ?? MediaTypes.image)}
             >
-                {job.mediaType === MediaTypes.video ? (
+                {job.mediaType === MediaTypes.audio ? (
+                    <div className="absolute inset-0">
+                        {/* Play + rings — centered in the card */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="relative flex items-center justify-center">
+                                <div className="absolute w-20 h-20 rounded-full border border-primary/30 animate-audio-ring" style={{ animationDelay: '0s' }} />
+                                <div className="absolute w-20 h-20 rounded-full border border-primary/20 animate-audio-ring" style={{ animationDelay: '1.2s' }} />
+                                <div className="absolute w-20 h-20 rounded-full border border-primary/10 animate-audio-ring" style={{ animationDelay: '2.0s' }} />
+                                <Play size={50} strokeWidth={1} className="relative z-10 text-primary/50 group-hover:text-primary transition-colors duration-300" />
+                            </div>
+                        </div>
+                        {/* Bars — pinned to the bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-3">
+                            {([
+                                [0,    1.9 ], [0.18, 2.8 ], [0.06, 1.65], [0.3,  3.2 ], [0.12, 2.3 ],
+                                [0.22, 2.6 ], [0.08, 1.8 ], [0.28, 3.0 ], [0.04, 2.1 ], [0.14, 3.4 ],
+                                [0.24, 1.55], [0.02, 2.7 ], [0.16, 2.9 ], [0.32, 1.95], [0.1,  3.6 ],
+                                [0.26, 2.4 ], [0.07, 2.0 ], [0.2,  3.15], [0.35, 2.55], [0.03, 1.5 ],
+                            ] as [number, number][]).map(([delay, duration], i) => (
+                                <div
+                                    key={i}
+                                    className="w-[3px] h-8 bg-primary/40 group-hover:bg-primary/70 rounded-full animate-equalizer transition-colors duration-300"
+                                    style={{ animationDelay: `${delay}s`, animationDuration: `${duration}s`, transformOrigin: 'bottom' }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                ) : job.mediaType === MediaTypes.video ? (
                     <>
                         <video
                             src={url}
@@ -275,8 +295,8 @@ function MediaCard({
                             onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
-                            <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-                                <Play size={18} className="text-white fill-white ml-0.5" />
+                            <div className="w-16 h-16 rounded-full border border-white/20 bg-black/40 flex items-center justify-center">
+                                <Play size={28} className="text-white/80 fill-white/80 ml-1" />
                             </div>
                         </div>
                     </>
@@ -357,11 +377,13 @@ function MediaCard({
                 </div>
 
 
-                <div className="absolute bottom-2 left-2 z-10">
-                    <div className="px-1 py-0.5 bg-black/40 backdrop-blur-md rounded-[0.3rem] shadow-lg text-white flex items-center justify-center">
-                        <Hd size={22} strokeWidth={1.5} className="text-white" />
+                {job.mediaType !== MediaTypes.audio && (
+                    <div className="absolute bottom-2 left-2 z-10">
+                        <div className="px-1 py-0.5 bg-black/40 backdrop-blur-md rounded-[0.3rem] shadow-lg text-white flex items-center justify-center">
+                            <Hd size={22} strokeWidth={1.5} className="text-white" />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
             </>
         );
