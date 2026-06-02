@@ -44,10 +44,10 @@ function CreateTwinIdPhotosPage() {
     const uploadedPhotosConfig: { label: string; name: string; ref: React.RefObject<HTMLInputElement | null>; mode: CropMode }[] = [
         { label: 'Front',         name: 'front',        ref: useRef<HTMLInputElement>(null), mode: 'front'     },
         { label: 'Front smile',   name: 'front-smile',   ref: useRef<HTMLInputElement>(null), mode: 'front'     },
-        { label: 'Right quarter', name: 'right-quarter', ref: useRef<HTMLInputElement>(null), mode: 'quarter'   },
         { label: 'Left quarter',  name: 'left-quarter',  ref: useRef<HTMLInputElement>(null), mode: 'quarter'   },
-        { label: 'Right side',    name: 'right-side',    ref: useRef<HTMLInputElement>(null), mode: 'side'      },
+        { label: 'Right quarter', name: 'right-quarter', ref: useRef<HTMLInputElement>(null), mode: 'quarter'   },
         { label: 'Left side',     name: 'left-side',     ref: useRef<HTMLInputElement>(null), mode: 'side'      },
+        { label: 'Right side',    name: 'right-side',    ref: useRef<HTMLInputElement>(null), mode: 'side'      },
         { label: 'Full body',     name: 'full-body',     ref: useRef<HTMLInputElement>(null), mode: 'full_body' },
     ];
 

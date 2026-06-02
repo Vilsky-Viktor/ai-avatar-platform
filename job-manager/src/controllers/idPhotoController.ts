@@ -5,17 +5,10 @@ import {
   JobTargets,
   JobStatuses,
   IdPhotoJobRequest,
-  Upscaler,
-  HeadDirectionChecker,
-  Models,
-  Flows,
-  Services,
-  FaceMatcher,
 } from '../types/job';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
 import { genDigitalTwinIdPhotoData, genSyntheticFrontIdPhtotoData, genSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import {
-  getByGroupId as getByGroupIdDb,
   create as createDb,
   createMany as createManyDb,
 } from '../repositories/job';
@@ -36,19 +29,6 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
   try {
     const input = genSyntheticFrontIdPhtotoData(jobRequest.parameters, userId, jobRequest.avatarId);
 
-    const generatorUploadPath = input.imageGenerator.uploadPath!;
-    const dotIndex = generatorUploadPath.lastIndexOf('.');
-    const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
-
-    const upscaler: Upscaler = {
-      service: Services.upscaler,
-      imagePath: generatorUploadPath,
-      uploadPath: upscalerUploadPath,
-      status: JobStatuses.pending,
-      model: Models.seedvr,
-      flow: Flows.i2i,
-    };
-
     const job: Job = {
       groupId,
       userId,
@@ -59,9 +39,9 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
       maxRuns: 3,
       curRun: 0,
       order: 1,
-      workflow: [input.imageGenerator, upscaler],
+      workflow: [input.imageGenerator],
       metadata: input.metadata,
-      resultMediaPath: upscalerUploadPath
+      resultMediaPath: input.imageGenerator.uploadPath!
     }
 
     const dbJob = await createDb(userId, job);
@@ -88,28 +68,6 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
     const inputs = genSyntheticIdPhotoData(jobRequest.parameters, userId, jobRequest.avatarId, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input) => {
-      const generatorUploadPath = input.imageGenerator.uploadPath!;
-      const dotIndex = generatorUploadPath.lastIndexOf('.');
-      const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
-
-      const upscaler: Upscaler = {
-        service: Services.upscaler,
-        imagePath: generatorUploadPath,
-        uploadPath: upscalerUploadPath,
-        status: JobStatuses.pending,
-        model: Models.seedvr,
-        flow: Flows.i2i,
-      };
-
-      const headDirectionChecker: HeadDirectionChecker = {
-        service: Services.headDirectionChecker,
-        imagePath: generatorUploadPath,
-        direction: input.direction,
-        status: JobStatuses.pending,
-        model: Models.buffaloL,
-        flow: Flows.none
-      };
-
       return {
         userId,
         groupId: jobRequest.groupId,
@@ -120,9 +78,9 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, headDirectionChecker, upscaler],
+        workflow: [input.imageGenerator],
         metadata: input.metadata,
-        resultMediaPath: upscalerUploadPath
+        resultMediaPath: input.imageGenerator.uploadPath!
       }
     })
 
@@ -158,19 +116,6 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
     const inputs = genDigitalTwinIdPhotoData(jobRequest.parameters, userId, jobRequest.avatarId, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input) => {
-      const generatorUploadPath = input.imageGenerator.uploadPath!;
-      const dotIndex = generatorUploadPath.lastIndexOf('.');
-      const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
-
-      const upscaler: Upscaler = {
-        service: Services.upscaler,
-        imagePath: generatorUploadPath,
-        uploadPath: upscalerUploadPath,
-        status: JobStatuses.pending,
-        model: Models.seedvr,
-        flow: Flows.i2i,
-      };
-
       return {
         userId,
         groupId: groupId,
@@ -181,9 +126,9 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, input.faceMatcher, upscaler],
+        workflow: [input.imageGenerator],
         metadata: input.metadata,
-        resultMediaPath: upscalerUploadPath
+        resultMediaPath: input.imageGenerator.uploadPath!
       }
     })
     

@@ -16,7 +16,8 @@ export const genV2ProEdit = async (req: Request, res: Response, next: NextFuncti
     image_urls: imageUrls,
     image_size: RatioToImageSizeMapping[input.ratio],
     output_format: OutputFormats.png,
-    safety_tolerance: input.safetyTolerance
+    safety_tolerance: input.safetyTolerance,
+    enable_safety_checker: false
   }
 
   try {

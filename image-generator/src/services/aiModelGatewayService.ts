@@ -14,3 +14,6 @@ export const genQwenImageEdit2511MultipleAngles = (userId: string, payload: Imag
 
 export const genFluxV2ProEdit = (userId: string, payload: ImageGenerator): Promise<void> =>
     client.post('/flux/v2/pro/edit', userId, payload);
+
+export const genGoogleImage3Pro = (userId: string, payload: ImageGenerator): Promise<void> =>
+    client.post('/google/image/3/pro', userId, payload);

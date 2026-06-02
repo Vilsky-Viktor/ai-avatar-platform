@@ -1,6 +1,19 @@
 import type { FirestoreTimestamp } from "./firestore";
-import type { AvatarParameters, AvatarTypes } from "./avatar";
+import type { AvatarParameters } from "./avatar";
 import type { PhotoSetType } from "./image";
+
+export enum Views {
+  front = 'front',
+  leftQuarter = 'leftQuarter',
+  rightQuarter = 'rightQuarter',
+  leftSide = 'leftSide',
+  rightSide = 'rightSide',
+}
+
+export enum ShotTypes {
+  upperBody = 'upperBody',
+  fullBody = 'fullBody',
+}
 
 export type IdPhotoJobRequest = {
   groupId?: string;
@@ -14,6 +27,8 @@ export type PhotoJobRequest = {
   ratio: string;
   prompt: string;
   mediaPaths?: string[];
+  view: Views;
+  shotType: ShotTypes;
 }
 
 export type VideoJobRequest = {

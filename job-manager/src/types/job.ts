@@ -2,8 +2,21 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { Ratios } from './ratios';
 import type { AvatarTypes, AvatarParameters } from './avatar';
 
+export enum Views {
+  front = 'front',
+  leftQuarter = 'leftQuarter',
+  rightQuarter = 'rightQuarter',
+  leftSide = 'leftSide',
+  rightSide = 'rightSide',
+}
+
+export enum ShotTypes {
+  upperBody = 'upperBody',
+  fullBody = 'fullBody',
+}
+
 export type PhotoSetType = 
-  'whatsapp-stickers' | 
+  'whatsapp-stickers' |
   'around-the-world' | 
   'outfit-styles' | 
   'luxury-life';
@@ -20,6 +33,8 @@ export type PhotoJobRequest = {
   ratio: Ratios;
   prompt: string;
   mediaPaths?: string[];
+  view: Views;
+  shotType: ShotTypes;
 }
 
 export type VideoJobRequest = {
@@ -49,6 +64,7 @@ export enum JobStatuses {
   pending = 'pending',
   generating = 'generating',
   completed = 'completed',
+  canceled = 'canceled',
   error = 'error',
 }
 
@@ -85,6 +101,7 @@ export enum Models {
   buffaloL = 'buffalo_l',
   adaface = 'adaface',
   seedvr = 'seedvr',
+  googleImage3Pro = 'googleImage3Pro',
   none = 'none'
 }
 
@@ -118,6 +135,7 @@ export type ImageGenerator = ServiceBase & {
   horizontalAngle?: number;
   verticalAngle?: number;
   zoom?: number;
+  temperature?: number;
 }
 
 export type videoGenerator = ServiceBase & {
@@ -133,6 +151,7 @@ export type videoGenerator = ServiceBase & {
 export type Upscaler = ServiceBase & {
   imagePath?: string;
   videoPath?: string;
+  faceMatch?: number;
 }
 
 export type AudioGenerator = ServiceBase & {
@@ -150,6 +169,7 @@ export type FaceMatcher = ServiceBase & {
   imagePath: string;
   idPhotoPaths: string[];
   threshold: number;
+  faceMatch?: number;
 }
 
 export type HeadDirectionChecker = ServiceBase & {

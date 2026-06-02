@@ -7,6 +7,7 @@ import pinoHttp from 'pino-http';
 import logger from './logger';
 import { errorHandler } from './middlewares/errorHandler';
 import falAi from './services/falAi';
+import googleAiStudio from './services/googleAiStudio';
 
 admin.initializeApp({
     projectId: process.env.PROJECT_ID,
@@ -19,6 +20,11 @@ falAi.authenticate().catch((err) => {
     process.exit(1);
 });
 
+googleAiStudio.authenticate().catch((err) => {
+    logger.error({ err }, 'Failed to authenticate Google AI Studio');
+    process.exit(1);
+});
+
 import qwen from './routes/falAiQwen';
 import flux from './routes/falAiflux';
 import topaz from './routes/falAitopaz';
@@ -26,6 +32,7 @@ import kling from './routes/falAiKling';
 import elevenLabs from './routes/falAiElevenLabs';
 import syncLipsync from './routes/falAisyncLipsync';
 import seedvr from './routes/falAiSeedvr';
+import google from './routes/google';
 
 
 const app = express();
@@ -40,6 +47,7 @@ app.use('/kling', kling);
 app.use('/elevenlabs', elevenLabs);
 app.use('/sync-lipsync', syncLipsync);
 app.use('/seedvr', seedvr);
+app.use('/google', google);
 
 app.use(errorHandler);
 

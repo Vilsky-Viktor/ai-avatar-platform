@@ -16,4 +16,5 @@ export type V2ProEditOut = {
     seed?: number;
     output_format: OutputFormats;
     image_urls: string[];
+    enable_safety_checker: boolean;
 }

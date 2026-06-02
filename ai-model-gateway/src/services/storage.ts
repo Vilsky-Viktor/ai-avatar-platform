@@ -24,6 +24,14 @@ export const downloadResultFile = async (url: string): Promise<Buffer> => {
   return Buffer.from(response.data);
 };
 
+export const downloadFromPath = async (filePath: string): Promise<Buffer> => {
+  logger.info(`Downloading ${filePath} from bucket`);
+  const bucket = getStorage().bucket();
+  const [contents] = await bucket.file(filePath).download();
+  logger.info(`Downloaded ${contents.byteLength} bytes from ${filePath}`);
+  return contents;
+};
+
 export const uploadToBucket = async (file: Buffer, filePath: string): Promise<void> => {
   logger.info(`Uploading ${file.byteLength} bytes to ${filePath}`);
   const bucket = getStorage().bucket();

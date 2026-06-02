@@ -1,4 +1,6 @@
 python-dotenv
+pydantic
+requests
 google-cloud-pubsub
 google-cloud-storage
 numpy

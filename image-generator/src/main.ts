@@ -1,8 +1,9 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
 import { Flows, ImageGenerator, Job, JobStatuses, Models, Services, WorkflowStep } from './types/job';
-import { genQwenImage2512, genQwenImageEdit2511, genQwenImageEdit2511MultipleAngles, genFluxV2ProEdit } from './services/aiModelGatewayService';
+import { genQwenImage2512, genQwenImageEdit2511, genQwenImageEdit2511MultipleAngles, genFluxV2ProEdit, genGoogleImage3Pro } from './services/aiModelGatewayService';
 import { sendJob } from './services/messageQueue';
+import { getJob } from './services/jobManagerService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
@@ -23,12 +24,26 @@ function listenForResults() {
 
     logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
 
+    try {
+      const liveJob = await getJob(job);
+      if (liveJob.status === JobStatuses.canceled) {
+        logger.info({ jobId: job.id }, 'Job canceled — skipping');
+        message.ack();
+        return;
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.info({ jobId: job.id }, 'Job not found — skipping');
+        message.ack();
+        return;
+      }
+      throw error;
+    }
+
     const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.imageGenerator && step.status === JobStatuses.pending);
 
     if (stepIdx >= 0) {
       const stepData = job.workflow[stepIdx] as ImageGenerator;
-
-      message.ack();
 
       try {
         if (stepData.model === Models.qwen && stepData.flow === Flows.t2i) {
@@ -43,6 +58,9 @@ function listenForResults() {
         } else if (stepData.model === Models.qwen && stepData.flow === Flows.ti2i) {
           logger.info(`Using qwen image edit 2511 for job ${job.id}`);
           await genQwenImageEdit2511(job.userId, stepData);
+        } else if (stepData.model === Models.googleImage3Pro) {
+          logger.info(`Using Google Image 3 Pro for job ${job.id}`);
+          await genGoogleImage3Pro(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);
         }
@@ -61,7 +79,8 @@ function listenForResults() {
     } else {
       logger.warn(`Image generator pending step is not found for job ${job.id}`);
     }
-    
+
+    message.ack();
   };
 
   subscription.on('message', messageHandler);

@@ -10,6 +10,7 @@ admin.initializeApp({
 
 import { HeadDirectionChecker, Job, JobStatuses, Services, WorkflowStep } from './types/job';
 import { sendJob } from './services/messageQueue';
+import { getJob } from './services/jobManagerService';
 import { downloadMediaFromPath } from './services/storage';
 import { checkDirection } from './utils/detector';
 
@@ -31,6 +32,22 @@ function listenForResults() {
     const job = JSON.parse(message.data.toString()) as Job;
 
     logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
+
+    try {
+      const liveJob = await getJob(job);
+      if (liveJob.status === JobStatuses.canceled) {
+        logger.info({ jobId: job.id }, 'Job canceled — skipping');
+        message.ack();
+        return;
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.info({ jobId: job.id }, 'Job not found — skipping');
+        message.ack();
+        return;
+      }
+      throw error;
+    }
 
     const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.headDirectionChecker && step.status === JobStatuses.pending);
 

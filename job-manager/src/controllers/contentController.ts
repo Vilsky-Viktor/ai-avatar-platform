@@ -23,7 +23,7 @@ import {
 import { publishJob, publishJobs } from '../services/messageQueue';
 import { getAvatarById } from '../services/avatarService';
 import uuid from 'uuid';
-import { genOutfitStylesData, genTravelingAroundTheWorldData, genWhatsappStickersData, genLuxuryLifeData } from '../utils/photoSetInputData';
+import { genOutfitStylesData, genTravelingAroundTheWorldData, genLuxuryLifeData, genWhatsappStickersData } from '../utils/photoSetInputData';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
 
 
@@ -39,32 +39,23 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
 
   try {
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
-    const idPhotos = idPhotoJobs.map((job: Job) => job.resultMediaPath);
+    const idPhotos = idPhotoJobs
+      .map((job: Job) => job.resultMediaPath);
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`
-    const upscalerUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-upscaled.png`
 
     const imageGenerator: ImageGenerator = {
       service: Services.imageGenerator,
       prompt: jobRequest.prompt,
-      negativePrompt: 'blurry face, low quality, distorted face, oversaturated, unrealistic skin, plastic skin',
+      negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...jobRequest.mediaPaths!, ...idPhotos],
-      safetyTolerance: 2,
+      temperature: 1.0,
       ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
-      model: Models.flux,
+      model: Models.googleImage3Pro,
       flow: Flows.ti2i,
     };
-
-    const upscaler: Upscaler = {
-      service: Services.upscaler,
-      imagePath: generatorUploadPath,
-      uploadPath: upscalerUploadPath,
-      status: JobStatuses.pending,
-      model: Models.seedvr,
-      flow: Flows.i2i,
-    }
 
     const job: Job = {
       userId,
@@ -74,9 +65,9 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       maxRuns: 3,
       curRun: 0,
-      workflow: [imageGenerator, upscaler],
-      metadata: { ratio: jobRequest.ratio },
-      resultMediaPath: upscalerUploadPath
+      workflow: [imageGenerator],
+      metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
+      resultMediaPath: generatorUploadPath
     }
 
     const dbJob = await createDb(userId, job);
@@ -105,44 +96,35 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
 
   try {
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
-
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs.map((job: Job) => job.resultMediaPath);
   
     const idPhotoSet: IdPhotoSetPaths = {
       front: idPhotos[0],
       frontSmile: idPhotos[1],
+      leftQuarter: idPhotos[2],
+      rightQuarter: idPhotos[3],
+      leftSide: idPhotos[4],
+      rightSide: idPhotos[5],
+      body: idPhotos[6]
     }
   
     const inputs = functionMapping[jobRequest.type!](userId, jobRequest.avatarId, avatar.parameters, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input: any) => {
-      const generatorUploadPath = input.imageGenerator.uploadPath!;
-      const dotIndex = generatorUploadPath.lastIndexOf('.');
-      const upscalerUploadPath = `${generatorUploadPath.slice(0, dotIndex)}-upscaled${generatorUploadPath.slice(dotIndex)}`;
-
-      const upscaler: Upscaler = {
-        service: Services.upscaler,
-        imagePath: generatorUploadPath,
-        uploadPath: upscalerUploadPath,
-        status: JobStatuses.pending,
-        model: Models.seedvr,
-        flow: Flows.i2i,
-      };
-
       return {
         userId,
         groupId,
         avatarId: jobRequest.avatarId,
         mediaType: MediaTypes.image,
-        target: JobTargets.idPhoto,
+        target: JobTargets.avatarMedia,
         status: JobStatuses.pending,
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, upscaler],
-        metadata: input.metadata,
-        resultMediaPath: upscalerUploadPath
+        workflow: [input.imageGenerator],
+        metadata: {...input.metadata, userPrompt: input.imageGenerator.prompt},
+        resultMediaPath: input.imageGenerator.uploadPath!
       }
     })
     
@@ -164,10 +146,9 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
   req.log.info(`Generate avatar video for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}, length ${jobRequest.lengthSec}s`);
 
   try {
-    const avatar = await getAvatarById(userId, jobRequest.avatarId);
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
-      .filter((job: Job) => [1,3,4,5].includes(job.order!))
+      .filter((job: Job) => [0,2,3,6].includes(job.order!))
       .map((job: Job) => job.resultMediaPath);
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.png`

@@ -11,6 +11,8 @@ from google.cloud import pubsub_v1
 
 from matcher import get_app, acquire_face_recognition, ADAFACE_MODEL_DIR
 from storage import download_bytes, download_models
+from models import FaceMatcherStep, Job, JobStatus
+from services.job_manager_service import get_job
 
 PROJECT_ID              = os.environ["PROJECT_ID"]
 SUBSCRIPTION_ID         = os.getenv("SUBSCRIPTION_ID", "face-matcher-sub")
@@ -31,25 +33,41 @@ publisher  = pubsub_v1.PublisherClient()
 subscriber = pubsub_v1.SubscriberClient()
 
 
-def _send_job(job: dict) -> None:
+def _send_job(raw: dict) -> None:
     topic_path = publisher.topic_path(PROJECT_ID, WORKFLOW_MANAGER_TOPIC)
-    publisher.publish(topic_path, json.dumps(job).encode()).result()
-    logger.info(f"Published job {job.get('id')} to {WORKFLOW_MANAGER_TOPIC}")
+    publisher.publish(topic_path, json.dumps(raw).encode()).result()
+    logger.info(f"Published job {raw.get('id')} to {WORKFLOW_MANAGER_TOPIC}")
 
 
 def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
     try:
-        job = json.loads(message.data.decode())
+        raw = json.loads(message.data.decode())
     except Exception as e:
         logger.error(f"Failed to parse message: {e}")
         message.nack()
         return
 
-    job_id = job.get("id", "unknown")
+    job = Job.model_validate(raw)
+    job_id = job.id or "unknown"
+
+    try:
+        db_job = get_job(job)
+        if db_job.status == JobStatus.canceled:
+            logger.info(f"Job {job_id} is canceled — skipping")
+            message.ack()
+            return
+    except Exception as e:
+        if getattr(getattr(e, "response", None), "status_code", None) == 404:
+            logger.info(f"Job {job_id} not found — skipping")
+            message.ack()
+            return
+        raise
 
     step_idx = next(
-        (i for i, step in enumerate(job.get("workflow", []))
-         if step.get("service") == SERVICE_NAME and step.get("status") == "pending"),
+        (i for i, step in enumerate(job.workflow)
+         if isinstance(step, dict)
+         and step.get("service") == SERVICE_NAME
+         and step.get("status") == JobStatus.pending),
         -1,
     )
 
@@ -58,37 +76,45 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         message.ack()
         return
 
-    step = job["workflow"][step_idx]
+    step = FaceMatcherStep.model_validate(job.workflow[step_idx])
 
     try:
-        image_bytes       = download_bytes(step["imagePath"])
-        id_photo_bytes    = [download_bytes(p) for p in step["idPhotoPaths"]]
+        image_bytes    = download_bytes(step.imagePath)
+        id_photo_bytes = [download_bytes(p) for p in step.idPhotoPaths]
 
         with acquire_face_recognition() as fr:
             similarity = fr.calc_face_similarity(id_photo_bytes, image_bytes)
 
         if similarity is None:
-            raise ValueError(f"No face detected in image: {step['imagePath']}")
+            raise ValueError(f"No face detected in image: {step.imagePath}")
 
         similarity = round(float(similarity), 4)
 
-        if similarity >= step["threshold"]:
-            logger.info(f"Job {job_id}: face match passed (similarity={similarity}, threshold={step['threshold']})")
-            step["status"] = "completed"
+        # Keep the best match seen across all runs
+        step.faceMatch = max(step.faceMatch, similarity)
+
+        if job.curRun < job.maxRuns:
+            if step.faceMatch >= step.threshold:
+                logger.info(f"Job {job_id}: face match passed (faceMatch={step.faceMatch}, threshold={step.threshold})")
+                step.status = JobStatus.completed
+                step.error  = None
+            else:
+                logger.info(f"Job {job_id}: face match FAILED (faceMatch={step.faceMatch}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
+                step.status = JobStatus.error
+                step.error  = f"face similarity {step.faceMatch:.4f} below threshold {step.threshold}"
         else:
-            logger.info(f"Job {job_id}: face match FAILED (similarity={similarity}, threshold={step['threshold']})")
-            step["status"] = "error"
-            step["error"]  = f"face similarity {similarity:.4f} below threshold {step['threshold']}"
+            logger.info(f"Job {job_id}: final run — passing regardless (faceMatch={step.faceMatch}, threshold={step.threshold})")
+            step.status = JobStatus.completed
+            step.error  = None
 
     except Exception as e:
         logger.error(f"Job {job_id}: face matcher error: {e}", exc_info=True)
-        step["status"] = "error"
-        step["error"]  = str(e)
-    finally:
-        message.ack()
+        step.status = JobStatus.error
+        step.error  = str(e)
 
-    job["workflow"][step_idx] = step
-    _send_job(job)
+    raw["workflow"][step_idx] = step.model_dump()
+    _send_job(raw)
+    message.ack()
 
 
 def main() -> None:

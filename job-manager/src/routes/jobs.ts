@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId } from '../controllers/jobController';
+import { getById, getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId } from '../controllers/jobController';
 import { genSyntheticFrontIdPhoto, genSyntheticIdPhotos, genDigitalTwinIdPhotos } from '../controllers/idPhotoController';
 import { genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo } from '../controllers/contentController';
 
 const router = Router();
 
+router.get('/get/id/:id', getById);
 router.get('/get/group/:groupId', getByGroupId);
 router.get('/get/avatar/:avatarId', getByAvatarId);
 router.post('/gen-synthetic-front-id-photo', genSyntheticFrontIdPhoto);

@@ -2,7 +2,7 @@ import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
 import { Job, JobStatuses, WorkflowStep } from './types/job';
 import { sendJob } from './services/messageQueue';
-import { updateJob } from './services/jobManagerService';
+import { updateJob, getJob } from './services/jobManagerService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'image-generator-sub';
@@ -20,6 +20,20 @@ function listenForResults() {
     logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
 
     message.ack();
+
+    try {
+      const dbJob = await getJob(job);
+      if (!dbJob || dbJob.status === JobStatuses.canceled) {
+        logger.info({ jobId: job.id }, 'Job not found or canceled — skipping');
+        return;
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.info({ jobId: job.id }, 'Job not found — skipping');
+        return;
+      }
+      throw error;
+    }
 
     try {
       if (job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.pending)) {

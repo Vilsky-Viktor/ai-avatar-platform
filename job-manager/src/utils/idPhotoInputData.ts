@@ -37,19 +37,21 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
     imageGenerator: {
       service: Services.imageGenerator,
       prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with natural texture. Ultrarealistic and natural, neutral expression. Wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Gray studio background`,
-      negativePrompt: 'cut off shoulders, missing shoulders, cropped head, cut off haircut, cut off hair, cut off head, blurry face, low quality, distorted face, wrong ethnicity, smile, open mouth, teeth visible, makeup, oversaturated, unrealistic skin, plastic skin, head tilt',
+      negativePrompt: '',
       ratio,
       uploadPath,
       status: JobStatuses.pending,
-      model: Models.qwen,
+      model: Models.googleImage3Pro,
       flow: Flows.t2i,
+      temperature: 1.0,
+      imagePaths: []
     },
     metadata: { ratio, dimensions }
   }
 }
 
 export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): {
-  imageGenerator: ImageGenerator, metadata: JobMetadata, order: number, direction: Directions
+  imageGenerator: ImageGenerator, metadata: JobMetadata, order: number
 }[] => {
   const {
     gender,
@@ -73,88 +75,76 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         imagePaths: [idPhotoSet.front!],
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.qwen,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
+        temperature: 1.0
       },
       metadata: { ratio, dimensions },
       order: 2,
-      direction: Directions.front
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: 'rotated 35 degrees to the left side of the frame',
+        prompt: 'rotate person 45 degrees to the left to create a three-quarter view',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        horizontalAngle: 45,
-        verticalAngle: 0,
-        zoom: 5,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        temperature: 1.0,
         status: JobStatuses.pending,
-        model: Models.qwen,
-        flow: Flows.ia2i,
+        model: Models.googleImage3Pro,
+        flow: Flows.ti2i,
       },
       metadata: { ratio, dimensions },
       order: 3,
-      direction: Directions.right
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: 'rotated 35 degrees to the right side of the frame',
+        prompt: 'rotate person 45 degrees to the right to create a three-quarter view',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        horizontalAngle: 315,
-        verticalAngle: 0,
-        zoom: 5,
+        temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.qwen,
-        flow: Flows.ia2i,
+        model: Models.googleImage3Pro,
+        flow: Flows.ti2i,
       },
       metadata: { ratio, dimensions },
       order: 4,
-      direction: Directions.left
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: 'rotated 90 degrees to the left side of the frame',
+        prompt: 'rotate person 90 degrees to the left to create a side profile view',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        horizontalAngle: 90,
-        verticalAngle: 0,
-        zoom: 5,
+        temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.qwen,
-        flow: Flows.ia2i,
+        model: Models.googleImage3Pro,
+        flow: Flows.ti2i,
       },
       metadata: { ratio, dimensions },
       order: 5,
-      direction: Directions.right
     },
     {
       imageGenerator: {
         service: Services.imageGenerator,
-        prompt: 'rotated 90 degrees to the right side of the frame',
+        prompt: 'rotate person 90 degrees to the right to create a side profile view',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        horizontalAngle: 270,
-        verticalAngle: 0,
-        zoom: 5,
+        temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.qwen,
-        flow: Flows.ia2i,
+        model: Models.googleImage3Pro,
+        flow: Flows.ti2i,
       },
       metadata: { ratio, dimensions },
       order: 6,
-      direction: Directions.left
     },
     {
       imageGenerator: {
@@ -163,27 +153,24 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
+        temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.qwen,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
       },
       metadata: { ratio, dimensions },
       order: 7,
-      direction: Directions.front
     }
   ]
 }
 
 
 export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): { 
-  imageGenerator: ImageGenerator, metadata: JobMetadata, faceMatcher: FaceMatcher, order: number 
+  imageGenerator: ImageGenerator, metadata: JobMetadata, order: number 
 }[] => {
-  const { gender } = parameters;
-
   const ratio = Ratios['1:1'];
   const dimensions = '2048x2048';
-  const isFemale = gender === 'female';
 
   const uuids = Array.from({ length: 7 }, () => uuid.v4());
 
@@ -192,23 +179,14 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
       imageGenerator: {
         service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
-        negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
+        negativePrompt: '',
         ratio,
-        imagePaths: [idPhotoSet.front!, idPhotoSet.front!],
-        safetyTolerance: 2,
+        imagePaths: [idPhotoSet.front!],
+        temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[0]}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[0]}.png`,
-        idPhotoPaths: [idPhotoSet.front!],
-        threshold: 0.95,
-        status: JobStatuses.pending,
-        model: Models.adaface,
-        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 1,
@@ -217,23 +195,14 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
       imageGenerator: {
         service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
-        negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
+        negativePrompt: '',
         ratio,
-        imagePaths: [idPhotoSet.frontSmile!, idPhotoSet.frontSmile!],
-        safetyTolerance: 2,
+        imagePaths: [idPhotoSet.frontSmile!],
+        temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[1]}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[1]}.png`,
-        idPhotoPaths: [idPhotoSet.frontSmile!],
-        threshold: 0.95,
-        status: JobStatuses.pending,
-        model: Models.adaface,
-        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 2,
@@ -242,23 +211,14 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
       imageGenerator: {
         service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
-        negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
+        negativePrompt: '',
         ratio,
-        imagePaths: [idPhotoSet.rightQuarter!, idPhotoSet.rightQuarter!],
-        safetyTolerance: 2,
+        imagePaths: [idPhotoSet.leftQuarter!],
+        temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[2]}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[2]}.png`,
-        idPhotoPaths: [idPhotoSet.rightQuarter!],
-        threshold: 0.92,
-        status: JobStatuses.pending,
-        model: Models.adaface,
-        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 3,
@@ -267,23 +227,14 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
       imageGenerator: {
         service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
-        negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
+        negativePrompt: '',
         ratio,
-        imagePaths: [idPhotoSet.leftQuarter!, idPhotoSet.leftQuarter!],
-        safetyTolerance: 2,
+        imagePaths: [idPhotoSet.rightQuarter!],
+        temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[3]}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[3]}.png`,
-        idPhotoPaths: [idPhotoSet.leftQuarter!],
-        threshold: 0.92,
-        status: JobStatuses.pending,
-        model: Models.adaface,
-        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 4,
@@ -292,23 +243,14 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
       imageGenerator: {
         service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
-        negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
+        negativePrompt: '',
         ratio,
-        imagePaths: [idPhotoSet.rightSide!, idPhotoSet.rightSide!],
-        safetyTolerance: 2,
+        imagePaths: [idPhotoSet.leftSide!],
+        temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[4]}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[4]}.png`,
-        idPhotoPaths: [idPhotoSet.rightSide!],
-        threshold: 0.85,
-        status: JobStatuses.pending,
-        model: Models.adaface,
-        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 5,
@@ -317,23 +259,14 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
       imageGenerator: {
         service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
-        negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
+        negativePrompt: '',
         ratio,
-        imagePaths: [idPhotoSet.leftSide!, idPhotoSet.leftSide!],
-        safetyTolerance: 2,
+        imagePaths: [idPhotoSet.rightSide!],
+        temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[5]}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[5]}.png`,
-        idPhotoPaths: [idPhotoSet.leftSide!],
-        threshold: 0.85,
-        status: JobStatuses.pending,
-        model: Models.adaface,
-        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 6,
@@ -342,23 +275,14 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
       imageGenerator: {
         service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
-        negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
+        negativePrompt: '',
         ratio,
-        imagePaths: [idPhotoSet.body!, idPhotoSet.body!],
-        safetyTolerance: 2,
+        imagePaths: [idPhotoSet.body!],
+        temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[6]}.png`,
         status: JobStatuses.pending,
-        model: Models.flux,
+        model: Models.googleImage3Pro,
         flow: Flows.ti2i,
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        imagePath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[6]}.png`,
-        idPhotoPaths: [idPhotoSet.body!],
-        threshold: 0.9,
-        status: JobStatuses.pending,
-        model: Models.adaface,
-        flow: Flows.none
       },
       metadata: { ratio, dimensions },
       order: 7,

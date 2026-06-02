@@ -3,6 +3,7 @@ import logger from './logger';
 import { Flows, ImageGenerator, Job, JobStatuses, Models, Services, Upscaler, WorkflowStep } from './types/job';
 import { upscaleTopazImage, upscaleTopazVideo, upscaleSeedvrImage } from './services/aiModelGatewayService';
 import { sendJob } from './services/messageQueue';
+import { getJob } from './services/jobManagerService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
@@ -23,12 +24,26 @@ function listenForResults() {
 
     logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
 
+    try {
+      const liveJob = await getJob(job);
+      if (liveJob.status === JobStatuses.canceled) {
+        logger.info({ jobId: job.id }, 'Job canceled — skipping');
+        message.ack();
+        return;
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.info({ jobId: job.id }, 'Job not found — skipping');
+        message.ack();
+        return;
+      }
+      throw error;
+    }
+
     const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.upscaler && step.status === JobStatuses.pending);
 
     if (stepIdx >= 0) {
       const stepData = job.workflow[stepIdx] as Upscaler;
-
-      message.ack();
 
       try {
         if (stepData.model === Models.topaz && stepData.flow === Flows.i2i) {
@@ -55,6 +70,8 @@ function listenForResults() {
     } else {
       logger.warn(`Upscaler pending step is not found for job ${job.id}`);
     }
+
+    message.ack();
   };
 
   subscription.on('message', messageHandler);

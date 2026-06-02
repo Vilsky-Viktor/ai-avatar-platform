@@ -15,6 +15,7 @@ export enum JobStatuses {
   generating = 'generating',
   completed = 'completed',
   error = 'error',
+  canceled = 'canceled',
 }
 
 export enum Directions {
@@ -47,6 +48,7 @@ export enum Models {
   lipSync = 'lipSync',
   eleven = 'eleven',
   buffaloL = 'buffalo_l',
+  googleImage3Pro = 'googleImage3Pro',
   none = 'none'
 }
 
@@ -80,6 +82,7 @@ export type ImageGenerator = ServiceBase & {
   horizontalAngle?: number;
   verticalAngle?: number;
   zoom?: number;
+  temperature?: number;
 }
 
 export type videoGenerator = ServiceBase & {
@@ -112,6 +115,7 @@ export type FaceMatcher = ServiceBase & {
   imagePath: string;
   idPhotoPaths: string[];
   threshold: number;
+  faceMatch?: number;
 }
 
 export type HeadDirectionChecker = ServiceBase & {

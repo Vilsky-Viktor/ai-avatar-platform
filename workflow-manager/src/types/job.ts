@@ -15,6 +15,7 @@ export enum JobStatuses {
   generating = 'generating',
   completed = 'completed',
   error = 'error',
+  canceled = 'canceled',
 }
 
 export enum Directions {

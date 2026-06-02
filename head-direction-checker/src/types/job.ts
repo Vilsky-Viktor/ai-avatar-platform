@@ -15,6 +15,7 @@ export enum JobStatuses {
   generating = 'generating',
   completed = 'completed',
   error = 'error',
+  canceled = 'canceled',
 }
 
 export enum Directions {
@@ -112,6 +113,7 @@ export type FaceMatcher = ServiceBase & {
   imagePath: string;
   idPhotoPaths: string[];
   threshold: number;
+  faceMatch?: number;
 }
 
 export type HeadDirectionChecker = ServiceBase & {

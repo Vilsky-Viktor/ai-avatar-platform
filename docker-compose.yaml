@@ -194,6 +194,7 @@ services:
       - SUBSCRIPTION_ID=image-generator-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+      - JOB_MANAGER_URL=http://job-manager:3300
       - MAX_CONCURRENT_MESSAGES=10
 
   upscaler:
@@ -213,6 +214,7 @@ services:
       - SUBSCRIPTION_ID=upscaler-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+      - JOB_MANAGER_URL=http://job-manager:3300
       - MAX_CONCURRENT_MESSAGES=10
 
   head-direction-checker:
@@ -233,6 +235,7 @@ services:
       - SUBSCRIPTION_ID=head-direction-checker-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - JOB_MANAGER_URL=http://job-manager:3300
       - MAX_CONCURRENT_MESSAGES=10
 
   face-matcher:
@@ -250,6 +253,7 @@ services:
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - SUBSCRIPTION_ID=face-matcher-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - JOB_MANAGER_URL=http://job-manager:3300
       - INSIGHTFACE_MODEL=buffalo_l
       - INSIGHTFACE_ROOT=/models/insightface
       - ADAFACE_MODEL_DIR=/app/models/adaface

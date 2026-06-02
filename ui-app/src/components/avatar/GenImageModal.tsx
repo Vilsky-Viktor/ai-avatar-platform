@@ -2,23 +2,40 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import type { Avatar } from '../../types/avatar';
 import { type Ratio, RATIOS } from '../../types/image';
+import { Views, ShotTypes } from '../../types/job';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 const EMPTY_SLOTS: [null, null, null] = [null, null, null];
+
+const VIEW_STEPS: { label: string; value: Views }[] = [
+    { label: 'Left Side',     value: Views.leftSide     },
+    { label: 'Left Quarter',  value: Views.leftQuarter  },
+    { label: 'Front',         value: Views.front        },
+    { label: 'Right Quarter', value: Views.rightQuarter },
+    { label: 'Right Side',    value: Views.rightSide    },
+];
+
+const SHOT_TYPE_OPTIONS: { label: string; value: ShotTypes }[] = [
+    { label: 'Upper Body', value: ShotTypes.upperBody },
+    { label: 'Full Body',  value: ShotTypes.fullBody  },
+];
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatar?: Avatar;
-    onGenerate: (prompt: string, ratio: Ratio, referenceImages: File[]) => Promise<void>;
+    onGenerate: (prompt: string, ratio: Ratio, referenceImages: File[], view: Views, shotType: ShotTypes) => Promise<void>;
 };
 
 function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
     const [ratio, setRatio] = useState<Ratio>('9:16');
+    const [view, setView] = useState<Views>(Views.front);
+    const [shotType, setShotType] = useState<ShotTypes>(ShotTypes.upperBody);
     const [loading, setLoading] = useState(false);
     const [slots, setSlots] = useState<(File | null)[]>([...EMPTY_SLOTS]);
     const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRefs = [
         useRef<HTMLInputElement>(null),
         useRef<HTMLInputElement>(null),
@@ -30,6 +47,8 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
             setPrompt('');
             setSlots([...EMPTY_SLOTS]);
             setPreviews([null, null, null]);
+            setView(Views.front);
+            setShotType(ShotTypes.upperBody);
         }
     }, [isOpen]);
 
@@ -54,12 +73,30 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
         setSlots(prev => prev.map((s, i) => i === idx ? null : s));
     };
 
+    const insertReference = (idx: number) => {
+        const tag = `@image${idx + 1}`;
+        const el = textareaRef.current;
+        if (!el) return;
+        const start = el.selectionStart ?? prompt.length;
+        const end   = el.selectionEnd   ?? prompt.length;
+        const before = prompt.slice(0, start);
+        const after  = prompt.slice(end);
+        const separator = before.length > 0 && !before.endsWith(' ') ? ' ' : '';
+        const next = `${before}${separator}${tag} ${after}`;
+        setPrompt(next);
+        const newCursor = before.length + separator.length + tag.length + 1;
+        requestAnimationFrame(() => {
+            el.focus();
+            el.setSelectionRange(newCursor, newCursor);
+        });
+    };
+
     const canGenerate = () => prompt.trim().length >= 5 && !loading;
 
     const handleGenerate = async () => {
         if (!canGenerate()) return;
         setLoading(true);
-        await onGenerate(prompt.trim(), ratio, slots.filter((f): f is File => f !== null));
+        await onGenerate(prompt.trim(), ratio, slots.filter((f): f is File => f !== null), view, shotType);
         setLoading(false);
     };
 
@@ -76,6 +113,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                 </button>
 
                 <textarea
+                    ref={textareaRef}
                     autoFocus
                     value={prompt}
                     onChange={e => setPrompt(e.target.value)}
@@ -91,7 +129,14 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                         <div key={idx} className="group relative w-49 h-49 rounded-xl overflow-hidden border border-base-content/10 shrink-0">
                             {previews[idx] ? (
                                 <>
-                                    <img src={previews[idx]!} className="w-full h-full object-cover object-top" />
+                                    <img
+                                        src={previews[idx]!}
+                                        onClick={() => insertReference(idx)}
+                                        className="w-full h-full object-cover object-top cursor-pointer"
+                                    />
+                                    <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-semibold uppercase tracking-widest pointer-events-none">
+                                        image #{idx + 1}
+                                    </span>
                                     <button
                                         onClick={() => removeSlot(idx)}
                                         className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
@@ -119,24 +164,68 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                     ))}
                 </div>
 
-                <div className="flex gap-3">
-                    {RATIOS.map(r => (
-                        <button
-                            key={r.value}
-                            onClick={() => setRatio(r.value)}
-                            className={`flex flex-col items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                                ratio === r.value
-                                    ? 'border-primary/50 bg-primary/5 text-primary'
-                                    : 'border-base-content/10 text-base-content/30 hover:border-base-content/20 hover:text-base-content/50'
-                            }`}
-                        >
+                {/* View slider */}
+                <div className="px-5 py-2">
+                    <div className="relative h-12">
+                        <div className="absolute top-[7px] left-0 right-0 h-[2px] bg-base-content/10" />
+                        {VIEW_STEPS.map((step, i) => (
                             <div
-                                className={`rounded-sm border-2 transition-colors duration-200 ${ratio === r.value ? 'border-primary' : 'border-current'}`}
-                                style={{ width: r.w, height: r.h }}
-                            />
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.15em]">{r.value}</span>
-                        </button>
-                    ))}
+                                key={step.value}
+                                onClick={() => setView(step.value)}
+                                style={{ left: `${i * 25}%` }}
+                                className="absolute -translate-x-1/2 flex flex-col items-center gap-2.5 cursor-pointer group"
+                            >
+                                <div className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
+                                    view === step.value
+                                        ? 'bg-primary border-primary'
+                                        : 'bg-base-100 border-base-content/20 group-hover:border-primary/50'
+                                }`} />
+                                <span className={`text-[10px] uppercase tracking-widest whitespace-nowrap transition-colors ${
+                                    view === step.value ? 'text-primary font-semibold' : 'text-base-content/30 group-hover:text-base-content/50'
+                                }`}>
+                                    {step.label}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Shot type + Ratio */}
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                        {SHOT_TYPE_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setShotType(opt.value)}
+                                className={`px-4 py-2 rounded-xl border text-xs font-semibold uppercase tracking-widest transition-all cursor-pointer ${
+                                    shotType === opt.value
+                                        ? 'border-primary/50 bg-primary/5 text-primary'
+                                        : 'border-base-content/10 text-base-content/30 hover:border-base-content/20 hover:text-base-content/50'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex gap-3">
+                        {RATIOS.map(r => (
+                            <button
+                                key={r.value}
+                                onClick={() => setRatio(r.value)}
+                                className={`flex flex-col items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                                    ratio === r.value
+                                        ? 'border-primary/50 bg-primary/5 text-primary'
+                                        : 'border-base-content/10 text-base-content/30 hover:border-base-content/20 hover:text-base-content/50'
+                                }`}
+                            >
+                                <div
+                                    className={`rounded-sm border-2 transition-colors duration-200 ${ratio === r.value ? 'border-primary' : 'border-current'}`}
+                                    style={{ width: r.w, height: r.h }}
+                                />
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.15em]">{r.value}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex justify-end">

@@ -26,3 +26,8 @@ export enum OutputFormats {
     png = 'png',
     jpeg = 'jpeg'
 }
+
+export enum OutputMimeTypes {
+    jpeg = 'image/jpeg',
+    png = 'image/png',
+}

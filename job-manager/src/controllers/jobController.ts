@@ -13,6 +13,22 @@ import { deleteBlob } from '../services/storageService';
 
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
 
+export const getById = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const id = req.params.id as string;
+
+  req.log.info(`Get job by ID ${id} for user ${userId}`);
+
+  try {
+    const job = await getByIdDb(userId, id);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    return res.status(200).json(job);
+  } catch (error) {
+    req.log.info(`Failed to get job ${id} for ${userId}: ${error}`);
+    next(error);
+  }
+};
+
 export const getByGroupId = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const groupId = req.params.groupId as string;

@@ -60,7 +60,7 @@ export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promi
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId)
         .where("target", "==", JobTargets.idPhoto)
-        .where("order", "in", [1,2,3,4,5,6,7,8,9])
+        .orderBy("order", "asc")
         .get();
 
     return snapshot.docs.map(doc => doc.data() as Job);
