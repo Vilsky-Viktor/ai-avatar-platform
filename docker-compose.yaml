@@ -197,6 +197,26 @@ services:
       - JOB_MANAGER_URL=http://job-manager:3300
       - MAX_CONCURRENT_MESSAGES=10
 
+  video-generator:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./video-generator
+    volumes:
+      - ./video-generator:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - SUBSCRIPTION_ID=video-generator-sub
+      - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+      - JOB_MANAGER_URL=http://job-manager:3300
+      - MAX_CONCURRENT_MESSAGES=10
+
   upscaler:
     <<: *default-dns
     networks:

@@ -148,7 +148,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
   try {
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
-      .filter((job: Job) => [0,2,3,6].includes(job.order!))
+      .filter((job: Job) => [0,1,2,3].includes(job.order!))
       .map((job: Job) => job.resultMediaPath);
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.png`
