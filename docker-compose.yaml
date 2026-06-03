@@ -174,6 +174,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - SUBSCRIPTION_ID=workflow-manager-sub
       - JOB_MANAGER_URL=http://job-manager:3300
 

@@ -1,8 +1,12 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
+import admin from 'firebase-admin';
 import logger from './logger';
 import { Job, JobStatuses, WorkflowStep } from './types/job';
 import { sendJob } from './services/messageQueue';
 import { updateJob, getJob } from './services/jobManagerService';
+import { deleteBlob } from './services/storageService';
+
+admin.initializeApp({ projectId: process.env.PROJECT_ID, storageBucket: process.env.BUCKET_NAME });
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'image-generator-sub';
@@ -71,6 +75,15 @@ function listenForResults() {
         job.status = JobStatuses.completed;
 
         await updateJob(job);
+
+        const intermediatePaths = job.workflow
+          .map((step: WorkflowStep) => step.uploadPath)
+          .filter((path): path is string => !!path && path !== job.resultMediaPath);
+
+        if (intermediatePaths.length > 0) {
+          logger.info({ jobId: job.id, paths: intermediatePaths }, 'Deleting intermediate files');
+          await Promise.all(intermediatePaths.map(deleteBlob));
+        }
       } else if (job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.pending)) {
         const pendingStepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
         const pendingStepData = job.workflow[pendingStepIdx];
