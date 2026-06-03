@@ -17,6 +17,7 @@ import {
   AudioJobRequest,
   AudioGenerator,
   LipSync,
+  MimicMotionRequest,
 } from '../types/job';
 import { 
   getAvatarIdPhotos as getAvatarIdPhotosDb, 
@@ -47,9 +48,13 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`
 
+    const refCount = jobRequest.mediaPaths?.length ?? 0;
+    const idPhotoStart = refCount + 1;
+    const idPhotoEnd = refCount + idPhotos.length;
+
     const imageGenerator: ImageGenerator = {
       service: Services.imageGenerator,
-      prompt: jobRequest.prompt,
+      prompt: `${jobRequest.prompt}. Person identity images from image ${idPhotoStart} to image ${idPhotoEnd}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...jobRequest.mediaPaths!, ...idPhotos],
       temperature: 1.0,
@@ -156,12 +161,18 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`;
 
+    const mediaPaths = jobRequest.mediaPaths ?? [];
+    const hasObjectPhotos = mediaPaths.length > 1;
+    const identityRef = hasObjectPhotos ? '@Element2' : '@Element1';
+    const objectRefPaths = hasObjectPhotos ? mediaPaths.slice(1) : [];
+
     const videoGenerator: VideoGenerator = {
       service: Services.videoGenerator,
-      prompt: jobRequest.prompt,
-      negativePrompt: 'blur, distort, and low quality',
-      imagePath: jobRequest.mediaPaths ? jobRequest.mediaPaths[0] : '',
+      prompt: `${jobRequest.prompt}. Person identity from ${identityRef}`,
+      negativePrompt: 'blur, distort, and low quality, crossed hands',
+      imagePath: mediaPaths[0] ?? '',
       imageRefPaths: idPhotos,
+      objectRefPaths,
       duration: jobRequest.lengthSec!,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
@@ -198,6 +209,18 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       };
 
       workflow = [videoGenerator, audioGenerator, lipSync];
+    } else if (jobRequest.audioPath) {
+      const lipSync: LipSync = {
+        service: Services.lipSync,
+        model: Models.lipSync,
+        flow: Flows.va2v,
+        status: JobStatuses.pending,
+        videoPath: generatorUploadPath,
+        audioPath: jobRequest.audioPath,
+        uploadPath: generatorUploadPath,
+      };
+
+      workflow = [videoGenerator, lipSync];
     }
 
     const job: Job = {
@@ -218,6 +241,55 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
     return res.status(201).json(dbJob);
   } catch (error) {
     req.log.info(`Failed to generate avatar video for ${userId}: ${error}`);
+    next(error);
+  }
+}
+
+export const mimicMotion = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const jobRequest: MimicMotionRequest = req.body;
+  const videoId = uuid.v4();
+
+  req.log.info(`Generate mimic motion video for user ${userId}, avatar ${jobRequest.avatarId}`);
+
+  try {
+    const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
+    const idPhotos = idPhotoJobs
+      .filter((job: Job) => [1,2,3,4].includes(job.order!))
+      .map((job: Job) => job.resultMediaPath);
+
+    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`;
+
+    const videoGenerator: VideoGenerator = {
+      service: Services.videoGenerator,
+      imagePath: jobRequest.imagePath,
+      videoPath: jobRequest.videoPath,
+      imageRefPaths: idPhotos,
+      keepOriginalAudio: jobRequest.keepOriginalAudio,
+      uploadPath: generatorUploadPath,
+      status: JobStatuses.pending,
+      model: Models.kling,
+      flow: Flows.v2v,
+    };
+
+    const job: Job = {
+      userId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.video,
+      target: JobTargets.avatarMedia,
+      status: JobStatuses.pending,
+      maxRuns: 1,
+      curRun: 0,
+      workflow: [videoGenerator],
+      metadata: { userPrompt: 'Mimic motion' },
+      resultMediaPath: generatorUploadPath
+    }
+
+    const dbJob = await createDb(userId, job);
+    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
+    return res.status(201).json(dbJob);
+  } catch (error) {
+    req.log.info(`Failed to generate mimic motion video for ${userId}: ${error}`);
     next(error);
   }
 }

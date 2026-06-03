@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import type { Avatar } from '../../types/avatar';
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
+    avatar?: Avatar;
     onGenerate: (text: string) => Promise<void>;
 };
 
-function GenAudioModal({ isOpen, onClose, onGenerate }: Props) {
+function GenAudioModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -45,7 +47,7 @@ function GenAudioModal({ isOpen, onClose, onGenerate }: Props) {
                     value={text}
                     onChange={e => setText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
-                    placeholder="Write what you want your avatar to say..."
+                    placeholder={`Write what you want ${avatar?.name ?? 'your avatar'} to say...`}
                     rows={8}
                     className="mt-8 w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                 />

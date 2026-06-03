@@ -89,6 +89,7 @@ export type VideoGenerator = ServiceBase & {
   prompt?: string;
   negativePrompt?: string;
   imagePath: string;
+  videoPath?: string;
   imageRefPaths: string[];
   objectRefPaths?: string[] | null;
   duration: number;

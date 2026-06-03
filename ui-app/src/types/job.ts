@@ -36,6 +36,14 @@ export type VideoJobRequest = {
   mediaPaths?: string[];
   lengthSec?: number;
   audioText?: string;
+  audioPath?: string;
+}
+
+export type MimicMotionRequest = {
+  avatarId: string;
+  imagePath: string;
+  videoPath: string;
+  keepOriginalAudio: boolean;
 }
 
 export type AudioJobRequest = {

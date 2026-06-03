@@ -56,7 +56,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     };
 
     const insertReference = (idx: number) => {
-        const tag = `@image${idx + 1}`;
+        const tag = `image ${idx + 1}`;
         const el = textareaRef.current;
         if (!el) return;
         const start = el.selectionStart ?? prompt.length;
@@ -132,7 +132,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                                     className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
                                 >
                                     <ImagePlus size={35} strokeWidth={1.5} />
-                                    <span className="text-[11px] uppercase tracking-widest">Reference</span>
+                                    <span className="text-[11px] uppercase tracking-widest text-center leading-relaxed">Reference<br/>Image</span>
                                 </button>
                             )}
                             <input

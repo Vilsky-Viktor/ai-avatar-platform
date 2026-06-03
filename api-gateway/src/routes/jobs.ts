@@ -37,6 +37,10 @@ router.post(
     createProxyHandler('post', () => `${BASE}/gen-avatar-video`, 'Generate avatar video')
 );
 router.post(
+    '/mimic-motion',
+    createProxyHandler('post', () => `${BASE}/mimic-motion`, 'Mimic motion video')
+);
+router.post(
     '/gen-avatar-audio',
     createProxyHandler('post', () => `${BASE}/gen-avatar-audio`, 'Generate avatar audio')
 );

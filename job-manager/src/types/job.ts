@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { Ratios } from './ratios';
-import type { AvatarTypes, AvatarParameters } from './avatar';
+import type { AvatarParameters } from './avatar';
 
 export enum Views {
   front = 'front',
@@ -42,6 +42,14 @@ export type VideoJobRequest = {
   mediaPaths?: string[];
   lengthSec?: number;
   audioText?: string;
+  audioPath?: string;
+}
+
+export type MimicMotionRequest = {
+  avatarId: string;
+  imagePath: string;
+  videoPath: string;
+  keepOriginalAudio: boolean;
 }
 
 export type AudioJobRequest = {
@@ -147,9 +155,11 @@ export type VideoGenerator = ServiceBase & {
   prompt?: string;
   negativePrompt?: string;
   imagePath: string;
-  imageRefPaths: string[];
+  videoPath?: string;
+  keepOriginalAudio?: boolean;
+  imageRefPaths?: string[];
   objectRefPaths?: string[] | null;
-  duration: number;
+  duration?: number;
   ratio?: string;
 }
 

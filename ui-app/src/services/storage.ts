@@ -1,5 +1,5 @@
 import { storage } from "../firebase";
-import { ref, getDownloadURL, uploadString, deleteObject, getBlob } from "firebase/storage";
+import { ref, getDownloadURL, uploadString, uploadBytes, deleteObject, getBlob } from "firebase/storage";
 
 export const getMediaUrlFromPath = async (path: string): Promise<string> => {
     const storageRef = ref(storage, path);
@@ -18,4 +18,10 @@ export const deleteMediaFromBucket = async (path: string): Promise<void> => {
 
 export const downloadMediaFromBucket = async (path: string): Promise<Blob> => {
     return await getBlob(ref(storage, path));
+}
+
+export const uploadBlobToBucket = async (path: string, blob: Blob): Promise<string> => {
+    const storageRef = ref(storage, path);
+    const result = await uploadBytes(storageRef, blob);
+    return result.metadata.fullPath;
 }

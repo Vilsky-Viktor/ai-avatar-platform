@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getById, getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId } from '../controllers/jobController';
 import { genSyntheticFrontIdPhoto, genSyntheticIdPhotos, genDigitalTwinIdPhotos } from '../controllers/idPhotoController';
-import { genAvatarAudio, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo } from '../controllers/contentController';
+import { genAvatarAudio, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, mimicMotion } from '../controllers/contentController';
 
 const router = Router();
 
@@ -13,6 +13,7 @@ router.post('/gen-digital-twin-id-photos', genDigitalTwinIdPhotos);
 router.post('/gen-avatar-photo', genAvatarPhoto);
 router.post('/gen-avatar-photo-set', genAvatarPhotoSet);
 router.post('/gen-avatar-video', genAvatarVideo);
+router.post('/mimic-motion', mimicMotion);
 router.post('/gen-avatar-audio', genAvatarAudio);
 
 router.get('/get/id/:id', getById);

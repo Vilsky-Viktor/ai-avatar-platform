@@ -1,7 +1,7 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
 import { Flows, VideoGenerator, Job, JobStatuses, Models, Services, WorkflowStep } from './types/job';
-import { genKling3 } from './services/aiModelGatewayService';
+import { genKling3V3Pro, genKling3V3ProMotionControl } from './services/aiModelGatewayService';
 import { sendJob } from './services/messageQueue';
 import { getJob } from './services/jobManagerService';
 
@@ -46,9 +46,11 @@ function listenForResults() {
       const stepData = job.workflow[stepIdx] as VideoGenerator;
 
       try {
-        if (stepData.model === Models.kling) {
-          logger.info(`Using kling 3 for job ${job.id}`);
-          await genKling3(job.userId, stepData);
+        if (stepData.model === Models.kling && stepData.flow === Flows.ti2v) {
+          logger.info(`Using kling 3 V3 Pro for job ${job.id}`);
+          await genKling3V3Pro(job.userId, stepData);
+        } else if (stepData.model === Models.kling && stepData.flow === Flows.v2v) {
+          await genKling3V3ProMotionControl(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);
         }

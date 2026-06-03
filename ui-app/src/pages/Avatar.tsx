@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
-import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
+import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, mimicMotion, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '../types/avatar';
 import LazyMediaCard from '../components/LazyMediaCard';
@@ -125,17 +125,27 @@ function AvatarPage() {
         closeGenerateImage();
     };
 
-    const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null) => {
+    const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null, audioPath: string | null, objectPhotoPaths: string[]) => {
         const jobRequest: VideoJobRequest = {
             prompt,
             ratio,
             avatarId: avatar.id!,
-            mediaPaths: referenceImagePath ? [referenceImagePath] : [],
+            mediaPaths: [
+                ...(referenceImagePath ? [referenceImagePath] : []),
+                ...objectPhotoPaths,
+            ],
             lengthSec,
             ...(audioText ? { audioText } : {}),
+            ...(audioPath ? { audioPath } : {}),
         };
 
         const job = await genAvatarVideo(jobRequest);
+        pushJobs([job]);
+        closeGenerateVideo();
+    };
+
+    const handleMimicMotion = async (imagePath: string, videoPath: string, keepOriginalAudio: boolean) => {
+        const job = await mimicMotion({ avatarId: avatar.id!, imagePath, videoPath, keepOriginalAudio });
         pushJobs([job]);
         closeGenerateVideo();
     };
@@ -285,10 +295,12 @@ function AvatarPage() {
                 avatar={avatar}
                 jobs={jobs.filter((j): j is Job => j !== null)}
                 onGenerate={handleGenerateVideo}
+                onMimicMotion={handleMimicMotion}
             />
             <GenAudioModal
                 isOpen={generateAudioOpen}
                 onClose={closeGenerateAudio}
+                avatar={avatar}
                 onGenerate={handleGenerateAudio}
             />
         </>

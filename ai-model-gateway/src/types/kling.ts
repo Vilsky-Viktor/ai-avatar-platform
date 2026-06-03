@@ -54,7 +54,7 @@ export type VideoV3ProMotionControlIn = {
     imagePath: string;
     videoPath: string;
     imageRefPaths: string[];
-    duration: number;
+    keepOriginalAudio: boolean;
     uploadPath: string;
 }
 

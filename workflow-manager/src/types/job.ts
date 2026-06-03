@@ -83,10 +83,11 @@ export type ImageGenerator = ServiceBase & {
   zoom?: number;
 }
 
-export type videoGenerator = ServiceBase & {
+export type VideoGenerator = ServiceBase & {
   prompt?: string;
   negativePrompt?: string;
   imagePath: string;
+  videoPath?: string;
   imageRefPaths: string[];
   objectRefPaths?: string[] | null;
   duration: number;
@@ -121,7 +122,7 @@ export type HeadDirectionChecker = ServiceBase & {
 
 export type WorkflowStep = 
   ImageGenerator | 
-  videoGenerator | 
+  VideoGenerator | 
   Upscaler | 
   AudioGenerator | 
   LipSync | 

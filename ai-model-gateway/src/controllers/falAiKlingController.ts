@@ -12,7 +12,7 @@ export const genVideoV3ProImageToVideo = async (req: Request, res: Response, nex
   const imageUrl = await getMediaUrlFromPath(input.imagePath);
   const imageRefUrls = await Promise.all(input.imageRefPaths.map((imageRefPath: string) => getMediaUrlFromPath(imageRefPath)));
 
-  const element: ImageElement = {
+  const characterElement: ImageElement = {
     frontal_image_url: imageRefUrls[0],
     reference_image_urls: imageRefUrls.slice(1),
   }
@@ -29,8 +29,8 @@ export const genVideoV3ProImageToVideo = async (req: Request, res: Response, nex
   }
 
   const payload: VideoV3ProImageToVideoOut = {
-    prompt: `${input.prompt}. Face identity from @Element1`,
-    elements: [element, ...objectElements],
+    prompt: input.prompt,
+    elements: [...objectElements, characterElement],
     negative_prompt: input.negativePrompt,
     start_image_url: imageUrl,
     duration: input.duration.toString(),
@@ -69,10 +69,10 @@ export const genVideoV3ProMotionControl = async (req: Request, res: Response, ne
   }
 
   const payload: VideoV3ProMotionControlOut = {
-    prompt: `Mimic motion with face @Element1`,
+    prompt: `Mimic motion with @Element1 identity`,
     image_url: imageUrl,
     video_url: videoUrl,
-    keep_original_sound: true,
+    keep_original_sound: input.keepOriginalAudio,
     character_orientation: CharacterOrientations.video,
     elements: [element]
   }
