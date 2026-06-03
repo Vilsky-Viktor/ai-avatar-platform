@@ -45,11 +45,17 @@ function listenForResults() {
     if (stepIdx >= 0) {
       const stepData = job.workflow[stepIdx] as VideoGenerator;
 
+      const heartbeat = setInterval(() => {
+        message.modAck(600);
+        logger.info({ jobId: job.id }, 'Extended ack deadline');
+      }, 500_000);
+
       try {
         if (stepData.model === Models.kling && stepData.flow === Flows.ti2v) {
           logger.info(`Using kling 3 V3 Pro for job ${job.id}`);
           await genKling3V3Pro(job.userId, stepData);
         } else if (stepData.model === Models.kling && stepData.flow === Flows.v2v) {
+          logger.info(`Using kling 3 V3 Pro Motion Control for job ${job.id}`);
           await genKling3V3ProMotionControl(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);
@@ -65,7 +71,9 @@ function listenForResults() {
         job.workflow[stepIdx] = stepData;
 
         await sendJob(WORKFLOW_MANAGER_TOPIC, job);
-      } 
+      } finally {
+        clearInterval(heartbeat);
+      }
     } else {
       logger.warn(`Video generator pending step is not found for job ${job.id}`);
     }
