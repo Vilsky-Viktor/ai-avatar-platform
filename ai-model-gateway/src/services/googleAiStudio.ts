@@ -1,12 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
-import { getSecretValue } from "./secretManager";
 import { detectMimeType } from "../utils/detectMimeType";
 
 let client: GoogleGenAI | null = null;
 
 export const authenticate = async () => {
-    const apiKey = await getSecretValue('GOOGLE_AI_STUDIO_API_KEY');
-    client = new GoogleGenAI({ apiKey });
+    client = new GoogleGenAI({
+        vertexai: true,
+        project: process.env.PROJECT_ID,
+        location: 'global'
+    });
 };
 
 const getClient = (): GoogleGenAI => {
@@ -27,7 +29,7 @@ export const sendRequest = async (modelName: string, prompt: string, media: Buff
     const response = await getClient().models.generateContent({
         model: modelName,
         contents: [promptPayload, ...mediaPayload],
-        config
+        config: { ...config, responseModalities: ['IMAGE'] }
     });
 
     const candidate = response.candidates?.[0];
@@ -37,6 +39,7 @@ export const sendRequest = async (modelName: string, prompt: string, media: Buff
     }
 
     const inlineData = candidate?.content?.parts?.[0]?.inlineData;
+
     if (!inlineData?.data) {
         throw new Error('No image data in Google AI Studio response');
     }

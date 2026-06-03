@@ -22,7 +22,7 @@ export const genImage3Pro = async (req: Request, res: Response, next: NextFuncti
                 aspectRatio: input.ratio,
                 imageOutputFormat: OutputMimeTypes.png,
                 imageSize: ImageSizes._2k,
-                // personGeneration: PersonGenerations.allowAdult,
+                personGeneration: PersonGenerations.allowAdult,
                 editMode: EditModes.default
             },
         };
