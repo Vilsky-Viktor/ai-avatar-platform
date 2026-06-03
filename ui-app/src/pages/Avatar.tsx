@@ -125,13 +125,14 @@ function AvatarPage() {
         closeGenerateImage();
     };
 
-    const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number) => {
+    const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null) => {
         const jobRequest: VideoJobRequest = {
             prompt,
             ratio,
             avatarId: avatar.id!,
             mediaPaths: referenceImagePath ? [referenceImagePath] : [],
             lengthSec,
+            ...(audioText ? { audioText } : {}),
         };
 
         const job = await genAvatarVideo(jobRequest);

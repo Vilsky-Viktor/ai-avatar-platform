@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Sparkles, ImagePlus, Trash2, Clock } from 'lucide-react';
+import { X, Sparkles, ImagePlus, Trash2, Clock, Mic } from 'lucide-react';
 import type { Avatar } from '../../types/avatar';
 import { type VideoRatio, VIDEO_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -11,7 +11,7 @@ type Props = {
     onClose: () => void;
     avatar?: Avatar;
     jobs: Job[];
-    onGenerate: (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number) => Promise<void>;
+    onGenerate: (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null) => Promise<void>;
 };
 
 function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
@@ -21,11 +21,15 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
     const [selectedImage, setSelectedImage] = useState<{ path: string; url: string } | null>(null);
     const [selectorOpen, setSelectorOpen] = useState(false);
     const [lengthSec, setLengthSec] = useState(2);
+    const [generateVoice, setGenerateVoice] = useState(false);
+    const [audioText, setAudioText] = useState('');
 
     useEffect(() => {
         if (!isOpen) {
             setPrompt('');
             setSelectedImage(null);
+            setGenerateVoice(false);
+            setAudioText('');
         }
     }, [isOpen]);
 
@@ -37,7 +41,7 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
     const handleGenerate = async () => {
         if (!canGenerate()) return;
         setLoading(true);
-        await onGenerate(prompt.trim(), ratio, selectedImage?.path ?? null, lengthSec);
+        await onGenerate(prompt.trim(), ratio, selectedImage?.path ?? null, lengthSec, generateVoice && audioText.trim() ? audioText.trim() : null);
         setLoading(false);
     };
 
@@ -130,6 +134,39 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate }: Props) {
                                 ))}
                             </div>
                         </div>
+                    </div>
+
+                    <div className={`rounded-2xl border transition-all duration-300 ${generateVoice ? 'border-primary/30 bg-primary/[0.03]' : 'border-base-content/10'}`}>
+                        <label className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300 ${generateVoice ? 'bg-primary/10 text-primary' : 'bg-base-200 text-base-content/30'}`}>
+                                    <Mic size={17} />
+                                </div>
+                                <div>
+                                    <p className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors duration-300 ${generateVoice ? 'text-primary' : 'text-base-content/50'}`}>Generate voice</p>
+                                    <p className="text-[10px] text-base-content/30 mt-0.5">Add avatar speech to the video</p>
+                                </div>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={generateVoice}
+                                onChange={e => setGenerateVoice(e.target.checked)}
+                                className="checkbox checkbox-primary checkbox-sm"
+                            />
+                        </label>
+
+                        {generateVoice && (
+                            <div className="px-5 pb-5">
+                                <textarea
+                                    autoFocus
+                                    value={audioText}
+                                    onChange={e => setAudioText(e.target.value)}
+                                    placeholder={`Write what you want ${avatar?.name ?? 'your avatar'} to say in the video...`}
+                                    rows={3}
+                                    className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end">

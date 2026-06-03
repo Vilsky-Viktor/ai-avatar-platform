@@ -36,7 +36,6 @@ export const genVideoV3ProImageToVideo = async (req: Request, res: Response, nex
     duration: input.duration.toString(),
     generate_audio: false,
     shot_type: ShotTypes.customize,
-    aspect_ratio: input.ratio,
     cfg_scale: 0.5
   }
 

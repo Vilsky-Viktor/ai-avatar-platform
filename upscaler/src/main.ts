@@ -7,7 +7,7 @@ import { getJob } from './services/jobManagerService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
-const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'image-generator-sub';
+const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'upscaler-sub';
 const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });

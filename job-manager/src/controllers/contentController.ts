@@ -16,6 +16,7 @@ import {
   Flows,
   AudioJobRequest,
   AudioGenerator,
+  LipSync,
 } from '../types/job';
 import { 
   getAvatarIdPhotos as getAvatarIdPhotosDb, 
@@ -162,12 +163,42 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       imagePath: jobRequest.mediaPaths ? jobRequest.mediaPaths[0] : '',
       imageRefPaths: idPhotos,
       duration: jobRequest.lengthSec!,
-      ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
       model: Models.kling,
       flow: Flows.ti2v,
     };
+
+    let workflow = [videoGenerator] as Job['workflow'];
+
+    if (jobRequest.audioText) {
+      const avatar = await getAvatarById(userId, jobRequest.avatarId);
+
+      const audioId = uuid.v4();
+      const audioUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/audios/${audioId}.mp3`;
+
+      const audioGenerator: AudioGenerator = {
+        service: Services.audioGenerator,
+        model: Models.eleven,
+        flow: Flows.t2a,
+        status: JobStatuses.pending,
+        text: jobRequest.audioText,
+        voice: avatar.voiceId!,
+        uploadPath: audioUploadPath,
+      };
+
+      const lipSync: LipSync = {
+        service: Services.lipSync,
+        model: Models.lipSync,
+        flow: Flows.va2v,
+        status: JobStatuses.pending,
+        videoPath: generatorUploadPath,
+        audioPath: audioUploadPath,
+        uploadPath: generatorUploadPath
+      };
+
+      workflow = [videoGenerator, audioGenerator, lipSync];
+    }
 
     const job: Job = {
       userId,
@@ -177,7 +208,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       maxRuns: 1,
       curRun: 0,
-      workflow: [videoGenerator],
+      workflow,
       metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
       resultMediaPath: generatorUploadPath
     }

@@ -1,13 +1,13 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import logger from './logger';
-import { AudioGenerator, Job, JobStatuses, Models, Services, WorkflowStep } from './types/job';
-import { genElevenV3 } from './services/aiModelGatewayService';
+import { Flows, VideoGenerator, Job, JobStatuses, Models, Services, WorkflowStep } from './types/job';
+import { genLipSyncV3 } from './services/aiModelGatewayService';
 import { sendJob } from './services/messageQueue';
 import { getJob } from './services/jobManagerService';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
-const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'audio-generator-sub';
+const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'lip-sync-sub';
 const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
@@ -17,7 +17,7 @@ function listenForResults() {
     flowControl: { maxMessages: MAX_CONCURRENT_MESSAGES },
   });
 
-  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for audio jobs...');
+  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for lip sync jobs...');
 
   const messageHandler = async (message: Message) => {
     const job = JSON.parse(message.data.toString()) as Job;
@@ -40,15 +40,15 @@ function listenForResults() {
       throw error;
     }
 
-    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.audioGenerator && step.status === JobStatuses.pending);
+    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.lipSync && step.status === JobStatuses.pending);
 
     if (stepIdx >= 0) {
-      const stepData = job.workflow[stepIdx] as AudioGenerator;
+      const stepData = job.workflow[stepIdx] as VideoGenerator;
 
       try {
-        if (stepData.model === Models.eleven) {
-          logger.info(`Using ElevenLabs Eleven V3 for job ${job.id}`);
-          await genElevenV3(job.userId, stepData);
+        if (stepData.model === Models.lipSync) {
+          logger.info(`Using LipSync V3 for job ${job.id}`);
+          await genLipSyncV3(job.userId, stepData);
         } else {
           logger.warn(`Not supported model and flow`);
         }
@@ -65,7 +65,7 @@ function listenForResults() {
         await sendJob(WORKFLOW_MANAGER_TOPIC, job);
       } 
     } else {
-      logger.warn(`Audio generator pending step is not found for job ${job.id}`);
+      logger.warn(`Lip sync pending step is not found for job ${job.id}`);
     }
 
     message.ack();

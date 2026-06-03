@@ -1,63 +1,8 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { Ratios } from './ratios';
-import type { AvatarTypes, AvatarParameters } from './avatar';
-
-export enum Views {
-  front = 'front',
-  leftQuarter = 'leftQuarter',
-  rightQuarter = 'rightQuarter',
-  leftSide = 'leftSide',
-  rightSide = 'rightSide',
-}
-
-export enum ShotTypes {
-  upperBody = 'upperBody',
-  fullBody = 'fullBody',
-}
-
-export type PhotoSetType = 
-  'whatsapp-stickers' |
-  'around-the-world' | 
-  'outfit-styles' | 
-  'luxury-life';
-
-export type IdPhotoJobRequest = {
-  groupId?: string;
-  avatarId: string;
-  parameters: AvatarParameters;
-  frontIdPhotoPath?: string;
-}
-
-export type PhotoJobRequest = {
-  avatarId: string;
-  ratio: Ratios;
-  prompt: string;
-  mediaPaths?: string[];
-}
-
-export type VideoJobRequest = {
-  avatarId: string;
-  ratio: Ratios;
-  prompt: string;
-  mediaPaths?: string[];
-  lengthSec?: number;
-  audioText?: string;
-}
-
-export type AudioJobRequest = {
-  avatarId: string;
-  prompt: string;
-}
-
-export type PhotoSetJobRequest = {
-  avatarId: string;
-  type: PhotoSetType;
-}
 
 export enum MediaTypes {
   image = 'image',
   video = 'video',
-  audio = 'audio'
 }
 
 export enum JobTargets {
@@ -69,8 +14,8 @@ export enum JobStatuses {
   pending = 'pending',
   generating = 'generating',
   completed = 'completed',
-  canceled = 'canceled',
   error = 'error',
+  canceled = 'canceled',
 }
 
 export enum Directions {
@@ -81,7 +26,6 @@ export enum Directions {
 
 export type JobMetadata = {
   ratio?: string;
-  dimensions?: string;
   userPrompt?: string;
   lengthSec?: number;
 }
@@ -104,8 +48,6 @@ export enum Models {
   lipSync = 'lipSync',
   eleven = 'eleven',
   buffaloL = 'buffalo_l',
-  adaface = 'adaface',
-  seedvr = 'seedvr',
   googleImage3Pro = 'googleImage3Pro',
   none = 'none'
 }
@@ -156,12 +98,12 @@ export type VideoGenerator = ServiceBase & {
 export type Upscaler = ServiceBase & {
   imagePath?: string;
   videoPath?: string;
-  faceMatch?: number;
 }
 
 export type AudioGenerator = ServiceBase & {
   text: string;
   voice: string;
+  language: string;
 }
 
 export type LipSync = ServiceBase & {

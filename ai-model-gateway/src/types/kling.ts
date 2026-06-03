@@ -45,7 +45,6 @@ export type VideoV3ProImageToVideoOut = {
     end_image_url?: string;
     elements: (ImageElement | VideoElement)[] | null;
     shot_type: ShotTypes;
-    aspect_ratio: Ratios;
     negative_prompt: string;
     cfg_scale: number;
 }

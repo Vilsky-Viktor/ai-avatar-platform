@@ -35,6 +35,7 @@ export type VideoJobRequest = {
   prompt: string;
   mediaPaths?: string[];
   lengthSec?: number;
+  audioText?: string;
 }
 
 export type AudioJobRequest = {
