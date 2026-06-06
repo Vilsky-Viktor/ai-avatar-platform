@@ -1,4 +1,3 @@
-import type { FirestoreTimestamp } from './firestore';
 
 export enum AvatarGender {
   male = 'male',
@@ -43,6 +42,6 @@ export type Avatar = {
   parameters: AvatarParameters;
   mainImagePath?: string;
   voiceId?: string;
-  createdAt?: FirestoreTimestamp;
-  updatedAt?: FirestoreTimestamp;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

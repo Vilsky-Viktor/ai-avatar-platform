@@ -10,8 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@loom24/shared": "^0.0.9",
+    "@loom24/shared": "^0.0.10",
     "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-virtual": "^3.14.2",
     "axios": "^1.13.4",
     "firebase": "^12.8.0",
     "lucide-react": "^0.563.0",

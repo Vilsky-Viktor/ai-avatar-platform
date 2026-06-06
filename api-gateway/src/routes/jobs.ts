@@ -12,6 +12,10 @@ router.get(
     '/get/avatar/:avatarId',
     createProxyHandler('get', (req) => `${BASE}/get/avatar/${req.params.avatarId}`, 'Get by avatar ID')
 )
+router.get(
+    '/counts/avatar/:avatarId',
+    createProxyHandler('get', (req) => `${BASE}/counts/avatar/${req.params.avatarId}`, 'Get job counts by avatar ID')
+)
 router.post(
     '/gen-synthetic-front-id-photo',
     createProxyHandler('post', () => `${BASE}/gen-synthetic-front-id-photo`, 'Create synthetic front ID photo')

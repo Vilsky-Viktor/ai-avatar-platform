@@ -1,9 +1,10 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState, useRef } from "react";
-import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, mimicMotion, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
+import { useEffect, useLayoutEffect, useState, useRef } from "react";
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, mimicMotion, getJobsByAvatarId, getJobCountsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '@loom24/shared/types';
-import LazyMediaCard from '../components/LazyMediaCard';
+import MediaCard from '../components/MediaCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
 import CreateMediaCard from '../components/avatar/CreateMediaCard';
 import CreateMediaModal from '../components/avatar/CreateMediaModal';
@@ -20,6 +21,8 @@ import { useApp } from '../providers/ContextProvider';
 import { scrollToTop } from '../utils/scroller';
 import type { PhotoSetType } from '@loom24/shared/types';
 
+const CARD_GAP = 16;
+
 function AvatarPage() {
     const { user } = useApp();
     const { slug } = useParams<{ slug: string }>();
@@ -28,6 +31,14 @@ function AvatarPage() {
 
     const [jobs, setJobs] = useState([] as (Job | null)[]);
     const jobsRef = useRef<(Job | null)[]>([]);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+
+    const gridRef = useRef<HTMLDivElement>(null);
+    const [colCount, setColCount] = useState(4);
+    const [rowHeight, setRowHeight] = useState(300 + CARD_GAP);
+    const [scrollMargin, setScrollMargin] = useState(0);
 
     const [numImages, setNumImages] = useState(0);
     const [numVideos, setNumVideos] = useState(0);
@@ -72,6 +83,11 @@ function AvatarPage() {
 
                 if (oldJob && oldJob.status !== job.status) {
                     setJob(jobIndex, job);
+                    if (job.status === JobStatuses.completed) {
+                        if (job.mediaType === MediaTypes.image) setNumImages(n => n + 1);
+                        else if (job.mediaType === MediaTypes.video) setNumVideos(n => n + 1);
+                        else if (job.mediaType === MediaTypes.audio) setNumAudios(n => n + 1);
+                    }
                 }
             }
         });
@@ -79,19 +95,56 @@ function AvatarPage() {
         return () => unsubscribe();
     }, [avatar.id, user?.id]);
 
-    useEffect(() => {
-        setNumImages(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
-        setNumVideos(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
-        setNumAudios(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.audio && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
-    }, [jobs]);
 
     useEffect(() => {
         jobsRef.current = jobs;
     }, [jobs]);
 
+    useEffect(() => {
+        if (!sentinelRef.current) return;
+        const observer = new IntersectionObserver(
+            (entries) => { if (entries[0].isIntersecting) loadMoreJobs(); },
+            { threshold: 0.1 }
+        );
+        observer.observe(sentinelRef.current);
+        return () => observer.disconnect();
+    }, [nextCursor, loadingMore]);
+
+    useEffect(() => {
+        const update = () => setColCount(window.innerWidth >= 1024 ? 4 : window.innerWidth >= 768 ? 3 : 2);
+        update();
+        window.addEventListener('resize', update);
+        return () => window.removeEventListener('resize', update);
+    }, []);
+
+    useLayoutEffect(() => {
+        if (pageLoading || !gridRef.current) return;
+        const w = gridRef.current.clientWidth;
+        setRowHeight(Math.round((w - CARD_GAP * (colCount - 1)) / colCount) + CARD_GAP);
+        setScrollMargin(gridRef.current.getBoundingClientRect().top + window.scrollY);
+    }, [pageLoading, colCount]);
+
+    useEffect(() => {
+        if (pageLoading) return;
+        const el = gridRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(([entry]) => {
+            const w = entry.contentRect.width;
+            setRowHeight(Math.round((w - CARD_GAP * (colCount - 1)) / colCount) + CARD_GAP);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [pageLoading, colCount]);
+
     const initPage = async () => {
         const fetchedAvatar = await fetchAvatar();
-        await fetchJobs(fetchedAvatar.id!);
+        const [, counts] = await Promise.all([
+            fetchJobs(fetchedAvatar.id!),
+            getJobCountsByAvatarId(fetchedAvatar.id!),
+        ]);
+        setNumImages(counts.images);
+        setNumVideos(counts.videos);
+        setNumAudios(counts.audios);
         setPageLoading(false);
         scrollToTop();
     };
@@ -177,20 +230,33 @@ function AvatarPage() {
         return fetchedAvatar
     }
 
-    const fetchJobs = async (avatarId: string) => {
-        const jobs = await getJobsByAvatarId(avatarId);
-        const filteredJobs = jobs
-            .filter((job: Job) => [JobTargets.avatarMedia, JobTargets.idPhoto].includes(job.target))
-            .sort((a, b) => ((b.createdAt as any)?._seconds ?? 0) - ((a.createdAt as any)?._seconds ?? 0));
-
-        await Promise.all(filteredJobs.map(async (job: Job) => {
+    const resolveMediaUrls = async (jobs: Job[]) => {
+        await Promise.all(jobs.map(async (job) => {
             if (job.status === JobStatuses.completed && job.resultMediaPath) {
                 job.resultMediaUrl = await getMediaUrlFromPath(job.resultMediaPath);
             }
         }));
+    };
 
-        setJobs(filteredJobs);
-    }
+    const fetchJobs = async (avatarId: string) => {
+        const { jobs: fetchedJobs, nextCursor: cursor } = await getJobsByAvatarId(avatarId);
+        await resolveMediaUrls(fetchedJobs);
+        setJobs(fetchedJobs);
+        setNextCursor(cursor);
+    };
+
+    const loadMoreJobs = async () => {
+        if (!nextCursor || loadingMore) return;
+        setLoadingMore(true);
+        try {
+            const { jobs: moreJobs, nextCursor: cursor } = await getJobsByAvatarId(avatar.id!, nextCursor);
+            await resolveMediaUrls(moreJobs);
+            setJobs(prev => [...prev, ...moreJobs]);
+            setNextCursor(cursor);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
 
     const restartJob = async (jobId: string) => {
         const listIdx = jobs.findIndex(job => job?.id === jobId);
@@ -203,10 +269,16 @@ function AvatarPage() {
     }
 
     const deleteJob = async (jobId: string) => {
+        const deletedJob = jobs.find((job: Job | null) => job?.id === jobId);
         await deleteJobById(jobId);
 
-        const updatedJobs = jobs.filter((job: Job | null) => job?.id !== jobId);
-        setJobs(updatedJobs);
+        setJobs(jobs.filter((job: Job | null) => job?.id !== jobId));
+
+        if (deletedJob?.status === JobStatuses.completed) {
+            if (deletedJob.mediaType === MediaTypes.image) setNumImages(n => n - 1);
+            else if (deletedJob.mediaType === MediaTypes.video) setNumVideos(n => n - 1);
+            else if (deletedJob.mediaType === MediaTypes.audio) setNumAudios(n => n - 1);
+        }
     }
 
     const pushJobs = (jobs: (Job | null)[]) => {
@@ -216,6 +288,19 @@ function AvatarPage() {
     const setJob = (listIdx: number, job: Job | null) => {
         setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
+
+    const allItems: (Job | null | 'create')[] = ['create', ...jobs];
+    const rows: (Job | null | 'create')[][] = [];
+    for (let i = 0; i < allItems.length; i += colCount) {
+        rows.push(allItems.slice(i, i + colCount));
+    }
+
+    const rowVirtualizer = useWindowVirtualizer({
+        count: rows.length,
+        estimateSize: () => rowHeight,
+        overscan: 2,
+        scrollMargin,
+    });
 
     return (
         <>
@@ -245,21 +330,51 @@ function AvatarPage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <CreateMediaCard onClick={openCreateMedia} />
+                        <div ref={gridRef}>
+                            <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+                                {rowVirtualizer.getVirtualItems().map(virtualRow => {
+                                    const rowItems = rows[virtualRow.index];
+                                    return (
+                                        <div
+                                            key={virtualRow.key}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                                                display: 'grid',
+                                                gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+                                                columnGap: `${CARD_GAP}px`,
+                                                paddingBottom: `${CARD_GAP}px`,
+                                            }}
+                                        >
+                                            {rowItems.map((item, colIdx) => {
+                                                if (item === 'create') {
+                                                    return <CreateMediaCard key="create" onClick={openCreateMedia} />;
+                                                }
+                                                const jobIdx = virtualRow.index * colCount + colIdx - 1;
+                                                return (
+                                                    <MediaCard
+                                                        key={item?.id ?? `empty-${virtualRow.index}-${colIdx}`}
+                                                        job={item}
+                                                        idx={jobIdx}
+                                                        onPhotoClick={(src: string, rect: DOMRect, mediaType: MediaTypes) => setFullscreen({ src, rect, mediaType })}
+                                                        onRegenerate={restartJob}
+                                                        onDelete={deleteJob}
+                                                        canDelete={item?.target === JobTargets.avatarMedia}
+                                                        canRestart={item?.target === JobTargets.avatarMedia}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })}
+                            </div>
 
-                            {jobs.map((job, idx) => (
-                                <LazyMediaCard
-                                    key={idx} 
-                                    job={job} 
-                                    idx={idx} 
-                                    onPhotoClick={(src, rect, mediaType) => setFullscreen({ src, rect, mediaType })}
-                                    onRegenerate={restartJob}
-                                    onDelete={deleteJob}
-                                    canDelete={job?.target! === JobTargets.avatarMedia}
-                                    canRestart={job?.target! === JobTargets.avatarMedia}
-                                />
-                            ))}
+                            <div ref={sentinelRef} className="flex justify-center py-8">
+                                {loadingMore && <span className="loading loading-spinner loading-xl text-primary scale-150" />}
+                            </div>
                         </div>
                     </div>
                 )}

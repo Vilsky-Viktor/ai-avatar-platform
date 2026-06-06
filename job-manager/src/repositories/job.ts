@@ -1,17 +1,12 @@
-import { Job, JobStatuses, JobTargets } from '@loom24/shared/types';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import logger from '@loom24/shared/logger';
+import { Job, JobTargets, JobStatuses, MediaTypes } from '@loom24/shared/types';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || '';
 const JOBS_COLLECTION_NAME = process.env.JOBS_COLLECTION_NAME || '';
 const db = getFirestore(DB_NAME);
 
-const STATUS_ORDER: Record<string, number> = {
-    [JobStatuses.pending]:    0,
-    [JobStatuses.generating]: 1,
-    [JobStatuses.completed]:  2,
-    [JobStatuses.error]:      2,
-};
+const PAGE_SIZE = 30;
+
 
 const batchDeleteQuery = async (query: FirebaseFirestore.Query): Promise<void> => {
   const snapshot = await query.limit(500).get();
@@ -48,16 +43,53 @@ export const getByGroupId = async (userId: string, groupId: string): Promise<Job
     return snapshot.docs.map(doc => doc.data() as Job);
 }
 
-export const getByAvatarId = async (userId: string, avatarId: string): Promise<Job[]> => {
-    const snapshot = await db.collection(JOBS_COLLECTION_NAME)
+export const getByAvatarId = async (
+    userId: string,
+    avatarId: string,
+    cursor?: string,
+): Promise<{ jobs: Job[]; nextCursor: string | null }> => {
+    let query: FirebaseFirestore.Query = db.collection(JOBS_COLLECTION_NAME)
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId)
+        .where("target", "in", [JobTargets.avatarMedia, JobTargets.idPhoto])
         .orderBy("createdAt", "desc")
-        .limit(1000)
-        .get();
+        .limit(PAGE_SIZE);
 
-    return snapshot.docs.map(doc => doc.data() as Job);
+    if (cursor) {
+        const cursorDoc = await db.collection(JOBS_COLLECTION_NAME).doc(cursor).get();
+        if (cursorDoc.exists) {
+            query = query.startAfter(cursorDoc);
+        }
+    }
+
+    const snapshot = await query.get();
+    const jobs = snapshot.docs.map(doc => doc.data() as Job);
+    const nextCursor = snapshot.size === PAGE_SIZE ? (jobs[jobs.length - 1]?.id ?? null) : null;
+    return { jobs, nextCursor };
 }
+
+export const getCountsByAvatarId = async (
+    userId: string,
+    avatarId: string,
+): Promise<{ images: number; videos: number; audios: number }> => {
+    const base = db.collection(JOBS_COLLECTION_NAME)
+        .where('userId', '==', userId)
+        .where('avatarId', '==', avatarId)
+        .where('target', 'in', [JobTargets.avatarMedia, JobTargets.idPhoto])
+        .where('status', '==', JobStatuses.completed);
+
+    const [imagesSnap, videosSnap, audiosSnap] = await Promise.all([
+        base.where('mediaType', '==', MediaTypes.image).count().get(),
+        base.where('mediaType', '==', MediaTypes.video).count().get(),
+        base.where('mediaType', '==', MediaTypes.audio).count().get(),
+    ]);
+
+    return {
+        images: imagesSnap.data().count,
+        videos: videosSnap.data().count,
+        audios: audiosSnap.data().count,
+    };
+};
 
 export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promise<Job[]> => {
     const snapshot = await db.collection(JOBS_COLLECTION_NAME)
@@ -65,7 +97,7 @@ export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promi
         .where("avatarId", "==", avatarId)
         .where("target", "==", JobTargets.idPhoto)
         .orderBy("order", "asc")
-        .limit(100)
+        .limit(10)
         .get();
 
     return snapshot.docs.map(doc => doc.data() as Job);
@@ -77,7 +109,7 @@ export const create = async (userId: string, job: Omit<Job, 'id'>): Promise<Job>
 }
 
 export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promise<Job[]> => {
-    const now = Timestamp.now() as unknown as Job['createdAt'];
+    const now = new Date();
     const batch = db.batch();
     const dbJobs: Job[] = [];
 
@@ -89,7 +121,7 @@ export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promi
             userId,
             createdAt: now,
             updatedAt: now,
-        } as Job;
+        } as unknown as Job;
         batch.set(jobRef, dbJob);
         dbJobs.push(dbJob);
     }
@@ -98,7 +130,7 @@ export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promi
     return dbJobs;
 };
 
-export const update = async (userId: string, jobId: string, updateData: Partial<Job>, forceStatus = false): Promise<void> => {
+export const update = async (userId: string, jobId: string, updateData: Partial<Job>): Promise<void> => {
     const jobRef = db.collection(JOBS_COLLECTION_NAME).doc(jobId);
 
     await db.runTransaction(async (transaction) => {
@@ -112,21 +144,10 @@ export const update = async (userId: string, jobId: string, updateData: Partial<
             throw Object.assign(new Error(`Unauthorized: user ${userId} does not own job ${jobId}`), { status: 403 });
         }
 
-        if (updateData.status) {
-            const currentStatus = doc.data()?.status as string;
-            const currentOrder = STATUS_ORDER[currentStatus] ?? 0;
-            const newOrder = STATUS_ORDER[updateData.status] ?? 0;
-
-            if (!forceStatus && newOrder < currentOrder) {
-                logger.warn({ jobId, currentStatus, newStatus: updateData.status }, 'Skipping status update — regression blocked');
-                return;
-            }
-        }
-
         const { id: _id, userId: _userId, createdAt: _createdAt, ...safeData } = updateData;
         transaction.update(jobRef, {
             ...safeData,
-            updatedAt: Timestamp.now() as unknown as Job['updatedAt']
+            updatedAt: new Date()
         });
     });
 }

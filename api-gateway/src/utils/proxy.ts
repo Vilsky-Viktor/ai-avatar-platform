@@ -18,7 +18,7 @@ export const createProxyHandler = (
   const userId = req.headers['x-user-id'];
   const url = getUrl(req);
   const msg = typeof logMessage === 'function' ? logMessage(req) : logMessage;
-  const config = { headers: { 'x-user-id': userId }, timeout: PROXY_TIMEOUT_MS, httpAgent, httpsAgent };
+  const config = { headers: { 'x-user-id': userId }, timeout: PROXY_TIMEOUT_MS, httpAgent, httpsAgent, params: req.query };
 
   req.log.info(msg);
 

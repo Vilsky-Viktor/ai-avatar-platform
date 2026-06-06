@@ -9,7 +9,11 @@ export const getJob = (job: Job): Promise<Job> =>
 
 export const updateJob = async (job: Job): Promise<void> => {
   try {
-    await client.patch(`/update/job/${job.id}`, job.userId, job);
+    await client.patch(`/update/job/${job.id}`, job.userId, {
+      status: job.status,
+      workflow: job.workflow,
+      curRun: job.curRun,
+    });
   } catch (error: any) {
     if (error.response?.status === 404) {
       logger.warn({ jobId: job.id }, 'Job not found during update — it was likely deleted, skipping');

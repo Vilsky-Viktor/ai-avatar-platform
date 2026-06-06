@@ -159,7 +159,7 @@ export const genAvatarPhoto = async (jobRequest: PhotoJobRequest): Promise<Job> 
   try {
     const res = await apiClient.post('/jobs/gen-avatar-photo', jobRequest);
 
-    return res.data as Job;
+    return normalizeJob(res.data);
   } catch (error) {
     console.error("Error creating job to generate avatar photo:", error);
     throw error;
@@ -170,7 +170,7 @@ export const genAvatarPhotoSet = async (jobRequest: PhotoSetJobRequest): Promise
   try {
     const res = await apiClient.post('/jobs/gen-avatar-photo-set', jobRequest);
 
-    return res.data as Job[];
+    return (res.data as any[]).map(normalizeJob);
   } catch (error) {
     console.error("Error creating job to generate avatar photo set:", error);
     throw error;
@@ -181,7 +181,7 @@ export const genAvatarVideo = async (jobRequest: VideoJobRequest): Promise<Job> 
   try {
     const res = await apiClient.post('/jobs/gen-avatar-video', jobRequest);
 
-    return res.data as Job;
+    return normalizeJob(res.data);
   } catch (error) {
     console.error("Error creating job to generate avatar video:", error);
     throw error;
@@ -192,7 +192,7 @@ export const mimicMotion = async (jobRequest: MimicMotionRequest): Promise<Job> 
   try {
     const res = await apiClient.post('/jobs/mimic-motion', jobRequest);
 
-    return res.data as Job;
+    return normalizeJob(res.data);
   } catch (error) {
     console.error("Error creating job to mimic motion video:", error);
     throw error;
@@ -203,7 +203,7 @@ export const genAvatarAudio = async (jobRequest: AudioJobRequest): Promise<Job> 
   try {
     const res = await apiClient.post('/jobs/gen-avatar-audio', jobRequest);
 
-    return res.data as Job;
+    return normalizeJob(res.data);
   } catch (error) {
     console.error("Error creating job to generate avatar audio:", error);
     throw error;
@@ -221,13 +221,40 @@ export const getJobsByGroupId  = async (groupId: string): Promise<Job[]> => {
   }
 }
 
-export const getJobsByAvatarId  = async (avatarId: string): Promise<Job[]> => {
-  try {
-    const res = await apiClient.get(`/jobs/get/avatar/${avatarId}`, {});
+const toDate = (raw: any): Date | undefined => {
+  if (!raw) return undefined;
+  if (raw instanceof Date) return raw;
+  if (typeof raw._seconds === 'number') return new Date(raw._seconds * 1000);
+  return undefined;
+};
 
-    return res.data as Job[];
+const normalizeJob = (job: any): Job => ({
+  ...job,
+  createdAt: toDate(job.createdAt),
+  updatedAt: toDate(job.updatedAt),
+});
+
+export const getJobsByAvatarId = async (avatarId: string, cursor?: string): Promise<{ jobs: Job[]; nextCursor: string | null }> => {
+  try {
+    const res = await apiClient.get(`/jobs/get/avatar/${avatarId}`, { params: cursor ? { cursor } : {} });
+    const data = res.data as { jobs: any[]; nextCursor: string | null };
+
+    return {
+      nextCursor: data.nextCursor,
+      jobs: data.jobs.map(normalizeJob),
+    };
   } catch (error) {
     console.error("Error fetching jobs:", error);
+    throw error;
+  }
+}
+
+export const getJobCountsByAvatarId = async (avatarId: string): Promise<{ images: number; videos: number; audios: number }> => {
+  try {
+    const res = await apiClient.get(`/jobs/counts/avatar/${avatarId}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching job counts:", error);
     throw error;
   }
 }
@@ -236,7 +263,7 @@ export const restartJobById = async (jobId: string): Promise<Job> => {
   try {
     const res = await apiClient.post(`/jobs/restart/job/${jobId}`, {});
 
-    return res.data as Job;
+    return normalizeJob(res.data);
   } catch (error) {
     console.error("Error restarting job:", error);
     throw error;

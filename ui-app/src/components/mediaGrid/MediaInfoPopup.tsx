@@ -1,5 +1,6 @@
 import { Maximize2, LayoutTemplate, MessageSquare, Copy, Check, Clock, Hd, CalendarDays } from 'lucide-react';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { MediaTypes, type Job } from '@loom24/shared/types';
 
@@ -38,7 +39,7 @@ function MediaInfoPopup({ job, onClose }: Props) {
     const dimensions = job.metadata?.dimensions;
     const lengthSec = job.metadata?.lengthSec;
     const createdAt = job.createdAt
-        ? new Date((job.createdAt as any)._seconds * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+        ? job.createdAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
         : null;
     const [copied, setCopied] = useState(false);
 
@@ -49,7 +50,7 @@ function MediaInfoPopup({ job, onClose }: Props) {
         setTimeout(() => setCopied(false), 2000);
     };
     
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div
                 className="absolute inset-0 bg-base-300/60 animate-modal-backdrop"
@@ -116,7 +117,8 @@ function MediaInfoPopup({ job, onClose }: Props) {
                     Close
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

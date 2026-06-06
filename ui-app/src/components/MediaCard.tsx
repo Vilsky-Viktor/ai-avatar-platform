@@ -42,8 +42,8 @@ function MediaCard({
 
     useEffect(() => {
         if (job?.status !== JobStatuses.generating) return;
-        const ts = (job.updatedAt ?? job.createdAt) as any;
-        const startSec: number = ts?.seconds ?? ts?._seconds ?? Date.now() / 1000;
+        const startDate = job.updatedAt ?? job.createdAt;
+        const startSec: number = startDate ? startDate.getTime() / 1000 : Date.now() / 1000;
         startRef.current = startSec;
         setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startSec)));
         const interval = setInterval(() =>

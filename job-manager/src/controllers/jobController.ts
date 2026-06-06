@@ -5,6 +5,7 @@ import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
   getByAvatarId as getByAvatarIdDb,
+  getCountsByAvatarId as getCountsByAvatarIdDb,
   update as updateDb,
   deleteById as deleteByIdDb,
   deleteByAvatarId as deleteByAvatarIdDb,
@@ -52,14 +53,32 @@ export const getByGroupId = async (req: Request, res: Response, next: NextFuncti
 export const getByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const avatarId = req.params.avatarId as string;
+  const cursor = req.query.cursor as string | undefined;
 
   setLogContext(userId, avatarId);
   try {
     logger.info('Get jobs by avatar ID');
-    const jobs = await getByAvatarIdDb(userId, avatarId);
-    return res.status(200).json(jobs);
+    const result = await getByAvatarIdDb(userId, avatarId, cursor);
+    return res.status(200).json(result);
   } catch (error) {
     logger.error({ err: error }, 'Failed to get jobs by avatar ID');
+    next(error);
+  } finally {
+    clearLogContext();
+  }
+};
+
+export const getCountsByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.headers['x-user-id'] as string;
+  const avatarId = req.params.avatarId as string;
+
+  setLogContext(userId, avatarId);
+  try {
+    logger.info('Get job counts by avatar ID');
+    const counts = await getCountsByAvatarIdDb(userId, avatarId);
+    return res.status(200).json(counts);
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to get job counts by avatar ID');
     next(error);
   } finally {
     clearLogContext();
@@ -87,7 +106,7 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
       job.workflow[idx].status = 'pending' as any;
     });
 
-    await updateDb(userId, id, job, true);
+    await updateDb(userId, id, job);
     await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'job-manager');
 
     return res.status(200).json(job);

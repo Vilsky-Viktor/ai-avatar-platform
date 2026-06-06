@@ -1,4 +1,5 @@
 import { AlertTriangle, Trash2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {
@@ -9,7 +10,7 @@ type Props = {
 
 function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
     useScrollLock();
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div
                 className="absolute inset-0 bg-base-300/60 animate-modal-backdrop"
@@ -43,7 +44,8 @@ function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
