@@ -18,7 +18,7 @@ services:
       - app-net
     build:
       context: ./ui-app
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     ports:
@@ -33,6 +33,7 @@ services:
       - app-net
     build:
       context: ./api-gateway
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     ports:
@@ -59,6 +60,7 @@ services:
       - app-net
     build:
       context: ./user
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     ports:
@@ -81,6 +83,7 @@ services:
       - app-net
     build:
       context: ./avatar
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     ports:
@@ -106,6 +109,7 @@ services:
       - app-net
     build:
       context: ./job-manager
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     ports:
@@ -131,6 +135,7 @@ services:
       - app-net
     build:
       context: ./voice
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     ports:
@@ -153,6 +158,7 @@ services:
       - app-net
     build:
       context: ./cropper
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     ports:
@@ -173,6 +179,7 @@ services:
       - app-net
     build:
       context: ./ai-model-gateway
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     volumes:
@@ -195,6 +202,7 @@ services:
       - app-net
     build:
       context: ./workflow-manager
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     volumes:
@@ -216,6 +224,7 @@ services:
       - app-net
     build:
       context: ./head-direction-checker
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     volumes:
@@ -239,6 +248,7 @@ services:
       - app-net
     build:
       context: ./face-matcher
+      dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
     volumes:
