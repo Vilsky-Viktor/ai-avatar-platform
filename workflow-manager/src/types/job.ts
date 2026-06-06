@@ -1,8 +1,46 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
+export enum Views {
+  front = 'front',
+  leftQuarter = 'leftQuarter',
+  rightQuarter = 'rightQuarter',
+  leftSide = 'leftSide',
+  rightSide = 'rightSide',
+}
+
+export enum ShotTypes {
+  upperBody = 'upperBody',
+  fullBody = 'fullBody',
+}
+
+export type PhotoSetType = 
+  'whatsapp-stickers' |
+  'around-the-world' | 
+  'outfit-styles' | 
+  'luxury-life';
+
+export type MimicMotionRequest = {
+  avatarId: string;
+  imagePath: string;
+  videoPath: string;
+  keepOriginalAudio: boolean;
+}
+
+export type AudioJobRequest = {
+  avatarId: string;
+  prompt: string;
+}
+
+export type PhotoSetJobRequest = {
+  avatarId: string;
+  type: PhotoSetType;
+}
+
 export enum MediaTypes {
   image = 'image',
   video = 'video',
+  audio = 'audio',
+  text = 'text',
 }
 
 export enum JobTargets {
@@ -14,8 +52,8 @@ export enum JobStatuses {
   pending = 'pending',
   generating = 'generating',
   completed = 'completed',
-  error = 'error',
   canceled = 'canceled',
+  error = 'error',
 }
 
 export enum Directions {
@@ -26,106 +64,81 @@ export enum Directions {
 
 export type JobMetadata = {
   ratio?: string;
+  dimensions?: string;
   userPrompt?: string;
   lengthSec?: number;
 }
 
-export enum Services {
-  imageGenerator = 'image-generator',
-  videoGenerator = 'video-generator',
-  audioGenerator = 'audio-generator',
-  upscaler = 'upscaler',
-  lipSync = 'lip-sync',
-  faceMatcher = 'face-matcher',
-  headDirectionChecker = 'head-direction-checker',
-}
-
-export enum Models {
-  qwen = 'qwen',
-  flux = 'flux',
-  kling = 'kling',
-  topaz = 'topaz',
-  lipSync = 'lipSync',
-  eleven = 'eleven',
-  buffaloL = 'buffalo_l',
-  none = 'none'
-}
-
-export enum Flows {
-  t2i = 't2i',
-  i2i = 'i2i',
-  ti2i = 'ti2i',
-  ia2i = 'ia2i',
-  ti2v = 'ti2v',
-  v2v = 'v2v',
-  t2a = 't2a',
-  va2v = 'va2v',
+export enum Platforms {
+  falai = 'fal-ai',
+  google = 'google',
   none = 'none',
 }
 
-export type ServiceBase = {
-  service: Services;
+export enum Models {
+  qwenImage2512 = 'qwen-image-2512',
+  qwenImageEdit2511 = 'qwen-image-edit-2511',
+  qwenImageEdit2512MultipleAnglesLora = 'qwen-image-edit-2511-multiple-angles-lora',
+  fluxV2ProEdit = 'flux-v2-pro-edit',
+  klingV3ProImageToVideo = 'kling-v3-pro-image-to-video',
+  klingV3ProMotionControl = 'kling-v3-pro-motion-control',
+  topazImageUpscale = 'topaz-image-upscale',
+  topazVideoUpscale = 'topaz-video-upscale',
+  lipSyncV3 = 'lip-sync-v3',
+  elevenV3 = 'eleven-labs-eleven-v3',
+  seedvrImageUpscale = 'seedvr-image-upscale',
+  geminiImage3Pro = 'gemini-image-3-pro',
+  none = 'none',
+}
+
+export enum Services {
+  faceMatcher = 'face-matcher',
+  headDirectionChecker = 'head-direction-checker',
+  aiModelGateway = 'ai-model-gateway',
+}
+
+export type StepBase = {
   error?: string;
   uploadPath?: string;
   status: JobStatuses;
   model: Models;
-  flow: Flows;
+  platform: Platforms;
+  service: Services,
 }
 
-export type ImageGenerator = ServiceBase & {
-  prompt: string;
-  negativePrompt: string;
-  ratio: string;
+export type AiModelGateway = StepBase & {
+  prompt?: string;
+  negativePrompt?: string;
+  ratio?: string;
   imagePaths?: string[];
+  videoPaths?: string[];
+  audioPaths?: string[];
+  idPhotoPaths?: string[];
+  objectRefPaths?: string[] | null;
   safetyTolerance?: number;
   horizontalAngle?: number;
   verticalAngle?: number;
   zoom?: number;
+  temperature?: number;
+  keepOriginalAudio?: boolean;
+  duration?: number;
+  voice?: string;
 }
 
-export type VideoGenerator = ServiceBase & {
-  prompt?: string;
-  negativePrompt?: string;
+export type FaceMatcher = StepBase & {
   imagePath: string;
-  videoPath?: string;
-  imageRefPaths: string[];
-  objectRefPaths?: string[] | null;
-  duration: number;
-  ratio?: string;
-}
-
-export type Upscaler = ServiceBase & {
-  imagePath?: string;
-  videoPath?: string;
-}
-
-export type AudioGenerator = ServiceBase & {
-  text: string;
-  voice: string;
-  language: string;
-}
-
-export type LipSync = ServiceBase & {
-  videoPath: string;
-  audioPath: string;
-}
-
-export type FaceMatcher = ServiceBase & {
-  imagePath: string;
+  idPhotoPaths: string[];
   threshold: number;
+  faceMatch?: number;
 }
 
-export type HeadDirectionChecker = ServiceBase & {
+export type HeadDirectionChecker = StepBase & {
   imagePath: string;
   direction: Directions;
 }
 
 export type WorkflowStep = 
-  ImageGenerator | 
-  VideoGenerator | 
-  Upscaler | 
-  AudioGenerator | 
-  LipSync | 
+  AiModelGateway | 
   FaceMatcher | 
   HeadDirectionChecker;
 

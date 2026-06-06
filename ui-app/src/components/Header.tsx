@@ -45,7 +45,7 @@ function Header() {
 
                     <div className="flex items-baseline gap-1.5 relative">
                         <span className="text-sm font-black tabular-nums tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-base-content to-base-content/70">
-                            100
+                            {user?.credits || 0}
                         </span>
                         <span className="text-[9px] font-bold opacity-40 uppercase tracking-[0.15em] transition-opacity group-hover:opacity-60 duration-500">
                             pulses

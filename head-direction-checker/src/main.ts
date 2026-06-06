@@ -8,7 +8,7 @@ admin.initializeApp({
   storageBucket: process.env.BUCKET_NAME,
 });
 
-import { HeadDirectionChecker, Job, JobStatuses, Services, WorkflowStep } from './types/job';
+import { HeadDirectionChecker, Job, JobStatuses, WorkflowStep, Services } from './types/job';
 import { sendJob } from './services/messageQueue';
 import { getJob } from './services/jobManagerService';
 import { downloadMediaFromPath } from './services/storage';

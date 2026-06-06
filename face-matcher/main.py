@@ -11,7 +11,7 @@ from google.cloud import pubsub_v1
 
 from matcher import get_app, acquire_face_recognition, ADAFACE_MODEL_DIR
 from storage import download_bytes, download_models
-from models import FaceMatcherStep, Job, JobStatus
+from models import FaceMatcherStep, Job, JobStatus, StepBase
 from services.job_manager_service import get_job
 
 PROJECT_ID              = os.environ["PROJECT_ID"]
@@ -33,10 +33,10 @@ publisher  = pubsub_v1.PublisherClient()
 subscriber = pubsub_v1.SubscriberClient()
 
 
-def _send_job(raw: dict) -> None:
+def _send_job(job: Job) -> None:
     topic_path = publisher.topic_path(PROJECT_ID, WORKFLOW_MANAGER_TOPIC)
-    publisher.publish(topic_path, json.dumps(raw).encode()).result()
-    logger.info(f"Published job {raw.get('id')} to {WORKFLOW_MANAGER_TOPIC}")
+    publisher.publish(topic_path, json.dumps(job.model_dump()).encode()).result()
+    logger.info(f"Published job {job.id} to {WORKFLOW_MANAGER_TOPIC}")
 
 
 def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
@@ -65,9 +65,8 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
     step_idx = next(
         (i for i, step in enumerate(job.workflow)
-         if isinstance(step, dict)
-         and step.get("service") == SERVICE_NAME
-         and step.get("status") == JobStatus.pending),
+         if step.service == SERVICE_NAME
+         and step.status == JobStatus.pending),
         -1,
     )
 
@@ -76,7 +75,7 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         message.ack()
         return
 
-    step = FaceMatcherStep.model_validate(job.workflow[step_idx])
+    step = FaceMatcherStep.model_validate(job.workflow[step_idx].model_dump())
 
     try:
         image_bytes    = download_bytes(step.imagePath)
@@ -112,8 +111,8 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         step.status = JobStatus.error
         step.error  = str(e)
 
-    raw["workflow"][step_idx] = step.model_dump()
-    _send_job(raw)
+    job.workflow[step_idx] = StepBase.model_validate(step.model_dump())
+    _send_job(job)
     message.ack()
 
 

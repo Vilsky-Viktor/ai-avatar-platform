@@ -55,6 +55,15 @@ export const getByAvatarId = async (userId: string, avatarId: string): Promise<J
     return snapshot.docs.map(doc => doc.data() as Job);
 }
 
+export const getByStatus = async (status: JobStatuses): Promise<Job[]> => {
+    const snapshot = await db.collection(JOBS_COLLECTION_NAME)
+        .where("status", "==", status)
+        .orderBy("createdAt", "asc")
+        .get();
+
+    return snapshot.docs.map(doc => doc.data() as Job);
+}
+
 export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promise<Job[]> => {
     const snapshot = await db.collection(JOBS_COLLECTION_NAME)
         .where("userId", "==", userId)

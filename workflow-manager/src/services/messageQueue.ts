@@ -14,7 +14,7 @@ export const sendJob = async (topicName: string, job: Job) => {
             data: Buffer.from(JSON.stringify(job)),
             attributes: {
                 timestamp: new Date().toISOString(),
-                service: 'avatar-manager',
+                service: 'workflow-manager',
             }
         });
 

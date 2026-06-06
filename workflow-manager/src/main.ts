@@ -2,9 +2,9 @@ import { PubSub, Message } from '@google-cloud/pubsub';
 import admin from 'firebase-admin';
 import logger from './logger';
 import { Job, JobStatuses, WorkflowStep } from './types/job';
-import { sendJob } from './services/messageQueue';
 import { updateJob, getJob } from './services/jobManagerService';
 import { deleteBlob } from './services/storageService';
+import { sendJob } from './services/messageQueue';
 
 admin.initializeApp({ projectId: process.env.PROJECT_ID, storageBucket: process.env.BUCKET_NAME });
 
@@ -12,6 +12,77 @@ const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'image-generator-sub';
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
+
+const completedHandler = async (job: Job) => {
+  logger.info(`Workflow successfully completed for job ${job.id}`)
+  job.status = JobStatuses.completed;
+
+  await updateJob(job);
+
+  const intermediatePaths = job.workflow
+    .map((step: WorkflowStep) => step.uploadPath)
+    .filter((path): path is string => !!path && path !== job.resultMediaPath);
+
+  if (intermediatePaths.length > 0) {
+    logger.info({ jobId: job.id, paths: intermediatePaths }, 'Deleting intermediate files');
+    await Promise.all(intermediatePaths.map(deleteBlob));
+  }
+}
+
+const newWorkflowHandler = async (job: Job) => {
+  logger.info(`Starting a new workflow for job ${job.id}`);
+  const stepIdx = 0;
+  const stepData = job.workflow[stepIdx];
+
+  await sendJob(stepData.service, job);
+
+  stepData.status = JobStatuses.generating;
+  job.workflow[stepIdx] = stepData;
+  job.status = JobStatuses.generating;
+
+  await updateJob(job);
+}
+
+const pendingStepHandler = async (job: Job) => {
+  const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
+  const stepData = job.workflow[stepIdx];
+
+  await sendJob(stepData.service, job);
+
+  stepData.status = JobStatuses.generating;
+  job.workflow[stepIdx] = stepData;
+
+  await updateJob(job);
+}
+
+const jobErrorHandler = async (job: Job) => {
+  const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.error);
+  const stepData = job.workflow[stepIdx];
+
+  job.status = JobStatuses.error;
+
+  logger.info(`Workflow failed after ${job.maxRuns} runs for job ${job.id}, model: ${stepData.model}, error: ${stepData.error}`);
+  await updateJob(job);
+}
+
+const stepErrorHandler = async (job: Job) => {
+  const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.error);
+  const stepData = job.workflow[stepIdx];
+
+  logger.info(`Restarting workflow due to job ${job.id}, model: ${stepData.model}, error: ${stepData.error}`);
+
+  job.curRun += 1;
+  job.workflow = job.workflow.map((step: WorkflowStep) => ({...step, status: JobStatuses.pending, error: '', operationJobId: undefined}));
+
+  const firstStepIdx = 0;
+  const firstStepData = job.workflow[firstStepIdx];
+
+  await sendJob(firstStepData.service, job);
+
+  job.workflow[firstStepIdx] = firstStepData;
+
+  await updateJob(job);
+}
 
 function listenForResults() {
   const subscription = pubsub.subscription(SUBSCRIPTION_ID);
@@ -39,60 +110,23 @@ function listenForResults() {
       throw error;
     }
 
+    const allStepsCompleted = job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.completed);
+    const jobError = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun === job.maxRuns;
+    const stepError = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun !== job.maxRuns;
+    const newWorkflow = job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.pending);
+    const pendingStep = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.pending);
+
     try {
-      if (job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.pending)) {
-        logger.info(`Starting a new workflow for job ${job.id}`);
-        const topic = job.workflow[0].service;
-
-        job.status = JobStatuses.generating;
-        job.curRun += 1;
-        
-        await sendJob(topic, job);
-        await updateJob(job);
-      } else if (job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun !== job.maxRuns) {
-        const topic = job.workflow[0].service;
-        const errorStepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.error);
-        const errorStepData = job.workflow[errorStepIdx];
-
-        logger.info(`Restarting workflow due to job ${job.id}, step: ${errorStepData.service}, error: ${errorStepData.error}`);
-
-        job.curRun += 1;
-        job.workflow = job.workflow.map((step: WorkflowStep) => ({...step, status: JobStatuses.pending, error: ''}));
-
-        await sendJob(topic, job);
-        await updateJob(job);
-      } else if (job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun === job.maxRuns) {
-        const errorStepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.error);
-        const errorStepData = job.workflow[errorStepIdx];
-
-        logger.info(`Workflow failed after ${job.maxRuns} runs for job ${job.id}, step: ${errorStepData.service}, error: ${errorStepData.error}`);
-
-        job.status = JobStatuses.error;
-        
-        await updateJob(job);
-      } else if (job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.completed)) {
-        logger.info(`Workflow successfully completed for job ${job.id}`)
-        job.status = JobStatuses.completed;
-
-        await updateJob(job);
-
-        const intermediatePaths = job.workflow
-          .map((step: WorkflowStep) => step.uploadPath)
-          .filter((path): path is string => !!path && path !== job.resultMediaPath);
-
-        if (intermediatePaths.length > 0) {
-          logger.info({ jobId: job.id, paths: intermediatePaths }, 'Deleting intermediate files');
-          await Promise.all(intermediatePaths.map(deleteBlob));
-        }
-      } else if (job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.pending)) {
-        const pendingStepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
-        const pendingStepData = job.workflow[pendingStepIdx];
-        const topic = pendingStepData.service;
-
-        logger.info(`Sending job ${job.id} to the next step ${topic}`);
-
-        await sendJob(topic, job);
-        await updateJob(job);
+      if (allStepsCompleted) {
+        await completedHandler(job);
+      } else if (jobError) {
+        await jobErrorHandler(job);
+      } else if (stepError) {
+        await stepErrorHandler(job);
+      } else if (newWorkflow) {
+        await newWorkflowHandler(job);
+      } else if (pendingStep) {
+        await pendingStepHandler(job);
       } else {
         logger.warn(`None of conditions met for job ${job.id}`)
       }

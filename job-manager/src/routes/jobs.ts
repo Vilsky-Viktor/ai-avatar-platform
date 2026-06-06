@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getById, getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId } from '../controllers/jobController';
+import { getById, getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId, getByStatus } from '../controllers/jobController';
 import { genSyntheticFrontIdPhoto, genSyntheticIdPhotos, genDigitalTwinIdPhotos } from '../controllers/idPhotoController';
 import { genAvatarAudio, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, mimicMotion } from '../controllers/contentController';
 
@@ -23,5 +23,7 @@ router.post('/restart/:id', restart);
 router.patch('/update/:id', update);
 router.delete('/delete-by-id/:id', deleteById);
 router.delete('/delete-by-avatar-id/:avatarId', deleteByAvatarId);
+
+router.get('/get/status/:status', getByStatus);
 
 export default router;

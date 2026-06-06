@@ -29,6 +29,17 @@ export const linkGoogleAccount = async (googleIdToken: string): Promise<{ custom
   return res.data;
 };
 
+export const getUserById = async (userId: string): Promise<User> => {
+  try {
+    const res = await apiClient.get(`/users/get/id/${userId}`);
+    
+    return res.data as User; 
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
+};
+
 export const syncUser = async (user: FirebaseUser): Promise<User> => {
   try {
     const userInfo: User = {

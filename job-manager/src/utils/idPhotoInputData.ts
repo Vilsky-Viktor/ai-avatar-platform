@@ -1,10 +1,12 @@
 import { AvatarParameters } from '../types/avatar';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
-import { Directions, FaceMatcher, Flows, ImageGenerator, Job, JobMetadata, JobStatuses, Models, Services } from '../types/job';
+import { Platforms, AiModelGateway, JobMetadata, JobStatuses, Models, Services } from '../types/job';
 import { Ratios } from '../types/ratios';
 import uuid from 'uuid';
 
-export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, userId: string, avatarId: string): {imageGenerator: ImageGenerator, metadata: JobMetadata} => {
+export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, userId: string, avatarId: string): {
+  imageGenerator: AiModelGateway, metadata: JobMetadata
+} => {
   const {
     gender,
     attractiveness,
@@ -35,23 +37,23 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
 
   return {
     imageGenerator: {
-      service: Services.imageGenerator,
       prompt: `Front headshot with fully visible head and shoulders in the frame of a ${age}-year-old ${ethnicity} ${gender} with ${skinColor} skin tone, ${attractiveness ? `${attractiveness} appearance, ` : ''}${face} face, ${eyes} eyes with ${eyeLashes} eyelashes and ${eyeBrows} eyebrows, ${nose} nose, ${ears} ears, ${lips} lips, ${facialHair === 'none' ? 'no facial hair' : `with ${facialHair}`}, ${hairColor} hair in ${hairStyle} style, ${body || bustSize ? `with ${body} build${bustSize ? ` and ${bustSize} bust` : ''}, ` : ''}${bodyHair === 'none' ? 'no body hair' : `with ${bodyHair} body hair`}, skin is ${skin} with natural texture. Ultrarealistic and natural, neutral expression. Wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}. Gray studio background`,
       negativePrompt: '',
       ratio,
       uploadPath,
       status: JobStatuses.pending,
-      model: Models.googleImage3Pro,
-      flow: Flows.t2i,
+      model: Models.geminiImage3Pro,
+      platform: Platforms.google,
       temperature: 1.0,
-      imagePaths: []
+      imagePaths: [],
+      service: Services.aiModelGateway
     },
     metadata: { ratio, dimensions }
   }
 }
 
 export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): {
-  imageGenerator: ImageGenerator, metadata: JobMetadata, order: number
+  imageGenerator: AiModelGateway, metadata: JobMetadata, order: number
 }[] => {
   const {
     gender,
@@ -68,23 +70,22 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
   return [
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Gentle smile showing teeth`,
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
-        temperature: 1.0
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        temperature: 1.0,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 2,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: 'rotate person 45 degrees to the left to create a three-quarter view',
         negativePrompt: '',
         ratio,
@@ -92,15 +93,15 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         temperature: 1.0,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 3,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: 'rotate person 45 degrees to the right to create a three-quarter view',
         negativePrompt: '',
         ratio,
@@ -108,15 +109,15 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 4,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: 'rotate person 90 degrees to the left to create a side profile view',
         negativePrompt: '',
         ratio,
@@ -124,15 +125,15 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 5,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: 'rotate person 90 degrees to the right to create a side profile view',
         negativePrompt: '',
         ratio,
@@ -140,15 +141,15 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 6,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Standing full body wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}, light gray running shorts and white sneakers. ${body} body type, ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'no body hair'}, ${bustSize} chest, ${height} height.`,
         negativePrompt: '',
         ratio,
@@ -156,8 +157,9 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         temperature: 1.0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 7,
@@ -167,7 +169,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
 
 
 export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): { 
-  imageGenerator: ImageGenerator, metadata: JobMetadata, order: number 
+  imageGenerator: AiModelGateway, metadata: JobMetadata, order: number 
 }[] => {
   const ratio = Ratios['1:1'];
   const dimensions = '2048x2048';
@@ -177,7 +179,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
   return [
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
         negativePrompt: '',
         ratio,
@@ -185,15 +186,15 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[0]}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 1,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
         negativePrompt: '',
         ratio,
@@ -201,15 +202,15 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[1]}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 2,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
         negativePrompt: '',
         ratio,
@@ -217,15 +218,15 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[2]}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 3,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
         negativePrompt: '',
         ratio,
@@ -233,15 +234,15 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[3]}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 4,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
         negativePrompt: '',
         ratio,
@@ -249,15 +250,15 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[4]}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 5,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
         negativePrompt: '',
         ratio,
@@ -265,15 +266,15 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[5]}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 6,
     },
     {
       imageGenerator: {
-        service: Services.imageGenerator,
         prompt: `Change background to gray studio background`,
         negativePrompt: '',
         ratio,
@@ -281,8 +282,9 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         temperature: 0,
         uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[6]}.png`,
         status: JobStatuses.pending,
-        model: Models.googleImage3Pro,
-        flow: Flows.ti2i,
+        model: Models.geminiImage3Pro,
+        platform: Platforms.google,
+        service: Services.aiModelGateway
       },
       metadata: { ratio, dimensions },
       order: 7,

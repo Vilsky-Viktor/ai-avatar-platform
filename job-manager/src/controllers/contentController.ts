@@ -7,17 +7,13 @@ import {
   PhotoJobRequest,
   PhotoSetJobRequest,
   VideoJobRequest,
-  ImageGenerator,
-  Upscaler,
-  Services,
   PhotoSetType,
-  VideoGenerator,
   Models,
-  Flows,
   AudioJobRequest,
-  AudioGenerator,
-  LipSync,
+  AiModelGateway,
   MimicMotionRequest,
+  Platforms,
+  Services,
 } from '../types/job';
 import { 
   getAvatarIdPhotos as getAvatarIdPhotosDb, 
@@ -52,8 +48,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const idPhotoStart = refCount + 1;
     const idPhotoEnd = refCount + idPhotos.length;
 
-    const imageGenerator: ImageGenerator = {
-      service: Services.imageGenerator,
+    const imageGenerator: AiModelGateway = {
       prompt: `${jobRequest.prompt}. Person identity images from image ${idPhotoStart} to image ${idPhotoEnd}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...jobRequest.mediaPaths!, ...idPhotos],
@@ -61,8 +56,9 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
-      model: Models.googleImage3Pro,
-      flow: Flows.ti2i,
+      model: Models.geminiImage3Pro,
+      platform: Platforms.google,
+      service: Services.aiModelGateway
     };
 
     const job: Job = {
@@ -166,18 +162,18 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
     const identityRef = hasObjectPhotos ? '@Element2' : '@Element1';
     const objectRefPaths = hasObjectPhotos ? mediaPaths.slice(1) : [];
 
-    const videoGenerator: VideoGenerator = {
-      service: Services.videoGenerator,
+    const videoGenerator: AiModelGateway = {
       prompt: `${jobRequest.prompt}. Person identity from ${identityRef}`,
       negativePrompt: 'blur, distort, and low quality, crossed hands',
-      imagePath: mediaPaths[0] ?? '',
-      imageRefPaths: idPhotos,
+      imagePaths: mediaPaths,
+      idPhotoPaths: idPhotos,
       objectRefPaths,
       duration: jobRequest.lengthSec!,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
-      model: Models.kling,
-      flow: Flows.ti2v,
+      model: Models.klingV3ProImageToVideo,
+      platform: Platforms.falai,
+      service: Services.aiModelGateway
     };
 
     let workflow = [videoGenerator] as Job['workflow'];
@@ -188,36 +184,36 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       const audioId = uuid.v4();
       const audioUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/audios/${audioId}.mp3`;
 
-      const audioGenerator: AudioGenerator = {
-        service: Services.audioGenerator,
-        model: Models.eleven,
-        flow: Flows.t2a,
+      const audioGenerator: AiModelGateway = {
+        model: Models.elevenV3,
+        platform: Platforms.falai,
         status: JobStatuses.pending,
-        text: jobRequest.audioText,
+        prompt: jobRequest.audioText,
         voice: avatar.voiceId!,
         uploadPath: audioUploadPath,
+        service: Services.aiModelGateway
       };
 
-      const lipSync: LipSync = {
-        service: Services.lipSync,
-        model: Models.lipSync,
-        flow: Flows.va2v,
+      const lipSync: AiModelGateway = {
+        model: Models.lipSyncV3,
+        platform: Platforms.falai,
         status: JobStatuses.pending,
-        videoPath: generatorUploadPath,
-        audioPath: audioUploadPath,
-        uploadPath: generatorUploadPath
+        videoPaths: [generatorUploadPath],
+        audioPaths: [audioUploadPath],
+        uploadPath: generatorUploadPath,
+        service: Services.aiModelGateway
       };
 
       workflow = [videoGenerator, audioGenerator, lipSync];
     } else if (jobRequest.audioPath) {
-      const lipSync: LipSync = {
-        service: Services.lipSync,
-        model: Models.lipSync,
-        flow: Flows.va2v,
+      const lipSync: AiModelGateway = {
+        model: Models.lipSyncV3,
+        platform: Platforms.falai,
         status: JobStatuses.pending,
-        videoPath: generatorUploadPath,
-        audioPath: jobRequest.audioPath,
+        videoPaths: [generatorUploadPath],
+        audioPaths: [jobRequest.audioPath],
         uploadPath: generatorUploadPath,
+        service: Services.aiModelGateway
       };
 
       workflow = [videoGenerator, lipSync];
@@ -260,16 +256,16 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`;
 
-    const videoGenerator: VideoGenerator = {
-      service: Services.videoGenerator,
-      imagePath: jobRequest.imagePath,
-      videoPath: jobRequest.videoPath,
-      imageRefPaths: idPhotos,
+    const videoGenerator: AiModelGateway = {
+      imagePaths: [jobRequest.imagePath],
+      videoPaths: [jobRequest.videoPath],
+      idPhotoPaths: idPhotos,
       keepOriginalAudio: jobRequest.keepOriginalAudio,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
-      model: Models.kling,
-      flow: Flows.v2v,
+      model: Models.klingV3ProMotionControl,
+      platform: Platforms.falai,
+      service: Services.aiModelGateway
     };
 
     const job: Job = {
@@ -305,14 +301,14 @@ export const genAvatarAudio = async (req: Request, res: Response, next: NextFunc
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
     const uploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/audios/${audioId}.mp3`;
 
-    const audioGenerator: AudioGenerator = {
-      service: Services.audioGenerator,
-      model: Models.eleven,
-      flow: Flows.t2a,
+    const audioGenerator: AiModelGateway = {
+      model: Models.elevenV3,
+      platform: Platforms.falai,
       status: JobStatuses.pending,
-      text: jobRequest.prompt,
+      prompt: jobRequest.prompt,
       voice: avatar.voiceId!,
-      uploadPath
+      uploadPath,
+      service: Services.aiModelGateway
     }
 
     const job: Job = {

@@ -4,6 +4,7 @@ import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
   getByAvatarId as getByAvatarIdDb,
+  getByStatus as getByStatusDb,
   update as updateDb,
   deleteById as deleteByIdDb,
   deleteByAvatarId as deleteByAvatarIdDb,
@@ -55,6 +56,20 @@ export const getByAvatarId = async (req: Request, res: Response, next: NextFunct
     return res.status(201).json(jobs);
   } catch (error) {
     req.log.info(`Failed to get jobs by avatar ID ${avatarId} for ${userId}: ${error}`);
+    next(error);
+  }
+};
+
+export const getByStatus = async (req: Request, res: Response, next: NextFunction) => {
+  const status = req.params.status as JobStatuses;
+
+  req.log.info(`Get jobs by status "${status}"`);
+
+  try {
+    const jobs = await getByStatusDb(status);
+    return res.status(200).json(jobs);
+  } catch (error) {
+    req.log.info(`Failed to get jobs by status "${status}": ${error}`);
     next(error);
   }
 };

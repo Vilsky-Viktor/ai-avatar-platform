@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel
 
 
@@ -13,19 +13,23 @@ class JobStatus(str, Enum):
     canceled   = "canceled"
 
 
-class FaceMatcherStep(BaseModel):
+class StepBase(BaseModel):
     model_config = {"extra": "allow"}
 
-    service: str
+    service: Optional[str] = None
     status: JobStatus
-    model: str
-    flow: str
+    model: str = ''
+    platform: str = ''
+    error: Optional[str] = None
+    uploadPath: Optional[str] = None
+
+
+class FaceMatcherStep(StepBase):
+    internalService: str
     imagePath: str
     idPhotoPaths: List[str]
     threshold: float
     faceMatch: float = 0.0
-    error: Optional[str] = None
-    uploadPath: Optional[str] = None
 
 
 class Job(BaseModel):
@@ -41,6 +45,6 @@ class Job(BaseModel):
     curRun: int
     maxRuns: int
     order: Optional[int] = None
-    workflow: List[Any]
+    workflow: List[StepBase]
     metadata: Optional[dict] = None
     resultMediaPath: str

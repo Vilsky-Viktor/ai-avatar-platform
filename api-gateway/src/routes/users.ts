@@ -4,6 +4,11 @@ import { createProxyHandler } from '../utils/proxy';
 const BASE = process.env.USER_URL;
 const router = Router();
 
+router.get(
+    '/get/id/:id',
+    createProxyHandler('get', (req) => `${BASE}/get/id/${req.params.id}`, 'Get user by ID')
+);
+
 router.post(
     '/sync',
     createProxyHandler('post', () => `${BASE}/sync`, 'Sync user')

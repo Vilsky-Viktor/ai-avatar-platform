@@ -3,6 +3,7 @@ import { auth } from '../firebase';
 import { type User } from '../types/user';
 import { type Theme, ThemeColor } from '../types/settings';
 import Loading from '../components/Loading';
+import { getUserById } from '../services/apiGateway';
 
 interface AppContextType {
   theme: Theme;
@@ -24,13 +25,16 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   }, [theme]);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
+        const dbUser = await getUserById(firebaseUser.uid);
+
         const userInfo: User = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName!,
           email: firebaseUser.email ?? firebaseUser.providerData?.find(p => p.email)?.email ?? '',
           img: firebaseUser.photoURL,
+          credits: dbUser.credits || 0
         };
 
         setUser(userInfo);
