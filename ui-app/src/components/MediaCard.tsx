@@ -1,6 +1,6 @@
 import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd, AudioLines } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { JobStatuses, MediaTypes, type Job } from '../types/job';
+import { JobStatuses, MediaTypes, type Job } from '@loom24/shared/types';
 import { downloadMediaFromBucket } from '../services/storage';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
 import MediaInfoPopup from './mediaGrid/MediaInfoPopup';

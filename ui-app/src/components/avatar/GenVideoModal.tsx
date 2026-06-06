@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, ImagePlus, Trash2, Clock, Mic, Square, RotateCcw, Check, Loader2, Images, Film, Volume2 } from 'lucide-react';
-import type { Avatar } from '../../types/avatar';
+import type { Avatar } from '@loom24/shared/types';
 import type { VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useApp } from '../../providers/ContextProvider';
 import MediaSelectorModal from '../mediaSelector/MediaSelectorModal';
-import type { Job } from '../../types/job';
+import type { Job } from '@loom24/shared/types';
 import { uploadBlobToBucket } from '../../services/storage';
 import { convertBlobToWav } from '../../utils/audioConverter';
 

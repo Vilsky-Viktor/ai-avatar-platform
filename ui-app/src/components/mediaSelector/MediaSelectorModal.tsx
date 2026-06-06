@@ -1,5 +1,5 @@
 import { X, Images } from 'lucide-react';
-import { MediaTypes, JobStatuses, JobTargets, type Job } from '../../types/job';
+import { MediaTypes, JobStatuses, JobTargets, type Job } from '@loom24/shared/types';
 import { VIDEO_RATIOS, type VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 

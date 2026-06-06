@@ -4,9 +4,9 @@ import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepp
 import { ChevronDown } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
-import { type Avatar } from '../../types/avatar';
+import { type Avatar } from '@loom24/shared/types';
 import { updateAvatar, restartJobById, genSyntheticIdPhotos, genSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId } from '../../services/apiGateway';
-import { JobStatuses, type Job, type IdPhotoJobRequest } from '../../types/job';
+import { JobStatuses, type Job, type IdPhotoJobRequest } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
 import { 
     AVATAR_PARAMETER_OPTIONS,

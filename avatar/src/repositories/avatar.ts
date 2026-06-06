@@ -1,5 +1,5 @@
 import { Avatar } from '@loom24/shared/types';
-import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || ''
 const AVATARS_COLLECTION_NAME = process.env.AVATARS_COLLECTION_NAME || ''
@@ -46,7 +46,7 @@ export const create = async (userId: string, avatar: Omit<Avatar, 'id'>): Promis
         .doc();
     const newId = avatarRef.id; 
 
-    const now = Timestamp.now();
+    const now = Timestamp.now() as unknown as Avatar['createdAt'];
 
     const dbAvatar: Avatar = {
         ...avatar,
@@ -66,7 +66,7 @@ export const update = async (userId: string, avatarId: string, avatarData: Parti
         .doc(userId)
         .collection(AVATARS_COLLECTION_NAME)
         .doc(avatarId);
-    const now = Timestamp.now();
+    const now = Timestamp.now() as unknown as Avatar['updatedAt'];
 
     const { id: _id, userId: _userId, ...safeData } = avatarData;
     const updatePayload = { ...safeData, updatedAt: now };

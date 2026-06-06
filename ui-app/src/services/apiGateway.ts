@@ -1,10 +1,7 @@
 import axios from 'axios';
 import { auth } from '../firebase';
-import { type User } from '../types/user';
 import type { User as FirebaseUser } from "firebase/auth";
-import type { Avatar, AvatarGender } from '../types/avatar';
-import type { Job, IdPhotoJobRequest, PhotoJobRequest, PhotoSetJobRequest, VideoJobRequest, AudioJobRequest, MimicMotionRequest } from '../types/job';
-import type { Voice } from '../types/voice';
+import type { User, Avatar, AvatarGender, Job, IdPhotoJobRequest, PhotoJobRequest, PhotoSetJobRequest, VideoJobRequest, AudioJobRequest, MimicMotionRequest, Voice } from '@loom24/shared/types';
 
 const apiClient = axios.create({ baseURL: import.meta.env.VITE_API_GATEWAY_URL });
 
@@ -47,6 +44,7 @@ export const syncUser = async (user: FirebaseUser): Promise<User> => {
       name: user.displayName!,
       email: user.email ?? user.providerData?.find(p => p.email)?.email ?? '',
       img: user.photoURL,
+      credits: 0,
     };
 
     const res = await apiClient.post('/users/sync', userInfo);

@@ -1,6 +1,6 @@
 import { doc, collection, query, where, onSnapshot, DocumentSnapshot, QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { db } from "../firebase";
-import { JobStatuses, JobTargets } from '../types/job';
+import { JobStatuses, JobTargets } from '@loom24/shared/types';
 
 export const listenToDocChanges = (
     collectionId: string, 

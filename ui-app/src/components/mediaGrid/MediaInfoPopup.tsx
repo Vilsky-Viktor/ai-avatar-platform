@@ -1,7 +1,7 @@
 import { Maximize2, LayoutTemplate, MessageSquare, Copy, Check, Clock, Hd, CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import { MediaTypes, type Job } from '../../types/job';
+import { MediaTypes, type Job } from '@loom24/shared/types';
 
 type Props = {
     job: Partial<Job>;
@@ -38,7 +38,7 @@ function MediaInfoPopup({ job, onClose }: Props) {
     const dimensions = job.metadata?.dimensions;
     const lengthSec = job.metadata?.lengthSec;
     const createdAt = job.createdAt
-        ? new Date(job.createdAt._seconds * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+        ? new Date((job.createdAt as any)._seconds * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
         : null;
     const [copied, setCopied] = useState(false);
 

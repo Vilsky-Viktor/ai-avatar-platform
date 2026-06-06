@@ -3,7 +3,7 @@ import AvatarCard from "../components/avatars/AvatarCard";
 import DeleteAvatarModal from "../components/avatars/DeleteAvatarModal";
 import { useEffect, useState } from "react";
 import { getAllUserAvatars, deleteAvatarById } from "../services/apiGateway";
-import { type Avatar } from "../types/avatar";
+import { type Avatar } from "@loom24/shared/types";
 import { User } from 'lucide-react';
 
 function AvatarsPage() {

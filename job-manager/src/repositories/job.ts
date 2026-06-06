@@ -65,7 +65,7 @@ export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promi
         .where("avatarId", "==", avatarId)
         .where("target", "==", JobTargets.idPhoto)
         .orderBy("order", "asc")
-        .limit(1000)
+        .limit(100)
         .get();
 
     return snapshot.docs.map(doc => doc.data() as Job);
@@ -77,7 +77,7 @@ export const create = async (userId: string, job: Omit<Job, 'id'>): Promise<Job>
 }
 
 export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promise<Job[]> => {
-    const now = Timestamp.now();
+    const now = Timestamp.now() as unknown as Job['createdAt'];
     const batch = db.batch();
     const dbJobs: Job[] = [];
 
@@ -126,7 +126,7 @@ export const update = async (userId: string, jobId: string, updateData: Partial<
         const { id: _id, userId: _userId, createdAt: _createdAt, ...safeData } = updateData;
         transaction.update(jobRef, {
             ...safeData,
-            updatedAt: Timestamp.now()
+            updatedAt: Timestamp.now() as unknown as Job['updatedAt']
         });
     });
 }

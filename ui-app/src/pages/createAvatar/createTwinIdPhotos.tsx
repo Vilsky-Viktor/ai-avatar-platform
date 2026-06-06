@@ -4,10 +4,10 @@ import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepp
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
-import { type Avatar } from '../../types/avatar';
+import { type Avatar } from '@loom24/shared/types';
 import { updateAvatar, restartJobById, genDigitalTwinIdPhotos, getJobsByGroupId, getAvatarById, cropPerson } from '../../services/apiGateway';
 import type { CropMode } from '../../services/apiGateway';
-import { JobStatuses, type Job, type IdPhotoJobRequest } from '../../types/job';
+import { JobStatuses, type Job, type IdPhotoJobRequest } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
 import { uploadMediaToBucket, getMediaUrlFromPath, deleteMediaFromBucket } from '../../services/storage';
 import { 

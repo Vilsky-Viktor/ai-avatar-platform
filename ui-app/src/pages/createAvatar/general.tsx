@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepper';
 import { User } from 'lucide-react';
 import { createAvatar, getAvatarById } from '../../services/apiGateway';
-import { AvatarTypes, type Avatar } from '../../types/avatar';
-import { AvatarGender } from '../../types/avatar';
+import { AvatarTypes, AvatarGender, type Avatar } from '@loom24/shared/types';
 import { getAvatarData, initialAvatarData, saveAvatarData } from '../../utils/avatarCreation';
 import { type NewAvatarData  } from "../../types/avatarCreation";
 import BottomDock from '../../components/createAvatar/BottomDock'

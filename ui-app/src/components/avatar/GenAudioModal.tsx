@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import type { Avatar } from '../../types/avatar';
+import type { Avatar } from '@loom24/shared/types';
 
 type Props = {
     isOpen: boolean;

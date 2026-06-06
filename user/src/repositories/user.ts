@@ -23,8 +23,8 @@ export const sync = async (user: User): Promise<{ user: User; created: boolean }
             const dbUser: User = {
                 ...user,
                 credits: 0,
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now(),
+                createdAt: Timestamp.now() as unknown as User['createdAt'],
+                updatedAt: Timestamp.now() as unknown as User['updatedAt'],
             };
             transaction.set(userRef, dbUser);
             return { user: dbUser, created: true };
@@ -35,7 +35,7 @@ export const sync = async (user: User): Promise<{ user: User; created: boolean }
         const imgChanged = user.img !== existingUser.img;
 
         if (nameChanged || imgChanged) {
-            const updates: Partial<User> = { updatedAt: Timestamp.now() };
+            const updates: Partial<User> = { updatedAt: Timestamp.now() as unknown as User['updatedAt'] };
             if (nameChanged) updates.name = user.name;
             if (imgChanged) updates.img = user.img;
             transaction.update(userRef, updates);

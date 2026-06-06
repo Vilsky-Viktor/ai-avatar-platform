@@ -1,5 +1,5 @@
 import { deleteAvatarById } from "../services/apiGateway";
-import { AvatarGender, AvatarTypes, type Avatar } from "../types/avatar";
+import { AvatarGender, AvatarTypes, type Avatar } from "@loom24/shared/types";
 import { type NewAvatarData } from "../types/avatarCreation";
 import { decode, encode } from "./encoder";
 

@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase-admin/firestore';
+import type { FirestoreTimestamp } from './firestore';
 import { ImageRatios } from './image';
 import { VideoRatios } from './video';
 import type { AvatarParameters } from './avatar';
@@ -179,10 +179,11 @@ export type Job = {
   status?: JobStatuses;
   curRun: number;
   maxRuns: number;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: FirestoreTimestamp;
+  updatedAt?: FirestoreTimestamp;
   order?: number;
   workflow: WorkflowStep[];
   metadata?: JobMetadata;
   resultMediaPath: string;
+  resultMediaUrl?: string;
 }

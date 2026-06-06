@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { auth } from '../firebase';
-import { type User } from '../types/user';
+import { type User } from '@loom24/shared/types';
 import { type Theme, ThemeColor } from '../types/settings';
 import Loading from '../components/Loading';
 import { syncUser } from '../services/apiGateway';

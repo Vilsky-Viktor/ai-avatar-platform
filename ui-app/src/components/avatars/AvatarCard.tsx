@@ -1,8 +1,7 @@
 import { Trash2 } from 'lucide-react';
-import { type Avatar } from '../../types/avatar';
+import { type Avatar, AvatarGender } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
 import { ThemeColor } from '../../types/settings';
-import { AvatarGender } from '../../types/avatar';
 import { useEffect, useState } from 'react';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { useNavigate } from 'react-router-dom';

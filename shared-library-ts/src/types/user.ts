@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase-admin/firestore';
+import type { FirestoreTimestamp } from './firestore';
 
 export type User = {
   id: string;
@@ -6,6 +6,6 @@ export type User = {
   email: string;
   img: string | null;
   credits: number;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: FirestoreTimestamp;
+  updatedAt?: FirestoreTimestamp;
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import type { PhotoSetType } from '../../types/image';
+import type { PhotoSetType } from '@loom24/shared/types';
 
 type PhotoSetOption = {
     id: PhotoSetType;

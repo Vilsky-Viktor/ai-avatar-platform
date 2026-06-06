@@ -7,9 +7,9 @@ import {
     getAvatarData,
     initialAvatarData
 } from '../../utils/avatarCreation';
-import { AvatarGender, AvatarTypes, type Avatar } from '../../types/avatar';
+import { AvatarGender, AvatarTypes, type Avatar } from '@loom24/shared/types';
 import { updateAvatar, getVoicesByGender, getAvatarById } from '../../services/apiGateway';
-import type { Voice } from '../../types/voice';
+import type { Voice } from '@loom24/shared/types';
 import { Play, Pause, Check } from 'lucide-react';
 import { scrollToTop } from '../../utils/scroller';
 

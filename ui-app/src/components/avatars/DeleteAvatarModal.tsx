@@ -1,5 +1,5 @@
 import { AlertTriangle, Trash2 } from 'lucide-react';
-import type { Avatar } from '../../types/avatar';
+import type { Avatar } from '@loom24/shared/types';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {

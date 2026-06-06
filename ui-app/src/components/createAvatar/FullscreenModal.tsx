@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AudioLines } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import { MediaTypes } from '../../types/job';
+import { MediaTypes } from '@loom24/shared/types';
 
 type Props = {
     src: string | null;

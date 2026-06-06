@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
-import type { Avatar } from '../../types/avatar';
-import { type Ratio, RATIOS } from '../../types/image';
+import type { Avatar } from '@loom24/shared/types';
+import { type ImageRatio, IMAGE_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 const EMPTY_SLOTS: [null, null, null] = [null, null, null];
@@ -10,12 +10,12 @@ type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatar?: Avatar;
-    onGenerate: (prompt: string, ratio: Ratio, referenceImages: File[]) => Promise<void>;
+    onGenerate: (prompt: string, ratio: ImageRatio, referenceImages: File[]) => Promise<void>;
 };
 
 function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
-    const [ratio, setRatio] = useState<Ratio>('9:16');
+    const [ratio, setImageRatio] = useState<ImageRatio>('9:16');
     const [loading, setLoading] = useState(false);
     const [slots, setSlots] = useState<(File | null)[]>([...EMPTY_SLOTS]);
     const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
@@ -146,12 +146,12 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                     ))}
                 </div>
 
-                {/* Ratio */}
+                {/* ImageRatio */}
                 <div className="flex gap-3">
-                    {RATIOS.map(r => (
+                    {IMAGE_RATIOS.map(r => (
                         <button
                             key={r.value}
-                            onClick={() => setRatio(r.value)}
+                            onClick={() => setImageRatio(r.value)}
                             className={`flex flex-col items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
                                 ratio === r.value
                                     ? 'border-primary/50 bg-primary/5 text-primary'

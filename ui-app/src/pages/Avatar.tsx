@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from "react";
 import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, mimicMotion, getJobsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
-import type { Avatar } from '../types/avatar';
+import type { Avatar } from '@loom24/shared/types';
 import LazyMediaCard from '../components/LazyMediaCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
 import CreateMediaCard from '../components/avatar/CreateMediaCard';
@@ -11,14 +11,14 @@ import GenImageModal from '../components/avatar/GenImageModal';
 import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import GenVideoModal from '../components/avatar/GenVideoModal';
 import GenAudioModal from '../components/avatar/GenAudioModal';
-import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, type AudioJobRequest, JobStatuses, JobTargets, MediaTypes } from '../types/job';
+import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, type AudioJobRequest, JobStatuses, JobTargets, MediaTypes } from '@loom24/shared/types';
 import { ImageRatios, VideoRatios } from '@loom24/shared/types';
 import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
 import { useApp } from '../providers/ContextProvider';
 import { scrollToTop } from '../utils/scroller';
-import type { PhotoSetType } from '../types/image';
+import type { PhotoSetType } from '@loom24/shared/types';
 
 function AvatarPage() {
     const { user } = useApp();
@@ -181,7 +181,7 @@ function AvatarPage() {
         const jobs = await getJobsByAvatarId(avatarId);
         const filteredJobs = jobs
             .filter((job: Job) => [JobTargets.avatarMedia, JobTargets.idPhoto].includes(job.target))
-            .sort((a, b) => (b.createdAt?._seconds ?? 0) - (a.createdAt?._seconds ?? 0));
+            .sort((a, b) => ((b.createdAt as any)?._seconds ?? 0) - ((a.createdAt as any)?._seconds ?? 0));
 
         await Promise.all(filteredJobs.map(async (job: Job) => {
             if (job.status === JobStatuses.completed && job.resultMediaPath) {
