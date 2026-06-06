@@ -7,5 +7,5 @@ _client = create_service_client(os.environ["JOB_MANAGER_URL"])
 
 
 def get_job(job: Job) -> Job:
-    data = _client.get(f"/get/id/{job.id}", job.userId)
+    data = _client.get(f"/get/job/{job.id}", job.userId)
     return Job.model_validate(data)

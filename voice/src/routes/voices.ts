@@ -5,6 +5,6 @@ import {
 
 const router = Router();
 
-router.get('/get-by-gender/:gender', getByGender);
+router.get('/get/gender/:gender', getByGender);
 
 export default router;

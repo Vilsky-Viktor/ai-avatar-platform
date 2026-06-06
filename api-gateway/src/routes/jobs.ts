@@ -45,12 +45,12 @@ router.post(
     createProxyHandler('post', () => `${BASE}/gen-avatar-audio`, 'Generate avatar audio')
 );
 router.post(
-    '/restart/:id',
-    createProxyHandler('post', (req) => `${BASE}/restart/${req.params.id}`, 'Restart job')
+    '/restart/job/:id',
+    createProxyHandler('post', (req) => `${BASE}/restart/job/${req.params.id}`, 'Restart job')
 );
 router.delete(
-    '/delete-by-id/:id',
-    createProxyHandler('delete', (req) => `${BASE}/delete-by-id/${req.params.id}`, 'Delete job')
+    '/delete/job/:id',
+    createProxyHandler('delete', (req) => `${BASE}/delete/job/${req.params.id}`, 'Delete job')
 );
 
 export default router;

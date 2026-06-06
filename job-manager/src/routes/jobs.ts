@@ -16,14 +16,13 @@ router.post('/gen-avatar-video', genAvatarVideo);
 router.post('/mimic-motion', mimicMotion);
 router.post('/gen-avatar-audio', genAvatarAudio);
 
-router.get('/get/id/:id', getById);
+router.get('/get/job/:id', getById);
 router.get('/get/group/:groupId', getByGroupId);
 router.get('/get/avatar/:avatarId', getByAvatarId);
-router.post('/restart/:id', restart);
-router.patch('/update/:id', update);
-router.delete('/delete-by-id/:id', deleteById);
-router.delete('/delete-by-avatar-id/:avatarId', deleteByAvatarId);
-
 router.get('/get/status/:status', getByStatus);
+router.post('/restart/job/:id', restart);
+router.patch('/update/job/:id', update);
+router.delete('/delete/job/:id', deleteById);
+router.delete('/delete/avatar/:avatarId', deleteByAvatarId);
 
 export default router;

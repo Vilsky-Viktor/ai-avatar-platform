@@ -79,7 +79,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const update = async (req: Request, res: Response, next: NextFunction) => {
+export const updateByAvatarId = async (req: Request, res: Response, next: NextFunction) => {
   const headerUserId = req.headers['x-user-id'] as string;
   const avatarData: Partial<Avatar> = req.body;
   const id = req.params.id as string;

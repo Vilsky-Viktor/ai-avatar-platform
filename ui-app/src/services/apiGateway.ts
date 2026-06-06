@@ -31,7 +31,7 @@ export const linkGoogleAccount = async (googleIdToken: string): Promise<{ custom
 
 export const getUserById = async (userId: string): Promise<User> => {
   try {
-    const res = await apiClient.get(`/users/get/id/${userId}`);
+    const res = await apiClient.get(`/users/get/user/${userId}`);
     
     return res.data as User; 
   } catch (error) {
@@ -60,7 +60,7 @@ export const syncUser = async (user: FirebaseUser): Promise<User> => {
 
 export const getAvatarById = async (avatarId: string): Promise<Avatar> => {
   try {
-    const res = await apiClient.get(`/avatars/get/${avatarId}`);
+    const res = await apiClient.get(`/avatars/get/avatar/${avatarId}`);
 
     return res.data as Avatar;
   } catch (error) {
@@ -82,7 +82,7 @@ export const getAvatarBySlug = async (slug: string): Promise<Avatar> => {
 
 export const getAllUserAvatars = async (): Promise<Avatar[]> => {
   try {
-    const res = await apiClient.get('/avatars/get-all');
+    const res = await apiClient.get('/avatars/get/all');
 
     return res.data as Avatar[];
   } catch (error) {
@@ -104,7 +104,7 @@ export const createAvatar = async (avatar: Avatar): Promise<Avatar> => {
 
 export const updateAvatar = async (id: string, avatarData: Partial<Avatar>): Promise<Avatar> => {
   try {
-    const res = await apiClient.patch(`/avatars/update/${id}`, avatarData);
+    const res = await apiClient.patch(`/avatars/update/avatar/${id}`, avatarData);
 
     return res.data as Avatar;
   } catch (error) {
@@ -115,7 +115,7 @@ export const updateAvatar = async (id: string, avatarData: Partial<Avatar>): Pro
 
 export const deleteAvatarById = async (avatarId: string): Promise<Avatar> => {
   try {
-    const res = await apiClient.delete(`/avatars/delete-by-id/${avatarId}`);
+    const res = await apiClient.delete(`/avatars/delete/avatar/${avatarId}`);
 
     return res.data;
   } catch (error) {
@@ -236,7 +236,7 @@ export const getJobsByAvatarId  = async (avatarId: string): Promise<Job[]> => {
 
 export const restartJobById = async (jobId: string): Promise<Job> => {
   try {
-    const res = await apiClient.post(`/jobs/restart/${jobId}`, {});
+    const res = await apiClient.post(`/jobs/restart/job/${jobId}`, {});
 
     return res.data as Job;
   } catch (error) {
@@ -247,7 +247,7 @@ export const restartJobById = async (jobId: string): Promise<Job> => {
 
 export const deleteJobById = async (jobId: string): Promise<Job> => {
   try {
-    const res = await apiClient.delete(`/jobs/delete-by-id/${jobId}`, {});
+    const res = await apiClient.delete(`/jobs/delete/job/${jobId}`, {});
 
     return res.data as Job;
   } catch (error) {
@@ -258,7 +258,7 @@ export const deleteJobById = async (jobId: string): Promise<Job> => {
 
 export const getVoicesByGender = async (gender: AvatarGender): Promise<Voice[]> => {
   try {
-    const res = await apiClient.get(`/voices/get-by-gender/${gender}`);
+    const res = await apiClient.get(`/voices/get/gender/${gender}`);
 
     return res.data as Voice[];
   } catch (error) {

@@ -5,8 +5,8 @@ const BASE = process.env.VOICE_URL;
 const router = Router();
 
 router.get(
-    '/get-by-gender/:gender',
-    createProxyHandler('get', (req) => `${BASE}/get-by-gender/${req.params.gender}`, 'Get voices by gender')
+    '/get/gender/:gender',
+    createProxyHandler('get', (req) => `${BASE}/get/gender/${req.params.gender}`, 'Get voices by gender')
 );
 
 export default router;

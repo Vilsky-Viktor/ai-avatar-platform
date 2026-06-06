@@ -7,7 +7,7 @@ import {
 
 const router = Router();
 
-router.get('/get/id/:id', getById);
+router.get('/get/user/:id', getById);
 router.post('/sync', sync);
 router.post('/link-google', linkGoogle);
 

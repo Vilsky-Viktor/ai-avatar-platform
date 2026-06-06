@@ -4,17 +4,17 @@ import {
   getBySlug,
   getAll,
   create,
-  update,
+  updateByAvatarId,
   deleteByAvatarId,
 } from '../controllers/avatarController';
 
 const router = Router();
 
 router.get('/get/slug/:slug', getBySlug);
-router.get('/get/:id', getById);
-router.get('/get-all', getAll);
+router.get('/get/avatar/:id', getById);
+router.get('/get/all', getAll);
 router.post('/create', create);
-router.patch('/update/:id', update);
-router.delete('/delete-by-avatar-id/:id', deleteByAvatarId);
+router.patch('/update/avatar/:id', updateByAvatarId);
+router.delete('/delete/avatar/:id', deleteByAvatarId);
 
 export default router;

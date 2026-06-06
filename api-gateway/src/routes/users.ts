@@ -5,8 +5,8 @@ const BASE = process.env.USER_URL;
 const router = Router();
 
 router.get(
-    '/get/id/:id',
-    createProxyHandler('get', (req) => `${BASE}/get/id/${req.params.id}`, 'Get user by ID')
+    '/get/user/:id',
+    createProxyHandler('get', (req) => `${BASE}/get/user/${req.params.id}`, 'Get user by ID')
 );
 
 router.post(
