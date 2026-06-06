@@ -127,8 +127,9 @@ export const update = async (userId: string, jobId: string, updateData: Partial<
             }
         }
 
+        const { id: _id, userId: _userId, createdAt: _createdAt, ...safeData } = updateData;
         transaction.update(jobRef, {
-            ...updateData,
+            ...safeData,
             updatedAt: Timestamp.now()
         });
     });

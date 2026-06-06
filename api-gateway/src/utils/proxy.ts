@@ -3,6 +3,8 @@ import { Request, Response } from 'express';
 
 type HttpMethod = 'get' | 'post' | 'patch' | 'delete';
 
+const PROXY_TIMEOUT_MS = Number(process.env.PROXY_TIMEOUT_MS) || 30_000;
+
 export const createProxyHandler = (
   method: HttpMethod,
   getUrl: (req: Request) => string,
@@ -11,7 +13,7 @@ export const createProxyHandler = (
   const userId = req.headers['x-user-id'];
   const url = getUrl(req);
   const msg = typeof logMessage === 'function' ? logMessage(req) : logMessage;
-  const config = { headers: { 'x-user-id': userId } };
+  const config = { headers: { 'x-user-id': userId }, timeout: PROXY_TIMEOUT_MS };
 
   req.log.info(msg);
 
@@ -23,10 +25,10 @@ export const createProxyHandler = (
     return res.status(serviceResponse.status).json(serviceResponse.data);
   } catch (error: any) {
     if (error.response) {
-      req.log.error(`${msg} failed with status ${error.response.status}`);
+      req.log.error({ err: error }, `${msg} failed with status ${error.response.status}`);
       return res.status(error.response.status).json(error.response.data);
     }
-    req.log.error(`${msg} failed: ${error}`);
-    return res.status(500).json(error);
+    req.log.error({ err: error }, `${msg} failed`);
+    return res.status(500).json({ message: error.message || 'Internal server error' });
   }
 };

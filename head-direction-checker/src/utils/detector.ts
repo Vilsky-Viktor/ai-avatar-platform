@@ -155,20 +155,20 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
     return true;
   }
 
-  // avatar's right → nose shifts left  → yawRatio < 0
-  // avatar's left  → nose shifts right → yawRatio > 0
-  // front          → nose centered     → |yawRatio| < FRONT_THRESHOLD
+  // viewer's left  → nose shifts left  in frame → yawRatio < 0
+  // viewer's right → nose shifts right in frame → yawRatio > 0
+  // front          → nose centered              → |yawRatio| < FRONT_THRESHOLD
   const yawRatio = (noseTipX - midEyeX) / interOcular;
 
   let passed: boolean;
   if (requiredDirection === 'front') {
     passed = Math.abs(yawRatio) < FRONT_THRESHOLD;
-  } else if (requiredDirection === 'right') {
+  } else if (requiredDirection === 'left') {
     passed = yawRatio < -FRONT_THRESHOLD;
-  } else {
+  } else { // right
     passed = yawRatio > FRONT_THRESHOLD;
   }
 
-  logger.info(`Face direction: yawRatio=${yawRatio.toFixed(3)}, expected=${requiredDirection} → ${passed ? 'ok' : 'FAIL'}`);
+  logger.info({ yawRatio: yawRatio.toFixed(3), expected: requiredDirection, passed }, 'Face direction check');
   return passed;
 };

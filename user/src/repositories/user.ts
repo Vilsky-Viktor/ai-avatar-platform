@@ -5,19 +5,20 @@ const DB_NAME = process.env.DB_NAME || ''
 const USERS_COLLECTION_NAME = process.env.USERS_COLLECTION_NAME || ''
 const db = getFirestore(DB_NAME)
 
-export const getById = async (id: string) => {
+export const getById = async (id: string): Promise<User | null> => {
     const userRef = db.collection(USERS_COLLECTION_NAME).doc(id);
     const userDoc = await userRef.get();
 
+    if (!userDoc.exists) return null;
     return userDoc.data() as User;
 }
 
-export const sync = async (user: User): Promise<User> => {
+export const sync = async (user: User): Promise<{ user: User; created: boolean }> => {
     const userRef = db.collection(USERS_COLLECTION_NAME).doc(user.id);
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
-        return userDoc.data() as User;
+        return { user: userDoc.data() as User, created: false };
     }
 
     const dbUser: User = {
@@ -28,5 +29,5 @@ export const sync = async (user: User): Promise<User> => {
     };
 
     await userRef.set(dbUser);
-    return dbUser;
+    return { user: dbUser, created: true };
 }

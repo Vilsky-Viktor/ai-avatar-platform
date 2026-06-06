@@ -15,7 +15,7 @@ RUN --mount=type=secret,id=gcp_key \
     GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key \
     pip install --no-cache-dir \
         --extra-index-url https://us-central1-python.pkg.dev/loom24-mvp/loom24-pypi/simple/ \
-        python-dotenv google-cloud-pubsub numpy scipy \
+        python-dotenv google-cloud-pubsub numpy scipy watchfiles \
         opencv-python-headless torch torchvision insightface onnxruntime \
         "loom24-shared==0.0.2"
 
@@ -29,4 +29,4 @@ RUN mkdir -p /models/insightface/models/buffalo_l && \
 
 COPY . .
 
-CMD ["python", "main.py"]
+CMD ["python", "-m", "watchfiles", "python main.py"]

@@ -2,14 +2,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import json
-import logging
 import os
 import signal
-import sys
 
 from google.cloud import pubsub_v1
 
-from loom24_shared.types import FaceMatcherStep, Job, JobStatuses, StepBase
+from loom24_shared import logger, set_log_context, clear_log_context
+from loom24_shared.types import FaceMatcherStep, Job, JobStatuses
 
 from utils.matcher import get_app, acquire_face_recognition, ADAFACE_MODEL_DIR
 from services.storage import download_bytes, download_models
@@ -23,21 +22,14 @@ MAX_CONCURRENT_MESSAGES = int(os.getenv("MAX_CONCURRENT_MESSAGES", str(POOL_SIZE
 
 SERVICE_NAME = "face-matcher"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    stream=sys.stdout,
-)
-logger = logging.getLogger(__name__)
-
 publisher  = pubsub_v1.PublisherClient()
 subscriber = pubsub_v1.SubscriberClient()
 
 
 def _send_job(job: Job) -> None:
     topic_path = publisher.topic_path(PROJECT_ID, WORKFLOW_MANAGER_TOPIC)
-    publisher.publish(topic_path, json.dumps(job.model_dump()).encode()).result()
-    logger.info(f"Published job {job.id} to {WORKFLOW_MANAGER_TOPIC}")
+    publisher.publish(topic_path, json.dumps(job.model_dump(mode="json")).encode()).result()
+    logger.info(f"Published to {WORKFLOW_MANAGER_TOPIC}")
 
 
 def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
@@ -48,72 +40,83 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         message.nack()
         return
 
-    job = Job.model_validate(raw)
-    job_id = job.id or "unknown"
-
     try:
-        db_job = get_job(job)
-        if db_job.status == JobStatuses.canceled:
-            logger.info(f"Job {job_id} is canceled — skipping")
-            message.ack()
-            return
+        job = Job.model_validate(raw)
     except Exception as e:
-        if getattr(getattr(e, "response", None), "status_code", None) == 404:
-            logger.info(f"Job {job_id} not found — skipping")
-            message.ack()
-            return
-        raise
-
-    step_idx = next(
-        (i for i, step in enumerate(job.workflow)
-         if step.service == SERVICE_NAME
-         and step.status == JobStatuses.pending),
-        -1,
-    )
-
-    if step_idx < 0:
-        logger.warning(f"No pending {SERVICE_NAME} step in job {job_id}")
-        message.ack()
+        logger.error(f"Failed to validate job payload: {e}")
+        message.nack()
         return
 
-    step = FaceMatcherStep.model_validate(job.workflow[step_idx].model_dump())
+    set_log_context(user_id=job.userId, avatar_id=job.avatarId, job_id=job.id)
 
     try:
-        image_bytes    = download_bytes(step.imagePath)
-        id_photo_bytes = [download_bytes(p) for p in step.idPhotoPaths]
+        try:
+            db_job = get_job(job)
+            if db_job.status == JobStatuses.canceled:
+                logger.info("Job is canceled — skipping")
+                message.ack()
+                return
+        except Exception as e:
+            if getattr(getattr(e, "response", None), "status_code", None) == 404:
+                logger.info("Job not found — skipping")
+                message.ack()
+                return
+            logger.error(f"Failed to fetch from job manager: {e}", exc_info=True)
+            message.nack()
+            return
 
-        with acquire_face_recognition() as fr:
-            similarity = fr.calc_face_similarity(id_photo_bytes, image_bytes)
+        step_idx = next(
+            (i for i, step in enumerate(job.workflow)
+             if step.service == SERVICE_NAME
+             and step.status == JobStatuses.pending),
+            -1,
+        )
 
-        if similarity is None:
-            raise ValueError(f"No face detected in image: {step.imagePath}")
+        if step_idx < 0:
+            logger.warning(f"No pending {SERVICE_NAME} step found")
+            message.ack()
+            return
 
-        similarity  = round(float(similarity), 4)
-        face_match  = max(step.faceMatch or 0.0, similarity)
-        step.faceMatch = face_match
+        step = FaceMatcherStep.model_validate(job.workflow[step_idx].model_dump())
 
-        if job.curRun < job.maxRuns:
-            if face_match >= step.threshold:
-                logger.info(f"Job {job_id}: face match passed (faceMatch={face_match}, threshold={step.threshold})")
+        try:
+            image_bytes    = download_bytes(step.imagePath)
+            id_photo_bytes = [download_bytes(p) for p in step.idPhotoPaths]
+
+            with acquire_face_recognition() as fr:
+                similarity = fr.calc_face_similarity(id_photo_bytes, image_bytes)
+
+            if similarity is None:
+                raise ValueError(f"No face detected in image: {step.imagePath}")
+
+            similarity  = round(float(similarity), 4)
+            face_match  = max(step.faceMatch or 0.0, similarity)
+            step.faceMatch = face_match
+
+            if job.curRun < job.maxRuns:
+                if face_match >= step.threshold:
+                    logger.info(f"Face match passed (faceMatch={face_match}, threshold={step.threshold})")
+                    step.status = JobStatuses.completed
+                    step.error  = None
+                else:
+                    logger.info(f"Face match FAILED (faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
+                    step.status = JobStatuses.error
+                    step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
+            else:
+                logger.info(f"Final run — passing regardless (faceMatch={face_match}, threshold={step.threshold})")
                 step.status = JobStatuses.completed
                 step.error  = None
-            else:
-                logger.info(f"Job {job_id}: face match FAILED (faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
-                step.status = JobStatuses.error
-                step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
-        else:
-            logger.info(f"Job {job_id}: final run — passing regardless (faceMatch={face_match}, threshold={step.threshold})")
-            step.status = JobStatuses.completed
-            step.error  = None
 
-    except Exception as e:
-        logger.error(f"Job {job_id}: face matcher error: {e}", exc_info=True)
-        step.status = JobStatuses.error
-        step.error  = str(e)
+        except Exception as e:
+            logger.error(f"Face matcher error: {e}", exc_info=True)
+            step.status = JobStatuses.error
+            step.error  = str(e)
 
-    job.workflow[step_idx] = StepBase.model_validate(step.model_dump())
-    _send_job(job)
-    message.ack()
+        job.workflow[step_idx] = step
+        _send_job(job)
+        message.ack()
+    finally:
+        clear_log_context()
 
 
 def main() -> None:

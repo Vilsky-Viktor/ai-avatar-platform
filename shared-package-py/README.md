@@ -26,7 +26,7 @@ Services use Poetry for local development and `pip` in Docker.
 
 ```toml
 [tool.poetry.dependencies]
-loom24-shared = {version = "0.0.2", source = "loom24-pypi"}
+loom24-shared = {version = "0.0.3", source = "loom24-pypi"}
 
 [[tool.poetry.source]]
 name = "loom24-pypi"

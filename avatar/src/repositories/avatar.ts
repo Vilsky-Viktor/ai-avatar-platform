@@ -68,19 +68,12 @@ export const update = async (userId: string, avatarId: string, avatarData: Parti
         .doc(avatarId);
     const now = Timestamp.now();
 
-    const updatePayload = {
-        ...avatarData,
-        updatedAt: now
-    };
+    const { id: _id, userId: _userId, ...safeData } = avatarData;
+    const updatePayload = { ...safeData, updatedAt: now };
 
     await avatarRef.update(updatePayload);
 
     const snapshot = await avatarRef.get();
-    
-    if (!snapshot.exists) {
-        throw new Error(`Avatar with id ${avatarId} not found`);
-    }
-
     return snapshot.data() as Avatar;
 }
 

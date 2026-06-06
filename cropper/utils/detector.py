@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import threading
 from typing import Literal
 
 import numpy as np
@@ -9,16 +10,19 @@ CropMode = Literal["front", "quarter", "side", "full_body"]
 
 _PoseLandmark = mp.solutions.pose.PoseLandmark
 _pose: mp.solutions.pose.Pose | None = None
+_pose_lock = threading.Lock()
 
 
 def _get_pose() -> mp.solutions.pose.Pose:
     global _pose
     if _pose is None:
-        _pose = mp.solutions.pose.Pose(
-            static_image_mode=True,
-            model_complexity=1,
-            min_detection_confidence=0.5,
-        )
+        with _pose_lock:
+            if _pose is None:
+                _pose = mp.solutions.pose.Pose(
+                    static_image_mode=True,
+                    model_complexity=1,
+                    min_detection_confidence=0.5,
+                )
     return _pose
 
 
@@ -87,7 +91,8 @@ def crop(image: Image.Image, mode: CropMode = "front") -> Image.Image:
     img_array = np.array(img_rgb)
     h, w      = img_array.shape[:2]
 
-    results = _get_pose().process(img_array)
+    with _pose_lock:
+        results = _get_pose().process(img_array)
 
     if not results.pose_landmarks:
         raise ValueError("No face or shoulders detected in this image")

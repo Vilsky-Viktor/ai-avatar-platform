@@ -1,29 +1,31 @@
 import { Request, Response, NextFunction } from 'express';
 import { Avatar } from '@loom24/shared/types';
-import { 
-  create as createDb, 
+import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
+import {
+  create as createDb,
   update as updateDb,
-  deleteByAvatarId as deleteByAvatarIdDb, 
+  deleteByAvatarId as deleteByAvatarIdDb,
   getAll as getAllDb,
   getById as getByIdDb,
   getBySlug as getBySlugDb,
 } from '../repositories/avatar';
-import { deleteJobsByAvatarId, deleteJobsByUserId } from '../services/jobService';
+import { deleteJobsByAvatarId } from '../services/jobService';
 import { removeAvatarMediaFolder } from '../services/storage';
 
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const avatarId = req.params.id as string;
 
-  req.log.info(`Get avatar ${avatarId} for user ${userId}`);
-
+  setLogContext(userId, avatarId);
   try {
+    logger.info('Get avatar by ID');
     const avatarDB = await getByIdDb(userId, avatarId);
-
     return res.status(200).json(avatarDB);
   } catch (error) {
-    req.log.info(`Failed to get avatar ${avatarId} for user ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to get avatar by ID');
     next(error);
+  } finally {
+    clearLogContext();
   }
 }
 
@@ -31,30 +33,32 @@ export const getBySlug = async (req: Request, res: Response, next: NextFunction)
   const userId = req.headers['x-user-id'] as string;
   const avatarSlug = req.params.slug as string;
 
-  req.log.info(`Get avatar ${avatarSlug} for user ${userId}`);
-
+  setLogContext(userId);
   try {
+    logger.info({ avatarSlug }, 'Get avatar by slug');
     const avatarDB = await getBySlugDb(userId, avatarSlug);
-
     return res.status(200).json(avatarDB);
   } catch (error) {
-    req.log.info(`Failed to get avatar ${avatarSlug} for user ${userId}: ${error}`);
+    logger.error({ avatarSlug, err: error }, 'Failed to get avatar by slug');
     next(error);
+  } finally {
+    clearLogContext();
   }
 }
 
 export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
 
-  req.log.info(`Get all avatars for user ${userId}`);
-
+  setLogContext(userId);
   try {
+    logger.info('Get all avatars');
     const avatarsDB = await getAllDb(userId);
-
     return res.status(200).json(avatarsDB);
   } catch (error) {
-    req.log.info(`Failed to get all avatars for user ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to get all avatars');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -62,15 +66,16 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
   const userId = req.headers['x-user-id'] as string;
   const avatar: Avatar = req.body;
 
-  req.log.info(`Create avatar ${avatar.name} for user ${userId}`);
-
+  setLogContext(userId);
   try {
+    logger.info({ avatarName: avatar.name }, 'Create avatar');
     const avatarDB = await createDb(userId, avatar);
-
     return res.status(201).json(avatarDB);
   } catch (error) {
-    req.log.info(`Failed to create avatar ${avatar.name} for user ${userId}: ${error}`);
+    logger.error({ avatarName: avatar.name, err: error }, 'Failed to create avatar');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -79,15 +84,16 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
   const avatarData: Partial<Avatar> = req.body;
   const id = req.params.id as string;
 
-  req.log.info(`Update avatar ${id} for user ${headerUserId}`);
-
+  setLogContext(headerUserId, id);
   try {
+    logger.info('Update avatar');
     const avatarDB = await updateDb(headerUserId, id, avatarData);
-
     return res.status(200).json(avatarDB);
   } catch (error) {
-    req.log.info(`Failed to update avatar ${id} for user ${headerUserId}: ${error}`);
+    logger.error({ err: error }, 'Failed to update avatar');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -95,18 +101,20 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
   const userId = req.headers['x-user-id'] as string;
   const id = req.params.id as string;
 
-  req.log.info(`Delete avatar ${id} for user ${userId}`);
-
+  setLogContext(userId, id);
   try {
+    logger.info('Delete avatar');
     await Promise.all([
       deleteByAvatarIdDb(userId, id),
       deleteJobsByAvatarId(userId, id),
       removeAvatarMediaFolder(userId, id)
     ]);
-    
+
     return res.status(200).json({'result': 'ok'});
   } catch (error) {
-    req.log.info(`Failed to delete avatar ${id} for user ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to delete avatar');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };

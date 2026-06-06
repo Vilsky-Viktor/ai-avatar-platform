@@ -21,7 +21,7 @@ const withRetry = async <T>(fn: () => Promise<T>, context: object): Promise<T> =
 
 export const generate = async (data: AiModelGateway) => {
   const service = internalTypes.PLATFORM_TO_SERVICE_MAPPING[data.platform];
-  if (!service) throw new Error(`Unsupported platform: ${data.model}`);
+  if (!service) throw new Error(`Unsupported platform: ${data.platform}`);
 
   const handlerName = internalTypes.MODEL_TO_FUNCTION_MAPPING[data.model];
   if (!handlerName) throw new Error(`Unsupported model: ${data.model}`);

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../types/user';
+import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { sync as syncDB, getById as getByIdDb } from '../repositories/user';
 import admin from 'firebase-admin';
 
@@ -38,21 +39,24 @@ export const linkGoogle = async (req: Request, res: Response, next: NextFunction
 };
 
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
-  const userId = req.params.id as string
+  const userId = req.params.id as string;
   const headerUserId = req.headers['x-user-id'] as string;
 
   if (userId !== headerUserId) {
-    return res.status(400).json({error: 'Bad request'});
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
-  req.log.info(`Sync user ${userId}`);
-
+  setLogContext(userId);
   try {
+    logger.info('Get user by ID');
     const userDB = await getByIdDb(userId);
+    if (!userDB) return res.status(404).json({ error: 'User not found' });
     return res.status(200).json(userDB);
   } catch (error) {
-    req.log.info(`Failed to get user ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to get user by ID');
     next(error);
+  } finally {
+    clearLogContext();
   }
 }
 
@@ -60,17 +64,19 @@ export const sync = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const user: User = req.body;
 
-  req.log.info(`Sync user ${user.id}`);
-
   if (userId !== user.id) {
-    return res.status(400).json({error: 'Bad request'});
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
+  setLogContext(userId);
   try {
-    const userDB = await syncDB(user);
-    return res.status(201).json(userDB);
+    logger.info('Sync user');
+    const { user: userDB, created } = await syncDB(user);
+    return res.status(created ? 201 : 200).json(userDB);
   } catch (error) {
-    req.log.info(`Failed to sync user ${user.id}: ${error}`);
+    logger.error({ err: error }, 'Failed to sync user');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };

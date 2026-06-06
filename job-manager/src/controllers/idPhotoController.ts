@@ -6,6 +6,7 @@ import {
   JobStatuses,
   IdPhotoJobRequest,
 } from '@loom24/shared/types';
+import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
 import { genDigitalTwinIdPhotoData, genSyntheticFrontIdPhtotoData, genSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import {
@@ -24,9 +25,10 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
   const jobRequest: IdPhotoJobRequest = req.body;
   const groupId = uuid.v4();
 
-  req.log.info(`Create synthetic front ID photo job for user ${userId} with group ID ${groupId}`);
-
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info({ groupId }, 'Create synthetic front ID photo job');
+
     const input = genSyntheticFrontIdPhtotoData(jobRequest.parameters, userId, jobRequest.avatarId);
 
     const job: Job = {
@@ -49,8 +51,10 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
 
     return res.status(201).json(dbJob);
   } catch (error) {
-    req.log.info(`Failed to create synthetic front ID photo job for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to create synthetic front ID photo job');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -58,13 +62,14 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: IdPhotoJobRequest = req.body;
 
-  req.log.info(`Create synthetic ID photo jobs for user ${userId} with group ID ${jobRequest.groupId}`);
-
   const idPhotoSet: IdPhotoSetPaths = {
     front: jobRequest.frontIdPhotoPath,
   };
 
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info({ groupId: jobRequest.groupId }, 'Create synthetic ID photo jobs');
+
     const inputs = genSyntheticIdPhotoData(jobRequest.parameters, userId, jobRequest.avatarId, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input) => {
@@ -89,8 +94,10 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
 
     return res.status(201).json(dbJobs);
   } catch (error) {
-    req.log.info(`Failed to create synthetic ID photo jobs for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to create synthetic ID photo jobs');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -98,8 +105,6 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: IdPhotoJobRequest = req.body;
   const groupId = uuid.v4();
-
-  req.log.info(`Create twin ID photo jobs for user ${userId} with group ID ${groupId}`);
 
   const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
   const idPhotoSet: IdPhotoSetPaths = {
@@ -112,7 +117,10 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
     body: `${avatarMediaPath}/uploaded/full-body-cropped.png`,
   };
 
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info({ groupId }, 'Create digital twin ID photo jobs');
+
     const inputs = genDigitalTwinIdPhotoData(jobRequest.parameters, userId, jobRequest.avatarId, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input) => {
@@ -131,13 +139,15 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         resultMediaPath: input.imageGenerator.uploadPath!
       }
     })
-    
+
     const dbJobs = await createManyDb(userId, jobs);
     await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
 
     return res.status(201).json(dbJobs);
   } catch (error) {
-    req.log.info(`Failed to create twin ID photo jobs for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to create digital twin ID photo jobs');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };

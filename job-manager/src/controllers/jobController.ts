@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Job, JobStatuses, WorkflowStep } from '@loom24/shared/types';
+import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
@@ -18,15 +19,17 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
   const userId = req.headers['x-user-id'] as string;
   const id = req.params.id as string;
 
-  req.log.info(`Get job by ID ${id} for user ${userId}`);
-
+  setLogContext(userId, undefined, id);
   try {
+    logger.info('Get job by ID');
     const job = await getByIdDb(userId, id);
     if (!job) return res.status(404).json({ error: 'Job not found' });
     return res.status(200).json(job);
   } catch (error) {
-    req.log.info(`Failed to get job ${id} for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to get job by ID');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -34,14 +37,16 @@ export const getByGroupId = async (req: Request, res: Response, next: NextFuncti
   const userId = req.headers['x-user-id'] as string;
   const groupId = req.params.groupId as string;
 
-  req.log.info(`Get jobs by group ID ${groupId} for user ${userId}`);
-
+  setLogContext(userId);
   try {
+    logger.info({ groupId }, 'Get jobs by group ID');
     const jobs = await getByGroupIdDb(userId, groupId);
-    return res.status(201).json(jobs);
+    return res.status(200).json(jobs);
   } catch (error) {
-    req.log.info(`Failed to get jobs by group ID ${groupId} for ${userId}: ${error}`);
+    logger.error({ groupId, err: error }, 'Failed to get jobs by group ID');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -49,27 +54,28 @@ export const getByAvatarId = async (req: Request, res: Response, next: NextFunct
   const userId = req.headers['x-user-id'] as string;
   const avatarId = req.params.avatarId as string;
 
-  req.log.info(`Get jobs by avatar ID ${avatarId} for user ${userId}`);
-
+  setLogContext(userId, avatarId);
   try {
+    logger.info('Get jobs by avatar ID');
     const jobs = await getByAvatarIdDb(userId, avatarId);
-    return res.status(201).json(jobs);
+    return res.status(200).json(jobs);
   } catch (error) {
-    req.log.info(`Failed to get jobs by avatar ID ${avatarId} for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to get jobs by avatar ID');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
 export const getByStatus = async (req: Request, res: Response, next: NextFunction) => {
   const status = req.params.status as JobStatuses;
 
-  req.log.info(`Get jobs by status "${status}"`);
-
   try {
+    logger.info({ status }, 'Get jobs by status');
     const jobs = await getByStatusDb(status);
     return res.status(200).json(jobs);
   } catch (error) {
-    req.log.info(`Failed to get jobs by status "${status}": ${error}`);
+    logger.error({ status, err: error }, 'Failed to get jobs by status');
     next(error);
   }
 };
@@ -78,31 +84,32 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
   const userId = req.headers['x-user-id'] as string;
   const id = req.params.id as string;
 
-  req.log.info(`Restart job ${id}`);
-
+  setLogContext(userId, undefined, id);
   try {
+    logger.info('Restart job');
     const job: Job | null = await getByIdDb(userId, id);
 
     if (!job) {
-      const errorMessage = `Job ${id} does not exist`;
-      req.log.error(errorMessage);
-      throw Error(errorMessage);
+      logger.error('Job not found for restart');
+      throw Object.assign(new Error(`Job ${id} does not exist`), { status: 404 });
     }
 
     job.status = JobStatuses.pending;
-    
-    job.workflow.forEach((step, idx) => {
+
+    job.workflow.forEach((_, idx) => {
       job.workflow[idx].error = '';
       job.workflow[idx].status = JobStatuses.pending;
-    })
+    });
 
     await updateDb(userId, id, job, true);
     await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'job-manager');
 
     return res.status(200).json(job);
   } catch (error) {
-    req.log.info(`Failed to restart job ${id} for user ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to restart job');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -111,14 +118,16 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
   const id = req.params.id as string;
   const updateData: Partial<Job> = req.body;
 
-  req.log.info(`Update Job for ${id} for user ${userId}`);
-
+  setLogContext(userId, undefined, id);
   try {
+    logger.info('Update job');
     const dbJob = await updateDb(userId, id, updateData);
     return res.status(200).json(dbJob);
   } catch (error) {
-    req.log.info(`Failed to update job for ${id}: ${error}`);
+    logger.error({ err: error }, 'Failed to update job');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -126,9 +135,9 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
   const userId = req.headers['x-user-id'] as string;
   const id = req.params.id as string;
 
-  req.log.info(`Delete job ${id} for user ${userId}`);
-
+  setLogContext(userId, undefined, id);
   try {
+    logger.info('Delete job');
     const job = await getByIdDb(userId, id);
     const mediaPaths = job?.workflow
       .filter((step: WorkflowStep) => step.uploadPath)
@@ -137,13 +146,15 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
     await deleteByIdDb(userId, id);
 
     if (mediaPaths && mediaPaths.length > 0) {
-      await Promise.all(mediaPaths.map(path => deleteBlob(path!)))
+      await Promise.all(mediaPaths.map(path => deleteBlob(path!)));
     }
 
     return res.status(200).json({ result: 'ok' });
   } catch (error) {
-    req.log.info(`Failed to delete job ${id} for user ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to delete job');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -151,13 +162,15 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
   const userId = req.headers['x-user-id'] as string;
   const avatarId = req.params.avatarId as string;
 
-  req.log.info(`Delete jobs for avatar ${avatarId} and user ${userId}`);
-
+  setLogContext(userId, avatarId);
   try {
+    logger.info('Delete jobs by avatar ID');
     await deleteByAvatarIdDb(userId, avatarId);
     return res.status(200).json({ result: 'ok' });
   } catch (error) {
-    req.log.info(`Failed to delete jobs for ${avatarId} and user ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to delete jobs by avatar ID');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };

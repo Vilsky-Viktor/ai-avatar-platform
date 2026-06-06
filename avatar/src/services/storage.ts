@@ -12,7 +12,7 @@ export const removeAvatarMediaFolder = async (userId: string, avatarId: string):
         force: true
     });
     logger.info(`Successfully removed folder and contents: ${folderPath}`);
-  } catch (error: any) {
-    logger.error(`Failed to remove media at ${folderPath}: ${error.message}`);
+  } catch (error) {
+    logger.error({ err: error }, `Failed to remove media at ${folderPath}`);
   }
 };

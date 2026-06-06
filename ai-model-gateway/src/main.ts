@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import { PubSub, Message } from '@google-cloud/pubsub';
-import logger from '@loom24/shared/logger';
+import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import falAi from './services/falAi';
 import google from './services/google';
 
@@ -40,65 +40,82 @@ function listenForResults() {
   logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for AI model jobs...');
 
   const messageHandler = async (message: Message) => {
-    const job = JSON.parse(message.data.toString()) as Job;
-
-    logger.info({ jobId: job.id, msgId: message.id }, 'Received message');
-
+    let job: Job;
     try {
-      const liveJob = await getJob(job);
-      if (liveJob.status === JobStatuses.canceled) {
-        logger.info({ jobId: job.id }, 'Job canceled — skipping');
-        message.ack();
-        return;
-      }
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        logger.info({ jobId: job.id }, 'Job not found — skipping');
-        message.ack();
-        return;
-      }
-      throw error;
-    }
-
-    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.aiModelGateway && step.status === JobStatuses.pending);
-
-    if (stepIdx < 0) {
-      logger.warn(`Head direction checker pending step is not found for job ${job.id}`);
+      job = JSON.parse(message.data.toString()) as Job;
+    } catch (error) {
+      logger.error({ msgId: message.id, err: error }, 'Failed to parse message — skipping');
+      message.ack();
       return;
     }
 
-    const stepData = job.workflow[stepIdx] as AiModelGateway;
-
-    const heartbeat = setInterval(() => {
-        message.modAck(600);
-        logger.info({ jobId: job.id }, 'Extended ack deadline');
-      }, 500_000);
+    setLogContext(job.userId, job.avatarId, job.id);
 
     try {
-      logger.info(`Using ${stepData.platform} ${stepData.model} for job ${job.id}`)
+      logger.info({ msgId: message.id }, 'Received message');
 
-      const result = await generate(stepData);
+      try {
+        const liveJob = await getJob(job);
+        if (liveJob.status === JobStatuses.canceled) {
+          logger.info('Job canceled — skipping');
+          message.ack();
+          return;
+        }
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          logger.info('Job not found — skipping');
+          message.ack();
+          return;
+        }
+        logger.error({ err: error }, 'Failed to fetch job from job manager');
+        message.nack();
+        return;
+      }
 
-      const uploadData = result.type === MediaTypes.text ? Buffer.from(result.data) : result.data as Buffer;
-      await uploadToBucket(uploadData, stepData.uploadPath!);
+      const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.aiModelGateway && step.status === JobStatuses.pending);
 
-      stepData.status = JobStatuses.completed;
-      job.workflow[stepIdx] = stepData;
+      if (stepIdx < 0) {
+        logger.warn('No pending ai-model-gateway step found — skipping');
+        message.ack();
+        return;
+      }
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
-    } catch (error: any) {
-      logger.error(`Head direction checker failed iwth error: ${error}`);
+      const stepData = job.workflow[stepIdx] as AiModelGateway;
 
-      stepData.status = JobStatuses.error;
-      stepData.error = String(error);
-      
-      job.curRun = job.maxRuns;
-      job.workflow[stepIdx] = stepData;
+      const heartbeat = setInterval(() => {
+          message.modAck(600);
+          logger.info('Extended ack deadline');
+        }, 500_000);
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
+      try {
+        logger.info({ platform: stepData.platform, model: stepData.model }, 'Starting generation');
+
+        const result = await generate(stepData);
+
+        if (!stepData.uploadPath) throw new Error('uploadPath missing on step');
+        const uploadData = result.type === MediaTypes.text ? Buffer.from(result.data) : result.data as Buffer;
+        await uploadToBucket(uploadData, stepData.uploadPath);
+
+        stepData.status = JobStatuses.completed;
+        job.workflow[stepIdx] = stepData;
+
+        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
+      } catch (error: any) {
+        logger.error({ err: error }, 'ai-model-gateway generation failed');
+
+        stepData.status = JobStatuses.error;
+        stepData.error = String(error);
+
+        job.curRun = job.maxRuns;
+        job.workflow[stepIdx] = stepData;
+
+        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
+      } finally {
+        clearInterval(heartbeat);
+        message.ack();
+      }
     } finally {
-      clearInterval(heartbeat);
-      message.ack();
+      clearLogContext();
     }
   }
 

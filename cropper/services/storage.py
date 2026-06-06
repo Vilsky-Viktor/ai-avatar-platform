@@ -5,7 +5,7 @@ from PIL import Image, ImageOps
 
 from loom24_shared.services import create_storage_client
 
-_storage = create_storage_client(os.environ.get("BUCKET_NAME", "loom24-mvp.firebasestorage.app"))
+_storage = create_storage_client(os.environ["BUCKET_NAME"])
 
 
 def download_image(blob_path: str) -> Image.Image:

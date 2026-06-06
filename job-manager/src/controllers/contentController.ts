@@ -15,9 +15,10 @@ import {
   Platforms,
   Services,
 } from '@loom24/shared/types';
-import { 
-  getAvatarIdPhotos as getAvatarIdPhotosDb, 
-  create as createDb, 
+import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
+import {
+  getAvatarIdPhotos as getAvatarIdPhotosDb,
+  create as createDb,
   createMany as createManyDb
 } from '../repositories/job';
 import { sendJob, sendJobs } from '@loom24/shared/services';
@@ -35,9 +36,10 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
   const jobRequest: PhotoJobRequest = req.body;
   const imageId = uuid.v4();
 
-  req.log.info(`Generate avatar photo for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}`);
-
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info({ ratio: jobRequest.ratio }, 'Generate avatar photo');
+
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
       .map((job: Job) => job.resultMediaPath);
@@ -51,7 +53,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const imageGenerator: AiModelGateway = {
       prompt: `${jobRequest.prompt}. Person identity images from image ${idPhotoStart} to image ${idPhotoEnd}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
-      imagePaths: [...jobRequest.mediaPaths!, ...idPhotos],
+      imagePaths: [...(jobRequest.mediaPaths ?? []), ...idPhotos],
       temperature: 1.0,
       ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
@@ -79,8 +81,10 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
 
     return res.status(201).json(dbJob);
   } catch (error) {
-    req.log.info(`Failed to generate avatar photo for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to generate avatar photo');
     next(error);
+  } finally {
+    clearLogContext();
   }
 };
 
@@ -95,14 +99,15 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
     'around-the-world': genTravelingAroundTheWorldData,
     'luxury-life': genLuxuryLifeData
   }
-  
-  req.log.info(`Generate avatar photo set for user ${userId}, group ${groupId}, avatar ${jobRequest.avatarId}`);
 
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info({ groupId }, 'Generate avatar photo set');
+
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs.map((job: Job) => job.resultMediaPath);
-  
+
     const idPhotoSet: IdPhotoSetPaths = {
       front: idPhotos[0],
       frontSmile: idPhotos[1],
@@ -112,7 +117,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
       rightSide: idPhotos[5],
       body: idPhotos[6]
     }
-  
+
     const inputs = functionMapping[jobRequest.type!](userId, jobRequest.avatarId, avatar.parameters, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input: any) => {
@@ -131,14 +136,16 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
         resultMediaPath: input.imageGenerator.uploadPath!
       }
     })
-    
+
     const dbJobs = await createManyDb(userId, jobs);
     await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
 
     return res.status(201).json(dbJobs);
   } catch (error) {
-    req.log.info(`Failed to generate avatar photo set for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to generate avatar photo set');
     next(error);
+  } finally {
+    clearLogContext();
   }
 }
 
@@ -147,9 +154,10 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
   const jobRequest: VideoJobRequest = req.body;
   const videoId = uuid.v4();
 
-  req.log.info(`Generate avatar video for user ${userId}, avatar ${jobRequest.avatarId}, ratio ${jobRequest.ratio}, length ${jobRequest.lengthSec}s`);
-
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info({ ratio: jobRequest.ratio, lengthSec: jobRequest.lengthSec }, 'Generate avatar video');
+
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
       .filter((job: Job) => [1,2,3,4].includes(job.order!))
@@ -231,13 +239,15 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
       resultMediaPath: generatorUploadPath
     }
-      
+
     const dbJob = await createDb(userId, job);
     await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
     return res.status(201).json(dbJob);
   } catch (error) {
-    req.log.info(`Failed to generate avatar video for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to generate avatar video');
     next(error);
+  } finally {
+    clearLogContext();
   }
 }
 
@@ -246,9 +256,10 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
   const jobRequest: MimicMotionRequest = req.body;
   const videoId = uuid.v4();
 
-  req.log.info(`Generate mimic motion video for user ${userId}, avatar ${jobRequest.avatarId}`);
-
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info('Generate mimic motion video');
+
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
       .filter((job: Job) => [1,2,3,4].includes(job.order!))
@@ -285,8 +296,10 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
     await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
     return res.status(201).json(dbJob);
   } catch (error) {
-    req.log.info(`Failed to generate mimic motion video for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to generate mimic motion video');
     next(error);
+  } finally {
+    clearLogContext();
   }
 }
 
@@ -295,9 +308,10 @@ export const genAvatarAudio = async (req: Request, res: Response, next: NextFunc
   const jobRequest: AudioJobRequest = req.body;
   const audioId = uuid.v4();
 
-  req.log.info(`Generate avatar audio for user ${userId}, avatar ${jobRequest.avatarId}`);
-
+  setLogContext(userId, jobRequest.avatarId);
   try {
+    logger.info('Generate avatar audio');
+
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
     const uploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/audios/${audioId}.mp3`;
 
@@ -328,8 +342,9 @@ export const genAvatarAudio = async (req: Request, res: Response, next: NextFunc
     await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
     return res.status(201).json(dbJob);
   } catch (error) {
-    req.log.info(`Failed to generate avatar audio for ${userId}: ${error}`);
+    logger.error({ err: error }, 'Failed to generate avatar audio');
     next(error);
+  } finally {
+    clearLogContext();
   }
-
 }
