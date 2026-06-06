@@ -1,23 +1,58 @@
 import { Request, Response, NextFunction } from 'express';
 import { AvatarGender } from '../types/avatar';
-import { getByGender as getByGenderDb } from '../repositories/voice';
+import {
+    getFiltered as getFilteredDb,
+    getFilterOptions as getFilterOptionsDb,
+    type VoiceFilters,
+} from '../repositories/voice';
 
 const VALID_GENDERS = Object.values(AvatarGender);
 
-export const getByGender = async (req: Request, res: Response, next: NextFunction) => {
-  const gender = req.params.gender as string;
+const validateGender = (gender: string, res: Response): boolean => {
+    if (!VALID_GENDERS.includes(gender as AvatarGender)) {
+        res.status(400).json({ error: `Invalid gender. Must be one of: ${VALID_GENDERS.join(', ')}` });
+        return false;
+    }
+    return true;
+};
 
-  if (!VALID_GENDERS.includes(gender as AvatarGender)) {
-    return res.status(400).json({ error: `Invalid gender. Must be one of: ${VALID_GENDERS.join(', ')}` });
-  }
+const str = (v: unknown): string | undefined =>
+    typeof v === 'string' ? v : undefined;
 
-  req.log.info({ gender }, 'Get voices by gender');
+export const getFiltered = async (req: Request, res: Response, next: NextFunction) => {
+    const gender = req.params.gender;
+    if (!validateGender(gender, res)) return;
 
-  try {
-    const voicesDB = await getByGenderDb(gender);
-    return res.status(200).json(voicesDB);
-  } catch (error) {
-    req.log.error({ gender, err: error }, 'Failed to get voices by gender');
-    next(error);
-  }
+    const cursor = str(req.query.cursor);
+    const filters: VoiceFilters = {
+        language: str(req.query.language),
+        age:      str(req.query.age),
+        category: str(req.query.category),
+        useCase:  str(req.query.useCase),
+    };
+
+    req.log.info({ gender, filters }, 'Get filtered voices');
+
+    try {
+        const result = await getFilteredDb(gender, filters, cursor);
+        return res.status(200).json(result);
+    } catch (error) {
+        req.log.error({ gender, err: error }, 'Failed to get filtered voices');
+        next(error);
+    }
+};
+
+export const getFilterOptions = async (req: Request, res: Response, next: NextFunction) => {
+    const gender = req.params.gender;
+    if (!validateGender(gender, res)) return;
+
+    req.log.info({ gender }, 'Get voice filter options');
+
+    try {
+        const options = await getFilterOptionsDb(gender);
+        return res.status(200).json(options);
+    } catch (error) {
+        req.log.error({ gender, err: error }, 'Failed to get voice filter options');
+        next(error);
+    }
 };

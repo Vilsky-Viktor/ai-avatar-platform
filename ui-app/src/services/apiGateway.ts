@@ -286,13 +286,34 @@ export const deleteJobById = async (jobId: string): Promise<Job> => {
   }
 }
 
-export const getVoicesByGender = async (gender: AvatarGender): Promise<Voice[]> => {
-  try {
-    const res = await apiClient.get(`/voices/get/gender/${gender}`);
+export type VoiceFilters = { language?: string; age?: string; category?: string; useCase?: string };
 
-    return res.data as Voice[];
+export const getVoices = async (
+  gender: AvatarGender,
+  filters?: VoiceFilters,
+  cursor?: string,
+): Promise<{ voices: Voice[]; nextCursor: string | null }> => {
+  try {
+    const params = { ...filters, ...(cursor ? { cursor } : {}) };
+    const res = await apiClient.get(`/voices/get/gender/${gender}`, { params });
+    return res.data;
   } catch (error) {
     console.error("Error fetching voices:", error);
+    throw error;
+  }
+}
+
+export const getVoiceFilterOptions = async (gender: AvatarGender): Promise<{
+  languages: string[];
+  ages: string[];
+  categories: string[];
+  useCases: string[];
+}> => {
+  try {
+    const res = await apiClient.get(`/voices/options/gender/${gender}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching voice filter options:", error);
     throw error;
   }
 }
