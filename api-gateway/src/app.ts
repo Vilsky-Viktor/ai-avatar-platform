@@ -7,13 +7,13 @@ import avatarRoutes from './routes/avatars';
 import jobRoutes from './routes/jobs';
 import voiceRoutes from './routes/voices';
 import cropperRoutes from './routes/cropper';
-import { errorHandler } from './middlewares/errorHandler';
+import { errorHandler } from '@loom24/shared/middlewares';
 import { validateAuth } from './middlewares/auth';
 import authRoutes from './routes/auth';
 import admin from 'firebase-admin';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
-import logger from './logger';
+import logger from '@loom24/shared/logger';
 
 admin.initializeApp({
     projectId: process.env.PROJECT_ID,

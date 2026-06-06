@@ -1,37 +1,9 @@
 import type { FirestoreTimestamp } from "./firestore";
+import { AvatarGender, AvatarTypes } from '@loom24/shared/types';
+import type { AvatarParameters } from '@loom24/shared/types';
 
-export enum AvatarTypes {
-  digitalTwin = 'twin',
-  synthetic = 'synthetic'
-}
-
-export enum AvatarGender {
-  male = 'male',
-  female = 'female'
-}
-
-export type AvatarParameters = {
-  gender: AvatarGender;
-  ethnicity: string;
-  skinColor: string;
-  age: string;
-  attractiveness: string;
-  body: string;
-  face: string;
-  hairStyle: string;
-  hairColor: string;
-  eyes: string;
-  skin: string;
-  facialHair: string;
-  nose: string;
-  eyeLashes: string;
-  eyeBrows: string;
-  lips: string;
-  bustSize: string;
-  ears: string;
-  bodyHair: string;
-  height: string;
-}
+export { AvatarGender, AvatarTypes };
+export type { AvatarParameters };
 
 export type Avatar = {
   id?: string;
@@ -43,5 +15,5 @@ export type Avatar = {
   mainImagePath?: string;
   voiceId?: string;
   updatedAt?: FirestoreTimestamp;
-  createdAt?: FirestoreTimestamp
+  createdAt?: FirestoreTimestamp;
 }

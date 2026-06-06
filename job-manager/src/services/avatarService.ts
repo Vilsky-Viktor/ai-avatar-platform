@@ -1,5 +1,5 @@
-import { createServiceClient } from '../utils/serviceClient';
-import { Avatar } from '../types/avatar';
+import { createServiceClient } from '@loom24/shared/services';
+import { Avatar } from '@loom24/shared/types';
 
 const client = createServiceClient(process.env.AVATAR_URL);
 

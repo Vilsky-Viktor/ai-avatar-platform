@@ -1,6 +1,6 @@
 import internalTypes from '../types/platform';
-import logger from '../logger';
-import { AiModelGateway } from '../types/job';
+import logger from '@loom24/shared/logger';
+import { AiModelGateway } from '@loom24/shared/types';
 
 const MAX_RETRIES = 3;
 

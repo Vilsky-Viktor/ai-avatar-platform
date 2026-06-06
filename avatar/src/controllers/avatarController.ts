@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Avatar } from '../types/avatar';
+import { Avatar } from '@loom24/shared/types';
 import { 
   create as createDb, 
   update as updateDb,

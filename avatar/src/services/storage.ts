@@ -1,5 +1,5 @@
 import { getStorage } from 'firebase-admin/storage';
-import logger from '../logger';
+import logger from '@loom24/shared/logger';
 
 export const removeAvatarMediaFolder = async (userId: string, avatarId: string): Promise<void> => {
   const folderPath = `media/${userId}-user/avatars/${avatarId}-avatar/`

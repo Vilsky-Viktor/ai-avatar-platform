@@ -1,7 +1,7 @@
 import os
 
-from models import Job
-from utils.service_client import create_service_client
+from loom24_shared.types import Job
+from loom24_shared.services import create_service_client
 
 _client = create_service_client(os.environ["JOB_MANAGER_URL"])
 

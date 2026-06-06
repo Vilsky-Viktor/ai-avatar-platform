@@ -12,6 +12,7 @@ import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import GenVideoModal from '../components/avatar/GenVideoModal';
 import GenAudioModal from '../components/avatar/GenAudioModal';
 import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, type AudioJobRequest, JobStatuses, JobTargets, MediaTypes } from '../types/job';
+import { ImageRatios, VideoRatios } from '@loom24/shared/types';
 import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
@@ -116,7 +117,7 @@ function AvatarPage() {
         const jobRequest: PhotoJobRequest = {
             prompt,
             mediaPaths: uploadedPaths,
-            ratio,
+            ratio: ratio as ImageRatios,
             avatarId: avatar.id!,
         };
 
@@ -128,7 +129,7 @@ function AvatarPage() {
     const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null, audioPath: string | null, objectPhotoPaths: string[]) => {
         const jobRequest: VideoJobRequest = {
             prompt,
-            ratio,
+            ratio: ratio as VideoRatios,
             avatarId: avatar.id!,
             mediaPaths: [
                 ...(referenceImagePath ? [referenceImagePath] : []),

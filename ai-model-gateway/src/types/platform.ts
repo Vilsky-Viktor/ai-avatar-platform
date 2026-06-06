@@ -1,6 +1,5 @@
-import { Ratios } from "./image";
 import falAitypes from './falAi';
-import { Models, JobStatuses, Platforms, AiModelGateway, MediaTypes } from "./job";
+import { Models, JobStatuses, Platforms, AiModelGateway, MediaTypes } from "@loom24/shared/types";
 import falAiService from '../services/falAi';
 import googleService from '../services/google';
 

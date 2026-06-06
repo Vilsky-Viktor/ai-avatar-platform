@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "face-matcher"
+version = "0.1.0"
+description = "Face matching service"
+authors = []
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-dotenv = "*"
+requests = "*"
+google-cloud-pubsub = "*"
+google-cloud-storage = "*"
+numpy = "*"
+scipy = "*"
+opencv-python-headless = "*"
+torch = "*"
+torchvision = "*"
+insightface = "*"
+onnxruntime = "*"
+loom24-shared = {version = "0.0.2", source = "loom24-pypi"}
+
+[[tool.poetry.source]]
+name = "loom24-pypi"
+url = "https://us-central1-python.pkg.dev/loom24-mvp/loom24-pypi/simple/"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

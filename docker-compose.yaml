@@ -7,6 +7,10 @@ networks:
   app-net:
     driver: bridge
 
+secrets:
+  gcp_key:
+    file: ./gcp-json-key.json
+
 services:
   ui-app:
     <<: *default-dns
@@ -15,6 +19,8 @@ services:
     build:
       context: ./ui-app
       dockerfile: Dockerfile
+      secrets:
+        - gcp_key
     ports:
       - "5173:5173"
     volumes:
@@ -27,6 +33,8 @@ services:
       - app-net
     build:
       context: ./api-gateway
+      secrets:
+        - gcp_key
     ports:
       - "3000:3000"
     volumes:
@@ -47,6 +55,8 @@ services:
       - app-net
     build:
       context: ./user
+      secrets:
+        - gcp_key
     ports:
       - "3100:3100"
     volumes:
@@ -67,6 +77,8 @@ services:
       - app-net
     build:
       context: ./avatar
+      secrets:
+        - gcp_key
     ports:
       - "3200:3200"
     volumes:
@@ -89,6 +101,8 @@ services:
       - app-net
     build:
       context: ./job-manager
+      secrets:
+        - gcp_key
     ports:
       - "3300:3300"
     volumes:
@@ -111,6 +125,8 @@ services:
       - app-net
     build:
       context: ./voice
+      secrets:
+        - gcp_key
     ports:
       - "3600:3600"
     volumes:
@@ -131,6 +147,8 @@ services:
       - app-net
     build:
       context: ./cropper
+      secrets:
+        - gcp_key
     ports:
       - "3800:3800"
     volumes:
@@ -147,6 +165,8 @@ services:
       - app-net
     build:
       context: ./ai-model-gateway
+      secrets:
+        - gcp_key
     volumes:
       - ./ai-model-gateway:/app
       - /app/node_modules
@@ -167,6 +187,8 @@ services:
       - app-net
     build:
       context: ./workflow-manager
+      secrets:
+        - gcp_key
     volumes:
       - ./workflow-manager:/app
       - /app/node_modules
@@ -186,6 +208,8 @@ services:
       - app-net
     build:
       context: ./head-direction-checker
+      secrets:
+        - gcp_key
     volumes:
       - ./head-direction-checker:/app
       - /app/node_modules
@@ -207,6 +231,8 @@ services:
       - app-net
     build:
       context: ./face-matcher
+      secrets:
+        - gcp_key
     volumes:
       - ./face-matcher:/app
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro

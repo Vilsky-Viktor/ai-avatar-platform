@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, JobStatuses, WorkflowStep } from '../types/job';
+import { Job, JobStatuses, WorkflowStep } from '@loom24/shared/types';
 import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
@@ -9,7 +9,7 @@ import {
   deleteById as deleteByIdDb,
   deleteByAvatarId as deleteByAvatarIdDb,
 } from '../repositories/job';
-import { publishJob } from '../services/messageQueue';
+import { sendJob } from '@loom24/shared/services';
 import { deleteBlob } from '../services/storageService';
 
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
@@ -97,7 +97,7 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
     })
 
     await updateDb(userId, id, job, true);
-    await publishJob(WORKFLOW_MANAGER_TOPIC, job);
+    await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'job-manager');
 
     return res.status(200).json(job);
   } catch (error) {

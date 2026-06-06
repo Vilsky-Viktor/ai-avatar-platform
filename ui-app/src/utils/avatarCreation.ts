@@ -28,9 +28,9 @@ export const initialNewAvatarData = {
 } as NewAvatarData;
 
 export const initialAvatarParameters = {
-    gender: AvatarGender.male, ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '', 
-    face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '', 
-    skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '', height: ''
+    gender: AvatarGender.male, ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '',
+    face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '',
+    skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '', height: '', outfit: ''
 };
 
 export const initialAvatarData = {

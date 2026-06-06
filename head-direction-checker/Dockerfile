@@ -1,10 +1,14 @@
+# syntax=docker/dockerfile:1
 FROM node:22-slim
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json* .npmrc ./
 
-RUN npm install
+RUN --mount=type=secret,id=gcp_key \
+    GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key \
+    npx --yes google-artifactregistry-auth && \
+    npm install
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates unzip && rm -rf /var/lib/apt/lists/*
 

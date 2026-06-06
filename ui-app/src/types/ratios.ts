@@ -1,7 +1,1 @@
-export enum Ratios {
-    '4:3' = '4:3',
-    '16:9' = '16:9',
-    '1:1' = '1:1',
-    '3:4' = '3:4',
-    '9:16' = '9:16',
-}
+export { ImageRatios as Ratios } from '@loom24/shared/types';

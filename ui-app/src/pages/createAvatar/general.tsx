@@ -89,7 +89,7 @@ function GeneralPage() {
                 setAvatarId(avatarDb.id!);
             }
 
-            if (avatar.type === AvatarTypes.digitalTwin) {
+            if (avatar.type === AvatarTypes.twin) {
                 navigate('/avatar/create/twin-id-photos');
             } else {
                 navigate('/avatar/create/synthetic-id-photos');

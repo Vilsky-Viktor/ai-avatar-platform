@@ -1,5 +1,5 @@
-import { OutputFormats, Ratios } from "./image";
-import { Models as JobModels } from './job';
+import { OutputFormats, ImageRatios } from "@loom24/shared/types";
+import { Models as JobModels } from '@loom24/shared/types';
 
 namespace FalAi {
     export enum Statuses {
@@ -44,12 +44,12 @@ namespace FalAi {
         portrait_16_9 = 'portrait_16_9',
     }
 
-    export const RatioToImageSizeMapping: Record<Ratios, ImageSizes> = {
-        [Ratios['4:3']]: ImageSizes.landscape_4_3,
-        [Ratios['16:9']]: ImageSizes.landscape_16_9,
-        [Ratios['1:1']]: ImageSizes.square_hd,
-        [Ratios['3:4']]: ImageSizes.portrait_4_3,
-        [Ratios['9:16']]: ImageSizes.portrait_16_9,
+    export const RatioToImageSizeMapping: Record<ImageRatios, ImageSizes> = {
+        [ImageRatios['4:3']]: ImageSizes.landscape_4_3,
+        [ImageRatios['16:9']]: ImageSizes.landscape_16_9,
+        [ImageRatios['1:1']]: ImageSizes.square_hd,
+        [ImageRatios['3:4']]: ImageSizes.portrait_4_3,
+        [ImageRatios['9:16']]: ImageSizes.portrait_16_9,
     }
 
     export enum TextNormalizations {

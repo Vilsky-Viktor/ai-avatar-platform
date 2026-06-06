@@ -14,13 +14,13 @@ import {
   MimicMotionRequest,
   Platforms,
   Services,
-} from '../types/job';
+} from '@loom24/shared/types';
 import { 
   getAvatarIdPhotos as getAvatarIdPhotosDb, 
   create as createDb, 
   createMany as createManyDb
 } from '../repositories/job';
-import { publishJob, publishJobs } from '../services/messageQueue';
+import { sendJob, sendJobs } from '@loom24/shared/services';
 import { getAvatarById } from '../services/avatarService';
 import uuid from 'uuid';
 import { genOutfitStylesData, genTravelingAroundTheWorldData, genLuxuryLifeData, genWhatsappStickersData } from '../utils/photoSetInputData';
@@ -75,7 +75,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     }
 
     const dbJob = await createDb(userId, job);
-    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -133,7 +133,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
     })
     
     const dbJobs = await createManyDb(userId, jobs);
-    await publishJobs(WORKFLOW_MANAGER_TOPIC, dbJobs);
+    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
 
     return res.status(201).json(dbJobs);
   } catch (error) {
@@ -233,7 +233,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
     }
       
     const dbJob = await createDb(userId, job);
-    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
     return res.status(201).json(dbJob);
   } catch (error) {
     req.log.info(`Failed to generate avatar video for ${userId}: ${error}`);
@@ -282,7 +282,7 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
     }
 
     const dbJob = await createDb(userId, job);
-    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
     return res.status(201).json(dbJob);
   } catch (error) {
     req.log.info(`Failed to generate mimic motion video for ${userId}: ${error}`);
@@ -325,7 +325,7 @@ export const genAvatarAudio = async (req: Request, res: Response, next: NextFunc
     }
 
     const dbJob = await createDb(userId, job);
-    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
     return res.status(201).json(dbJob);
   } catch (error) {
     req.log.info(`Failed to generate avatar audio for ${userId}: ${error}`);

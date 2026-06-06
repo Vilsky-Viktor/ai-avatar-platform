@@ -2,8 +2,8 @@ from pathlib import PurePosixPath
 
 from google.cloud.exceptions import NotFound
 
-from storage import download_image, upload_image
-from detector import crop, CropMode
+from services.storage import download_image, upload_image
+from utils.detector import crop, CropMode
 
 
 def _cropped_path(original_path: str) -> str:

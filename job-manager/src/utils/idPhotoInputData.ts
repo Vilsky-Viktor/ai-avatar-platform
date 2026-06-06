@@ -1,7 +1,5 @@
-import { AvatarParameters } from '../types/avatar';
+import { AvatarParameters, Platforms, AiModelGateway, JobMetadata, JobStatuses, Models, Services, ImageRatios } from '@loom24/shared/types';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
-import { Platforms, AiModelGateway, JobMetadata, JobStatuses, Models, Services } from '../types/job';
-import { Ratios } from '../types/ratios';
 import uuid from 'uuid';
 
 export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, userId: string, avatarId: string): {
@@ -29,7 +27,7 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
     bodyHair,
   } = parameters;
 
-  const ratio = Ratios['1:1'];
+  const ratio = ImageRatios['1:1'];
   const dimensions = '2048x2048';
   const isFemale = gender === 'female';
   const imageId = uuid.v4();
@@ -63,7 +61,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     height
   } = parameters;
 
-  const ratio = Ratios['1:1'];
+  const ratio = ImageRatios['1:1'];
   const dimensions = '2048x2048';
   const isFemale = gender === 'female';
 
@@ -171,7 +169,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
 export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): { 
   imageGenerator: AiModelGateway, metadata: JobMetadata, order: number 
 }[] => {
-  const ratio = Ratios['1:1'];
+  const ratio = ImageRatios['1:1'];
   const dimensions = '2048x2048';
 
   const uuids = Array.from({ length: 7 }, () => uuid.v4());

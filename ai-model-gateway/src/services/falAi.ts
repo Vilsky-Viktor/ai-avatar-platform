@@ -1,11 +1,11 @@
 import { fal, QueueStatus } from "@fal-ai/client";
 import { getSecretValue } from "./secretManager";
 import falAiTypes from '../types/falAi';
-import logger from '../logger';
-import { AiModelGateway, MediaTypes, Models } from "../types/job";
+import logger from '@loom24/shared/logger';
+import { AiModelGateway, MediaTypes, Models, ImageRatios } from "@loom24/shared/types";
 import platform from '../types/platform';
-import { downloadResultFile, getMediaUrlFromPath } from '../services/storage';
-import { OutputFormats } from "../types/image";
+import { downloadResultFile, getMediaUrlFromPath } from '@loom24/shared/services';
+import { OutputFormats } from "@loom24/shared/types";
 
 export const authenticate = async () => {
     fal.config({
@@ -63,7 +63,7 @@ export const genFluxV2ProEdit = async (data: AiModelGateway): Promise<platform.H
   const payload: falAiTypes.FluxV2ProEdit = {
     prompt: data.prompt!,
     image_urls: imageUrls,
-    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio!],
+    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio! as ImageRatios],
     output_format: OutputFormats.png,
     safety_tolerance: data.safetyTolerance || 2,
     enable_safety_checker: false
@@ -143,7 +143,7 @@ export const genQwenImage2512 = async (data: AiModelGateway): Promise<platform.H
   const payload: falAiTypes.QwenImage2512 = {
     prompt: data.prompt!,
     negative_prompt: data.negativePrompt || '',
-    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio!],
+    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio! as ImageRatios],
     num_inference_steps: 50,
     guidance_scale: 4,
     num_images: 1,
@@ -165,7 +165,7 @@ export const genQwenImageEdit2511 = async (data: AiModelGateway): Promise<platfo
     prompt: data.prompt!,
     negative_prompt: data.negativePrompt || '',
     image_urls: imageUrls,
-    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio!],
+    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio! as ImageRatios],
     num_inference_steps: 50,
     guidance_scale: 4.5,
     num_images: 1,
@@ -187,7 +187,7 @@ export const genQwenImageEdit2511MultipleAnglesLora = async (data: AiModelGatewa
     additional_prompt: data.prompt!,
     negative_prompt: data.negativePrompt || '',
     image_urls: imageUrls,
-    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio!],
+    image_size: falAiTypes.RatioToImageSizeMapping[data.ratio! as ImageRatios],
     horizontal_angle: data.horizontalAngle || 0,
     vertical_angle: data.verticalAngle || 0,
     zoom: data.zoom || 0,

@@ -1,7 +1,7 @@
 import * as ort from 'onnxruntime-web';
 import sharp from 'sharp';
 import path from 'path';
-import logger from '../logger';
+import logger from '@loom24/shared/logger';
 
 const MODEL_PATH = '/app/models/det_10g.onnx';
 const INPUT_SIZE = 640;

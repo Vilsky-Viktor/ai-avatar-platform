@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import { PubSub, Message } from '@google-cloud/pubsub';
-import logger from './logger';
+import logger from '@loom24/shared/logger';
 import falAi from './services/falAi';
 import google from './services/google';
 
@@ -20,11 +20,10 @@ google.authenticate().catch((err) => {
     process.exit(1);
 });
 
-import { sendJob } from './services/messageQueue';
+import { sendJob, uploadToBucket } from '@loom24/shared/services';
 import { getJob } from './services/jobManagerService';
-import { AiModelGateway, Job, JobStatuses, MediaTypes, Services, WorkflowStep } from './types/job';
+import { AiModelGateway, Job, JobStatuses, MediaTypes, Services, WorkflowStep } from '@loom24/shared/types';
 import { generate } from './controllers/generatorController';
-import { uploadToBucket } from './services/storage';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'ai-model-gateway-sub';
@@ -86,7 +85,7 @@ function listenForResults() {
       stepData.status = JobStatuses.completed;
       job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job);
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
     } catch (error: any) {
       logger.error(`Head direction checker failed iwth error: ${error}`);
 
@@ -96,7 +95,7 @@ function listenForResults() {
       job.curRun = job.maxRuns;
       job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job);
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
     } finally {
       clearInterval(heartbeat);
       message.ack();

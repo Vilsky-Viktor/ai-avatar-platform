@@ -4,7 +4,7 @@ dotenv.config();
 import express from 'express';
 import admin from 'firebase-admin';
 import pinoHttp from 'pino-http';
-import logger from './logger';
+import logger from '@loom24/shared/logger';
 
 admin.initializeApp({
     projectId: process.env.PROJECT_ID,
@@ -13,7 +13,7 @@ admin.initializeApp({
 });
 
 import voiceRoutes from './routes/voices';
-import { errorHandler } from './middlewares/errorHandler';
+import { errorHandler } from '@loom24/shared/middlewares';
 
 const app = express();
 

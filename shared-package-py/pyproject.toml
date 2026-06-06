@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loom24-shared"
+version = "0.0.2"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0.0",
+    "requests>=2.31.0",
+    "google-cloud-storage>=2.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["loom24_shared*"]

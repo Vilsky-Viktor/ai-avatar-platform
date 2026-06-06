@@ -1,6 +1,6 @@
-import { createServiceClient } from '../utils/serviceClient';
-import { Job } from '../types/job';
-import logger from '../logger';
+import { createServiceClient } from '@loom24/shared/services';
+import logger from '@loom24/shared/logger';
+import { Job } from '@loom24/shared/types';
 
 const client = createServiceClient(process.env.JOB_MANAGER_URL);
 

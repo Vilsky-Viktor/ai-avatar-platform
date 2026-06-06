@@ -1,10 +1,10 @@
 import { PubSub, Message } from '@google-cloud/pubsub';
 import admin from 'firebase-admin';
-import logger from './logger';
-import { Job, JobStatuses, WorkflowStep } from './types/job';
+import logger from '@loom24/shared/logger';
+import { sendJob } from '@loom24/shared/services';
+import { Job, JobStatuses, WorkflowStep } from '@loom24/shared/types';
 import { updateJob, getJob } from './services/jobManagerService';
 import { deleteBlob } from './services/storageService';
-import { sendJob } from './services/messageQueue';
 
 admin.initializeApp({ projectId: process.env.PROJECT_ID, storageBucket: process.env.BUCKET_NAME });
 
@@ -34,7 +34,7 @@ const newWorkflowHandler = async (job: Job) => {
   const stepIdx = 0;
   const stepData = job.workflow[stepIdx];
 
-  await sendJob(stepData.service, job);
+  await sendJob(stepData.service, job, 'workflow-manager');
 
   stepData.status = JobStatuses.generating;
   job.workflow[stepIdx] = stepData;
@@ -47,7 +47,7 @@ const pendingStepHandler = async (job: Job) => {
   const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
   const stepData = job.workflow[stepIdx];
 
-  await sendJob(stepData.service, job);
+  await sendJob(stepData.service, job, 'workflow-manager');
 
   stepData.status = JobStatuses.generating;
   job.workflow[stepIdx] = stepData;
@@ -77,7 +77,7 @@ const stepErrorHandler = async (job: Job) => {
   const firstStepIdx = 0;
   const firstStepData = job.workflow[firstStepIdx];
 
-  await sendJob(firstStepData.service, job);
+  await sendJob(firstStepData.service, job, 'workflow-manager');
 
   job.workflow[firstStepIdx] = firstStepData;
 

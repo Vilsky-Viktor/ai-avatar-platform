@@ -1,5 +1,5 @@
-import { OutputMimeTypes, Ratios } from "./image"
-import { Models as JobModels } from './job';
+import { OutputMimeTypes, ImageRatios } from "@loom24/shared/types";
+import { Models as JobModels } from '@loom24/shared/types';
 
 namespace Google {
     export enum Models {
@@ -28,7 +28,7 @@ namespace Google {
     }
 
     export type GeminiImageConfig = {
-        aspectRatio?: Ratios;
+        aspectRatio?: ImageRatios;
         personGeneration?: PersonGenerations;
         imageSize?: ImageSizes;
         imageOutputFormat?: OutputMimeTypes;

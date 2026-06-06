@@ -1,6 +1,4 @@
-import { AiModelGateway, JobMetadata, JobStatuses, Models, Platforms, Services } from "../types/job"
-import { AvatarParameters } from "../types/avatar";
-import { Ratios } from "../types/ratios";
+import { AiModelGateway, JobMetadata, JobStatuses, Models, Platforms, Services, AvatarParameters, ImageRatios } from "@loom24/shared/types";
 import uuid from 'uuid';
 import { IdPhotoSetPaths } from "../types/idPhotoSet";
 
@@ -8,7 +6,7 @@ import { IdPhotoSetPaths } from "../types/idPhotoSet";
 export const genWhatsappStickersData = (userId: string, avatarId: string, parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): {
     imageGenerator: AiModelGateway, metadata: JobMetadata, order: number
 }[] => {
-    const ratio = Ratios['1:1'];
+    const ratio = ImageRatios['1:1'];
 
     return [
         {
@@ -196,7 +194,7 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
 }[] => {
     const { gender } = parameters;
     const isFemale = gender === 'female';
-    const ratio = Ratios['3:4'];
+    const ratio = ImageRatios['3:4'];
 
     return [
         {
@@ -447,7 +445,7 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
 }[] => {
     const { gender } = parameters;
     const isFemale = gender === 'female';
-    const ratio = Ratios['3:4'];
+    const ratio = ImageRatios['3:4'];
 
     return [
         {
@@ -618,7 +616,7 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
 }[] => {
     const { gender } = parameters;
     const isFemale = gender === 'female';
-    const ratio = Ratios['3:4'];
+    const ratio = ImageRatios['3:4'];
 
     return [
         {

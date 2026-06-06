@@ -1,5 +1,5 @@
 import { getStorage } from 'firebase-admin/storage';
-import logger from '../logger';
+import logger from '@loom24/shared/logger';
 
 const BUCKET_NAME = process.env.BUCKET_NAME || 'loom24-mvp.firebasestorage.app';
 

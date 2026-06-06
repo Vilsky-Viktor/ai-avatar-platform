@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import { PubSub, Message } from '@google-cloud/pubsub';
-import logger from './logger';
+import logger from '@loom24/shared/logger';
 
 admin.initializeApp({
   projectId: process.env.PROJECT_ID,
@@ -8,10 +8,9 @@ admin.initializeApp({
   storageBucket: process.env.BUCKET_NAME,
 });
 
-import { HeadDirectionChecker, Job, JobStatuses, WorkflowStep, Services } from './types/job';
-import { sendJob } from './services/messageQueue';
+import { HeadDirectionChecker, Job, JobStatuses, WorkflowStep, Services } from '@loom24/shared/types';
+import { sendJob, downloadFromPath } from '@loom24/shared/services';
 import { getJob } from './services/jobManagerService';
-import { downloadMediaFromPath } from './services/storage';
 import { checkDirection } from './utils/detector';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
@@ -55,7 +54,7 @@ function listenForResults() {
       const stepData = job.workflow[stepIdx] as HeadDirectionChecker;
 
       try {
-        const image = await downloadMediaFromPath(stepData.imagePath);
+        const image = await downloadFromPath(stepData.imagePath);
         const passed = await checkDirection(image, stepData.direction);
 
         if (!passed) {
@@ -68,7 +67,7 @@ function listenForResults() {
           job.workflow[stepIdx] = stepData;
         }
 
-        await sendJob(WORKFLOW_MANAGER_TOPIC, job);
+        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
       } catch (error: any) {
         logger.error(`Head direction checker failed iwth error: ${error}`);
 
@@ -76,7 +75,7 @@ function listenForResults() {
         stepData.error = String(error);
         job.workflow[stepIdx] = stepData;
 
-        await sendJob(WORKFLOW_MANAGER_TOPIC, job);
+        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
       }
     } else {
       logger.warn(`Head direction checker pending step is not found for job ${job.id}`);

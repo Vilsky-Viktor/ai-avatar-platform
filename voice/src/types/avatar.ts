@@ -1,4 +1,1 @@
-export enum AvatarGender {
-  male = 'male',
-  female = 'female'
-}
+export { AvatarGender } from '@loom24/shared/types';

@@ -9,9 +9,10 @@ import sys
 
 from google.cloud import pubsub_v1
 
-from matcher import get_app, acquire_face_recognition, ADAFACE_MODEL_DIR
-from storage import download_bytes, download_models
-from models import FaceMatcherStep, Job, JobStatus, StepBase
+from loom24_shared.types import FaceMatcherStep, Job, JobStatuses, StepBase
+
+from utils.matcher import get_app, acquire_face_recognition, ADAFACE_MODEL_DIR
+from services.storage import download_bytes, download_models
 from services.job_manager_service import get_job
 
 PROJECT_ID              = os.environ["PROJECT_ID"]
@@ -52,7 +53,7 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
     try:
         db_job = get_job(job)
-        if db_job.status == JobStatus.canceled:
+        if db_job.status == JobStatuses.canceled:
             logger.info(f"Job {job_id} is canceled — skipping")
             message.ack()
             return
@@ -66,7 +67,7 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
     step_idx = next(
         (i for i, step in enumerate(job.workflow)
          if step.service == SERVICE_NAME
-         and step.status == JobStatus.pending),
+         and step.status == JobStatuses.pending),
         -1,
     )
 
@@ -87,28 +88,27 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         if similarity is None:
             raise ValueError(f"No face detected in image: {step.imagePath}")
 
-        similarity = round(float(similarity), 4)
-
-        # Keep the best match seen across all runs
-        step.faceMatch = max(step.faceMatch, similarity)
+        similarity  = round(float(similarity), 4)
+        face_match  = max(step.faceMatch or 0.0, similarity)
+        step.faceMatch = face_match
 
         if job.curRun < job.maxRuns:
-            if step.faceMatch >= step.threshold:
-                logger.info(f"Job {job_id}: face match passed (faceMatch={step.faceMatch}, threshold={step.threshold})")
-                step.status = JobStatus.completed
+            if face_match >= step.threshold:
+                logger.info(f"Job {job_id}: face match passed (faceMatch={face_match}, threshold={step.threshold})")
+                step.status = JobStatuses.completed
                 step.error  = None
             else:
-                logger.info(f"Job {job_id}: face match FAILED (faceMatch={step.faceMatch}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
-                step.status = JobStatus.error
-                step.error  = f"face similarity {step.faceMatch:.4f} below threshold {step.threshold}"
+                logger.info(f"Job {job_id}: face match FAILED (faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
+                step.status = JobStatuses.error
+                step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
         else:
-            logger.info(f"Job {job_id}: final run — passing regardless (faceMatch={step.faceMatch}, threshold={step.threshold})")
-            step.status = JobStatus.completed
+            logger.info(f"Job {job_id}: final run — passing regardless (faceMatch={face_match}, threshold={step.threshold})")
+            step.status = JobStatuses.completed
             step.error  = None
 
     except Exception as e:
         logger.error(f"Job {job_id}: face matcher error: {e}", exc_info=True)
-        step.status = JobStatus.error
+        step.status = JobStatuses.error
         step.error  = str(e)
 
     job.workflow[step_idx] = StepBase.model_validate(step.model_dump())

@@ -177,7 +177,7 @@ function AssignVoicePage() {
     }
 
     const previousStep = () => {
-        if (avatar.type === AvatarTypes.digitalTwin) {
+        if (avatar.type === AvatarTypes.twin) {
             navigate('/avatar/create/twin-id-photos');
         } else {
             navigate('/avatar/create/synthetic-id-photos');

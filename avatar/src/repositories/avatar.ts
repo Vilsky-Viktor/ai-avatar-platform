@@ -1,4 +1,4 @@
-import { Avatar } from '../types/avatar';
+import { Avatar } from '@loom24/shared/types';
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 const DB_NAME = process.env.DB_NAME || ''

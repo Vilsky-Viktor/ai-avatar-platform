@@ -1,4 +1,4 @@
-import { createServiceClient } from '../utils/serviceClient';
+import { createServiceClient } from '@loom24/shared/services';
 
 const client = createServiceClient(process.env.JOB_MANAGER_URL);
 

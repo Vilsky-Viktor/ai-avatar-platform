@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "cropper"
+version = "0.1.0"
+description = "Image cropping service"
+authors = []
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = ">=0.111.0"
+uvicorn = {extras = ["standard"], version = ">=0.29.0"}
+mediapipe = ">=0.10.14"
+Pillow = ">=10.4.0"
+google-cloud-storage = ">=2.18.0"
+python-dotenv = ">=1.0.0"
+numpy = ">=1.26.0"
+loom24-shared = {version = "0.0.2", source = "loom24-pypi"}
+
+[[tool.poetry.source]]
+name = "loom24-pypi"
+url = "https://us-central1-python.pkg.dev/loom24-mvp/loom24-pypi/simple/"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

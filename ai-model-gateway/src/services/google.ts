@@ -1,10 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
-import { AiModelGateway, MediaTypes, Models } from "../types/job";
+import { AiModelGateway, MediaTypes, Models, OutputMimeTypes } from "@loom24/shared/types";
 import { detectMimeType } from "../utils/detectMimeType";
 import platform from '../types/platform';
-import { downloadFromPath } from "./storage";
+import { downloadFromPath } from "@loom24/shared/services";
 import googleTypes from '../types/google';
-import { OutputMimeTypes, Ratios } from "../types/image";
 
 let client: GoogleGenAI | null = null;
 
@@ -70,7 +69,7 @@ export const genGeminiImage3Pro = async (data: AiModelGateway): Promise<platform
         topK: 40,
         temperature: data.temperature,
         imageConfig: {
-            aspectRatio: data.ratio,
+            aspectRatio: data.ratio as googleTypes.GeminiImageConfig['aspectRatio'],
             imageOutputFormat: OutputMimeTypes.png,
             imageSize: googleTypes.ImageSizes._2k,
             personGeneration: googleTypes.PersonGenerations.allowAdult,

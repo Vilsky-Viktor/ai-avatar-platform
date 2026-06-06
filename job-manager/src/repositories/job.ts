@@ -1,6 +1,6 @@
-import { Job, JobStatuses, JobTargets } from '../types/job';
+import { Job, JobStatuses, JobTargets } from '@loom24/shared/types';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import logger from '../logger';
+import logger from '@loom24/shared/logger';
 
 const DB_NAME = process.env.DB_NAME || '';
 const JOBS_COLLECTION_NAME = process.env.JOBS_COLLECTION_NAME || '';

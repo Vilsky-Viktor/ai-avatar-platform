@@ -5,14 +5,14 @@ import {
   JobTargets,
   JobStatuses,
   IdPhotoJobRequest,
-} from '../types/job';
+} from '@loom24/shared/types';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
 import { genDigitalTwinIdPhotoData, genSyntheticFrontIdPhtotoData, genSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import {
   create as createDb,
   createMany as createManyDb,
 } from '../repositories/job';
-import { publishJob, publishJobs } from '../services/messageQueue';
+import { sendJob, sendJobs } from '@loom24/shared/services';
 import uuid from 'uuid';
 
 
@@ -45,7 +45,7 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
     }
 
     const dbJob = await createDb(userId, job);
-    await publishJob(WORKFLOW_MANAGER_TOPIC, dbJob);
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -85,7 +85,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
     })
 
     const dbJobs = await createManyDb(userId, jobs);
-    await publishJobs(WORKFLOW_MANAGER_TOPIC, dbJobs);
+    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
 
     return res.status(201).json(dbJobs);
   } catch (error) {
@@ -133,7 +133,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
     })
     
     const dbJobs = await createManyDb(userId, jobs);
-    await publishJobs(WORKFLOW_MANAGER_TOPIC, dbJobs);
+    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
 
     return res.status(201).json(dbJobs);
   } catch (error) {
