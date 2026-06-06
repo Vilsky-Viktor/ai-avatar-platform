@@ -1,4 +1,5 @@
 import glob
+import hashlib
 import io
 import logging
 import os
@@ -132,7 +133,7 @@ class _FaceRecognitionInstance:
             self._embedding_cache.popitem(last=False)
 
     def get_face_embedding_cached(self, image_bytes: bytes) -> np.ndarray | None:
-        key = hash(image_bytes)
+        key = hashlib.sha256(image_bytes).digest()
         now = time.monotonic()
 
         cached = self._embedding_cache.get(key)

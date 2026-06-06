@@ -40,14 +40,18 @@ services:
     volumes:
       - ./api-gateway:/app
       - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
       - PORT=3000
       - NODE_ENV=development
+      - PROJECT_ID=loom24-mvp
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - USER_URL=http://user:3100
       - AVATAR_URL=http://avatar:3200
       - JOB_MANAGER_URL=http://job-manager:3300
       - VOICE_URL=http://voice:3600
       - CROPPER_URL=http://cropper:3800
+      - PROXY_TIMEOUT_MS=30000
 
   user:
     <<: *default-dns
@@ -69,7 +73,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
       - DB_NAME=ai-avatar-db
-      - COLLECTION_NAME=users
+      - USERS_COLLECTION_NAME=users
 
   avatar:
     <<: *default-dns
@@ -90,6 +94,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - DB_NAME=ai-avatar-db
       - USERS_COLLECTION_NAME=users
       - AVATARS_COLLECTION_NAME=avatars
@@ -118,6 +123,7 @@ services:
       - DB_NAME=ai-avatar-db
       - JOBS_COLLECTION_NAME=jobs
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - AVATAR_URL=http://avatar:3200
 
   voice:
     <<: *default-dns
@@ -158,6 +164,8 @@ services:
       - PORT=3800
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - JOB_MANAGER_URL=http://job-manager:3300
+      - MAX_CONCURRENT_CROPS=4
 
   ai-model-gateway:
     <<: *default-dns
@@ -200,7 +208,7 @@ services:
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - SUBSCRIPTION_ID=workflow-manager-sub
       - JOB_MANAGER_URL=http://job-manager:3300
-      - AI_MODEL_GATEWAY_URL=http://ai-model-gateway:3400
+      - MAX_CONCURRENT_MESSAGES=10
 
   head-direction-checker:
     <<: *default-dns

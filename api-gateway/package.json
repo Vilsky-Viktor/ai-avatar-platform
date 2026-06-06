@@ -27,7 +27,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@loom24/shared": "^0.0.5",
+    "@loom24/shared": "^0.0.6",
     "axios": "^1.13.4",
     "cors": "^2.8.6",
     "firebase-admin": "^13.6.0",

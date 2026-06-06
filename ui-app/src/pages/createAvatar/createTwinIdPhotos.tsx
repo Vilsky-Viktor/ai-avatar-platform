@@ -64,16 +64,14 @@ function CreateTwinIdPhotosPage() {
     }, [newAvatarData]);
 
     useEffect(() => {
-        if (!jobsCreated()) return;
+        if (!newAvatarData.groupId || !user?.id) return;
 
-        const groupId = jobs[0]?.groupId!;
-
-        const unsubscribe = listenToCollectionByGroupId('jobs', user?.id!, groupId, async (querySnap: QuerySnapshot) => {
+        const unsubscribe = listenToCollectionByGroupId('jobs', user.id, newAvatarData.groupId, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
-        })
+        });
 
         return () => unsubscribe();
-    }, [jobs]);
+    }, [newAvatarData.groupId, user?.id]);
 
     useEffect(() => {
         jobsRef.current = jobs;
@@ -306,7 +304,7 @@ function CreateTwinIdPhotosPage() {
     }
 
     const nextStep = async () => {
-        if (!canProceed) return
+        if (!canProceed()) return
 
         try {
             if (!stepLocked()) {

@@ -811,13 +811,13 @@ test = ["coverage[toml] (>=7.2)", "pytest (>=8.0)", "pytest-cov (>=5.0)"]
 
 [[package]]
 name = "loom24-shared"
-version = "0.0.3"
+version = "0.0.4"
 description = ""
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "loom24_shared-0.0.3-py3-none-any.whl", hash = "sha256:c18ad45f1865419b9d458393a673911a689dab7b75763b1ce73fd7651f24073a"},
-    {file = "loom24_shared-0.0.3.tar.gz", hash = "sha256:d0fcc040b8a1a72e2b2c599c9d7642cb584cdbcda71457627980679fb367ed06"},
+    {file = "loom24_shared-0.0.4-py3-none-any.whl", hash = "sha256:aafb340bbbf4dd937e5f7019b865255421dbfac99f95881aa63e5b336230985e"},
+    {file = "loom24_shared-0.0.4.tar.gz", hash = "sha256:e35472c81bbbc5bc93c4b4b9239839a08cb4b0e12d5d8b074f8fbb16ca7dabcd"},
 ]
 
 [package.dependencies]
@@ -2263,4 +2263,4 @@ zstd = ["backports-zstd (>=1.0.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "6f8be01a1ae53e47be2a079f2365899ae52345f8a9b12a8ef8092cb13c2fa62c"
+content-hash = "2ee799e8683be8e3eb7e171eef40ed92bcc62753d0caf3af597a02acd54eda61"

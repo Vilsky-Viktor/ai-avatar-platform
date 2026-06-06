@@ -15,19 +15,33 @@ export const getById = async (id: string): Promise<User | null> => {
 
 export const sync = async (user: User): Promise<{ user: User; created: boolean }> => {
     const userRef = db.collection(USERS_COLLECTION_NAME).doc(user.id);
-    const userDoc = await userRef.get();
 
-    if (userDoc.exists) {
-        return { user: userDoc.data() as User, created: false };
-    }
+    return db.runTransaction(async (transaction) => {
+        const userDoc = await transaction.get(userRef);
 
-    const dbUser: User = {
-        ...user,
-        credits: 0,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-    };
+        if (!userDoc.exists) {
+            const dbUser: User = {
+                ...user,
+                credits: 0,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+            };
+            transaction.set(userRef, dbUser);
+            return { user: dbUser, created: true };
+        }
 
-    await userRef.set(dbUser);
-    return { user: dbUser, created: true };
+        const existingUser = userDoc.data() as User;
+        const nameChanged = !!user.name && user.name !== existingUser.name;
+        const imgChanged = user.img !== existingUser.img;
+
+        if (nameChanged || imgChanged) {
+            const updates: Partial<User> = { updatedAt: Timestamp.now() };
+            if (nameChanged) updates.name = user.name;
+            if (imgChanged) updates.img = user.img;
+            transaction.update(userRef, updates);
+            return { user: { ...existingUser, ...updates }, created: false };
+        }
+
+        return { user: existingUser, created: false };
+    });
 }

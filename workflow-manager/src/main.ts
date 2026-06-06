@@ -10,6 +10,7 @@ admin.initializeApp({ projectId: process.env.PROJECT_ID, storageBucket: process.
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'workflow-manager-sub';
+const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
@@ -80,7 +81,9 @@ const stepErrorHandler = async (job: Job) => {
 }
 
 function listenForResults() {
-  const subscription = pubsub.subscription(SUBSCRIPTION_ID);
+  const subscription = pubsub.subscription(SUBSCRIPTION_ID, {
+    flowControl: { maxMessages: MAX_CONCURRENT_MESSAGES },
+  });
 
   logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for workflow updates...');
 
@@ -99,20 +102,21 @@ function listenForResults() {
     try {
       logger.info({ msgId: message.id }, 'Received message');
 
-      message.ack();
-
       try {
         const dbJob = await getJob(job);
         if (!dbJob || dbJob.status === JobStatuses.canceled) {
           logger.info('Job not found or canceled — skipping');
+          message.ack();
           return;
         }
       } catch (error: any) {
         if (error.response?.status === 404) {
           logger.info('Job not found — skipping');
+          message.ack();
           return;
         }
-        logger.error({ err: error }, 'Failed to fetch job from job manager — skipping');
+        logger.error({ err: error }, 'Failed to fetch job from job manager — nacking for retry');
+        message.nack();
         return;
       }
 
@@ -136,10 +140,12 @@ function listenForResults() {
         } else {
           logger.warn('No workflow condition matched');
         }
+        message.ack();
       } catch (error: any) {
         logger.error({ err: error }, 'Failed to process job');
         job.status = JobStatuses.error;
         await updateJob(job);
+        message.nack();
       }
     } finally {
       clearLogContext();

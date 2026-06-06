@@ -1,9 +1,14 @@
 import axios from 'axios';
+import http from 'http';
+import https from 'https';
 import { Request, Response } from 'express';
 
 type HttpMethod = 'get' | 'post' | 'patch' | 'delete';
 
 const PROXY_TIMEOUT_MS = Number(process.env.PROXY_TIMEOUT_MS) || 30_000;
+
+const httpAgent  = new http.Agent({ keepAlive: true });
+const httpsAgent = new https.Agent({ keepAlive: true });
 
 export const createProxyHandler = (
   method: HttpMethod,
@@ -13,7 +18,7 @@ export const createProxyHandler = (
   const userId = req.headers['x-user-id'];
   const url = getUrl(req);
   const msg = typeof logMessage === 'function' ? logMessage(req) : logMessage;
-  const config = { headers: { 'x-user-id': userId }, timeout: PROXY_TIMEOUT_MS };
+  const config = { headers: { 'x-user-id': userId }, timeout: PROXY_TIMEOUT_MS, httpAgent, httpsAgent };
 
   req.log.info(msg);
 

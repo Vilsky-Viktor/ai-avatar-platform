@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getById, getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId, getByStatus } from '../controllers/jobController';
+import { getById, getByGroupId, getByAvatarId, restart, update, deleteById, deleteByAvatarId } from '../controllers/jobController';
 import { genSyntheticFrontIdPhoto, genSyntheticIdPhotos, genDigitalTwinIdPhotos } from '../controllers/idPhotoController';
 import { genAvatarAudio, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, mimicMotion } from '../controllers/contentController';
 
@@ -19,7 +19,6 @@ router.post('/gen-avatar-audio', genAvatarAudio);
 router.get('/get/job/:id', getById);
 router.get('/get/group/:groupId', getByGroupId);
 router.get('/get/avatar/:avatarId', getByAvatarId);
-router.get('/get/status/:status', getByStatus);
 router.post('/restart/job/:id', restart);
 router.patch('/update/job/:id', update);
 router.delete('/delete/job/:id', deleteById);

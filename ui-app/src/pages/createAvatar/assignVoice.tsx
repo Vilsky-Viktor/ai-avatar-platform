@@ -66,14 +66,19 @@ function AssignVoicePage() {
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const savedVoicePathRef = useRef<string | null>(null);
+    const mountedRef = useRef(true);
 
     useEffect(() => {
         scrollToTop();
     }, [])
 
     useEffect(() => {
+        mountedRef.current = true;
         initPage();
-        return () => { audioRef.current?.pause(); };
+        return () => {
+            mountedRef.current = false;
+            audioRef.current?.pause();
+        };
     }, []);
 
     const initPage = async () => {
@@ -107,20 +112,22 @@ function AssignVoicePage() {
         audioRef.current = audio;
 
         audio.ontimeupdate = () => {
+            if (!mountedRef.current) return;
             if (audio.duration && isFinite(audio.duration)) {
                 setAudioProgress((audio.currentTime / audio.duration) * 100);
             }
         };
         audio.onended = () => {
+            if (!mountedRef.current) return;
             setPlayingId(null);
             setAudioProgress(0);
         };
 
         try {
             await audio.play();
-            setPlayingId(id);
+            if (mountedRef.current) setPlayingId(id);
         } finally {
-            setLoadingId(null);
+            if (mountedRef.current) setLoadingId(null);
         }
     };
 

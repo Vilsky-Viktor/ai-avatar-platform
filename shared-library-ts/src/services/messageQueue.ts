@@ -6,6 +6,8 @@ const pubsub = new PubSub({
   projectId: process.env.PROJECT_ID,
 });
 
+const SEND_JOBS_CHUNK_SIZE = 5;
+
 export const sendJob = async (topicName: string, job: Job, serviceName: string): Promise<string> => {
     try {
         const topic = pubsub.topic(topicName);
@@ -27,5 +29,8 @@ export const sendJob = async (topicName: string, job: Job, serviceName: string):
 };
 
 export const sendJobs = async (topicName: string, jobs: Job[], serviceName: string): Promise<void> => {
-    await Promise.all(jobs.map(job => sendJob(topicName, job, serviceName)));
+    for (let i = 0; i < jobs.length; i += SEND_JOBS_CHUNK_SIZE) {
+        const chunk = jobs.slice(i, i + SEND_JOBS_CHUNK_SIZE);
+        await Promise.all(chunk.map(job => sendJob(topicName, job, serviceName)));
+    }
 };

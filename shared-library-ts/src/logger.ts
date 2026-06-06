@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks';
 import pino from 'pino';
 import pretty from 'pino-pretty';
 
@@ -19,23 +20,25 @@ const baseLogger = pino({
   },
 }, stream);
 
-let activeLogger: pino.Logger = baseLogger;
+const storage = new AsyncLocalStorage<pino.Logger>();
 
 export const setLogContext = (userId?: string, avatarId?: string, jobId?: string): void => {
   const context: Record<string, string> = {};
   if (userId) context.userId = userId;
   if (avatarId) context.avatarId = avatarId;
   if (jobId) context.jobId = jobId;
-  activeLogger = Object.keys(context).length ? baseLogger.child(context) : baseLogger;
+  const child = Object.keys(context).length ? baseLogger.child(context) : baseLogger;
+  storage.enterWith(child);
 };
 
 export const clearLogContext = (): void => {
-  activeLogger = baseLogger;
+  storage.enterWith(baseLogger);
 };
 
 const logger = new Proxy(baseLogger, {
   get(_target, prop) {
-    return (activeLogger as any)[prop];
+    const active = storage.getStore() ?? baseLogger;
+    return (active as any)[prop];
   },
 });
 

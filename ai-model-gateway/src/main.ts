@@ -85,7 +85,7 @@ function listenForResults() {
       const heartbeat = setInterval(() => {
           message.modAck(600);
           logger.info('Extended ack deadline');
-        }, 500_000);
+        }, 300_000);
 
       try {
         logger.info({ platform: stepData.platform, model: stepData.model }, 'Starting generation');

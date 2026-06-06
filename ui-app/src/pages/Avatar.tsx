@@ -55,41 +55,39 @@ function AvatarPage() {
     useEffect(() => { initPage(); }, []);
 
     useEffect(() => {
-        if (!jobs.length) return;
+        if (!avatar.id || !user?.id) return;
 
-        const unsubscribe = listenToCollectionByAvatarId('jobs', user?.id!, avatar.id!, async (querySnap: QuerySnapshot) => {
-            await listener(querySnap);
-        })
+        const unsubscribe = listenToCollectionByAvatarId('jobs', user.id, avatar.id, async (querySnap: QuerySnapshot) => {
+            for (const docSnap of querySnap.docs) {
+                const job = docSnap.data() as Job;
 
+                if (job.status === JobStatuses.completed && job.resultMediaPath) {
+                    const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath);
+                    job.resultMediaUrl = downloadUrl;
+                }
+
+                const currentJobs = jobsRef.current;
+                const jobIndex = currentJobs.findIndex((item) => item?.id === job.id);
+                const oldJob = currentJobs[jobIndex];
+
+                if (oldJob && oldJob.status !== job.status) {
+                    setJob(jobIndex, job);
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [avatar.id, user?.id]);
+
+    useEffect(() => {
         setNumImages(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.image && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
         setNumVideos(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.video && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
         setNumAudios(jobs.reduce((acc: number, job: Job | null) => job && job.mediaType === MediaTypes.audio && job.status === JobStatuses.completed ? acc + 1 : acc, 0));
-
-        return () => unsubscribe();
     }, [jobs]);
 
     useEffect(() => {
         jobsRef.current = jobs;
     }, [jobs]);
-
-    const listener = async (querySnap: QuerySnapshot) => {
-        for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as Job;
-
-            if (job.status === JobStatuses.completed && job.resultMediaPath) {
-                const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath)
-                job.resultMediaUrl = downloadUrl;
-            }
-
-            const currentJobs = jobsRef.current;
-            const jobIndex = currentJobs.findIndex((item) => item?.id === job.id);
-            const oldJob = currentJobs[jobIndex];
-
-            if (oldJob && oldJob?.status !== job.status) {
-                setJob(jobIndex, job);
-            }
-        }
-    }
 
     const initPage = async () => {
         const fetchedAvatar = await fetchAvatar();

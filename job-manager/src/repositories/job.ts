@@ -14,11 +14,14 @@ const STATUS_ORDER: Record<string, number> = {
 };
 
 const batchDeleteQuery = async (query: FirebaseFirestore.Query): Promise<void> => {
-  const snapshot = await query.get();
+  const snapshot = await query.limit(500).get();
   if (snapshot.empty) return;
   const batch = db.batch();
   snapshot.docs.forEach(doc => batch.delete(doc.ref));
   await batch.commit();
+  if (snapshot.size === 500) {
+    await batchDeleteQuery(query);
+  }
 };
 
 export const getById = async (userId: string, id: string): Promise<Job | null> => {
@@ -50,15 +53,7 @@ export const getByAvatarId = async (userId: string, avatarId: string): Promise<J
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId)
         .orderBy("createdAt", "desc")
-        .get();
-
-    return snapshot.docs.map(doc => doc.data() as Job);
-}
-
-export const getByStatus = async (status: JobStatuses): Promise<Job[]> => {
-    const snapshot = await db.collection(JOBS_COLLECTION_NAME)
-        .where("status", "==", status)
-        .orderBy("createdAt", "asc")
+        .limit(1000)
         .get();
 
     return snapshot.docs.map(doc => doc.data() as Job);
@@ -70,6 +65,7 @@ export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promi
         .where("avatarId", "==", avatarId)
         .where("target", "==", JobTargets.idPhoto)
         .orderBy("order", "asc")
+        .limit(1000)
         .get();
 
     return snapshot.docs.map(doc => doc.data() as Job);

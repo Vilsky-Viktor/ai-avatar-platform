@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, JobStatuses, WorkflowStep } from '@loom24/shared/types';
+import { Job, WorkflowStep } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import {
   getById as getByIdDb,
   getByGroupId as getByGroupIdDb,
   getByAvatarId as getByAvatarIdDb,
-  getByStatus as getByStatusDb,
   update as updateDb,
   deleteById as deleteByIdDb,
   deleteByAvatarId as deleteByAvatarIdDb,
@@ -67,19 +66,6 @@ export const getByAvatarId = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getByStatus = async (req: Request, res: Response, next: NextFunction) => {
-  const status = req.params.status as JobStatuses;
-
-  try {
-    logger.info({ status }, 'Get jobs by status');
-    const jobs = await getByStatusDb(status);
-    return res.status(200).json(jobs);
-  } catch (error) {
-    logger.error({ status, err: error }, 'Failed to get jobs by status');
-    next(error);
-  }
-};
-
 export const restart = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const id = req.params.id as string;
@@ -94,11 +80,11 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
       throw Object.assign(new Error(`Job ${id} does not exist`), { status: 404 });
     }
 
-    job.status = JobStatuses.pending;
+    job.status = 'pending' as any;
 
     job.workflow.forEach((_, idx) => {
       job.workflow[idx].error = '';
-      job.workflow[idx].status = JobStatuses.pending;
+      job.workflow[idx].status = 'pending' as any;
     });
 
     await updateDb(userId, id, job, true);
