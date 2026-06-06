@@ -234,9 +234,14 @@ const normalizeJob = (job: any): Job => ({
   updatedAt: toDate(job.updatedAt),
 });
 
-export const getJobsByAvatarId = async (avatarId: string, cursor?: string): Promise<{ jobs: Job[]; nextCursor: string | null }> => {
+export const getJobsByAvatarId = async (
+  avatarId: string,
+  cursor?: string,
+  filters?: { mediaType?: string; status?: string; target?: string[] },
+): Promise<{ jobs: Job[]; nextCursor: string | null }> => {
   try {
-    const res = await apiClient.get(`/jobs/get/avatar/${avatarId}`, { params: cursor ? { cursor } : {} });
+    const params = { ...(cursor ? { cursor } : {}), ...filters };
+    const res = await apiClient.get(`/jobs/get/avatar/${avatarId}`, { params });
     const data = res.data as { jobs: any[]; nextCursor: string | null };
 
     return {

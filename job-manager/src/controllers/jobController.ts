@@ -54,11 +54,16 @@ export const getByAvatarId = async (req: Request, res: Response, next: NextFunct
   const userId = req.headers['x-user-id'] as string;
   const avatarId = req.params.avatarId as string;
   const cursor = req.query.cursor as string | undefined;
+  const mediaType = req.query.mediaType as string | undefined;
+  const status = req.query.status as string | undefined;
+  const targets = req.query.target
+    ? (Array.isArray(req.query.target) ? req.query.target : [req.query.target]) as string[]
+    : undefined;
 
   setLogContext(userId, avatarId);
   try {
     logger.info('Get jobs by avatar ID');
-    const result = await getByAvatarIdDb(userId, avatarId, cursor);
+    const result = await getByAvatarIdDb(userId, avatarId, cursor, mediaType, status, targets);
     return res.status(200).json(result);
   } catch (error) {
     logger.error({ err: error }, 'Failed to get jobs by avatar ID');

@@ -5,7 +5,6 @@ import type { VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useApp } from '../../providers/ContextProvider';
 import MediaSelectorModal from '../mediaSelector/MediaSelectorModal';
-import type { Job } from '@loom24/shared/types';
 import { uploadBlobToBucket } from '../../services/storage';
 import { convertBlobToWav } from '../../utils/audioConverter';
 
@@ -16,12 +15,11 @@ type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatar?: Avatar;
-    jobs: Job[];
     onGenerate: (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null, audioPath: string | null, objectPhotoPaths: string[]) => Promise<void>;
     onMimicMotion: (imagePath: string, videoPath: string, keepOriginalAudio: boolean) => Promise<void>;
 };
 
-function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate, onMimicMotion }: Props) {
+function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: Props) {
     const { user } = useApp();
 
     const [modalMode, setModalMode] = useState<ModalMode>('gen-video');
@@ -646,7 +644,7 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate, onMimicMotio
             <MediaSelectorModal
                 isOpen={selectorOpen}
                 onClose={() => setSelectorOpen(false)}
-                jobs={jobs}
+                avatarId={avatar?.id ?? ''}
                 onSelect={(path, url, imageRatio) => {
                     setSelectedImage({ path, url });
                     setRatio(imageRatio);
@@ -655,7 +653,7 @@ function GenVideoModal({ isOpen, onClose, avatar, jobs, onGenerate, onMimicMotio
             <MediaSelectorModal
                 isOpen={mimicSelectorOpen}
                 onClose={() => setMimicSelectorOpen(false)}
-                jobs={jobs}
+                avatarId={avatar?.id ?? ''}
                 title="Select Avatar Image"
                 onSelect={(path, url) => {
                     setMimicImagePath(path);

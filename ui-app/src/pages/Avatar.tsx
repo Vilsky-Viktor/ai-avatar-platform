@@ -407,7 +407,6 @@ function AvatarPage() {
                 isOpen={generateVideoOpen}
                 onClose={closeGenerateVideo}
                 avatar={avatar}
-                jobs={jobs.filter((j): j is Job => j !== null)}
                 onGenerate={handleGenerateVideo}
                 onMimicMotion={handleMimicMotion}
             />

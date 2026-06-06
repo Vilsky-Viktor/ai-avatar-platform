@@ -47,13 +47,21 @@ export const getByAvatarId = async (
     userId: string,
     avatarId: string,
     cursor?: string,
+    mediaType?: string,
+    status?: string,
+    targets?: string[],
 ): Promise<{ jobs: Job[]; nextCursor: string | null }> => {
+    const resolvedTargets = targets?.length ? targets : [JobTargets.avatarMedia, JobTargets.idPhoto];
+
     let query: FirebaseFirestore.Query = db.collection(JOBS_COLLECTION_NAME)
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId)
-        .where("target", "in", [JobTargets.avatarMedia, JobTargets.idPhoto])
-        .orderBy("createdAt", "desc")
-        .limit(PAGE_SIZE);
+        .where("target", "in", resolvedTargets);
+
+    if (mediaType) query = query.where("mediaType", "==", mediaType);
+    if (status) query = query.where("status", "==", status);
+
+    query = query.orderBy("createdAt", "desc").limit(PAGE_SIZE);
 
     if (cursor) {
         const cursorDoc = await db.collection(JOBS_COLLECTION_NAME).doc(cursor).get();
