@@ -228,7 +228,7 @@ const toDate = (raw: any): Date | undefined => {
   return undefined;
 };
 
-const normalizeJob = (job: any): Job => ({
+export const normalizeJob = (job: any): Job => ({
   ...job,
   createdAt: toDate(job.createdAt),
   updatedAt: toDate(job.updatedAt),

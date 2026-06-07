@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useLayoutEffect, useState, useRef } from "react";
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, mimicMotion, getJobsByAvatarId, getJobCountsByAvatarId, restartJobById, deleteJobById } from '../services/apiGateway';
+import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, mimicMotion, getJobsByAvatarId, getJobCountsByAvatarId, restartJobById, deleteJobById, normalizeJob } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '@loom24/shared/types';
 import MediaCard from '../components/MediaCard';
@@ -70,11 +70,13 @@ function AvatarPage() {
 
         const unsubscribe = listenToCollectionByAvatarId('jobs', user.id, avatar.id, async (querySnap: QuerySnapshot) => {
             for (const docSnap of querySnap.docs) {
-                const job = docSnap.data() as Job;
+                const job = normalizeJob(docSnap.data());
 
                 if (job.status === JobStatuses.completed && job.resultMediaPath) {
-                    const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath);
-                    job.resultMediaUrl = downloadUrl;
+                    job.resultMediaUrl = await getMediaUrlFromPath(job.resultMediaPath);
+                    if (job.resultThumbnailPath) {
+                        job.resultThumbnailUrl = await getMediaUrlFromPath(job.resultThumbnailPath);
+                    }
                 }
 
                 const currentJobs = jobsRef.current;
@@ -234,6 +236,9 @@ function AvatarPage() {
         await Promise.all(jobs.map(async (job) => {
             if (job.status === JobStatuses.completed && job.resultMediaPath) {
                 job.resultMediaUrl = await getMediaUrlFromPath(job.resultMediaPath);
+                if (job.resultThumbnailPath) {
+                    job.resultThumbnailUrl = await getMediaUrlFromPath(job.resultThumbnailPath);
+                }
             }
         }));
     };

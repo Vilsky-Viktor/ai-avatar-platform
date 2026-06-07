@@ -7,7 +7,7 @@ const CreateAvatarCard = () => {
     return ( 
         <button
             onClick={() => navigate('/avatar/create/general')}
-            className="group card bg-base-100 w-full h-[450px] shadow-md 
+            className="group card bg-base-100 w-full aspect-square shadow-md
                     relative overflow-hidden rounded-2xl transition-all duration-300 
                     active:scale-[0.98] focus:outline-none cursor-pointer text-left"
         >
@@ -20,7 +20,7 @@ const CreateAvatarCard = () => {
 
             <div className="card-body relative z-20 items-center justify-center text-center">
                 
-                <div className="relative mb-6">
+                <div className="relative mb-2">
                     <div className="absolute inset-0 blur-2xl bg-primary/20 scale-0 group-hover:scale-150 transition-transform duration-500 rounded-full" />
                     
                     <div className="relative text-base-content/20 group-hover:text-primary transition-all duration-500 ease-out group-hover:rotate-90">
@@ -29,7 +29,7 @@ const CreateAvatarCard = () => {
                 </div>
 
                 <div className="space-y-1">
-                    <span className="block text-xl font-medium uppercase tracking-[0.25em] text-base-content/80 group-hover:text-base-content transition-colors">
+                    <span className="block text-lg font-medium uppercase tracking-[0.25em] text-base-content/80 group-hover:text-base-content transition-colors">
                         Create New Life
                     </span>
                     <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-base-content/40 group-hover:text-primary/70 transition-colors">

@@ -5,6 +5,10 @@ import {
   JobTargets,
   JobStatuses,
   IdPhotoJobRequest,
+  Models,
+  Platforms,
+  Services,
+  ThumbnailMaker,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
@@ -31,6 +35,21 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
 
     const input = genSyntheticFrontIdPhtotoData(jobRequest.parameters, userId, jobRequest.avatarId);
 
+    const rawPath = input.imageGenerator.uploadPath as string;
+    const dotIdx = rawPath.lastIndexOf('.');
+    const thumbnailUploadPath = `${dotIdx >= 0 ? rawPath.slice(0, dotIdx) : rawPath}-thumbnail.jpg`;
+
+    const thumbnailMaker: ThumbnailMaker = {
+      mediaType: MediaTypes.image,
+      mediaPath: rawPath,
+      size: 400,
+      service: Services.thumbnailMaker,
+      model: Models.none,
+      platform: Platforms.none,
+      status: JobStatuses.pending,
+      uploadPath: thumbnailUploadPath,
+    };
+
     const job: Job = {
       groupId,
       userId,
@@ -41,9 +60,10 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
       maxRuns: 3,
       curRun: 0,
       order: 1,
-      workflow: [input.imageGenerator],
+      workflow: [input.imageGenerator, thumbnailMaker],
       metadata: input.metadata,
-      resultMediaPath: input.imageGenerator.uploadPath!
+      resultMediaPath: rawPath,
+      resultThumbnailPath: thumbnailUploadPath,
     }
 
     const dbJob = await createDb(userId, job);
@@ -73,6 +93,21 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
     const inputs = genSyntheticIdPhotoData(jobRequest.parameters, userId, jobRequest.avatarId, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input) => {
+      const rawPath = input.imageGenerator.uploadPath as string;
+      const dotIdx = rawPath.lastIndexOf('.');
+      const thumbnailUploadPath = `${dotIdx >= 0 ? rawPath.slice(0, dotIdx) : rawPath}-thumbnail.jpg`;
+
+      const thumbnailMaker: ThumbnailMaker = {
+        mediaType: MediaTypes.image,
+        mediaPath: rawPath,
+        size: 400,
+        service: Services.thumbnailMaker,
+        model: Models.none,
+        platform: Platforms.none,
+        status: JobStatuses.pending,
+        uploadPath: thumbnailUploadPath,
+      };
+
       return {
         userId,
         groupId: jobRequest.groupId,
@@ -83,9 +118,10 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator],
+        workflow: [input.imageGenerator, thumbnailMaker],
         metadata: input.metadata,
-        resultMediaPath: input.imageGenerator.uploadPath!
+        resultMediaPath: rawPath,
+        resultThumbnailPath: thumbnailUploadPath,
       }
     })
 
@@ -124,6 +160,21 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
     const inputs = genDigitalTwinIdPhotoData(jobRequest.parameters, userId, jobRequest.avatarId, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input) => {
+      const rawPath = input.imageGenerator.uploadPath as string;
+      const dotIdx = rawPath.lastIndexOf('.');
+      const thumbnailUploadPath = `${dotIdx >= 0 ? rawPath.slice(0, dotIdx) : rawPath}-thumbnail.jpg`;
+
+      const thumbnailMaker: ThumbnailMaker = {
+        mediaType: MediaTypes.image,
+        mediaPath: rawPath,
+        size: 400,
+        service: Services.thumbnailMaker,
+        model: Models.none,
+        platform: Platforms.none,
+        status: JobStatuses.pending,
+        uploadPath: thumbnailUploadPath,
+      };
+
       return {
         userId,
         groupId: groupId,
@@ -134,9 +185,10 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator],
+        workflow: [input.imageGenerator, thumbnailMaker],
         metadata: input.metadata,
-        resultMediaPath: input.imageGenerator.uploadPath!
+        resultMediaPath: rawPath,
+        resultThumbnailPath: thumbnailUploadPath,
       }
     })
 

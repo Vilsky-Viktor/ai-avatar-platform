@@ -14,6 +14,7 @@ import {
   MimicMotionRequest,
   Platforms,
   Services,
+  ThumbnailMaker,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import {
@@ -44,7 +45,8 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const idPhotos = idPhotoJobs
       .map((job: Job) => job.resultMediaPath);
 
-    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`
+    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
+    const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-thumbnail.jpg`
 
     const refCount = jobRequest.mediaPaths?.length ?? 0;
     const idPhotoStart = refCount + 1;
@@ -63,6 +65,17 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       service: Services.aiModelGateway
     };
 
+    const thumbnailMaker: ThumbnailMaker = {
+      mediaType: MediaTypes.image,
+      mediaPath: generatorUploadPath,
+      size: 400,
+      service: Services.thumbnailMaker,
+      model: Models.none,
+      platform: Platforms.none,
+      status: JobStatuses.pending,
+      uploadPath: thumbnailUploadPath
+    }
+
     const job: Job = {
       userId,
       avatarId: jobRequest.avatarId,
@@ -71,9 +84,10 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       maxRuns: 3,
       curRun: 0,
-      workflow: [imageGenerator],
+      workflow: [imageGenerator, thumbnailMaker],
       metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
-      resultMediaPath: generatorUploadPath
+      resultMediaPath: generatorUploadPath,
+      resultThumbnailPath: thumbnailUploadPath
     }
 
     const dbJob = await createDb(userId, job);
@@ -121,6 +135,21 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
     const inputs = functionMapping[jobRequest.type!](userId, jobRequest.avatarId, avatar.parameters, idPhotoSet);
 
     const jobs: Job[] = inputs.map((input: any) => {
+      const rawPath = input.imageGenerator.uploadPath as string;
+      const dotIdx = rawPath.lastIndexOf('.');
+      const thumbnailUploadPath = `${dotIdx >= 0 ? rawPath.slice(0, dotIdx) : rawPath}-thumbnail.jpg`;
+
+      const thumbnailMaker: ThumbnailMaker = {
+        mediaType: MediaTypes.image,
+        mediaPath: input.imageGenerator.uploadPath!,
+        size: 400,
+        service: Services.thumbnailMaker,
+        model: Models.none,
+        platform: Platforms.none,
+        status: JobStatuses.pending,
+        uploadPath: thumbnailUploadPath
+      }
+
       return {
         userId,
         groupId,
@@ -131,9 +160,10 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator],
+        workflow: [input.imageGenerator, thumbnailMaker],
         metadata: {...input.metadata, userPrompt: input.imageGenerator.prompt},
-        resultMediaPath: input.imageGenerator.uploadPath!
+        resultMediaPath: input.imageGenerator.uploadPath!,
+        resultThumbnailPath: thumbnailUploadPath,
       }
     })
 
@@ -164,6 +194,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       .map((job: Job) => job.resultMediaPath);
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`;
+    const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}-thumbnail.jpg`;
 
     const mediaPaths = jobRequest.mediaPaths ?? [];
     const hasObjectPhotos = mediaPaths.length > 1;
@@ -227,6 +258,17 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       workflow = [videoGenerator, lipSync];
     }
 
+    const thumbnailMaker: ThumbnailMaker = {
+      mediaType: MediaTypes.video,
+      mediaPath: generatorUploadPath,
+      size: 400,
+      service: Services.thumbnailMaker,
+      model: Models.none,
+      platform: Platforms.none,
+      status: JobStatuses.pending,
+      uploadPath: thumbnailUploadPath
+    }
+
     const job: Job = {
       userId,
       avatarId: jobRequest.avatarId,
@@ -235,9 +277,10 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       status: JobStatuses.pending,
       maxRuns: 1,
       curRun: 0,
-      workflow,
+      workflow: [...workflow, thumbnailMaker],
       metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
-      resultMediaPath: generatorUploadPath
+      resultMediaPath: generatorUploadPath,
+      resultThumbnailPath: thumbnailUploadPath,
     }
 
     const dbJob = await createDb(userId, job);
@@ -266,6 +309,7 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
       .map((job: Job) => job.resultMediaPath);
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`;
+    const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}-thumbnail.jpg`;
 
     const videoGenerator: AiModelGateway = {
       imagePaths: [jobRequest.imagePath],
@@ -279,6 +323,17 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
       service: Services.aiModelGateway
     };
 
+    const thumbnailMaker: ThumbnailMaker = {
+      mediaType: MediaTypes.video,
+      mediaPath: generatorUploadPath,
+      size: 400,
+      service: Services.thumbnailMaker,
+      model: Models.none,
+      platform: Platforms.none,
+      status: JobStatuses.pending,
+      uploadPath: thumbnailUploadPath
+    }
+
     const job: Job = {
       userId,
       avatarId: jobRequest.avatarId,
@@ -287,9 +342,10 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
       status: JobStatuses.pending,
       maxRuns: 1,
       curRun: 0,
-      workflow: [videoGenerator],
+      workflow: [videoGenerator, thumbnailMaker],
       metadata: { userPrompt: 'Mimic motion' },
-      resultMediaPath: generatorUploadPath
+      resultMediaPath: generatorUploadPath,
+      resultThumbnailPath: thumbnailUploadPath
     }
 
     const dbJob = await createDb(userId, job);

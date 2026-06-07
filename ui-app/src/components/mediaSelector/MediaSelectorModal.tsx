@@ -38,6 +38,9 @@ function MediaSelectorModal({ isOpen, onClose, avatarId, onSelect, title = 'Sele
         await Promise.all(jobs.map(async j => {
             if (j.resultMediaPath) {
                 j.resultMediaUrl = await getMediaUrlFromPath(j.resultMediaPath);
+                if (j.resultThumbnailPath) {
+                    j.resultThumbnailUrl = await getMediaUrlFromPath(j.resultThumbnailPath);
+                }
             }
         }));
         setImages(prev => cursor ? [...prev, ...jobs] : jobs);
@@ -131,7 +134,7 @@ function MediaSelectorModal({ isOpen, onClose, avatarId, onSelect, title = 'Sele
                                                 className="group relative aspect-square rounded-xl overflow-hidden border border-base-content/10 hover:border-primary/50 transition-all cursor-pointer"
                                             >
                                                 <img
-                                                    src={job.resultMediaUrl!}
+                                                    src={job.resultThumbnailUrl || job.resultMediaUrl!}
                                                     className="w-full h-full object-cover object-top transition-all duration-300 group-hover:scale-105 group-hover:opacity-90"
                                                 />
                                                 <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all" />

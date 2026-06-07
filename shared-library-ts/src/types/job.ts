@@ -121,6 +121,7 @@ export enum Services {
   faceMatcher = 'face-matcher',
   headDirectionChecker = 'head-direction-checker',
   aiModelGateway = 'ai-model-gateway',
+  thumbnailMaker = 'thumbnail-maker',
 }
 
 export type StepBase = {
@@ -163,10 +164,17 @@ export type HeadDirectionChecker = StepBase & {
   direction: Directions;
 }
 
+export type ThumbnailMaker = StepBase & {
+  mediaType: MediaTypes;
+  mediaPath: string;
+  size: number;
+}
+
 export type WorkflowStep =
   AiModelGateway |
   FaceMatcher |
-  HeadDirectionChecker;
+  HeadDirectionChecker |
+  ThumbnailMaker;
 
 export type Job = {
   id?: string;
@@ -185,4 +193,6 @@ export type Job = {
   metadata?: JobMetadata;
   resultMediaPath: string;
   resultMediaUrl?: string;
+  resultThumbnailPath?: string;
+  resultThumbnailUrl?: string;
 }

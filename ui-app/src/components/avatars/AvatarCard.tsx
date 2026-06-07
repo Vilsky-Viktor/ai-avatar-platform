@@ -37,7 +37,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
   }
 
   return (
-    <div className="group card bg-base-100 w-full h-[450px] shadow-md transition-all duration-300 relative rounded-2xl overflow-hidden active:scale-[0.99] hover:bg-base-200 cursor-pointer">
+    <div className="group card bg-base-100 w-full aspect-square shadow-md transition-all duration-300 relative rounded-2xl overflow-hidden active:scale-[0.99] hover:bg-base-200 cursor-pointer">
       
       <button
         onClick={(e) => { e.stopPropagation(); onDelete?.(avatar.id!); }}

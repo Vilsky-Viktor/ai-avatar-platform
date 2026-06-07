@@ -53,7 +53,7 @@ function AvatarsPage() {
                 {loading && (
                     <>
                         {[1, 2, 3, 4, 5].map((val) => (
-                            <div key={val} className="skeleton h-[450px] w-full rounded-2xl flex items-center justify-center bg-base-100/50">
+                            <div key={val} className="skeleton aspect-square w-full rounded-2xl flex items-center justify-center bg-base-100/50">
                                 <User size={100} strokeWidth={0.5} className="text-base-content/5" />
                             </div>
                         ))}

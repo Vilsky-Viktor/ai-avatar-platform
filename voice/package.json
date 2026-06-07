@@ -26,7 +26,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@loom24/shared": "^0.0.10",
+    "@loom24/shared": "^0.0.15",
     "firebase-admin": "^13.6.0",
     "pino": "^10.3.0",
     "pino-http": "^11.0.0",

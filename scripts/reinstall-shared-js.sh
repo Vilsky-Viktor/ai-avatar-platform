@@ -26,6 +26,7 @@ JS_SERVICES=(
     user
     voice
     workflow-manager
+    thumbnail-maker
 )
 
 FAILED=()

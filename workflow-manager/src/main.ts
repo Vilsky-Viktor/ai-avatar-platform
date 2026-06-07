@@ -20,9 +20,10 @@ const completedHandler = async (job: Job) => {
 
   await updateJob(job);
 
+  const keep = new Set([job.resultMediaPath, job.resultThumbnailPath]);
   const intermediatePaths = job.workflow
     .map((step: WorkflowStep) => step.uploadPath)
-    .filter((path): path is string => !!path && path !== job.resultMediaPath);
+    .filter((path): path is string => !!path && !keep.has(path));
 
   if (intermediatePaths.length > 0) {
     logger.info({ paths: intermediatePaths }, 'Deleting intermediate files');

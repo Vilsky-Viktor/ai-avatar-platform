@@ -87,6 +87,7 @@ function MediaCard({
 
     const status = job.status;
     const url = job.resultMediaUrl;
+    const displayUrl = job.resultThumbnailUrl || url;
     const order = job.order;
     const jobId = job.id;
 
@@ -292,16 +293,25 @@ function MediaCard({
                     </div>
                 ) : job.mediaType === MediaTypes.video ? (
                     <>
-                        <video
-                            src={url}
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
-                            className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
-                            onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
-                            onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-                        />
+                        {displayUrl !== url ? (
+                            <img
+                                src={displayUrl}
+                                alt={`Avatar video ${idx + 1}`}
+                                loading="lazy"
+                                className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                            />
+                        ) : (
+                            <video
+                                src={url}
+                                muted
+                                loop
+                                playsInline
+                                preload="metadata"
+                                className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                                onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+                                onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                            />
+                        )}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
                             <div className="w-16 h-16 rounded-full border border-white/20 bg-black/40 flex items-center justify-center">
                                 <Play size={28} className="text-white/80 fill-white/80 ml-1" />
@@ -310,7 +320,7 @@ function MediaCard({
                     </>
                 ) : (
                     <img
-                        src={url}
+                        src={displayUrl}
                         alt={`Avatar photo ${idx + 1}`}
                         loading="lazy"
                         className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
