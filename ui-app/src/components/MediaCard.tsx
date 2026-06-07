@@ -1,9 +1,10 @@
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd, AudioLines } from 'lucide-react';
+import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd, Share2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { JobStatuses, MediaTypes, type Job } from '@loom24/shared/types';
 import { downloadMediaFromBucket } from '../services/storage';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
 import MediaInfoPopup from './mediaGrid/MediaInfoPopup';
+import SharePopup from './mediaGrid/SharePopup';
 
 type FaceMatchThresholds = {
     green: number;
@@ -37,6 +38,7 @@ function MediaCard({
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [infoVisible, setInfoVisible] = useState(false);
+    const [shareVisible, setShareVisible] = useState(false);
     const [elapsed, setElapsed] = useState(0);
     const startRef = useRef<number | null>(null);
 
@@ -251,6 +253,12 @@ function MediaCard({
                     onClose={() => setInfoVisible(false)}
                 />
             )}
+            {shareVisible && url && (
+                <SharePopup
+                    url={url}
+                    onClose={() => setShareVisible(false)}
+                />
+            )}
             <div
                 className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
                 onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect(), job.mediaType ?? MediaTypes.image)}
@@ -354,6 +362,14 @@ function MediaCard({
                                 ? <span className="loading loading-spinner loading-xs text-white" />
                                 : <CloudDownload size={20} className="text-white" />
                             }
+                        </button>
+                    </div>
+                    <div className="tooltip tooltip-bottom" data-tip="Share">
+                        <button
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-colors cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); setShareVisible(v => !v); }}
+                        >
+                            <Share2 size={18} className="text-white" />
                         </button>
                     </div>
                     {canRestart && onRegenerate && (
