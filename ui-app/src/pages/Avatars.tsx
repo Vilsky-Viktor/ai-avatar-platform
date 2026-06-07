@@ -48,7 +48,7 @@ function AvatarsPage() {
     }
 
     return (
-        <div className="p-10 bg-base-200 min-h-screen relative">
+        <div className="p-15 bg-base-200 min-h-screen relative">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 <CreateAvatarCard />
 
