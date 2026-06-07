@@ -20,7 +20,7 @@ const str = (v: unknown): string | undefined =>
     typeof v === 'string' ? v : undefined;
 
 export const getFiltered = async (req: Request, res: Response, next: NextFunction) => {
-    const gender = req.params.gender;
+    const gender = req.params.gender as string;
     if (!validateGender(gender, res)) return;
 
     const cursor = str(req.query.cursor);
@@ -43,7 +43,7 @@ export const getFiltered = async (req: Request, res: Response, next: NextFunctio
 };
 
 export const getFilterOptions = async (req: Request, res: Response, next: NextFunction) => {
-    const gender = req.params.gender;
+    const gender = req.params.gender as string;
     if (!validateGender(gender, res)) return;
 
     req.log.info({ gender }, 'Get voice filter options');
