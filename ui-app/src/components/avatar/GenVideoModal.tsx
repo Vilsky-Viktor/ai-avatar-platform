@@ -30,6 +30,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
     const [mimicVideoUploading, setMimicVideoUploading] = useState(false);
     const [mimicImagePath, setMimicImagePath] = useState<string | null>(null);
     const [mimicImageUrl, setMimicImageUrl] = useState<string | null>(null);
+    const [mimicImageThumbnailUrl, setMimicImageThumbnailUrl] = useState<string | null>(null);
     const [keepOriginalAudio, setKeepOriginalAudio] = useState(false);
     const [mimicSelectorOpen, setMimicSelectorOpen] = useState(false);
 
@@ -37,7 +38,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
     const [ratio, setRatio] = useState<VideoRatio>('9:16');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [selectedImage, setSelectedImage] = useState<{ path: string; url: string } | null>(null);
+    const [selectedImage, setSelectedImage] = useState<{ path: string; url: string; thumbnailUrl?: string } | null>(null);
     const [selectorOpen, setSelectorOpen] = useState(false);
     const [lengthSec, setLengthSec] = useState(3);
     const [generateVoice, setGenerateVoice] = useState(false);
@@ -298,7 +299,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                             {selectedImage ? (
                                 <>
                                     <img
-                                        src={selectedImage.url}
+                                        src={selectedImage.thumbnailUrl || selectedImage.url}
                                         className="w-full h-full object-cover object-top cursor-pointer"
                                         onClick={() => avatar?.id && setSelectorOpen(true)}
                                     />
@@ -581,7 +582,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                 <div className="group relative flex-1 aspect-square rounded-xl overflow-hidden border border-base-content/10">
                                     {mimicImageUrl ? (
                                         <>
-                                            <img src={mimicImageUrl} className="w-full h-full object-cover object-top" />
+                                            <img src={mimicImageThumbnailUrl || mimicImageUrl} className="w-full h-full object-cover object-top" />
                                             <button
                                                 onClick={() => { setMimicImagePath(null); setMimicImageUrl(null); }}
                                                 className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
@@ -645,8 +646,8 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                 isOpen={selectorOpen}
                 onClose={() => setSelectorOpen(false)}
                 avatarId={avatar?.id ?? ''}
-                onSelect={(path, url, imageRatio) => {
-                    setSelectedImage({ path, url });
+                onSelect={(path, url, imageRatio, thumbnailUrl) => {
+                    setSelectedImage({ path, url, thumbnailUrl });
                     setRatio(imageRatio);
                 }}
             />
@@ -655,9 +656,10 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                 onClose={() => setMimicSelectorOpen(false)}
                 avatarId={avatar?.id ?? ''}
                 title="Select Avatar Image"
-                onSelect={(path, url) => {
+                onSelect={(path, url, _ratio, thumbnailUrl) => {
                     setMimicImagePath(path);
                     setMimicImageUrl(url);
+                    setMimicImageThumbnailUrl(thumbnailUrl ?? null);
                 }}
             />
         </>

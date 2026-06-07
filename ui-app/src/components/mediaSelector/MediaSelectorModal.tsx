@@ -15,7 +15,7 @@ type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatarId: string;
-    onSelect: (mediaPath: string, mediaUrl: string, ratio: VideoRatio) => void;
+    onSelect: (mediaPath: string, mediaUrl: string, ratio: VideoRatio, thumbnailUrl?: string) => void;
     title?: string;
 };
 
@@ -85,7 +85,7 @@ function MediaSelectorModal({ isOpen, onClose, avatarId, onSelect, title = 'Sele
     if (!isOpen) return null;
 
     const handleSelect = (job: Job) => {
-        onSelect(job.resultMediaPath!, job.resultMediaUrl!, job.metadata!.ratio as VideoRatio);
+        onSelect(job.resultMediaPath!, job.resultMediaUrl!, job.metadata!.ratio as VideoRatio, job.resultThumbnailUrl);
         onClose();
     };
 

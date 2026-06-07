@@ -272,7 +272,7 @@ function MediaCard({
                                 <div className="absolute w-20 h-20 rounded-full border border-primary/30 animate-audio-ring" style={{ animationDelay: '0s' }} />
                                 <div className="absolute w-20 h-20 rounded-full border border-primary/20 animate-audio-ring" style={{ animationDelay: '1.2s' }} />
                                 <div className="absolute w-20 h-20 rounded-full border border-primary/10 animate-audio-ring" style={{ animationDelay: '2.0s' }} />
-                                <Play size={50} strokeWidth={1} className="relative z-10 text-primary/50 group-hover:text-primary transition-colors duration-300" />
+                                <Play size={50} strokeWidth={1} className="relative z-10 text-primary/50 group-hover:text-primary group-hover:scale-125 transition-all duration-300" />
                             </div>
                         </div>
                         {/* Bars — pinned to the bottom */}
@@ -312,9 +312,9 @@ function MediaCard({
                                 onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                             />
                         )}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
-                            <div className="w-16 h-16 rounded-full border border-white/20 bg-black/40 flex items-center justify-center">
-                                <Play size={28} className="text-white/80 fill-white/80 ml-1" />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300">
+                            <div className="w-16 h-16 group-hover:w-20 group-hover:h-20 rounded-full border border-white/20 bg-black/40 flex items-center justify-center transition-all duration-300">
+                                <Play size={28} className="text-white/80 group-hover: ml-1 group-hover:scale-125 transition-all duration-300" />
                             </div>
                         </div>
                     </>
