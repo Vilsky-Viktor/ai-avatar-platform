@@ -19,6 +19,14 @@ def download_bytes(blob_path: str) -> bytes:
     return _storage.download_bytes(blob_path)
 
 
+def rename_blob(src_path: str, dst_path: str) -> None:
+    _storage.rename_blob(src_path, dst_path)
+
+
+def delete_blob(blob_path: str) -> None:
+    _storage.delete_blob(blob_path)
+
+
 def download_models(local_dir: str) -> None:
     os.makedirs(local_dir, exist_ok=True)
 

@@ -154,6 +154,7 @@ services:
 
   cropper:
     <<: *default-dns
+    platform: linux/amd64
     networks:
       - app-net
     build:
@@ -267,6 +268,7 @@ services:
 
   face-matcher:
     <<: *default-dns
+    platform: linux/amd64
     networks:
       - app-net
     build:

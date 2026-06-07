@@ -11,7 +11,7 @@ from loom24_shared import logger, set_log_context, clear_log_context
 from loom24_shared.types import FaceMatcherStep, Job, JobStatuses
 
 from utils.matcher import get_app, acquire_face_recognition, ADAFACE_MODEL_DIR
-from services.storage import download_bytes, download_models
+from services.storage import download_bytes, rename_blob, delete_blob, download_models
 from services.job_manager_service import get_job
 
 PROJECT_ID              = os.environ["PROJECT_ID"]
@@ -21,6 +21,13 @@ POOL_SIZE               = int(os.getenv("POOL_SIZE", "1"))
 MAX_CONCURRENT_MESSAGES = int(os.getenv("MAX_CONCURRENT_MESSAGES", str(POOL_SIZE)))
 
 SERVICE_NAME = "face-matcher"
+
+
+def _prev_tmp_path(image_path: str) -> str:
+    dot = image_path.rfind('.')
+    if dot >= 0:
+        return f"{image_path[:dot]}-prev-tmp{image_path[dot:]}"
+    return f"{image_path}-prev-tmp"
 
 publisher  = pubsub_v1.PublisherClient()
 subscriber = pubsub_v1.SubscriberClient()
@@ -89,23 +96,44 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
             if similarity is None:
                 raise ValueError(f"No face detected in image: {step.imagePath}")
 
-            similarity  = round(float(similarity), 4)
-            face_match  = max(step.faceMatch or 0.0, similarity)
-            step.faceMatch = face_match
+            similarity     = round(float(similarity), 4)
+            prev_face_match = step.faceMatch or 0.0
+            is_better      = similarity > prev_face_match
+            is_final       = job.curRun == job.maxRuns
+            prev_tmp       = _prev_tmp_path(step.imagePath)
 
-            if job.curRun < job.maxRuns:
-                if face_match >= step.threshold:
-                    logger.info(f"Face match passed (faceMatch={face_match}, threshold={step.threshold})")
-                    step.status = JobStatuses.completed
-                    step.error  = None
-                else:
-                    logger.info(f"Face match FAILED (faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
-                    step.status = JobStatuses.error
-                    step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
+            if is_final:
+                if is_better:
+                    step.faceMatch = similarity
+                elif job.curRun > 1:
+                    logger.info(f"Current image worse — restoring best from {prev_tmp}")
+                    rename_blob(prev_tmp, step.imagePath)
             else:
-                logger.info(f"Final run — passing regardless (faceMatch={face_match}, threshold={step.threshold})")
+                step.faceMatch = max(prev_face_match, similarity)
+                if job.curRun == 1 or is_better:
+                    rename_blob(step.imagePath, prev_tmp)
+
+            face_match = step.faceMatch or 0.0
+            threshold_met = face_match >= step.threshold
+
+            if threshold_met:
+                logger.info(f"Face match passed (faceMatch={face_match}, threshold={step.threshold})")
                 step.status = JobStatuses.completed
                 step.error  = None
+            elif is_final:
+                logger.info(f"Final run — completing regardless (faceMatch={face_match}, threshold={step.threshold})")
+                step.status = JobStatuses.completed
+                step.error  = None
+            else:
+                logger.info(f"Face match FAILED, retrying (faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
+                step.status = JobStatuses.error
+                step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
+
+            if step.status == JobStatuses.completed:
+                try:
+                    delete_blob(prev_tmp)
+                except Exception:
+                    pass
 
         except Exception as e:
             logger.error(f"Face matcher error: {e}", exc_info=True)

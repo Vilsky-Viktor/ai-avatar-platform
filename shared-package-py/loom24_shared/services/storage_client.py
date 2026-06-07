@@ -33,6 +33,23 @@ class StorageClient:
         self._get_bucket().blob(blob_path).download_to_filename(local_path)
         logger.info(f"Saved to {local_path}")
 
+    def copy_blob(self, src_path: str, dst_path: str) -> None:
+        logger.info(f"Copying {src_path} → {dst_path}")
+        bucket = self._get_bucket()
+        bucket.copy_blob(bucket.blob(src_path), bucket, new_name=dst_path)
+        logger.info(f"Copied {src_path} → {dst_path}")
+
+    def rename_blob(self, src_path: str, dst_path: str) -> None:
+        logger.info(f"Renaming {src_path} → {dst_path}")
+        bucket = self._get_bucket()
+        bucket.rename_blob(bucket.blob(src_path), new_name=dst_path)
+        logger.info(f"Renamed {src_path} → {dst_path}")
+
+    def delete_blob(self, blob_path: str) -> None:
+        logger.info(f"Deleting {blob_path}")
+        self._get_bucket().blob(blob_path).delete()
+        logger.info(f"Deleted {blob_path}")
+
 
 def create_storage_client(bucket_name: str) -> StorageClient:
     return StorageClient(bucket_name)
