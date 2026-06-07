@@ -84,8 +84,10 @@ export enum JobStatuses {
 
 export enum Directions {
   front = 'front',
-  left = 'left',
-  right = 'right',
+  leftQuarter = 'leftQuarter',
+  rightQuarter = 'rightQuarter',
+  leftSide = 'leftSide',
+  rightSide = 'rightSide',
 }
 
 export type JobMetadata = {

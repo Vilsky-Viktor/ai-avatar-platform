@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: ./scripts/reinstall-shared-py.sh <version>
-# Example: ./scripts/reinstall-shared-py.sh 0.0.5
+# Example: ./scripts/reinstall-shared-py.sh 0.0.1
 set -euo pipefail
 
 VERSION="${1:-}"

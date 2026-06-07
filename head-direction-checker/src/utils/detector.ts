@@ -7,7 +7,8 @@ const MODEL_PATH = '/app/models/det_10g.onnx';
 const INPUT_SIZE = 640;
 const SCORE_THRESHOLD = 0.3;
 const NMS_THRESHOLD = 0.4;
-const FRONT_THRESHOLD = 0.15;
+const FRONT_THRESHOLD   = 0.15;  // |yawRatio| < 0.15  → front
+const QUARTER_THRESHOLD = 0.45;  // 0.15–0.45 → quarter profile, >0.45 → side profile
 const NUM_ANCHORS = 2;
 const STRIDES = [8, 16, 32];
 
@@ -161,12 +162,25 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
   const yawRatio = (noseTipX - midEyeX) / interOcular;
 
   let passed: boolean;
-  if (requiredDirection === 'front') {
-    passed = Math.abs(yawRatio) < FRONT_THRESHOLD;
-  } else if (requiredDirection === 'left') {
-    passed = yawRatio < -FRONT_THRESHOLD;
-  } else { // right
-    passed = yawRatio > FRONT_THRESHOLD;
+  switch (requiredDirection) {
+    case 'front':
+      passed = Math.abs(yawRatio) < FRONT_THRESHOLD;
+      break;
+    case 'leftQuarter':
+      passed = yawRatio >= -QUARTER_THRESHOLD && yawRatio < -FRONT_THRESHOLD;
+      break;
+    case 'rightQuarter':
+      passed = yawRatio > FRONT_THRESHOLD && yawRatio <= QUARTER_THRESHOLD;
+      break;
+    case 'leftSide':
+      passed = yawRatio < -QUARTER_THRESHOLD;
+      break;
+    case 'rightSide':
+      passed = yawRatio > QUARTER_THRESHOLD;
+      break;
+    default:
+      logger.warn({ requiredDirection }, 'Unknown direction — passing by default');
+      passed = true;
   }
 
   logger.info({ yawRatio: yawRatio.toFixed(3), expected: requiredDirection, passed }, 'Face direction check');

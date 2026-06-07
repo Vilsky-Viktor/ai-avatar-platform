@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Usage: ./scripts/reinstall-shared-js.sh <version>
-# Example: ./scripts/reinstall-shared-js.sh 0.0.9
+# Usage: ./scripts/reinstall-shared-ts.sh <version>
+# Example: ./scripts/reinstall-shared-ts.sh 0.0.1
 set -euo pipefail
 
 VERSION="${1:-}"

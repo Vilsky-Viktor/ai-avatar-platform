@@ -45,8 +45,10 @@ class JobStatuses(str, Enum):
 
 class Directions(str, Enum):
     front = 'front'
-    left = 'left'
-    right = 'right'
+    leftQuarter = 'leftQuarter'
+    rightQuarter = 'rightQuarter'
+    leftSide = 'leftSide'
+    rightSide = 'rightSide'
 
 
 class Platforms(str, Enum):
