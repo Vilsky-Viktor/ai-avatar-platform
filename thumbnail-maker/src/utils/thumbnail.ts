@@ -3,6 +3,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
+import { randomUUID } from 'crypto';
 
 export const resizeImage = async (input: Buffer, size: number): Promise<Buffer> => {
   return sharp(input)
@@ -14,8 +15,9 @@ export const resizeImage = async (input: Buffer, size: number): Promise<Buffer> 
 
 const extractFrame = (videoBuffer: Buffer, seekSec: number): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
-    const tmpInput = path.join(os.tmpdir(), `thumb-in-${Date.now()}.mp4`);
-    const tmpOutput = path.join(os.tmpdir(), `thumb-out-${Date.now()}.png`);
+    const id = randomUUID();
+    const tmpInput = path.join(os.tmpdir(), `thumb-in-${id}.mp4`);
+    const tmpOutput = path.join(os.tmpdir(), `thumb-out-${id}.png`);
 
     fs.writeFileSync(tmpInput, videoBuffer);
 

@@ -15,21 +15,28 @@ const SERVICE_NAME = 'workflow-manager'
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
+const removeIntermediatePaths = async (job: Job) => {
+   try {
+    const keep = new Set([job.resultMediaPath, job.resultThumbnailPath]);
+    const intermediatePaths = job.workflow
+      .map((step: WorkflowStep) => step.uploadPath)
+      .filter((path): path is string => !!path && !keep.has(path));
+
+    if (intermediatePaths.length > 0) {
+      logger.info({ paths: intermediatePaths }, 'Deleting intermediate files');
+      await Promise.all(intermediatePaths.map(deleteBlob));
+    }
+   } catch (error: any) {
+    logger.error('Did not maange to remove intermediate paths');
+   }
+}
+
 const completedHandler = async (job: Job) => {
   logger.info('Workflow successfully completed');
   job.status = JobStatuses.completed;
 
   await updateJob(job);
-
-  const keep = new Set([job.resultMediaPath, job.resultThumbnailPath]);
-  const intermediatePaths = job.workflow
-    .map((step: WorkflowStep) => step.uploadPath)
-    .filter((path): path is string => !!path && !keep.has(path));
-
-  if (intermediatePaths.length > 0) {
-    logger.info({ paths: intermediatePaths }, 'Deleting intermediate files');
-    await Promise.all(intermediatePaths.map(deleteBlob));
-  }
+  await removeIntermediatePaths(job);
 }
 
 const newWorkflowHandler = async (job: Job) => {

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Job, WorkflowStep } from '@loom24/shared/types';
+import { Job, JobStatuses } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import {
   getById as getByIdDb,
@@ -104,11 +104,11 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
       throw Object.assign(new Error(`Job ${id} does not exist`), { status: 404 });
     }
 
-    job.status = 'pending' as any;
+    job.status = JobStatuses.pending;
 
     job.workflow.forEach((_, idx) => {
       job.workflow[idx].error = '';
-      job.workflow[idx].status = 'pending' as any;
+      job.workflow[idx].status = JobStatuses.pending;
     });
 
     await updateDb(userId, id, job);
@@ -149,14 +149,16 @@ export const deleteById = async (req: Request, res: Response, next: NextFunction
   try {
     logger.info('Delete job');
     const job = await getByIdDb(userId, id);
-    const mediaPaths = job?.workflow
-      .filter((step: WorkflowStep) => step.uploadPath)
-      .map((step: WorkflowStep) => step.uploadPath);
+    const blobPaths = new Set<string>([
+      ...(job?.workflow.filter(s => s.uploadPath).map(s => s.uploadPath!) ?? []),
+      ...(job?.resultMediaPath ? [job.resultMediaPath] : []),
+      ...(job?.resultThumbnailPath ? [job.resultThumbnailPath] : []),
+    ]);
 
     await deleteByIdDb(userId, id);
 
-    if (mediaPaths && mediaPaths.length > 0) {
-      await Promise.all(mediaPaths.map(path => deleteBlob(path!)));
+    if (blobPaths.size > 0) {
+      await Promise.all([...blobPaths].map(p => deleteBlob(p)));
     }
 
     return res.status(200).json({ result: 'ok' });

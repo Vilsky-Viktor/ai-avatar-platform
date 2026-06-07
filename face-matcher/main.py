@@ -4,6 +4,7 @@ load_dotenv()
 import json
 import os
 import signal
+from concurrent.futures import ThreadPoolExecutor
 
 from google.cloud import pubsub_v1
 
@@ -56,100 +57,100 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
     set_log_context(user_id=job.userId, avatar_id=job.avatarId, job_id=job.id)
 
+    logger.info("Received message")
+
     try:
-        logger.info("Received message")
-
-        try:
-            db_job = get_job(job)
-            if db_job.status == JobStatuses.canceled:
-                logger.info("Job is canceled — skipping")
-                message.ack()
-                return
-        except Exception as e:
-            if getattr(getattr(e, "response", None), "status_code", None) == 404:
-                logger.info("Job not found — skipping")
-                message.ack()
-                return
-            logger.error(f"Failed to fetch from job manager: {e}", exc_info=True)
-            message.nack()
-            return
-
-        step_idx = next(
-            (i for i, step in enumerate(job.workflow)
-             if step.service == SERVICE_NAME
-             and step.status == JobStatuses.pending),
-            -1,
-        )
-
-        if step_idx < 0:
-            logger.warning(f"No pending {SERVICE_NAME} step found")
+        db_job = get_job(job)
+        if db_job.status == JobStatuses.canceled:
+            logger.info("Job is canceled — skipping")
             message.ack()
             return
+    except Exception as e:
+        if getattr(getattr(e, "response", None), "status_code", None) == 404:
+            logger.info("Job not found — skipping")
+            message.ack()
+            return
+        logger.error(f"Failed to fetch from job manager: {e}", exc_info=True)
+        message.nack()
+        return
 
-        step = FaceMatcherStep.model_validate(job.workflow[step_idx].model_dump())
+    step_idx = next(
+        (i for i, step in enumerate(job.workflow)
+            if step.service == SERVICE_NAME
+            and step.status == JobStatuses.pending),
+        -1,
+    )
 
-        logger.info(f"Starting face match — image={step.imagePath}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns}")
+    if step_idx < 0:
+        logger.warning(f"No pending {SERVICE_NAME} step found")
+        message.ack()
+        return
 
-        try:
-            image_bytes    = download_bytes(step.imagePath)
-            id_photo_bytes = [download_bytes(p) for p in step.idPhotoPaths]
+    step = FaceMatcherStep.model_validate(job.workflow[step_idx].model_dump())
 
-            with acquire_face_recognition() as fr:
-                similarity = fr.calc_face_similarity(id_photo_bytes, image_bytes)
+    logger.info(f"Starting face match — image={step.imagePath}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns}")
 
-            if similarity is None:
-                raise ValueError(f"No face detected in image: {step.imagePath}")
+    try:
+        image_bytes    = download_bytes(step.imagePath)
+        with ThreadPoolExecutor() as executor:
+            id_photo_bytes = list(executor.map(download_bytes, step.idPhotoPaths))
 
-            similarity      = round(float(similarity), 4)
-            prev_face_match = step.faceMatch or 0.0
-            is_better       = similarity > prev_face_match
-            is_final        = job.curRun == job.maxRuns
-            prev_tmp        = _prev_tmp_path(step.imagePath)
+        with acquire_face_recognition() as fr:
+            similarity = fr.calc_face_similarity(id_photo_bytes, image_bytes)
 
-            logger.info(f"Similarity={similarity}, prev={prev_face_match}, is_better={is_better}, is_final={is_final}")
+        if similarity is None:
+            raise ValueError(f"No face detected in image: {step.imagePath}")
 
-            if is_final:
-                if is_better:
-                    step.faceMatch = similarity
-                elif job.curRun > 1:
-                    logger.info(f"Current image worse — restoring best from {prev_tmp}")
-                    rename_blob(prev_tmp, step.imagePath)
-            else:
-                step.faceMatch = max(prev_face_match, similarity)
-                if job.curRun == 1 or is_better:
-                    logger.info(f"Saving current as best candidate → {prev_tmp}")
-                    rename_blob(step.imagePath, prev_tmp)
+        similarity      = round(float(similarity), 4)
+        prev_face_match = step.faceMatch or 0.0
+        is_better       = similarity > prev_face_match
+        is_final        = job.curRun == job.maxRuns
+        prev_tmp        = _prev_tmp_path(step.imagePath)
 
-            face_match    = step.faceMatch or 0.0
-            threshold_met = face_match >= step.threshold
+        logger.info(f"Similarity={similarity}, prev={prev_face_match}, is_better={is_better}, is_final={is_final}")
 
-            if threshold_met:
-                logger.info(f"Face match passed — faceMatch={face_match}, threshold={step.threshold}")
-                step.status = JobStatuses.completed
-                step.error  = None
-            elif is_final:
-                logger.info(f"Final run — completing regardless — faceMatch={face_match}, threshold={step.threshold}")
-                step.status = JobStatuses.completed
-                step.error  = None
-            else:
-                logger.info(f"Face match below threshold — retrying — faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns}")
-                step.status = JobStatuses.error
-                step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
+        if is_final:
+            if is_better:
+                step.faceMatch = similarity
+            elif job.curRun > 1:
+                logger.info(f"Current image worse — restoring best from {prev_tmp}")
+                rename_blob(prev_tmp, step.imagePath)
+        else:
+            step.faceMatch = max(prev_face_match, similarity)
+            if job.curRun == 1 or is_better:
+                logger.info(f"Saving current as best candidate → {prev_tmp}")
+                rename_blob(step.imagePath, prev_tmp)
 
-            if step.status == JobStatuses.completed:
-                try:
-                    delete_blob(prev_tmp)
-                except Exception:
-                    pass
+        face_match    = step.faceMatch or 0.0
+        threshold_met = face_match >= step.threshold
 
-        except Exception as e:
-            logger.error(f"Face matcher error: {e}", exc_info=True)
+        if threshold_met:
+            logger.info(f"Face match passed — faceMatch={face_match}, threshold={step.threshold}")
+            step.status = JobStatuses.completed
+            step.error  = None
+        elif is_final:
+            logger.info(f"Final run — completing regardless — faceMatch={face_match}, threshold={step.threshold}")
+            step.status = JobStatuses.completed
+            step.error  = None
+        else:
+            logger.info(f"Face match below threshold — retrying — faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns}")
             step.status = JobStatuses.error
-            step.error  = str(e)
+            step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
 
+        if step.status == JobStatuses.completed and job.maxRuns > 1:
+            try:
+                delete_blob(prev_tmp)
+            except Exception:
+                pass
+
+    except Exception as e:
+        logger.error(f"Face matcher error: {e}", exc_info=True)
+        step.status = JobStatuses.error
+        step.error  = str(e)
+    finally:
         job.workflow[step_idx] = StepBase.model_validate(step.model_dump(mode="json"))
         _send_job(job)
-    finally:
+
         message.ack()
         clear_log_context()
 

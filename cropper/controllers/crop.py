@@ -8,7 +8,7 @@ from utils.detector import crop, CropMode
 
 def _cropped_path(original_path: str) -> str:
     p = PurePosixPath(original_path)
-    return str(p.with_name(f"{p.stem}-cropped{p.suffix}"))
+    return str(p.with_name(f"{p.stem}-cropped.png"))
 
 
 def crop_to_bucket(image_path: str, mode: CropMode = "front") -> str:

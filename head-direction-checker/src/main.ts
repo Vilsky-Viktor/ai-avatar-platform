@@ -39,62 +39,61 @@ function listenForResults() {
 
     setLogContext(job.userId, job.avatarId, job.id);
 
-    try {
-      logger.info({ msgId: message.id }, 'Received message');
+    logger.info({ msgId: message.id }, 'Received message');
 
-      try {
-        const liveJob = await getJob(job);
-        if (liveJob.status === JobStatuses.canceled) {
-          logger.info('Job canceled — skipping');
-          message.ack();
-          return;
-        }
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          logger.info('Job not found — skipping');
-          message.ack();
-          return;
-        }
-        logger.error({ err: error }, 'Failed to fetch job from job manager');
-        message.nack();
+    try {
+      const liveJob = await getJob(job);
+      if (liveJob.status === JobStatuses.canceled) {
+        logger.info('Job canceled — skipping');
+        message.ack();
         return;
       }
-
-      const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.headDirectionChecker && step.status === JobStatuses.pending);
-
-      if (stepIdx >= 0) {
-        const stepData = job.workflow[stepIdx] as HeadDirectionChecker;
-
-        try {
-          const image = await downloadFromPath(stepData.imagePath);
-          const passed = await checkDirection(image, stepData.direction);
-
-          if (!passed) {
-            logger.info('Wrong head direction');
-            stepData.status = JobStatuses.error;
-            stepData.error = 'wrong head direction';
-          } else {
-            logger.info('Correct head direction');
-            stepData.status = JobStatuses.completed;
-          }
-          job.workflow[stepIdx] = stepData;
-
-          await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
-        } catch (error: any) {
-          logger.error({ err: error }, 'Head direction checker failed');
-
-          stepData.status = JobStatuses.error;
-          stepData.error = String(error);
-          job.workflow[stepIdx] = stepData;
-
-          await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
-        }
-      } else {
-        logger.warn('No pending head-direction-checker step found');
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.info('Job not found — skipping');
+        message.ack();
+        return;
       }
+      logger.error({ err: error }, 'Failed to fetch job from job manager');
+      message.nack();
+      return;
+    }
 
+    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.headDirectionChecker && step.status === JobStatuses.pending);
+
+    if (stepIdx < 0) {
+      logger.warn('No pending head-direction-checker step found — skipping');
       message.ack();
+      return;
+    }
+
+    const stepData = job.workflow[stepIdx] as HeadDirectionChecker;
+
+    try {
+      const image = await downloadFromPath(stepData.imagePath);
+      const passed = await checkDirection(image, stepData.direction);
+
+      if (!passed) {
+        logger.info('Wrong head direction');
+        stepData.status = JobStatuses.error;
+        stepData.error = 'wrong head direction';
+      } else {
+        logger.info('Correct head direction');
+        stepData.status = JobStatuses.completed;
+      }
+      job.workflow[stepIdx] = stepData;
+
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
+    } catch (error: any) {
+      logger.error({ err: error }, 'Head direction checker failed');
+
+      stepData.status = JobStatuses.error;
+      stepData.error = String(error);
+      job.workflow[stepIdx] = stepData;
+
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
     } finally {
+      message.ack();
       clearLogContext();
     }
   };

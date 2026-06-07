@@ -17,7 +17,15 @@ function getCachedUid(token: string): string | null {
 
 function cacheToken(token: string, uid: string): void {
   if (tokenCache.size >= TOKEN_CACHE_MAX_SIZE) {
-    tokenCache.delete(tokenCache.keys().next().value!);
+    let evictKey: string | undefined;
+    let evictExpiry = Infinity;
+    for (const [k, v] of tokenCache) {
+      if (v.expiresAt < evictExpiry) {
+        evictExpiry = v.expiresAt;
+        evictKey = k;
+      }
+    }
+    if (evictKey) tokenCache.delete(evictKey);
   }
   tokenCache.set(token, { uid, expiresAt: Date.now() + TOKEN_CACHE_TTL_MS });
 }

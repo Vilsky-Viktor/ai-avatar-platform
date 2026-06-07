@@ -36,8 +36,10 @@ export const generate = async <Input extends Record<string, any>>(data: AiModelG
       resultUrl = resultData.video.url;
     } else if ('images' in resultData) {
       resultUrl = resultData.images[0].url;
-    } else {
+    } else if ('audio' in resultData) {
       resultUrl = resultData.audio.url;
+    } else {
+      throw new Error('Unsupported response type')
     }
 
     return await downloadResultFile(resultUrl);

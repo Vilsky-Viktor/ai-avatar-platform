@@ -9,7 +9,6 @@ import {
   ThumbnailMaker,
   HeadDirectionChecker,
   Directions,
-  FaceMatcher,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';

@@ -33,79 +33,77 @@ function listenForResults() {
       job = JSON.parse(message.data.toString()) as Job;
     } catch (error) {
       logger.error({ err: error }, 'Failed to parse message');
-      message.nack();
+      message.ack();
       return;
     }
 
     setLogContext(job.userId, job.avatarId, job.id);
 
+    logger.info({ msgId: message.id }, 'Received message');
+
     try {
-      logger.info({ msgId: message.id }, 'Received message');
-
-      try {
-        const liveJob = await getJob(job);
-        if (liveJob.status === JobStatuses.canceled) {
-          logger.info('Job canceled — skipping');
-          message.ack();
-          return;
-        }
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          logger.info('Job not found — skipping');
-          message.ack();
-          return;
-        }
-        logger.error({ err: error }, 'Failed to fetch job from job manager');
-        message.nack();
-        return;
-      }
-
-      const stepIdx = job.workflow.findIndex(
-        (step: WorkflowStep) => step.service === Services.thumbnailMaker && step.status === JobStatuses.pending,
-      );
-
-      if (stepIdx < 0) {
-        logger.warn('No pending thumbnail-maker step found');
+      const liveJob = await getJob(job);
+      if (liveJob.status === JobStatuses.canceled) {
+        logger.info('Job canceled — skipping');
         message.ack();
         return;
       }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.info('Job not found — skipping');
+        message.ack();
+        return;
+      }
+      logger.error({ err: error }, 'Failed to fetch job from job manager');
+      message.nack();
+      return;
+    }
 
-      const stepData = job.workflow[stepIdx] as ThumbnailMaker;
+    const stepIdx = job.workflow.findIndex(
+      (step: WorkflowStep) => step.service === Services.thumbnailMaker && step.status === JobStatuses.pending,
+    );
 
-      try {
-        let thumbnail: Buffer;
+    if (stepIdx < 0) {
+      logger.warn('No pending thumbnail-maker step found');
+      message.ack();
+      return;
+    }
 
-        logger.info({ mediaPath: stepData.mediaPath, mediaType: stepData.mediaType }, 'Downloading source media');
-        const source = await downloadFromPath(stepData.mediaPath);
+    const stepData = job.workflow[stepIdx] as ThumbnailMaker;
 
-        if (stepData.mediaType === MediaTypes.image) {
-          thumbnail = await resizeImage(source, stepData.size);
-        } else {
-          thumbnail = await makeThumbnailFromVideo(source, stepData.size);
-        }
+    try {
+      let thumbnail: Buffer;
 
-        logger.info({ uploadPath: stepData.uploadPath, bytes: thumbnail.byteLength }, 'Uploading thumbnail');
-        await uploadToBucket(thumbnail, stepData.uploadPath!);
+      logger.info({ mediaPath: stepData.mediaPath, mediaType: stepData.mediaType }, 'Downloading source media');
+      const source = await downloadFromPath(stepData.mediaPath);
 
-        stepData.status = JobStatuses.completed;
-        job.workflow[stepIdx] = stepData;
-
-        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'thumbnail-maker');
-        logger.info('Thumbnail created successfully');
-      } catch (error: any) {
-        logger.error({ err: error }, 'Thumbnail generation failed');
-
-        stepData.status = JobStatuses.error;
-        stepData.error = String(error);
-        job.workflow[stepIdx] = stepData;
-
-        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'thumbnail-maker');
+      if (stepData.mediaType === MediaTypes.image) {
+        thumbnail = await resizeImage(source, stepData.size);
+      } else {
+        thumbnail = await makeThumbnailFromVideo(source, stepData.size);
       }
 
-      message.ack();
+      logger.info({ uploadPath: stepData.uploadPath, bytes: thumbnail.byteLength }, 'Uploading thumbnail');
+      await uploadToBucket(thumbnail, stepData.uploadPath!);
+
+      stepData.status = JobStatuses.completed;
+      job.workflow[stepIdx] = stepData;
+
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'thumbnail-maker');
+      logger.info('Thumbnail created successfully');
+    } catch (error: any) {
+      logger.error({ err: error }, 'Thumbnail generation failed');
+
+      stepData.status = JobStatuses.error;
+      stepData.error = String(error);
+      job.workflow[stepIdx] = stepData;
+
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'thumbnail-maker');
     } finally {
+      message.ack();
       clearLogContext();
     }
+
   };
 
   subscription.on('message', messageHandler);

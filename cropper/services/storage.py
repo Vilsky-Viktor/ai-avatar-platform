@@ -15,5 +15,5 @@ def download_image(blob_path: str) -> Image.Image:
 
 def upload_image(image: Image.Image, blob_path: str) -> str:
     buf = io.BytesIO()
-    image.save(buf, format="JPEG", quality=95)
-    return _storage.upload_bytes(buf.getvalue(), blob_path, content_type="image/jpeg")
+    image.save(buf, format="PNG", optimize=True)
+    return _storage.upload_bytes(buf.getvalue(), blob_path, content_type="image/png")

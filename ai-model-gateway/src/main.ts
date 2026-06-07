@@ -41,6 +41,7 @@ function listenForResults() {
 
   const messageHandler = async (message: Message) => {
     let job: Job;
+    
     try {
       job = JSON.parse(message.data.toString()) as Job;
     } catch (error) {
@@ -51,70 +52,67 @@ function listenForResults() {
 
     setLogContext(job.userId, job.avatarId, job.id);
 
+    logger.info({ msgId: message.id }, 'Received message');
+
     try {
-      logger.info({ msgId: message.id }, 'Received message');
-
-      try {
-        const liveJob = await getJob(job);
-        if (liveJob.status === JobStatuses.canceled) {
-          logger.info('Job canceled — skipping');
-          message.ack();
-          return;
-        }
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          logger.info('Job not found — skipping');
-          message.ack();
-          return;
-        }
-        logger.error({ err: error }, 'Failed to fetch job from job manager');
-        message.nack();
-        return;
-      }
-
-      const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.aiModelGateway && step.status === JobStatuses.pending);
-
-      if (stepIdx < 0) {
-        logger.warn('No pending ai-model-gateway step found — skipping');
+      const liveJob = await getJob(job);
+      if (liveJob.status === JobStatuses.canceled) {
+        logger.info('Job canceled — skipping');
         message.ack();
         return;
       }
-
-      const stepData = job.workflow[stepIdx] as AiModelGateway;
-
-      const heartbeat = setInterval(() => {
-          message.modAck(600);
-          logger.info('Extended ack deadline');
-        }, 300_000);
-
-      try {
-        logger.info({ platform: stepData.platform, model: stepData.model }, 'Starting generation');
-
-        const result = await generate(stepData);
-
-        if (!stepData.uploadPath) throw new Error('uploadPath missing on step');
-        const uploadData = result.type === MediaTypes.text ? Buffer.from(result.data) : result.data as Buffer;
-        await uploadToBucket(uploadData, stepData.uploadPath);
-
-        stepData.status = JobStatuses.completed;
-        job.workflow[stepIdx] = stepData;
-
-        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
-      } catch (error: any) {
-        logger.error({ err: error }, 'ai-model-gateway generation failed');
-
-        stepData.status = JobStatuses.error;
-        stepData.error = String(error);
-
-        job.curRun = job.maxRuns;
-        job.workflow[stepIdx] = stepData;
-
-        await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
-      } finally {
-        clearInterval(heartbeat);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        logger.info('Job not found — skipping');
         message.ack();
+        return;
       }
+      logger.error({ err: error }, 'Failed to fetch job from job manager');
+      message.nack();
+      return;
+    }
+
+    const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.service === Services.aiModelGateway && step.status === JobStatuses.pending);
+
+    if (stepIdx < 0) {
+      logger.warn('No pending ai-model-gateway step found — skipping');
+      message.ack();
+      return;
+    }
+
+    const stepData = job.workflow[stepIdx] as AiModelGateway;
+
+    const heartbeat = setInterval(() => {
+        message.modAck(600);
+        logger.info('Extended ack deadline');
+      }, 300_000);
+
+    try {
+      logger.info({ platform: stepData.platform, model: stepData.model }, 'Starting generation');
+
+      const result = await generate(stepData);
+
+      if (!stepData.uploadPath) throw new Error('uploadPath missing on step');
+      const uploadData = result.type === MediaTypes.text ? Buffer.from(result.data) : result.data as Buffer;
+      await uploadToBucket(uploadData, stepData.uploadPath);
+
+      stepData.status = JobStatuses.completed;
+      job.workflow[stepIdx] = stepData;
+
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
+    } catch (error: any) {
+      logger.error({ err: error }, 'ai-model-gateway generation failed');
+
+      stepData.status = JobStatuses.error;
+      stepData.error = String(error);
+
+      job.curRun = job.maxRuns;
+      job.workflow[stepIdx] = stepData;
+
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
     } finally {
+      message.ack();
+      clearInterval(heartbeat);
       clearLogContext();
     }
   }

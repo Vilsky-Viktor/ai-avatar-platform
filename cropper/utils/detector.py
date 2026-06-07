@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-import threading
+import os
+import queue
 from typing import Literal
 
 import numpy as np
@@ -10,28 +11,24 @@ from PIL import Image
 CropMode = Literal["front", "quarter", "side", "full_body"]
 
 _PoseLandmark = mp.solutions.pose.PoseLandmark
-_pose: mp.solutions.pose.Pose | None = None
-_pose_lock = threading.Lock()
+_POOL_SIZE = int(os.getenv("MAX_CONCURRENT_CROPS", "4"))
+_pose_pool: queue.Queue = queue.Queue()
+
+
+def _make_pose() -> mp.solutions.pose.Pose:
+    return mp.solutions.pose.Pose(
+        static_image_mode=True,
+        model_complexity=1,
+        min_detection_confidence=0.5,
+    )
 
 
 def warmup() -> None:
     dummy = np.zeros((64, 64, 3), dtype=np.uint8)
-    pose = _get_pose()
-    with _pose_lock:
+    for _ in range(_POOL_SIZE):
+        pose = _make_pose()
         pose.process(dummy)
-
-
-def _get_pose() -> mp.solutions.pose.Pose:
-    global _pose
-    if _pose is None:
-        with _pose_lock:
-            if _pose is None:
-                _pose = mp.solutions.pose.Pose(
-                    static_image_mode=True,
-                    model_complexity=1,
-                    min_detection_confidence=0.5,
-                )
-    return _pose
+        _pose_pool.put(pose)
 
 
 _HEAD_SHOULDER_LANDMARKS = [
@@ -99,8 +96,11 @@ def crop(image: Image.Image, mode: CropMode = "front") -> Image.Image:
     img_array = np.array(img_rgb)
     h, w      = img_array.shape[:2]
 
-    with _pose_lock:
-        results = _get_pose().process(img_array)
+    pose = _pose_pool.get()
+    try:
+        results = pose.process(img_array)
+    finally:
+        _pose_pool.put(pose)
 
     if not results.pose_landmarks:
         raise ValueError("No face or shoulders detected in this image")

@@ -138,10 +138,10 @@ export const createMany = async (userId: string, jobs: Omit<Job, 'id'>[]): Promi
     return dbJobs;
 };
 
-export const update = async (userId: string, jobId: string, updateData: Partial<Job>): Promise<void> => {
+export const update = async (userId: string, jobId: string, updateData: Partial<Job>): Promise<Job> => {
     const jobRef = db.collection(JOBS_COLLECTION_NAME).doc(jobId);
 
-    await db.runTransaction(async (transaction) => {
+    return await db.runTransaction(async (transaction) => {
         const doc = await transaction.get(jobRef);
 
         if (!doc.exists) {
@@ -153,10 +153,10 @@ export const update = async (userId: string, jobId: string, updateData: Partial<
         }
 
         const { id: _id, userId: _userId, createdAt: _createdAt, ...safeData } = updateData;
-        transaction.update(jobRef, {
-            ...safeData,
-            updatedAt: new Date()
-        });
+        const updatedAt = new Date();
+        transaction.update(jobRef, { ...safeData, updatedAt });
+
+        return { ...doc.data(), ...safeData, updatedAt } as Job;
     });
 }
 
