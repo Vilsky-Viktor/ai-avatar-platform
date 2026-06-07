@@ -40,21 +40,48 @@ export const getFiltered = async (
     return { voices, nextCursor };
 };
 
+const FILTER_OPTIONS_BATCH_SIZE = 1000;
+
 export const getFilterOptions = async (gender: string): Promise<{
     languages: string[];
     ages: string[];
     categories: string[];
     useCases: string[];
 }> => {
-    const snapshot = await db.collection(VOICES_COLLECTION_NAME)
-        .where('gender', '==', gender)
-        .get();
+    const languages  = new Set<string>();
+    const ages       = new Set<string>();
+    const categories = new Set<string>();
+    const useCases   = new Set<string>();
 
-    const voices = snapshot.docs.map(doc => doc.data() as Voice);
+    let lastDoc: FirebaseFirestore.DocumentSnapshot | undefined;
+
+    while (true) {
+        let query = db.collection(VOICES_COLLECTION_NAME)
+            .where('gender', '==', gender)
+            .select('language', 'age', 'category', 'useCase')
+            .orderBy('__name__')
+            .limit(FILTER_OPTIONS_BATCH_SIZE);
+
+        if (lastDoc) query = query.startAfter(lastDoc);
+
+        const snapshot = await query.get();
+
+        snapshot.docs.forEach(doc => {
+            const d = doc.data();
+            if (d.language) languages.add(d.language);
+            if (d.age)      ages.add(d.age);
+            if (d.category) categories.add(d.category);
+            if (d.useCase)  useCases.add(d.useCase);
+        });
+
+        if (snapshot.size < FILTER_OPTIONS_BATCH_SIZE) break;
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
+    }
+
     return {
-        languages:  [...new Set(voices.map(v => v.language))].filter(Boolean).sort(),
-        ages:       [...new Set(voices.map(v => v.age))].filter(Boolean).sort(),
-        categories: [...new Set(voices.map(v => v.category))].filter(Boolean).sort(),
-        useCases:   [...new Set(voices.map(v => v.useCase))].filter(Boolean).sort(),
+        languages:  [...languages].sort(),
+        ages:       [...ages].sort(),
+        categories: [...categories].sort(),
+        useCases:   [...useCases].sort(),
     };
 };
