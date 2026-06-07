@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Link } from 'lucide-react';
+import { Check, Link, Loader2 } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {
@@ -39,6 +39,7 @@ const PlatformButton = ({
 function SharePopup({ url, onClose }: Props) {
     useScrollLock();
     const [copied, setCopied] = useState(false);
+    const [sharing, setSharing] = useState(false);
     const enc = encodeURIComponent(url);
 
     const handleCopy = (e: React.MouseEvent) => {
@@ -48,9 +49,40 @@ function SharePopup({ url, onClose }: Props) {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleNativeShare = (e: React.MouseEvent) => {
+    const handleNativeShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        navigator.share({ url });
+        setSharing(true);
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const ext = blob.type.split('/')[1] || 'jpg';
+            const file = new File([blob], `media.${ext}`, { type: blob.type });
+
+            if (navigator.canShare?.({ files: [file] })) {
+                await navigator.share({ files: [file] });
+                return;
+            }
+
+            // Desktop: try copying image to clipboard so it can be pasted into apps
+            if (blob.type === 'image/png' || blob.type === 'image/jpeg' || blob.type === 'image/webp') {
+                await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+                return;
+            }
+
+            // Fallback for video/audio: trigger download
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = file.name;
+            a.click();
+            URL.revokeObjectURL(blobUrl);
+        } catch {
+            // user cancelled or browser restriction — silently ignore
+        } finally {
+            setSharing(false);
+        }
     };
 
     return createPortal(
@@ -120,16 +152,22 @@ function SharePopup({ url, onClose }: Props) {
                     {'share' in navigator && (
                         <button
                             onClick={handleNativeShare}
-                            className="flex flex-col items-center gap-2 group cursor-pointer"
+                            disabled={sharing}
+                            className="flex flex-col items-center gap-2 group cursor-pointer disabled:cursor-not-allowed"
                         >
                             <div className="w-14 h-14 rounded-2xl bg-base-300 flex items-center justify-center transition-transform group-hover:scale-110 duration-200">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-base-content/60">
-                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                                    <polyline points="16 6 12 2 8 6" />
-                                    <line x1="12" y1="2" x2="12" y2="15" />
-                                </svg>
+                                {sharing
+                                    ? <Loader2 size={24} className="text-base-content/60 animate-spin" />
+                                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-base-content/60">
+                                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                        <polyline points="16 6 12 2 8 6" />
+                                        <line x1="12" y1="2" x2="12" y2="15" />
+                                      </svg>
+                                }
                             </div>
-                            <span className="text-[11px] text-base-content/50 group-hover:text-base-content/80 transition-colors">More</span>
+                            <span className="text-[11px] text-base-content/50 group-hover:text-base-content/80 transition-colors">
+                                {sharing ? 'Loading…' : copied ? 'Copied!' : 'Share File'}
+                            </span>
                         </button>
                     )}
                 </div>
