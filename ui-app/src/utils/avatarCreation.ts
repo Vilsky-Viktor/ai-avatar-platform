@@ -30,7 +30,7 @@ export const initialNewAvatarData = {
 export const initialAvatarParameters = {
     gender: AvatarGender.male, ethnicity: '', skinColor: '', age: '', attractiveness: '', body: '',
     face: '', hairStyle: '', hairColor: '', nose: '', eyes: '', eyeLashes: '', eyeBrows: '',
-    skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '', height: '', outfit: ''
+    skin: '', facialHair: '', lips: '', ears: '', bustSize: '', bodyHair: '', height: ''
 };
 
 export const initialAvatarData = {
@@ -97,4 +97,11 @@ export const saveAvatarData = (data: NewAvatarData): void => {
     const jsonData = JSON.stringify(data);
     const encodedData = encode(jsonData);
     localStorage.setItem(NEW_AVATAR_DATA, encodedData);
+}
+
+export const clearAvatarDataIfMatch = (avatarId: string): void => {
+    const data = getAvatarData();
+    if (data.avatarId === avatarId) {
+        localStorage.removeItem(NEW_AVATAR_DATA);
+    }
 }

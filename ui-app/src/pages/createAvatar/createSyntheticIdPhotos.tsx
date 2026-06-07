@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import { type Avatar } from '@loom24/shared/types';
-import { updateAvatar, restartJobById, genSyntheticIdPhotos, genSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genSyntheticIdPhotos, genSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId, normalizeJob } from '../../services/apiGateway';
 import { JobStatuses, type Job, type IdPhotoJobRequest } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
 import { 
@@ -67,7 +67,7 @@ function CreateSyntheticIdPhotosPage() {
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as Job;
+            const job = normalizeJob(docSnap.data()) as Job;
 
             if (job.status === JobStatuses.completed && job.resultMediaPath) {
                 const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath)

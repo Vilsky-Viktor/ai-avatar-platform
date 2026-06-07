@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getAllUserAvatars, deleteAvatarById } from "../services/apiGateway";
 import { type Avatar } from "@loom24/shared/types";
 import { User } from 'lucide-react';
+import { clearAvatarDataIfMatch } from "../utils/avatarCreation";
 
 function AvatarsPage() {
     const [avatars, setAvatars] = useState([] as Avatar[]);
@@ -36,6 +37,7 @@ function AvatarsPage() {
         setIsDeleting(true);
         try {
             await deleteAvatarById(avatarToDelete.id);
+            clearAvatarDataIfMatch(avatarToDelete.id);
             setAvatarToDelete(null); // Close modal
             await fetchAvatars(); // Refresh list
         } catch {

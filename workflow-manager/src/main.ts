@@ -36,18 +36,21 @@ const newWorkflowHandler = async (job: Job) => {
   const stepIdx = 0;
   const stepData = job.workflow[stepIdx];
 
+  job.status = JobStatuses.generating;
+
   await sendJob(stepData.service, job, 'workflow-manager');
 
   stepData.status = JobStatuses.generating;
   job.workflow[stepIdx] = stepData;
-  job.status = JobStatuses.generating;
-
+  
   await updateJob(job);
 }
 
 const pendingStepHandler = async (job: Job) => {
   const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
   const stepData = job.workflow[stepIdx];
+
+  job.status = JobStatuses.generating;
 
   await sendJob(stepData.service, job, 'workflow-manager');
 

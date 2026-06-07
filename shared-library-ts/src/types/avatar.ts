@@ -25,7 +25,6 @@ export type AvatarParameters = {
   nose: string;
   eyeLashes: string;
   eyeBrows: string;
-  outfit: string;
   lips: string;
   bustSize: string;
   ears: string;

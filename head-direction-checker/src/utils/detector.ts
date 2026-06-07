@@ -7,8 +7,10 @@ const MODEL_PATH = '/app/models/det_10g.onnx';
 const INPUT_SIZE = 640;
 const SCORE_THRESHOLD = 0.3;
 const NMS_THRESHOLD = 0.4;
-const FRONT_THRESHOLD   = 0.15;  // |yawRatio| < 0.15  → front
-const QUARTER_THRESHOLD = 0.45;  // 0.15–0.45 → quarter profile, >0.45 → side profile
+const FRONT_MAX    = 0.15;  // |yawRatio| < 0.15         → front
+const QUARTER_MIN  = 0.55;  // 0.55–0.85               → genuine 3/4 profile
+const QUARTER_MAX  = 0.85;  // gap: 0.85–1.05
+const SIDE_MIN     = 1.05;  // >1.05                   → genuine side profile
 const NUM_ANCHORS = 2;
 const STRIDES = [8, 16, 32];
 
@@ -164,19 +166,19 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
   let passed: boolean;
   switch (requiredDirection) {
     case 'front':
-      passed = Math.abs(yawRatio) < FRONT_THRESHOLD;
+      passed = Math.abs(yawRatio) < FRONT_MAX;
       break;
     case 'leftQuarter':
-      passed = yawRatio >= -QUARTER_THRESHOLD && yawRatio < -FRONT_THRESHOLD;
+      passed = yawRatio <= -QUARTER_MIN && yawRatio > -QUARTER_MAX;
       break;
     case 'rightQuarter':
-      passed = yawRatio > FRONT_THRESHOLD && yawRatio <= QUARTER_THRESHOLD;
+      passed = yawRatio >= QUARTER_MIN && yawRatio < QUARTER_MAX;
       break;
     case 'leftSide':
-      passed = yawRatio < -QUARTER_THRESHOLD;
+      passed = yawRatio <= -SIDE_MIN;
       break;
     case 'rightSide':
-      passed = yawRatio > QUARTER_THRESHOLD;
+      passed = yawRatio >= SIDE_MIN;
       break;
     default:
       logger.warn({ requiredDirection }, 'Unknown direction — passing by default');

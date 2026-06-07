@@ -5,7 +5,7 @@ import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
 import { type Avatar } from '@loom24/shared/types';
-import { updateAvatar, restartJobById, genDigitalTwinIdPhotos, getJobsByGroupId, getAvatarById, cropPerson } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genDigitalTwinIdPhotos, getJobsByGroupId, getAvatarById, cropPerson, normalizeJob } from '../../services/apiGateway';
 import type { CropMode } from '../../services/apiGateway';
 import { JobStatuses, type Job, type IdPhotoJobRequest } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
@@ -79,7 +79,7 @@ function CreateTwinIdPhotosPage() {
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
-            const job = docSnap.data() as Job;
+            const job = normalizeJob(docSnap.data()) as Job;
 
             if (job.status === JobStatuses.completed && job.resultMediaPath) {
                 const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath)

@@ -32,7 +32,6 @@ class AvatarParameters(BaseModel):
     nose:          str
     eyeLashes:     str
     eyeBrows:      str
-    outfit:        str
     lips:          str
     bustSize:      str
     ears:          str
