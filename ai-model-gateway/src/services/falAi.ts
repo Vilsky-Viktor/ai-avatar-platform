@@ -20,7 +20,7 @@ export const getPlatformModelName = (model: Models): string => {
 }
 
 export const generate = async <Input extends Record<string, any>>(data: AiModelGateway, payload: Input): Promise<platform.GeneratedData> => {
-    const modelPath = getPlatformModelName(data.model);
+    const modelPath = getPlatformModelName(data.model!);
 
     const result = await fal.subscribe(modelPath, {
         input: payload,

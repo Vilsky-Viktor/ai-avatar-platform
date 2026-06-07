@@ -93,8 +93,8 @@ class StepBase(BaseModel):
     model_config = {'extra': 'allow'}
 
     status: JobStatuses
-    model: Models
-    platform: Platforms
+    model: Optional[Models]
+    platform: Optional[Platforms]
     service: Services
     error: Optional[str] = None
     uploadPath: Optional[str] = None

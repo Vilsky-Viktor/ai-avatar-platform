@@ -1118,13 +1118,13 @@ files = [
 
 [[package]]
 name = "loom24-shared"
-version = "0.0.12"
+version = "0.0.13"
 description = ""
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "loom24_shared-0.0.12-py3-none-any.whl", hash = "sha256:430ac49446fe6975205bc80d86c1920b2103d27b128869a87b0feb2c9311c385"},
-    {file = "loom24_shared-0.0.12.tar.gz", hash = "sha256:ede8b0a15abaa099f00943eb67c44e73954e2e3e28b9601fd88a805105102cfe"},
+    {file = "loom24_shared-0.0.13-py3-none-any.whl", hash = "sha256:13c804065ad351529beccf90c8619327acbb6dd1d7f3500eaeb38442b88031ba"},
+    {file = "loom24_shared-0.0.13.tar.gz", hash = "sha256:d2d21d75fc925ba876eb4d4ca94243c8e9ed6a4c6d6e32893f5f170b622a912e"},
 ]
 
 [package.dependencies]
@@ -2432,4 +2432,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "c09a5e8620f287a0358e4653589099f80d56b874050a70a02760875937181433"
+content-hash = "73bf2f77af6a41aa58ca7c329e71fd736fb2de9828083ad08a9645d458dee353"

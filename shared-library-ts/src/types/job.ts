@@ -130,8 +130,8 @@ export type StepBase = {
   error?: string;
   uploadPath?: string;
   status: JobStatuses;
-  model: Models;
-  platform: Platforms;
+  model?: Models;
+  platform?: Platforms;
   service: Services;
 }
 

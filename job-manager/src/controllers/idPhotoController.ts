@@ -5,10 +5,11 @@ import {
   JobTargets,
   JobStatuses,
   IdPhotoJobRequest,
-  Models,
-  Platforms,
   Services,
   ThumbnailMaker,
+  HeadDirectionChecker,
+  Directions,
+  FaceMatcher,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
@@ -44,11 +45,16 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
       mediaPath: rawPath,
       size: 400,
       service: Services.thumbnailMaker,
-      model: Models.none,
-      platform: Platforms.none,
       status: JobStatuses.pending,
       uploadPath: thumbnailUploadPath,
     };
+
+    const headDirectionChecker: HeadDirectionChecker = {
+      service: Services.headDirectionChecker,
+      status: JobStatuses.pending,
+      imagePath: input.imageGenerator.uploadPath!,
+      direction: Directions.front
+    }
 
     const job: Job = {
       groupId,
@@ -60,7 +66,7 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
       maxRuns: 3,
       curRun: 0,
       order: 1,
-      workflow: [input.imageGenerator, thumbnailMaker],
+      workflow: [input.imageGenerator, headDirectionChecker, thumbnailMaker],
       metadata: input.metadata,
       resultMediaPath: rawPath,
       resultThumbnailPath: thumbnailUploadPath,
@@ -102,8 +108,6 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         mediaPath: rawPath,
         size: 400,
         service: Services.thumbnailMaker,
-        model: Models.none,
-        platform: Platforms.none,
         status: JobStatuses.pending,
         uploadPath: thumbnailUploadPath,
       };
@@ -118,7 +122,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, thumbnailMaker],
+        workflow: [input.imageGenerator, input.headDirectionChecker, thumbnailMaker],
         metadata: input.metadata,
         resultMediaPath: rawPath,
         resultThumbnailPath: thumbnailUploadPath,
@@ -169,8 +173,6 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         mediaPath: rawPath,
         size: 400,
         service: Services.thumbnailMaker,
-        model: Models.none,
-        platform: Platforms.none,
         status: JobStatuses.pending,
         uploadPath: thumbnailUploadPath,
       };
@@ -185,7 +187,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, thumbnailMaker],
+        workflow: [input.imageGenerator, input.headDirectionChecker, input.faceMatcher, thumbnailMaker],
         metadata: input.metadata,
         resultMediaPath: rawPath,
         resultThumbnailPath: thumbnailUploadPath,

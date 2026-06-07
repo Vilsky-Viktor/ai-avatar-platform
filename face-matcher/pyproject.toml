@@ -13,17 +13,10 @@ google-cloud-storage = "3.11.0"
 numpy = "2.4.6"
 scipy = "1.17.1"
 opencv-python-headless = "4.13.0.92"
-torch = {version = "2.7.1", source = "pytorch-cpu"}
-torchvision = {version = "0.22.1", source = "pytorch-cpu"}
 insightface = "1.0.1"
 onnxruntime = "1.26.0"
 watchfiles = "1.2.0"
-loom24-shared = {version = "0.0.12", source = "loom24-pypi"}
-
-[[tool.poetry.source]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-priority = "explicit"
+loom24-shared = {version = "0.0.13", source = "loom24-pypi"}
 
 [[tool.poetry.source]]
 name = "loom24-pypi"

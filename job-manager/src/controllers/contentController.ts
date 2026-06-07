@@ -70,8 +70,6 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       mediaPath: generatorUploadPath,
       size: 400,
       service: Services.thumbnailMaker,
-      model: Models.none,
-      platform: Platforms.none,
       status: JobStatuses.pending,
       uploadPath: thumbnailUploadPath
     }
@@ -144,8 +142,6 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
         mediaPath: input.imageGenerator.uploadPath!,
         size: 400,
         service: Services.thumbnailMaker,
-        model: Models.none,
-        platform: Platforms.none,
         status: JobStatuses.pending,
         uploadPath: thumbnailUploadPath
       }
@@ -263,8 +259,6 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       mediaPath: generatorUploadPath,
       size: 400,
       service: Services.thumbnailMaker,
-      model: Models.none,
-      platform: Platforms.none,
       status: JobStatuses.pending,
       uploadPath: thumbnailUploadPath
     }
@@ -328,8 +322,6 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
       mediaPath: generatorUploadPath,
       size: 400,
       service: Services.thumbnailMaker,
-      model: Models.none,
-      platform: Platforms.none,
       status: JobStatuses.pending,
       uploadPath: thumbnailUploadPath
     }

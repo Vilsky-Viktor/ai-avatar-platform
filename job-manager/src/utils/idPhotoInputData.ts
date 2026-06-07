@@ -1,4 +1,4 @@
-import { AvatarParameters, Platforms, AiModelGateway, JobMetadata, JobStatuses, Models, Services, ImageRatios } from '@loom24/shared/types';
+import { AvatarParameters, Platforms, AiModelGateway, JobMetadata, JobStatuses, Models, Services, ImageRatios, HeadDirectionChecker, Directions, FaceMatcher } from '@loom24/shared/types';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
 import uuid from 'uuid';
 
@@ -51,7 +51,7 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
 }
 
 export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): {
-  imageGenerator: AiModelGateway, metadata: JobMetadata, order: number
+  imageGenerator: AiModelGateway, headDirectionChecker: HeadDirectionChecker, metadata: JobMetadata, order: number
 }[] => {
   const {
     gender,
@@ -65,6 +65,8 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
   const dimensions = '2048x2048';
   const isFemale = gender === 'female';
 
+  const imagePaths = Array.from({ length: 6 }, () => `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`);
+
   return [
     {
       imageGenerator: {
@@ -72,12 +74,18 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: imagePaths[0],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         temperature: 1.0,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[0],
+        direction: Directions.front
       },
       metadata: { ratio, dimensions },
       order: 2,
@@ -88,12 +96,18 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: imagePaths[1],
         temperature: 1.0,
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[1],
+        direction: Directions.leftQuarter
       },
       metadata: { ratio, dimensions },
       order: 3,
@@ -105,11 +119,17 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         ratio,
         imagePaths: [idPhotoSet.front!],
         temperature: 1.0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: imagePaths[2],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[2],
+        direction: Directions.rightQuarter
       },
       metadata: { ratio, dimensions },
       order: 4,
@@ -121,11 +141,17 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         ratio,
         imagePaths: [idPhotoSet.front!],
         temperature: 1.0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: imagePaths[3],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[3],
+        direction: Directions.leftSide
       },
       metadata: { ratio, dimensions },
       order: 5,
@@ -137,11 +163,17 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         ratio,
         imagePaths: [idPhotoSet.front!],
         temperature: 1.0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: imagePaths[4],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[4],
+        direction: Directions.rightSide
       },
       metadata: { ratio, dimensions },
       order: 6,
@@ -153,11 +185,17 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         ratio,
         imagePaths: [idPhotoSet.front!],
         temperature: 1.0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
+        uploadPath: imagePaths[5],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[5],
+        direction: Directions.front
       },
       metadata: { ratio, dimensions },
       order: 7,
@@ -167,12 +205,12 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
 
 
 export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): { 
-  imageGenerator: AiModelGateway, metadata: JobMetadata, order: number 
+  imageGenerator: AiModelGateway, headDirectionChecker: HeadDirectionChecker, faceMatcher: FaceMatcher, metadata: JobMetadata, order: number 
 }[] => {
   const ratio = ImageRatios['1:1'];
   const dimensions = '2048x2048';
 
-  const uuids = Array.from({ length: 7 }, () => uuid.v4());
+  const imagePaths = Array.from({ length: 7 }, () => `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`);
 
   return [
     {
@@ -182,11 +220,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.front!],
         temperature: 0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[0]}.png`,
+        uploadPath: imagePaths[0],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[0],
+        direction: Directions.front
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[0],
+        idPhotoPaths: [idPhotoSet.front!],
+        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 1,
@@ -198,11 +249,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.frontSmile!],
         temperature: 0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[1]}.png`,
+        uploadPath: imagePaths[1],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[1],
+        direction: Directions.front
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[1],
+        idPhotoPaths: [idPhotoSet.frontSmile!],
+        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 2,
@@ -214,11 +278,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.leftQuarter!],
         temperature: 0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[2]}.png`,
+        uploadPath: imagePaths[2],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[2],
+        direction: Directions.leftQuarter
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[2],
+        idPhotoPaths: [idPhotoSet.leftQuarter!],
+        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 3,
@@ -230,11 +307,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.rightQuarter!],
         temperature: 0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[3]}.png`,
+        uploadPath: imagePaths[3],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[3],
+        direction: Directions.rightQuarter
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[3],
+        idPhotoPaths: [idPhotoSet.rightQuarter!],
+        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 4,
@@ -246,11 +336,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.leftSide!],
         temperature: 0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[4]}.png`,
+        uploadPath: imagePaths[4],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[4],
+        direction: Directions.leftSide
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[4],
+        idPhotoPaths: [idPhotoSet.leftSide!],
+        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 5,
@@ -262,11 +365,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.rightSide!],
         temperature: 0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[5]}.png`,
+        uploadPath: imagePaths[5],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[5],
+        direction: Directions.rightSide
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[5],
+        idPhotoPaths: [idPhotoSet.rightSide!],
+        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 6,
@@ -278,11 +394,24 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         ratio,
         imagePaths: [idPhotoSet.body!],
         temperature: 0,
-        uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuids[6]}.png`,
+        uploadPath: imagePaths[6],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
         service: Services.aiModelGateway
+      },
+      headDirectionChecker: {
+        service: Services.headDirectionChecker,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[6],
+        direction: Directions.front
+      },
+      faceMatcher: {
+        service: Services.faceMatcher,
+        status: JobStatuses.pending,
+        imagePath: imagePaths[6],
+        idPhotoPaths: [idPhotoSet.body!],
+        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 7,

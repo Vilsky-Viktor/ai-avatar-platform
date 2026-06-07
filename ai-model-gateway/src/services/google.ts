@@ -27,7 +27,7 @@ export const getPlatformModelName = (model: Models): string => {
 }
 
 export const generate = async (data: AiModelGateway, media: Buffer[], config: object): Promise<platform.GeneratedData> => {
-    const platformModel = getPlatformModelName(data.model);
+    const platformModel = getPlatformModelName(data.model!);
 
     const promptPayload = { text: data.prompt };
     const mediaPayload = media.map((buf) => ({
