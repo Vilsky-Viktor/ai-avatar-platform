@@ -36,7 +36,7 @@ function Header() {
 
                     <div className="flex items-center justify-center relative">
                         <HeartPulse 
-                            size={18} 
+                            size={25} 
                             className="text-error animate-pulse drop-shadow-[0_0_8px_rgba(245,158,11,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-12" 
                         />
                     </div>
@@ -45,7 +45,7 @@ function Header() {
 
                     <div className="flex items-baseline gap-1.5 relative">
                         <span className="text-sm font-black tabular-nums tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-base-content to-base-content/70">
-                            {user?.credits || 0}
+                            {(user?.credits || 0).toLocaleString('de-DE')}
                         </span>
                         <span className="text-[9px] font-bold opacity-40 uppercase tracking-[0.15em] transition-opacity group-hover:opacity-60 duration-500">
                             pulses

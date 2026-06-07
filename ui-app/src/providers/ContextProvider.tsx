@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { auth } from '../firebase';
 import { type User } from '@loom24/shared/types';
 import { type Theme, ThemeColor } from '../types/settings';
 import Loading from '../components/Loading';
 import { syncUser } from '../services/apiGateway';
+import { listenToDocChanges } from '../services/db';
 
 interface AppContextType {
   theme: Theme;
@@ -18,6 +19,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<Theme>((localStorage.getItem('theme') as Theme) || ThemeColor.Dark);
   const [user, setUser] = useState<User | null>(null);
+  const userUnsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -26,6 +28,9 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      userUnsubscribeRef.current?.();
+      userUnsubscribeRef.current = null;
+
       if (firebaseUser) {
         try {
           const dbUser = await syncUser(firebaseUser);
@@ -35,6 +40,13 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
             email: firebaseUser.email ?? firebaseUser.providerData?.find(p => p.email)?.email ?? '',
             img: firebaseUser.photoURL,
             credits: dbUser.credits || 0,
+          });
+
+          userUnsubscribeRef.current = listenToDocChanges('users', firebaseUser.uid, (snap) => {
+            const credits = snap.data()?.credits;
+            if (typeof credits === 'number') {
+              setUser(prev => prev ? { ...prev, credits } : prev);
+            }
           });
         } catch (error) {
           console.error('Failed to sync user:', error);
@@ -46,7 +58,10 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      userUnsubscribeRef.current?.();
+    };
   }, []);
 
   return (
