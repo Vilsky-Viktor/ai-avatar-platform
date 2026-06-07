@@ -16,7 +16,7 @@ opencv-python-headless = "4.13.0.92"
 insightface = "1.0.1"
 onnxruntime = "1.26.0"
 watchfiles = "1.2.0"
-loom24-shared = {version = "0.0.14", source = "loom24-pypi"}
+loom24-shared = {version = "0.0.17", source = "loom24-pypi"}
 
 [[tool.poetry.source]]
 name = "loom24-pypi"

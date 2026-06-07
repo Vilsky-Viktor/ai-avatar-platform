@@ -70,8 +70,10 @@ function CreateSyntheticIdPhotosPage() {
             const job = normalizeJob(docSnap.data()) as Job;
 
             if (job.status === JobStatuses.completed && job.resultMediaPath) {
-                const downloadUrl = await getMediaUrlFromPath(job.resultMediaPath)
-                job.resultMediaUrl = downloadUrl;
+                job.resultMediaUrl = await getMediaUrlFromPath(job.resultMediaPath);
+                if (job.resultThumbnailPath) {
+                    job.resultThumbnailUrl = await getMediaUrlFromPath(job.resultThumbnailPath);
+                }
             }
 
             const currentJobs = jobsRef.current;
@@ -122,7 +124,10 @@ function CreateSyntheticIdPhotosPage() {
                     const resultMediaUrl = job.resultMediaPath
                         ? await getMediaUrlFromPath(job.resultMediaPath).catch(() => undefined)
                         : undefined;
-                    return { ...job, resultMediaUrl };
+                    const resultThumbnailUrl = job.resultThumbnailPath
+                        ? await getMediaUrlFromPath(job.resultThumbnailPath).catch(() => undefined)
+                        : undefined;
+                    return { ...job, resultMediaUrl, resultThumbnailUrl };
                 })
             );
             setJobs(enrichedJobs as Job[]);
@@ -240,7 +245,7 @@ function CreateSyntheticIdPhotosPage() {
         try {
             if (!stepLocked()) {
                 const payload: Partial<Avatar> = {
-                    mainImagePath: jobs[0]?.resultMediaPath,
+                    mainImagePath: jobs[0]?.resultThumbnailPath || jobs[0]?.resultMediaPath,
                 };
                 await updateAvatar(newAvatarData.avatarId, payload);
             }

@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import logging
 import time
 from typing import Any
 
 import requests
 
+from loom24_shared.logger import logger
+
 RETRY_ATTEMPTS   = 3
 RETRY_BASE_DELAY = 0.5
-
-logger = logging.getLogger(__name__)
 
 _DEFAULT_TIMEOUT = 10
 

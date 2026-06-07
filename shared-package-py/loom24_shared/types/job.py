@@ -93,8 +93,8 @@ class StepBase(BaseModel):
     model_config = {'extra': 'allow'}
 
     status: JobStatuses
-    model: Optional[Models]
-    platform: Optional[Platforms]
+    model: Optional[Models] = None
+    platform: Optional[Platforms] = None
     service: Services
     error: Optional[str] = None
     uploadPath: Optional[str] = None
@@ -206,4 +206,4 @@ class Job(BaseModel):
     workflow: List[StepBase]
     metadata: Optional[JobMetadata] = None
     resultMediaPath: str
-    resultThumbnailPath: Optional[str]
+    resultThumbnailPath: Optional[str] = None

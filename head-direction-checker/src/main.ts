@@ -33,7 +33,7 @@ function listenForResults() {
       job = JSON.parse(message.data.toString()) as Job;
     } catch (error) {
       logger.error({ err: error }, 'Failed to parse message');
-      message.nack();
+      message.ack();
       return;
     }
 

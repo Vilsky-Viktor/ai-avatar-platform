@@ -205,7 +205,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
 
 
 export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): { 
-  imageGenerator: AiModelGateway, headDirectionChecker: HeadDirectionChecker, faceMatcher: FaceMatcher, metadata: JobMetadata, order: number 
+  imageGenerator: AiModelGateway, headDirectionChecker: HeadDirectionChecker, metadata: JobMetadata, order: number 
 }[] => {
   const ratio = ImageRatios['1:1'];
   const dimensions = '2048x2048';
@@ -232,13 +232,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePath: imagePaths[0],
         direction: Directions.front
       },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[0],
-        idPhotoPaths: [idPhotoSet.front!],
-        threshold: 0.95
-      },
       metadata: { ratio, dimensions },
       order: 1,
     },
@@ -260,13 +253,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         status: JobStatuses.pending,
         imagePath: imagePaths[1],
         direction: Directions.front
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[1],
-        idPhotoPaths: [idPhotoSet.frontSmile!],
-        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 2,
@@ -290,13 +276,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePath: imagePaths[2],
         direction: Directions.leftQuarter
       },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[2],
-        idPhotoPaths: [idPhotoSet.leftQuarter!],
-        threshold: 0.95
-      },
       metadata: { ratio, dimensions },
       order: 3,
     },
@@ -318,13 +297,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         status: JobStatuses.pending,
         imagePath: imagePaths[3],
         direction: Directions.rightQuarter
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[3],
-        idPhotoPaths: [idPhotoSet.rightQuarter!],
-        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 4,
@@ -348,13 +320,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePath: imagePaths[4],
         direction: Directions.leftSide
       },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[4],
-        idPhotoPaths: [idPhotoSet.leftSide!],
-        threshold: 0.95
-      },
       metadata: { ratio, dimensions },
       order: 5,
     },
@@ -377,13 +342,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         imagePath: imagePaths[5],
         direction: Directions.rightSide
       },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[5],
-        idPhotoPaths: [idPhotoSet.rightSide!],
-        threshold: 0.95
-      },
       metadata: { ratio, dimensions },
       order: 6,
     },
@@ -405,13 +363,6 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
         status: JobStatuses.pending,
         imagePath: imagePaths[6],
         direction: Directions.front
-      },
-      faceMatcher: {
-        service: Services.faceMatcher,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[6],
-        idPhotoPaths: [idPhotoSet.body!],
-        threshold: 0.95
       },
       metadata: { ratio, dimensions },
       order: 7,

@@ -3,6 +3,9 @@ import logger from '@loom24/shared/logger';
 import { AiModelGateway } from '@loom24/shared/types';
 
 const MAX_RETRIES = 3;
+const JITTER_MS = 1000;
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const withRetry = async <T>(fn: () => Promise<T>, context: object): Promise<T> => {
   let lastError: any;
@@ -12,7 +15,12 @@ const withRetry = async <T>(fn: () => Promise<T>, context: object): Promise<T> =
       return await fn();
     } catch (error: any) {
       lastError = error;
-      logger.warn({ ...context, attempt, err: error }, 'Operation failed, retrying');
+      const isLastAttempt = attempt === MAX_RETRIES;
+      const delay = Math.pow(2, attempt) * 1000 + Math.random() * JITTER_MS;
+      logger.warn({ ...context, attempt, nextRetryMs: isLastAttempt ? null : Math.round(delay), err: error }, 'Operation failed, retrying');
+      if (!isLastAttempt) {
+        await sleep(delay);
+      }
     }
   }
 

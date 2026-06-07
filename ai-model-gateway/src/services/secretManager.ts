@@ -1,4 +1,5 @@
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import logger from '@loom24/shared/logger';
 
 const PROJECT_ID = process.env.PROJECT_ID;
 
@@ -13,7 +14,7 @@ export async function getSecretValue(secretId: string, versionId = 'latest'): Pr
     
     return payload;
   } catch (error) {
-    console.error('Error accessing secret:', error);
+    logger.error({ err: error }, 'Error accessing secret');
     throw error;
   }
 }

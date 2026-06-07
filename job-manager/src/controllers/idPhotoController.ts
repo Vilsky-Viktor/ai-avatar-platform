@@ -187,7 +187,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
         maxRuns: 3,
         curRun: 0,
         order: input.order,
-        workflow: [input.imageGenerator, input.headDirectionChecker, input.faceMatcher, thumbnailMaker],
+        workflow: [input.imageGenerator, input.headDirectionChecker, thumbnailMaker],
         metadata: input.metadata,
         resultMediaPath: rawPath,
         resultThumbnailPath: thumbnailUploadPath,

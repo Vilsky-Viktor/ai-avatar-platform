@@ -1,7 +1,5 @@
-import { Trash2 } from 'lucide-react';
-import { type Avatar, AvatarGender } from '@loom24/shared/types';
-import { useApp } from '../../providers/ContextProvider';
-import { ThemeColor } from '../../types/settings';
+import { Trash2, User } from 'lucide-react';
+import { type Avatar } from '@loom24/shared/types';
 import { useEffect, useState } from 'react';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { useNavigate } from 'react-router-dom';
@@ -12,29 +10,18 @@ type PropType = {
 }
 
 const AvatarCard = ({ avatar, onDelete }: PropType) => {
-  const { theme } = useApp();
   const navigate = useNavigate();
 
-  const getAvatarDefaultImage = () => {
-    const isDark = theme === ThemeColor.Dark;
-    if (avatar.parameters.gender === AvatarGender.male) {
-      return isDark ? '/avatar-male-2.png' : '/avatar-male.png';
-    }
-    return isDark ? '/avatar-female-2.png' : '/avatar-female.png';
-  }
-
-  const [imageSrc, setImageSrc] = useState(() => getAvatarDefaultImage());
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(!!avatar.mainImagePath);
 
   useEffect(() => {
-    getAvatarImage();
-  }, [])
-
-  const getAvatarImage = async () => {
     if (!avatar.mainImagePath) return;
-
-    const frontPictureUrl = await getMediaUrlFromPath(avatar.mainImagePath);
-    setImageSrc(frontPictureUrl);
-  }
+    getMediaUrlFromPath(avatar.mainImagePath)
+      .then(url => setImageSrc(url))
+      .catch(() => {})
+      .finally(() => setImageLoading(false));
+  }, []);
 
   return (
     <div className="group card bg-base-100 w-full aspect-square shadow-md transition-all duration-300 relative rounded-2xl overflow-hidden active:scale-[0.99] hover:bg-base-200 cursor-pointer">
@@ -63,11 +50,17 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
             style={{ backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
 
         <figure className="h-full w-full overflow-hidden bg-base-300 relative">
-          <img 
-            src={imageSrc}
-            alt={avatar.name} 
-            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-1000 ease-out" 
-          />
+          {imageLoading || !imageSrc ? (
+            <div className="flex items-center justify-center w-full h-full">
+              <User size={200} strokeWidth={0.5} className="text-base-content/20" />
+            </div>
+          ) : (
+            <img
+              src={imageSrc}
+              alt={avatar.name}
+              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-1000 ease-out"
+            />
+          )}
           
           {/* Gradient Overlay for Text Readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-base-100 group-hover:from-base-200 via-base-100/5 to-transparent z-20 transition-colors duration-300" />

@@ -15,10 +15,6 @@ ENV POETRY_VIRTUALENVS_CREATE=false
 
 COPY pyproject.toml poetry.lock ./
 
-RUN pip install --no-cache-dir \
-    torch==2.7.1+cpu torchvision==0.22.1+cpu \
-    --index-url https://download.pytorch.org/whl/cpu
-
 RUN --mount=type=secret,id=gcp_key \
     pip install --no-cache-dir keyring keyrings.google-artifactregistry-auth && \
     GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key \
@@ -29,7 +25,7 @@ RUN --mount=type=secret,id=gcp_key \
 RUN mkdir -p /models/insightface/models/buffalo_l && \
     curl -fL -o /tmp/buffalo_l.zip \
     "https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip" && \
-    unzip -j /tmp/buffalo_l.zip "det_10g.onnx" -d /models/insightface/models/buffalo_l && \
+    unzip -j /tmp/buffalo_l.zip "det_10g.onnx" "w600k_r50.onnx" -d /models/insightface/models/buffalo_l && \
     rm /tmp/buffalo_l.zip
 
 COPY . .

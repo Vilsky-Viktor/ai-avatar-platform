@@ -1,21 +1,27 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-import logging
 import os
 import threading
 from typing import Literal
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from loom24_shared import logger
 from controllers.crop import crop_to_bucket
-
-logger = logging.getLogger(__name__)
+from utils.detector import warmup as warmup_pose
 
 MAX_CONCURRENT_CROPS = int(os.getenv("MAX_CONCURRENT_CROPS", "4"))
 _crop_sem = threading.Semaphore(MAX_CONCURRENT_CROPS)
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+def startup() -> None:
+    logger.info("Warming up mediapipe pose model...")
+    warmup_pose()
+    logger.info("Mediapipe pose model ready")
 
 CropMode = Literal["front", "quarter", "side", "full_body"]
 

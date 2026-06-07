@@ -52,7 +52,7 @@ services:
       - JOB_MANAGER_URL=http://job-manager:3300
       - VOICE_URL=http://voice:3600
       - CROPPER_URL=http://cropper:3800
-      - PROXY_TIMEOUT_MS=30000
+      - PROXY_TIMEOUT_MS=120000
 
   user:
     <<: *default-dns
@@ -173,6 +173,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - JOB_MANAGER_URL=http://job-manager:3300
       - MAX_CONCURRENT_CROPS=4
+      - GLOG_minloglevel=2
 
   ai-model-gateway:
     <<: *default-dns

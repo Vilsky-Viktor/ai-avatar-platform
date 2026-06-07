@@ -11,6 +11,7 @@ admin.initializeApp({ projectId: process.env.PROJECT_ID, storageBucket: process.
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'workflow-manager-sub';
 const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
+const SERVICE_NAME = 'workflow-manager'
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
@@ -36,9 +37,10 @@ const newWorkflowHandler = async (job: Job) => {
   const stepIdx = 0;
   const stepData = job.workflow[stepIdx];
 
+  job.curRun += 1;
   job.status = JobStatuses.generating;
 
-  await sendJob(stepData.service, job, 'workflow-manager');
+  await sendJob(stepData.service, job, SERVICE_NAME);
 
   stepData.status = JobStatuses.generating;
   job.workflow[stepIdx] = stepData;
@@ -50,9 +52,11 @@ const pendingStepHandler = async (job: Job) => {
   const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
   const stepData = job.workflow[stepIdx];
 
+  logger.info(`Sending job to ${stepData.service} step`)
+
   job.status = JobStatuses.generating;
 
-  await sendJob(stepData.service, job, 'workflow-manager');
+  await sendJob(stepData.service, job, SERVICE_NAME);
 
   stepData.status = JobStatuses.generating;
   job.workflow[stepIdx] = stepData;
@@ -77,9 +81,9 @@ const stepErrorHandler = async (job: Job) => {
   logger.info({ model: stepData.model, error: stepData.error, curRun: job.curRun }, 'Restarting workflow');
 
   job.curRun += 1;
-  job.workflow = job.workflow.map((step: WorkflowStep) => ({...step, status: JobStatuses.pending, error: '', operationJobId: undefined}));
+  job.workflow = job.workflow.map((step: WorkflowStep) => ({...step, status: JobStatuses.pending, error: undefined}));
 
-  await sendJob(job.workflow[0].service, job, 'workflow-manager');
+  await sendJob(job.workflow[0].service, job, SERVICE_NAME);
 
   await updateJob(job);
 }
@@ -144,14 +148,13 @@ function listenForResults() {
         } else {
           logger.warn('No workflow condition matched');
         }
-        message.ack();
       } catch (error: any) {
         logger.error({ err: error }, 'Failed to process job');
         job.status = JobStatuses.error;
         await updateJob(job);
-        message.nack();
       }
     } finally {
+      message.ack();
       clearLogContext();
     }
   };

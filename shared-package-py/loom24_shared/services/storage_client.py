@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import logging
 from typing import Optional
 
 from google.cloud import storage as gcs
 
-logger = logging.getLogger(__name__)
+from loom24_shared.logger import logger
 
 
 class StorageClient:

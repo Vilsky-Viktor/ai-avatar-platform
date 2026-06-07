@@ -6,11 +6,19 @@ import numpy as np
 import mediapipe as mp
 from PIL import Image
 
+
 CropMode = Literal["front", "quarter", "side", "full_body"]
 
 _PoseLandmark = mp.solutions.pose.PoseLandmark
 _pose: mp.solutions.pose.Pose | None = None
 _pose_lock = threading.Lock()
+
+
+def warmup() -> None:
+    dummy = np.zeros((64, 64, 3), dtype=np.uint8)
+    pose = _get_pose()
+    with _pose_lock:
+        pose.process(dummy)
 
 
 def _get_pose() -> mp.solutions.pose.Pose:

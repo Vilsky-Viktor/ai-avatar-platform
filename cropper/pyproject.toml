@@ -13,7 +13,7 @@ Pillow = "12.2.0"
 google-cloud-storage = "3.11.0"
 python-dotenv = "1.2.2"
 numpy = "1.26.4"
-loom24-shared = {version = "0.0.14", source = "loom24-pypi"}
+loom24-shared = {version = "0.0.17", source = "loom24-pypi"}
 
 [[tool.poetry.source]]
 name = "loom24-pypi"

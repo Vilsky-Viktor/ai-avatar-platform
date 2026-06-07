@@ -1,11 +1,8 @@
-import logging
 import os
 from typing import Optional
 
 from loom24_shared.types import Job
 from loom24_shared.services import ServiceClient, create_service_client
-
-logger = logging.getLogger(__name__)
 
 _client: Optional[ServiceClient] = None
 

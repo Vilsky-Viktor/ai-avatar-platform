@@ -8,10 +8,10 @@ import signal
 from google.cloud import pubsub_v1
 
 from loom24_shared import logger, set_log_context, clear_log_context
-from loom24_shared.types import FaceMatcherStep, Job, JobStatuses
+from loom24_shared.types import FaceMatcherStep, Job, JobStatuses, StepBase
 
-from utils.matcher import get_app, acquire_face_recognition, ADAFACE_MODEL_DIR
-from services.storage import download_bytes, rename_blob, delete_blob, download_models
+from utils.matcher import get_app, acquire_face_recognition
+from services.storage import download_bytes, rename_blob, delete_blob
 from services.job_manager_service import get_job
 
 PROJECT_ID              = os.environ["PROJECT_ID"]
@@ -44,19 +44,21 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         raw = json.loads(message.data.decode())
     except Exception as e:
         logger.error(f"Failed to parse message: {e}")
-        message.nack()
+        message.ack()
         return
 
     try:
         job = Job.model_validate(raw)
     except Exception as e:
         logger.error(f"Failed to validate job payload: {e}")
-        message.nack()
+        message.ack()
         return
 
     set_log_context(user_id=job.userId, avatar_id=job.avatarId, job_id=job.id)
 
     try:
+        logger.info("Received message")
+
         try:
             db_job = get_job(job)
             if db_job.status == JobStatuses.canceled:
@@ -86,6 +88,8 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
         step = FaceMatcherStep.model_validate(job.workflow[step_idx].model_dump())
 
+        logger.info(f"Starting face match — image={step.imagePath}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns}")
+
         try:
             image_bytes    = download_bytes(step.imagePath)
             id_photo_bytes = [download_bytes(p) for p in step.idPhotoPaths]
@@ -96,11 +100,13 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
             if similarity is None:
                 raise ValueError(f"No face detected in image: {step.imagePath}")
 
-            similarity     = round(float(similarity), 4)
+            similarity      = round(float(similarity), 4)
             prev_face_match = step.faceMatch or 0.0
-            is_better      = similarity > prev_face_match
-            is_final       = job.curRun == job.maxRuns
-            prev_tmp       = _prev_tmp_path(step.imagePath)
+            is_better       = similarity > prev_face_match
+            is_final        = job.curRun == job.maxRuns
+            prev_tmp        = _prev_tmp_path(step.imagePath)
+
+            logger.info(f"Similarity={similarity}, prev={prev_face_match}, is_better={is_better}, is_final={is_final}")
 
             if is_final:
                 if is_better:
@@ -111,21 +117,22 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
             else:
                 step.faceMatch = max(prev_face_match, similarity)
                 if job.curRun == 1 or is_better:
+                    logger.info(f"Saving current as best candidate → {prev_tmp}")
                     rename_blob(step.imagePath, prev_tmp)
 
-            face_match = step.faceMatch or 0.0
+            face_match    = step.faceMatch or 0.0
             threshold_met = face_match >= step.threshold
 
             if threshold_met:
-                logger.info(f"Face match passed (faceMatch={face_match}, threshold={step.threshold})")
+                logger.info(f"Face match passed — faceMatch={face_match}, threshold={step.threshold}")
                 step.status = JobStatuses.completed
                 step.error  = None
             elif is_final:
-                logger.info(f"Final run — completing regardless (faceMatch={face_match}, threshold={step.threshold})")
+                logger.info(f"Final run — completing regardless — faceMatch={face_match}, threshold={step.threshold}")
                 step.status = JobStatuses.completed
                 step.error  = None
             else:
-                logger.info(f"Face match FAILED, retrying (faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns})")
+                logger.info(f"Face match below threshold — retrying — faceMatch={face_match}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns}")
                 step.status = JobStatuses.error
                 step.error  = f"face similarity {face_match:.4f} below threshold {step.threshold}"
 
@@ -140,17 +147,14 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
             step.status = JobStatuses.error
             step.error  = str(e)
 
-        job.workflow[step_idx] = step
+        job.workflow[step_idx] = StepBase.model_validate(step.model_dump(mode="json"))
         _send_job(job)
-        message.ack()
     finally:
+        message.ack()
         clear_log_context()
 
 
 def main() -> None:
-    logger.info(f"Downloading models to {ADAFACE_MODEL_DIR}...")
-    download_models(ADAFACE_MODEL_DIR)
-
     logger.info(f"Loading face recognition model (pool_size={POOL_SIZE})...")
     get_app(n=POOL_SIZE)
     logger.info("Face recognition model loaded. Starting subscriber...")
