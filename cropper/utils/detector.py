@@ -11,7 +11,6 @@ from ultralytics import YOLO
 
 CropMode = Literal["front", "quarter", "side", "full_body"]
 
-# COCO 17 keypoint indices
 _NOSE           = 0
 _LEFT_EYE       = 1
 _RIGHT_EYE      = 2
@@ -179,7 +178,6 @@ def _fit_to_square(
     left: float, top: float, right: float, bottom: float,
     img_w: int, img_h: int,
 ) -> tuple[int, int, int, int]:
-    """Expand the crop region to a 1:1 square that fits within the image."""
     crop_w = right - left
     crop_h = bottom - top
 
@@ -192,16 +190,12 @@ def _fit_to_square(
         left  -= extra
         right += extra
 
-    # If the square is larger than the image in either dimension, shrink it.
-    # Doing this before the shift guarantees the box can always fit without
-    # conflicting shifts that cancel each other and leave a non-square result.
     side = min(right - left, float(img_w), float(img_h))
     cx   = (left + right) / 2
     cy   = (top + bottom) / 2
     left, right  = cx - side / 2, cx + side / 2
     top,  bottom = cy - side / 2, cy + side / 2
 
-    # Shift to stay within image bounds (box now fits, so one pass is enough)
     if left < 0:
         right -= left;  left = 0.0
     if top < 0:
@@ -213,6 +207,5 @@ def _fit_to_square(
 
     l, t, r, b = int(left), int(top), int(right), int(bottom)
 
-    # Force exact square after int truncation (at most 1-pixel adjustment)
     side_i = min(r - l, b - t)
     return l, t, l + side_i, t + side_i

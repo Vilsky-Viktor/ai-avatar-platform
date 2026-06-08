@@ -43,10 +43,8 @@ const extractFrame = async (videoBuffer: Buffer, seekSec: number): Promise<Buffe
 export const makeThumbnailFromVideo = async (videoBuffer: Buffer, size: number): Promise<Buffer> => {
   let frame: Buffer;
   try {
-    // Seek to 0.5 s to skip black/fade-in opening frames
     frame = await extractFrame(videoBuffer, 0.5);
   } catch {
-    // Fallback to the very first frame if the video is shorter than 0.5 s
     frame = await extractFrame(videoBuffer, 0);
   }
   return resizeImage(frame, size);

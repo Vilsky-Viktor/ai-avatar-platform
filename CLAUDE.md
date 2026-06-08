@@ -3,6 +3,8 @@
 ## Code style
 - All imports must be at the top of the file. No inline or deferred imports inside functions or conditionals.
 - Write readable and testable code. Split logic into small, focused functions. No large functions that do multiple things — each function should have one clear responsibility.
+- Do not use comments. No inline comments, no block comments, no docstrings.
+- Use only self-descriptive variable names. No single-letter or two-letter variable names (e.g. use `index` not `i`, `error` not `e`, `key` not `k`).
 
 ## Error handling and observability
 - Always handle errors. Never let failures silently disappear — every error path must log enough context to diagnose the problem without a debugger.

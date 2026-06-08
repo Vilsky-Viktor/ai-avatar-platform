@@ -87,8 +87,6 @@ class JobMetadata(BaseModel):
     lengthSec: Optional[int] = None
 
 
-# ── Workflow step types ────────────────────────────────────────────────────────
-
 class StepBase(BaseModel):
     model_config = {'extra': 'allow'}
 
@@ -143,8 +141,6 @@ WorkflowStep = Annotated[
 ]
 
 
-# ── Request types ──────────────────────────────────────────────────────────────
-
 class IdPhotoJobRequest(BaseModel):
     groupId: Optional[str] = None
     avatarId: str
@@ -185,8 +181,6 @@ class PhotoSetJobRequest(BaseModel):
     avatarId: str
     type: str
 
-
-# ── Job ────────────────────────────────────────────────────────────────────────
 
 class Job(BaseModel):
     model_config = {'extra': 'allow'}

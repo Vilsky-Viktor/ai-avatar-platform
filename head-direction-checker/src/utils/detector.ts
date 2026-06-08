@@ -7,14 +7,13 @@ const MODEL_PATH = '/app/models/det_10g.onnx';
 const INPUT_SIZE = 640;
 const SCORE_THRESHOLD = 0.3;
 const NMS_THRESHOLD = 0.4;
-const FRONT_MAX    = 0.15;  // |yawRatio| < 0.15         → front
-const QUARTER_MIN  = 0.55;  // 0.55–0.85               → genuine 3/4 profile
-const QUARTER_MAX  = 0.85;  // gap: 0.85–1.05
-const SIDE_MIN     = 1.05;  // >1.05                   → genuine side profile
+const FRONT_MAX    = 0.15;
+const QUARTER_MIN  = 0.55;
+const QUARTER_MAX  = 0.85;
+const SIDE_MIN     = 1.05;
 const NUM_ANCHORS = 2;
 const STRIDES = [8, 16, 32];
 
-// Point onnxruntime-web to the WASM files bundled in node_modules
 ort.env.wasm.wasmPaths = path.resolve('node_modules/onnxruntime-web/dist/') + '/';
 
 let session: ort.InferenceSession | null = null;
@@ -29,7 +28,6 @@ async function getSession(): Promise<ort.InferenceSession> {
   return session;
 }
 
-// Generate anchor center coordinates (in pixel space) for a given stride
 function generateAnchors(stride: number): Float32Array {
   const gridSize = INPUT_SIZE / stride;
   const total = gridSize * gridSize * NUM_ANCHORS;
@@ -79,20 +77,18 @@ function nmsKeep(boxes: number[][], scores: number[]): number[] {
 export const checkDirection = async (image: Buffer, requiredDirection: string): Promise<boolean> => {
   const sess = await getSession();
 
-  // Resize to 640x640 (letterbox), remove alpha, get raw RGB pixels
   const { data } = await sharp(image)
     .resize(INPUT_SIZE, INPUT_SIZE, { fit: 'contain', background: { r: 0, g: 0, b: 0 } })
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  // HWC RGB → CHW float32, normalize: (pixel - 127.5) / 128
   const float32 = new Float32Array(3 * INPUT_SIZE * INPUT_SIZE);
   const plane = INPUT_SIZE * INPUT_SIZE;
   for (let i = 0; i < plane; i++) {
-    float32[0 * plane + i] = (data[i * 3 + 0] - 127.5) / 128; // R
-    float32[1 * plane + i] = (data[i * 3 + 1] - 127.5) / 128; // G
-    float32[2 * plane + i] = (data[i * 3 + 2] - 127.5) / 128; // B
+    float32[0 * plane + i] = (data[i * 3 + 0] - 127.5) / 128;
+    float32[1 * plane + i] = (data[i * 3 + 1] - 127.5) / 128;
+    float32[2 * plane + i] = (data[i * 3 + 2] - 127.5) / 128;
   }
 
   const inputName = sess.inputNames[0];
@@ -101,7 +97,6 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
   };
   const outputs = await sess.run(feeds);
 
-  // Output order: scores×3, bboxes×3, kps×3 (one per stride)
   const outputVals = sess.outputNames.map(n => outputs[n].data as Float32Array);
   const [sc8, sc16, sc32, bb8, bb16, bb32, kp8, kp16, kp32] = outputVals;
 
@@ -121,13 +116,11 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
       const ax = anchors[i * 2];
       const ay = anchors[i * 2 + 1];
 
-      // Decode bbox: anchor_center + distance * stride (distance2bbox)
       const x1 = ax - bboxes[i * 4 + 0] * stride;
       const y1 = ay - bboxes[i * 4 + 1] * stride;
       const x2 = ax + bboxes[i * 4 + 2] * stride;
       const y2 = ay + bboxes[i * 4 + 3] * stride;
 
-      // Decode 5 keypoints: anchor_center + offset * stride (distance2kps)
       const pts: number[] = [];
       for (let k = 0; k < 5; k++) {
         pts.push(ax + kps[i * 10 + k * 2 + 0] * stride);
@@ -147,7 +140,6 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
     return false;
   }
 
-  // Best detection — keypoint layout: [rightEye_x, rightEye_y, leftEye_x, leftEye_y, nose_x, nose_y, ...]
   const kps = allKps[keepIdx[0]];
   const rightEyeX = kps[0];
   const leftEyeX  = kps[2];
@@ -161,9 +153,6 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
     return true;
   }
 
-  // viewer's left  → nose shifts left  in frame → yawRatio < 0
-  // viewer's right → nose shifts right in frame → yawRatio > 0
-  // front          → nose centered              → |yawRatio| < FRONT_THRESHOLD
   const yawRatio = (noseTipX - midEyeX) / interOcular;
 
   let passed: boolean;

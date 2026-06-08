@@ -124,9 +124,6 @@ class _FaceRecognitionInstance:
         return max_similarity if found_any else None
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _bytes_to_cv2(image_bytes: bytes) -> np.ndarray:
     arr = np.frombuffer(image_bytes, dtype=np.uint8)
@@ -136,9 +133,6 @@ def _bytes_to_cv2(image_bytes: bytes) -> np.ndarray:
     return img
 
 
-# ---------------------------------------------------------------------------
-# Pool API
-# ---------------------------------------------------------------------------
 
 def get_app(n: int = 1):
     for i in range(n):

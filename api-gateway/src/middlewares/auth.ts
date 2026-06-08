@@ -12,7 +12,6 @@ function getCachedUid(token: string): string | null {
     tokenCache.delete(token);
     return null;
   }
-  // Move to end so it is the most recently used
   tokenCache.delete(token);
   tokenCache.set(token, entry);
   return entry.uid;
@@ -20,7 +19,6 @@ function getCachedUid(token: string): string | null {
 
 function cacheToken(token: string, uid: string): void {
   if (tokenCache.size >= TOKEN_CACHE_MAX_SIZE) {
-    // Evict least recently used (first entry in insertion-order Map)
     const firstKey = tokenCache.keys().next().value;
     if (firstKey !== undefined) tokenCache.delete(firstKey);
   }

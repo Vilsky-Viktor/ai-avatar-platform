@@ -18,7 +18,7 @@ namespace Google {
     export enum EditModes {
         default = 'DEFAULT',
         creative = 'CREATIVE',
-        precise = 'PRECISE' // Fixed the typo here
+        precise = 'PRECISE'
     }
 
     export enum ImageSizes {
