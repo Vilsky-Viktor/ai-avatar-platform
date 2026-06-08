@@ -341,6 +341,16 @@ function CreateSyntheticIdPhotosPage() {
                                     </div>
                                 )}
 
+                                {/* Hint */}
+                                {allJobsStarted() && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-8 h-px bg-primary/50 flex-shrink-0" />
+                                        <p className="text-sm text-base-content/35 leading-relaxed">
+                                            Review each photo — if the face or colors look off, hit regenerate.
+                                        </p>
+                                    </div>
+                                )}
+
                                 {/* Photo grid */}
                                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                     {jobs.map((job, idx) => (

@@ -349,7 +349,7 @@ function CreateTwinIdPhotosPage() {
                                 </h1>
                             </div>
                             <p className="text-sm text-base-content/40 pl-11 leading-relaxed">
-                                Upload 7 high-quality photos from different angles so the AI can faithfully recreate your likeness.
+                                Upload 7 high-quality photos from different angles so AI can accurately recreate your digital copy.
                             </p>
                         </div>
 
@@ -422,6 +422,15 @@ function CreateTwinIdPhotosPage() {
                                     }
                                     Generate photos
                                 </button>
+                            </div>
+                        )}
+
+                        {jobs.length > 0 && (
+                            <div className="flex items-center gap-3">
+                                <span className="w-8 h-px bg-primary/50 flex-shrink-0" />
+                                <p className="text-sm text-base-content/35 leading-relaxed">
+                                    Review each photo — if the face or colors look off, hit regenerate.
+                                </p>
                             </div>
                         )}
 
