@@ -4,6 +4,8 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { getAvatarBySlug, genAvatarPhoto, genAvatarPhotoSet, genAvatarVideo, genAvatarAudio, mimicMotion, getJobsByAvatarId, getJobCountsByAvatarId, restartJobById, deleteJobById, normalizeJob } from '../services/apiGateway';
 import { getMediaUrlFromPath, uploadMediaToBucket } from '../services/storage';
 import type { Avatar } from '@loom24/shared/types';
+import { AvatarTypes } from '@loom24/shared/types';
+import Loading from '../components/Loading';
 import MediaCard from '../components/MediaCard';
 import FullscreenModal from '../components/createAvatar/FullscreenModal';
 import CreateMediaCard from '../components/avatar/CreateMediaCard';
@@ -28,6 +30,7 @@ function AvatarPage() {
     const { slug } = useParams<{ slug: string }>();
 
     const [avatar, setAvatar] = useState({} as Avatar);
+    const [avatarImageUrl, setAvatarImageUrl] = useState<string | null>(null);
 
     const [jobs, setJobs] = useState([] as (Job | null)[]);
     const jobsRef = useRef<(Job | null)[]>([]);
@@ -43,7 +46,7 @@ function AvatarPage() {
     const [numImages, setNumImages] = useState(0);
     const [numVideos, setNumVideos] = useState(0);
     const [numAudios, setNumAudios] = useState(0);
-    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; mediaType: MediaTypes } | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; mediaType: MediaTypes; thumbnailSrc?: string } | null>(null);
     const [createMediaOpen, setCreateMediaOpen] = useState(false);
     const [generateImageOpen, setGenerateImageOpen] = useState(false);
     const [generateVideoOpen, setGenerateVideoOpen] = useState(false);
@@ -229,7 +232,10 @@ function AvatarPage() {
     const fetchAvatar = async (): Promise<Avatar> => {
         const fetchedAvatar = await getAvatarBySlug(slug!);
         setAvatar(fetchedAvatar);
-        return fetchedAvatar
+        if (fetchedAvatar.mainImagePath) {
+            getMediaUrlFromPath(fetchedAvatar.mainImagePath).then(setAvatarImageUrl).catch(() => {});
+        }
+        return fetchedAvatar;
     }
 
     const resolveMediaUrls = async (jobs: Job[]) => {
@@ -312,25 +318,41 @@ function AvatarPage() {
             <div style={{ filter: bgBlurred ? 'blur(8px)' : 'none', transition: 'filter 0.1s ease' }}>
                 {pageLoading ? (
                     <div className="flex items-center justify-center min-h-[60vh]">
-                        <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
+                        <Loading />
                     </div>
                 ) : (
                     <div className="max-w-6xl mx-auto px-4 pt-12 mb-50">
-                        <div className="flex items-center gap-8 mb-10">
-                            <h1 className="text-2xl font-medium uppercase tracking-[0.2em]">{avatar.name}</h1>
-                            <div className="flex items-center gap-6 text-base-content/40">
+                        <div className="flex items-center gap-6 mb-10">
+                            {avatarImageUrl && (
+                                <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-base-content/5">
+                                    <img src={avatarImageUrl} alt={avatar.name} className="w-full h-full object-cover object-top" />
+                                </div>
+                            )}
+                            <div className="flex flex-col gap-1.5 flex-1">
+                                <div className="flex items-center gap-3">
+                                    <span className="w-8 h-px bg-primary/50" />
+                                    <h1 className="text-xl uppercase tracking-[0.2em] text-base-content/70">{avatar.name}</h1>
+                                </div>
+                                <div className="flex items-center gap-2 pl-11">
+                                    <span className="text-[9px] uppercase tracking-[0.25em] px-2 py-0.5 rounded-full bg-base-content/10 text-base-content/40">
+                                        {avatar.type === AvatarTypes.twin ? 'Twin' : 'Synthetic'}
+                                    </span>
+                                    <span className="text-xs text-base-content/25 font-mono">/{avatar.slug}</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-6 text-base-content/40 flex-shrink-0">
                                 <div className="flex flex-col items-center">
-                                    <span className="text-lg font-bold text-base-content">{numImages}</span>
+                                    <span className="text-lg text-base-content/80">{numImages}</span>
                                     <span className="text-[10px] uppercase tracking-[0.2em]">Images</span>
                                 </div>
                                 <div className="w-px h-8 bg-base-content/10" />
                                 <div className="flex flex-col items-center">
-                                    <span className="text-lg font-bold text-base-content">{numVideos}</span>
+                                    <span className="text-lg text-base-content/80">{numVideos}</span>
                                     <span className="text-[10px] uppercase tracking-[0.2em]">Videos</span>
                                 </div>
                                 <div className="w-px h-8 bg-base-content/10" />
                                 <div className="flex flex-col items-center">
-                                    <span className="text-lg font-bold text-base-content">{numAudios}</span>
+                                    <span className="text-lg text-base-content/80">{numAudios}</span>
                                     <span className="text-[10px] uppercase tracking-[0.2em]">Audios</span>
                                 </div>
                             </div>
@@ -364,7 +386,7 @@ function AvatarPage() {
                                                         key={item?.id ?? `empty-${virtualRow.index}-${colIdx}`}
                                                         job={item}
                                                         idx={jobIdx}
-                                                        onPhotoClick={(src: string, rect: DOMRect, mediaType: MediaTypes) => setFullscreen({ src, rect, mediaType })}
+                                                        onPhotoClick={(src: string, rect: DOMRect, mediaType: MediaTypes, thumbnailSrc?: string) => setFullscreen({ src, rect, mediaType, thumbnailSrc })}
                                                         onRegenerate={restartJob}
                                                         onDelete={deleteJob}
                                                         canDelete={item?.target === JobTargets.avatarMedia}
@@ -378,7 +400,7 @@ function AvatarPage() {
                             </div>
 
                             <div ref={sentinelRef} className="flex justify-center py-8">
-                                {loadingMore && <span className="loading loading-spinner loading-xl text-primary scale-150" />}
+                                {loadingMore && <Loading size="md" />}
                             </div>
                         </div>
                     </div>
@@ -387,7 +409,7 @@ function AvatarPage() {
 
             {bgBlurred && <div className="fixed inset-0 z-[9998] bg-black/20 pointer-events-none" />}
 
-            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} mediaType={fullscreen?.mediaType} onClose={() => setFullscreen(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} mediaType={fullscreen?.mediaType} thumbnailSrc={fullscreen?.thumbnailSrc} onClose={() => setFullscreen(null)} />
 
             <CreateMediaModal
                 isOpen={createMediaOpen}

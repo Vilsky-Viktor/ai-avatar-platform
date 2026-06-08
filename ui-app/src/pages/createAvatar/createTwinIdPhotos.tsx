@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
+import Loading from "../../components/Loading";
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import PhotoUploadGrid from "../../components/createAvatar/PhotoUploadGrid";
@@ -37,7 +38,7 @@ function CreateTwinIdPhotosPage() {
     const jobsRef = useRef<(Job | null)[]>([]);
 
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
-    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; thumbnailSrc?: string } | null>(null);
     const [croppingIndices, setCroppingIndices] = useState<number[]>([]);
     const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
     const [generateClicked, setGenerateClicked] = useState(false);
@@ -334,7 +335,7 @@ function CreateTwinIdPhotosPage() {
 
             {pageLoading ? (
                 <div className="flex items-center justify-center min-h-[60vh]">
-                    <span className="loading loading-spinner loading-xl text-primary scale-150" />
+                    <Loading />
                 </div>
             ) : (
                 <div className="max-w-7xl mx-auto px-4 pt-10 pb-32 flex gap-8 items-start">
@@ -417,7 +418,7 @@ function CreateTwinIdPhotosPage() {
                                     className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-primary text-primary-content text-sm uppercase tracking-[0.3em] transition-all duration-300 hover:brightness-110 hover:scale-[1.02] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
                                 >
                                     {generatingStarted() && !generatingCompleted()
-                                        ? <span className="loading loading-spinner loading-xs" />
+                                        ? <span className="loading loading-dots loading-xs" />
                                         : <Sparkles size={16} />
                                     }
                                     Generate photos
@@ -441,7 +442,7 @@ function CreateTwinIdPhotosPage() {
                                         key={idx}
                                         job={job}
                                         idx={idx}
-                                        onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
+                                        onPhotoClick={(src, rect, _mediaType, thumbnailSrc) => setFullscreen({ src, rect, thumbnailSrc })}
                                         onRegenerate={restartJob}
                                         canRestart={!stepLocked()}
                                         showOrder={true}
@@ -461,7 +462,7 @@ function CreateTwinIdPhotosPage() {
                 finish={false}
             />
 
-            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} thumbnailSrc={fullscreen?.thumbnailSrc} onClose={() => setFullscreen(null)} />
         </>
     )
 }

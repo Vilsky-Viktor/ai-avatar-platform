@@ -18,13 +18,13 @@ type RowProps = {
 
 function InfoRow({ icon, label, value, action }: RowProps) {
     return (
-        <div className="flex items-start gap-4 p-4 rounded-2xl bg-base-200/60">
-            <div className="w-9 h-9 rounded-xl bg-base-100 flex items-center justify-center shrink-0 shadow-sm">
+        <div className="flex items-start gap-4 py-3.5 border-b border-base-content/5 last:border-0">
+            <div className="w-8 h-8 rounded-xl bg-base-content/5 flex items-center justify-center shrink-0">
                 {icon}
             </div>
             <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-base-content/40 mb-0.5">{label}</p>
-                <p className="text-sm text-base-content leading-relaxed break-words">{value}</p>
+                <p className="text-[10px] uppercase tracking-[0.25em] text-base-content/30 mb-1">{label}</p>
+                <p className="text-sm text-base-content/70 leading-relaxed break-words">{value}</p>
             </div>
             {action && <div className="shrink-0 self-center">{action}</div>}
         </div>
@@ -56,8 +56,13 @@ function MediaInfoPopup({ job, onClose }: Props) {
                 className="absolute inset-0 bg-base-300/60 animate-modal-backdrop"
                 onClick={onClose}
             />
-            <div className="relative bg-base-100 w-full max-w-xl rounded-[2.5rem] shadow-2xl border border-base-content/5 p-8 animate-modal-card">
-                <div className="flex flex-col gap-2">
+            <div className="relative bg-base-100 w-full max-w-md rounded-2xl border border-base-content/5 p-8 animate-modal-card">
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center gap-3">
+                        <span className="w-8 h-px bg-primary/50" />
+                        <h3 className="text-xl uppercase tracking-[0.2em] text-base-content/70">Media info</h3>
+                    </div>
+                    <div className="flex flex-col">
                     {dimensions && (
                         <InfoRow
                             icon={<Maximize2 size={22} className="text-base-content/50" />}
@@ -108,14 +113,16 @@ function MediaInfoPopup({ job, onClose }: Props) {
                             }
                         />
                     )}
+                    </div>
+                    <div className="flex justify-end">
+                        <button
+                            onClick={onClose}
+                            className="px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-base-content/70 transition-colors duration-300"
+                        >
+                            Close
+                        </button>
+                    </div>
                 </div>
-
-                <button
-                    onClick={onClose}
-                    className="btn btn-ghost btn-lg rounded-2xl w-full uppercase tracking-widest text-xs opacity-50 hover:opacity-100 mt-6"
-                >
-                    Close
-                </button>
             </div>
         </div>,
         document.body

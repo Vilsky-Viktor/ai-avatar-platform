@@ -1,4 +1,5 @@
-import { X, Images } from 'lucide-react';
+import { Images } from 'lucide-react';
+import Loading from '../Loading';
 import { MediaTypes, JobStatuses, JobTargets, type Job } from '@loom24/shared/types';
 import type { VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -92,23 +93,19 @@ function MediaSelectorModal({ isOpen, onClose, avatarId, onSelect, title = 'Sele
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
-            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-6 p-8 w-[700px] max-h-[80vh] animate-modal-card">
+            <div className="relative bg-base-100 rounded-2xl border border-base-content/5 flex flex-col w-[700px] max-h-[80vh] animate-modal-card">
 
-                <button
-                    onClick={onClose}
-                    className="absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full text-base-content/30 hover:text-base-content hover:bg-base-200 transition-all cursor-pointer"
-                >
-                    <X size={25} />
-                </button>
+                <div className="flex items-center gap-3 px-10 pt-10 pb-6 flex-shrink-0">
+                    <span className="w-8 h-px bg-primary/50" />
+                    <h2 className="text-xl uppercase tracking-[0.2em] text-base-content/70">{title}</h2>
+                </div>
 
-                <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50 mt-2">{title}</h2>
-
-                <div ref={scrollRef} className="overflow-y-auto flex-1 min-h-0">
+                <div ref={scrollRef} className="overflow-y-auto flex-1 min-h-0 px-10">
                     {initialLoading ? (
                         <div className="flex items-center justify-center h-48">
-                            <span className="loading loading-spinner loading-lg text-primary" />
+                            <Loading />
                         </div>
-                    ) : images.length === 0 && !nextCursor ? (
+                    ) :images.length === 0 && !nextCursor ? (
                         <div className="flex flex-col items-center justify-center h-48 gap-3 text-base-content/30">
                             <Images size={40} strokeWidth={1.5} />
                             <span className="text-xs uppercase tracking-widest">No generated images yet</span>
@@ -140,7 +137,7 @@ function MediaSelectorModal({ isOpen, onClose, avatarId, onSelect, title = 'Sele
                                                 <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-all" />
                                                 {job.metadata?.ratio && (
                                                     <div className="absolute top-1.5 left-1.5 z-10">
-                                                        <div className="px-2.5 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.6rem] shadow-lg text-white text-xs font-medium">
+                                                        <div className="px-2.5 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.6rem] text-white text-xs">
                                                             {job.metadata.ratio}
                                                         </div>
                                                     </div>
@@ -155,9 +152,18 @@ function MediaSelectorModal({ isOpen, onClose, avatarId, onSelect, title = 'Sele
                     <div ref={sentinelRef} className="h-1" />
                     {loadingMore && (
                         <div className="flex justify-center py-4">
-                            <span className="loading loading-spinner loading-md text-primary" />
+                            <Loading size="md" />
                         </div>
                     )}
+                </div>
+
+                <div className="flex justify-end px-10 py-6 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        className="px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-base-content/70 transition-colors duration-300"
+                    >
+                        Close
+                    </button>
                 </div>
             </div>
         </div>,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Sparkles, ImagePlus, Trash2, Clock, Mic, Square, RotateCcw, Check, Loader2, Images, Film, Volume2 } from 'lucide-react';
+import { Sparkles, ImagePlus, Trash2, Mic, Square, RotateCcw, Check, Images, Film, Volume2 } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
 import type { VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -266,24 +266,28 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
 
     return (
         <>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
                 <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
-                <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-7 p-10 w-[680px] animate-modal-card">
+                <div className="relative bg-base-100 rounded-2xl border border-base-content/5 flex flex-col w-[680px] max-h-[90vh] animate-modal-card">
 
-                    <button
-                        onClick={onClose}
-                        className="absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full text-base-content/30 hover:text-base-content hover:bg-base-200 transition-all cursor-pointer"
-                    >
-                        <X size={25} />
-                    </button>
+                    {/* Header */}
+                    <div className="flex items-center gap-3 px-10 pt-10 pb-6 flex-shrink-0">
+                        <span className="w-8 h-px bg-primary/50" />
+                        <h3 className="text-xl uppercase tracking-[0.2em] text-base-content/70">
+                            {modalMode === 'gen-video' ? 'Generate video' : 'Mimic motion'}
+                        </h3>
+                    </div>
+
+                    {/* Scrollable body */}
+                    <div className="flex flex-col gap-5 px-10 overflow-y-auto flex-1 pb-2">
 
                     {/* Mode switcher */}
-                    <div className="flex w-full p-1.5 bg-base-content/5 rounded-2xl mt-8">
+                    <div className="flex w-full p-1.5 bg-base-content/5 rounded-2xl">
                         {(['gen-video', 'mimic-motion'] as ModalMode[]).map(mode => (
                             <button
                                 key={mode}
                                 onClick={() => setModalMode(mode)}
-                                className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 cursor-pointer ${
+                                className={`flex-1 py-3 px-4 rounded-xl text-xs uppercase tracking-[0.2em] transition-all duration-300 cursor-pointer ${
                                     modalMode === mode ? 'bg-base-100 text-primary shadow-sm scale-[1.02]' : 'text-base-content/40 hover:text-base-content/60'
                                 }`}
                             >
@@ -293,47 +297,54 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                     </div>
 
                     {modalMode === 'gen-video' && (<>
-                    <div className="flex items-start gap-4 mt-3">
-                        {/* Reference image */}
-                        <div className="group relative w-44 h-44 shrink-0 rounded-xl overflow-hidden border border-base-content/10">
-                            {selectedImage ? (
-                                <>
-                                    <img
-                                        src={selectedImage.thumbnailUrl || selectedImage.url}
-                                        className="w-full h-full object-cover object-top cursor-pointer"
-                                        onClick={() => avatar?.id && setSelectorOpen(true)}
-                                    />
+                    <div className="flex gap-4">
+                        <div className="flex flex-col gap-2 shrink-0">
+                            <div className="group relative w-44 h-44 rounded-xl overflow-hidden border border-base-content/10">
+                                {selectedImage ? (
+                                    <>
+                                        <img
+                                            src={selectedImage.thumbnailUrl || selectedImage.url}
+                                            className="w-full h-full object-cover object-top cursor-pointer"
+                                            onClick={() => avatar?.id && setSelectorOpen(true)}
+                                        />
+                                        <button
+                                            onClick={() => setSelectedImage(null)}
+                                            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                                        >
+                                            <Trash2 size={15} className="text-white" />
+                                        </button>
+                                    </>
+                                ) : (
                                     <button
-                                        onClick={() => setSelectedImage(null)}
-                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                                        onClick={() => avatar?.id && setSelectorOpen(true)}
+                                        className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
                                     >
-                                        <Trash2 size={15} className="text-white" />
+                                        <ImagePlus size={28} strokeWidth={1} />
+                                        <span className="text-[11px] uppercase tracking-widest text-center leading-relaxed">Avatar Image</span>
                                     </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={() => avatar?.id && setSelectorOpen(true)}
-                                    className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
-                                >
-                                    <ImagePlus size={28} strokeWidth={1} />
-                                    <span className="text-[11px] uppercase tracking-widest text-center leading-relaxed">Avatar Image</span>
-                                </button>
-                            )}
+                                )}
+                            </div>
                         </div>
-
-                        <textarea
-                            autoFocus
-                            value={prompt}
-                            onChange={e => setPrompt(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
-                            placeholder={`Describe what ${avatar?.name ?? 'your avatar'} is doing...`}
-                            className="flex-1 h-44 bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
-                        />
+                        <div className="flex flex-col gap-2 flex-1">
+                            <textarea
+                                autoFocus
+                                value={prompt}
+                                onChange={e => setPrompt(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
+                                placeholder={`Describe what ${avatar?.name ?? 'your avatar'} is doing...`}
+                                className="flex-1 bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
+                            />
+                        </div>
                     </div>
 
                     {/* Length slider */}
-                    <div className="flex items-center gap-3">
-                        <Clock size={18} className="text-base-content/30 shrink-0" />
+                    <div className="relative rounded-2xl border border-base-content/10 px-6 py-5 flex flex-col gap-3 overflow-hidden">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Duration</span>
+                            <span className="text-2xl text-primary tabular-nums leading-none">
+                                {lengthSec}<span className="text-sm text-base-content/30 ml-1">sec</span>
+                            </span>
+                        </div>
                         <input
                             type="range"
                             min={3}
@@ -341,42 +352,45 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                             step={1}
                             value={lengthSec}
                             onChange={e => setLengthSec(Number(e.target.value))}
-                            className="range range-primary range-xs flex-1"
+                            className="range range-primary range-sm w-full"
                         />
-                        <span className="text-sm font-semibold text-primary w-12 text-right shrink-0">{lengthSec} sec</span>
+                        <div className="flex justify-between px-0.5">
+                            {[3,4,5,6,7,8,9,10].map(n => (
+                                <span key={n} className={`text-[10px] tabular-nums transition-colors duration-200 ${n === lengthSec ? 'text-primary' : 'text-base-content/25'}`}>{n}</span>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Object photos section */}
                     <div className={`rounded-2xl border transition-all duration-300 ${objectPhotosEnabled ? 'border-primary/30 bg-primary/[0.03]' : 'border-base-content/10'}`}>
                         <label className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer">
                             <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300 ${objectPhotosEnabled ? 'bg-primary/10 text-primary' : 'bg-base-200 text-base-content/30'}`}>
-                                    <Images size={17} />
-                                </div>
+                                <Images size={22} strokeWidth={1.2} className={`shrink-0 transition-colors duration-300 ${objectPhotosEnabled ? 'text-primary' : 'text-base-content/25'}`} />
                                 <div>
-                                    <p className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors duration-300 ${objectPhotosEnabled ? 'text-primary' : 'text-base-content/50'}`}>Add object images</p>
-                                    <p className="text-[10px] text-base-content/30 mt-0.5">Reference object images from different angles</p>
+                                    <p className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${objectPhotosEnabled ? 'text-primary' : 'text-base-content/50'}`}>Add object images</p>
+                                    <p className="text-[10px] text-base-content/30 mt-0.5">Show AI the object you would like to place in the scene</p>
                                 </div>
                             </div>
-                            <input
-                                type="checkbox"
-                                checked={objectPhotosEnabled}
-                                onChange={e => setObjectPhotosEnabled(e.target.checked)}
-                                className="checkbox checkbox-primary checkbox-sm"
-                            />
+                            <div className={`relative w-9 h-5 rounded-full transition-colors duration-300 shrink-0 ${objectPhotosEnabled ? 'bg-primary/30' : 'bg-base-content/10'}`}>
+                                <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 ${objectPhotosEnabled ? 'left-[18px] bg-primary' : 'left-0.5 bg-base-content/30'}`} />
+                            </div>
+                            <input type="checkbox" checked={objectPhotosEnabled} onChange={e => setObjectPhotosEnabled(e.target.checked)} className="hidden" />
                         </label>
 
                         {objectPhotosEnabled && (
                             <div className="px-5 pb-5">
-                                <div className="grid grid-cols-4 gap-3 mb-4">
+                                <p className="text-[11px] text-base-content/30 leading-relaxed mb-4">
+                                    Upload 2–4 photos of the same object from different angles. The AI will be able to understand its proportions in 3D. The first image is the main one.
+                                </p>
+                                <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr] gap-3 mb-4">
                                     {[0, 1, 2, 3].map(idx => (
-                                        <div key={idx} className="group relative aspect-square rounded-xl overflow-hidden border border-base-content/10">
+                                        <div key={idx} className={`group relative aspect-square rounded-xl overflow-hidden border transition-colors duration-300 ${idx === 0 ? 'border-primary/20' : 'border-base-content/10'}`}>
                                             {objectPhotoPreviews[idx] ? (
                                                 <>
                                                     <img src={objectPhotoPreviews[idx]!} className="w-full h-full object-cover object-top" />
                                                     {objectPhotoUploading[idx] && (
                                                         <div className="absolute inset-0 bg-base-100/60 flex items-center justify-center">
-                                                            <Loader2 size={20} className="animate-spin text-primary" />
+                                                            <span className="loading loading-dots loading-xs text-primary" />
                                                         </div>
                                                     )}
                                                     <button
@@ -406,7 +420,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                 </div>
                                 <button
                                     onClick={() => setPrompt(p => p + (p.length > 0 && !p.endsWith(' ') ? ' ' : '') + '@Element1')}
-                                    className="text-[10px] font-semibold uppercase tracking-[0.2em] text-base-content/40 hover:text-primary transition-colors cursor-pointer"
+                                    className="text-[10px]  uppercase tracking-[0.2em] text-base-content/40 hover:text-primary transition-colors cursor-pointer"
                                 >
                                     + Add reference to prompt
                                 </button>
@@ -415,23 +429,19 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                     </div>
 
                     {/* Generate voice section */}
-                    <div className={`-mt-4 rounded-2xl border transition-all duration-300 ${generateVoice ? 'border-primary/30 bg-primary/[0.03]' : 'border-base-content/10'}`}>
+                    <div className={`rounded-2xl border transition-all duration-300 ${generateVoice ? 'border-primary/30 bg-primary/[0.03]' : 'border-base-content/10'}`}>
                         <label className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer">
                             <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300 ${generateVoice ? 'bg-primary/10 text-primary' : 'bg-base-200 text-base-content/30'}`}>
-                                    <Mic size={17} />
-                                </div>
+                                <Mic size={22} strokeWidth={1.2} className={`shrink-0 transition-colors duration-300 ${generateVoice ? 'text-primary' : 'text-base-content/25'}`} />
                                 <div>
-                                    <p className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors duration-300 ${generateVoice ? 'text-primary' : 'text-base-content/50'}`}>Add voice</p>
+                                    <p className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${generateVoice ? 'text-primary' : 'text-base-content/50'}`}>Add voice</p>
                                     <p className="text-[10px] text-base-content/30 mt-0.5">Add avatar speech to the video</p>
                                 </div>
                             </div>
-                            <input
-                                type="checkbox"
-                                checked={generateVoice}
-                                onChange={e => setGenerateVoice(e.target.checked)}
-                                className="checkbox checkbox-primary checkbox-sm"
-                            />
+                            <div className={`relative w-9 h-5 rounded-full transition-colors duration-300 shrink-0 ${generateVoice ? 'bg-primary/30' : 'bg-base-content/10'}`}>
+                                <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 ${generateVoice ? 'left-[18px] bg-primary' : 'left-0.5 bg-base-content/30'}`} />
+                            </div>
+                            <input type="checkbox" checked={generateVoice} onChange={e => setGenerateVoice(e.target.checked)} className="hidden" />
                         </label>
 
                         {generateVoice && (
@@ -456,7 +466,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                                     setAudioText('');
                                                 }
                                             }}
-                                            className={`flex-1 py-2 px-4 rounded-lg text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 cursor-pointer ${
+                                            className={`flex-1 py-2 px-4 rounded-lg text-[10px]  uppercase tracking-[0.2em] transition-all duration-300 cursor-pointer ${
                                                 voiceMode === mode
                                                     ? 'bg-base-100 text-primary shadow-sm scale-[1.02]'
                                                     : 'text-base-content/40 hover:text-base-content/60'
@@ -468,14 +478,19 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                 </div>
 
                                 {voiceMode === 'text' && (
+                                    <>
                                     <textarea
                                         autoFocus
                                         value={audioText}
                                         onChange={e => setAudioText(e.target.value)}
                                         placeholder={`Write what you want ${avatar?.name ?? 'your avatar'} to say in the video...`}
                                         rows={3}
-                                        className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
+                                        className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                                     />
+                                    <p className="text-[11px] text-base-content/30 leading-relaxed">
+                                        Use <span className="font-mono text-base-content/40">[tags]</span> to add emotions or actions — e.g. <span className="font-mono text-base-content/40">[excited]</span>, <span className="font-mono text-base-content/40">[laughs]</span>, <span className="font-mono text-base-content/40">[whispers]</span>.
+                                    </p>
+                                    </>
                                 )}
 
                                 {voiceMode === 'record' && (
@@ -493,7 +508,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="flex items-center gap-3">
                                                     <span className="w-2.5 h-2.5 rounded-full bg-error animate-pulse" />
-                                                    <span className="font-mono text-sm font-semibold text-base-content/70">{formatTime(recordingTime)}</span>
+                                                    <span className="font-mono text-sm  text-base-content/70">{formatTime(recordingTime)}</span>
                                                 </div>
                                                 <button
                                                     onClick={stopRecording}
@@ -518,13 +533,13 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                                     <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em]">
                                                         {isConverting && (
                                                             <>
-                                                                <Loader2 size={12} className="animate-spin text-base-content/40" />
+                                                                <span className="loading loading-dots loading-xs text-base-content/40" />
                                                                 <span className="text-base-content/40">Converting…</span>
                                                             </>
                                                         )}
                                                         {!isConverting && isUploading && (
                                                             <>
-                                                                <Loader2 size={12} className="animate-spin text-base-content/40" />
+                                                                <span className="loading loading-dots loading-xs text-base-content/40" />
                                                                 <span className="text-base-content/40">Uploading…</span>
                                                             </>
                                                         )}
@@ -547,16 +562,17 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                     </>)}
 
                     {modalMode === 'mimic-motion' && (
-                        <div className="flex flex-col gap-5 mt-3">
+                        <div className="flex flex-col gap-5">
                             <div className="flex gap-4">
                                 {/* Video reference */}
-                                <div className="group relative flex-1 aspect-square rounded-xl overflow-hidden border border-base-content/10">
+                                <div className="flex-1">
+                                <div className="group relative aspect-square rounded-xl overflow-hidden border border-base-content/10">
                                     {mimicVideoPreviewUrl ? (
                                         <>
                                             <video src={mimicVideoPreviewUrl} muted loop playsInline className="w-full h-full object-cover" />
                                             {mimicVideoUploading && (
                                                 <div className="absolute inset-0 bg-base-100/60 flex items-center justify-center">
-                                                    <Loader2 size={24} className="animate-spin text-primary" />
+                                                    <span className="loading loading-dots loading-sm text-primary" />
                                                 </div>
                                             )}
                                             <button
@@ -577,9 +593,11 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                     )}
                                     <input ref={mimicVideoInputRef} type="file" accept="video/*" className="hidden" onChange={handleMimicVideoChange} />
                                 </div>
+                                </div>
 
                                 {/* Image reference */}
-                                <div className="group relative flex-1 aspect-square rounded-xl overflow-hidden border border-base-content/10">
+                                <div className="flex-1">
+                                <div className="group relative aspect-square rounded-xl overflow-hidden border border-base-content/10">
                                     {mimicImageUrl ? (
                                         <>
                                             <img src={mimicImageThumbnailUrl || mimicImageUrl} className="w-full h-full object-cover object-top" />
@@ -600,43 +618,51 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                         </button>
                                     )}
                                 </div>
+                                </div>
                             </div>
 
                             <div className={`rounded-2xl border transition-all duration-300 ${keepOriginalAudio ? 'border-primary/30 bg-primary/[0.03]' : 'border-base-content/10'}`}>
                                 <label className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300 ${keepOriginalAudio ? 'bg-primary/10 text-primary' : 'bg-base-200 text-base-content/30'}`}>
-                                            <Volume2 size={17} />
-                                        </div>
+                                        <Volume2 size={22} strokeWidth={1.2} className={`shrink-0 transition-colors duration-300 ${keepOriginalAudio ? 'text-primary' : 'text-base-content/25'}`} />
                                         <div>
-                                            <p className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors duration-300 ${keepOriginalAudio ? 'text-primary' : 'text-base-content/50'}`}>Keep original audio</p>
+                                            <p className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${keepOriginalAudio ? 'text-primary' : 'text-base-content/50'}`}>Keep original audio</p>
                                             <p className="text-[10px] text-base-content/30 mt-0.5">Preserve the audio from the reference video</p>
                                         </div>
                                     </div>
-                                    <input
-                                        type="checkbox"
-                                        checked={keepOriginalAudio}
-                                        onChange={e => setKeepOriginalAudio(e.target.checked)}
-                                        className="checkbox checkbox-primary checkbox-sm"
-                                    />
+                                    <div className={`relative w-9 h-5 rounded-full transition-colors duration-300 shrink-0 ${keepOriginalAudio ? 'bg-primary/30' : 'bg-base-content/10'}`}>
+                                        <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 ${keepOriginalAudio ? 'left-[18px] bg-primary' : 'left-0.5 bg-base-content/30'}`} />
+                                    </div>
+                                    <input type="checkbox" checked={keepOriginalAudio} onChange={e => setKeepOriginalAudio(e.target.checked)} className="hidden" />
                                 </label>
                             </div>
                         </div>
                     )}
 
                     {error && (
-                        <p className="text-xs text-error text-right">{error}</p>
+                        <p className="text-xs text-error">{error}</p>
                     )}
 
-                    <div className="flex justify-end">
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between px-10 py-6 flex-shrink-0">
+                        <button
+                            onClick={onClose}
+                            className="px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-base-content/70 transition-colors duration-300"
+                        >
+                            Close
+                        </button>
                         <button
                             onClick={handleGenerate}
                             disabled={!canGenerate()}
-                            className="group flex items-center gap-3 px-7 py-3 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="group flex items-center gap-3 px-7 py-3.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                         >
-                            <Sparkles size={16} className="group-hover:animate-pulse" />
-                            <span className="text-sm font-semibold uppercase tracking-[0.2em]">Generate</span>
-                            {loading && <span className="loading loading-spinner loading-xs" />}
+                            {loading
+                                ? <span className="loading loading-dots loading-xs" />
+                                : <Sparkles size={16} className="group-hover:animate-pulse" />
+                            }
+                            <span className="text-sm uppercase tracking-[0.2em]">Generate</span>
                         </button>
                     </div>
                 </div>

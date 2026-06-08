@@ -1,4 +1,4 @@
-import { Trash2, Loader2, Sparkles, CircleOff, ArrowLeft, ArrowRight, ArrowDownLeft, ArrowDownRight, User, PersonStanding } from 'lucide-react';
+import { Trash2, Sparkles, CircleOff, ArrowLeft, ArrowRight, ArrowDownLeft, ArrowDownRight, User, PersonStanding } from 'lucide-react';
 import type { RefObject } from 'react';
 import type { UploadedIdPhoto } from '../../types/avatarCreation';
 
@@ -79,7 +79,7 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                         {isCropping ? (
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative">
-                                    <Loader2 size={44} strokeWidth={1} className="text-primary animate-spin" />
+                                    <span className="loading loading-dots loading-md text-primary" />
                                     <Sparkles size={16} className="absolute -top-2 -right-2 text-primary animate-pulse" />
                                 </div>
                                 <div className="text-center">

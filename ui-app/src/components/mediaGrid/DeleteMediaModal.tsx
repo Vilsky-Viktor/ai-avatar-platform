@@ -1,4 +1,4 @@
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
@@ -16,30 +16,35 @@ function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
                 className="absolute inset-0 bg-base-300/60 animate-modal-backdrop"
                 onClick={() => !isDeleting && onCancel()}
             />
-            <div className="relative bg-base-100 w-full max-w-md rounded-[1.5rem] shadow-2xl border border-base-content/5 p-10 animate-modal-card">
-                <div className="flex flex-col items-center text-center">
-                    <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mb-6">
-                        <AlertTriangle className="text-error" size={32} />
+            <div className="relative bg-base-100 w-full max-w-md rounded-2xl border border-base-content/5 p-10 animate-modal-card">
+                <div className="flex flex-col gap-8">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-3">
+                            <span className="w-8 h-px bg-error/50" />
+                            <h3 className="text-xl uppercase tracking-[0.2em] text-base-content/70">Delete media?</h3>
+                        </div>
+                        <p className="text-sm text-base-content/40 leading-relaxed pl-11">
+                            This media will be permanently deleted and cannot be recovered.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold uppercase tracking-widest mb-2">Confirm Delete</h3>
-                    <p className="text-sm text-base-content/60 leading-relaxed mb-8">
-                        Are you sure you want to delete this media? This action cannot be undone.
-                    </p>
-                    <div className="flex flex-col w-full gap-3">
-                        <button
-                            onClick={onConfirm}
-                            disabled={isDeleting}
-                            className="btn btn-error btn-lg rounded-2xl w-full uppercase tracking-widest text-xs"
-                        >
-                            {isDeleting ? <span className="loading loading-spinner" /> : <Trash2 size={16} className="mr-2" />}
-                            Delete Media
-                        </button>
+                    <div className="flex gap-3 justify-end">
                         <button
                             onClick={onCancel}
                             disabled={isDeleting}
-                            className="btn btn-ghost btn-lg rounded-2xl w-full uppercase tracking-widest text-xs opacity-50 hover:opacity-100"
+                            className="px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-base-content/70 transition-colors duration-300"
                         >
-                            Cancel
+                            Keep it
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            disabled={isDeleting}
+                            className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer border border-error/20 text-error/50 hover:border-error/50 hover:text-error transition-all duration-300"
+                        >
+                            {isDeleting
+                                ? <span className="loading loading-dots loading-xs" />
+                                : <Trash2 size={13} strokeWidth={2} />
+                            }
+                            Delete
                         </button>
                     </div>
                 </div>

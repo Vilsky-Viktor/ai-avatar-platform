@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
+import { Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
 import { type ImageRatio, IMAGE_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -85,97 +85,118 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
-            <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-content/5 flex flex-col gap-7 p-10 w-[700px] animate-modal-card">
+            <div className="relative bg-base-100 rounded-2xl border border-base-content/5 flex flex-col gap-6 p-10 w-[620px] animate-modal-card">
 
-                <button
-                    onClick={onClose}
-                    className="absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full text-base-content/30 hover:text-base-content hover:bg-base-200 transition-all cursor-pointer"
-                >
-                    <X size={25} />
-                </button>
+                {/* Title */}
+                <div className="flex items-center gap-3">
+                    <span className="w-8 h-px bg-primary/50" />
+                    <h3 className="text-xl uppercase tracking-[0.2em] text-base-content/70">Generate photo</h3>
+                </div>
 
-                <textarea
-                    ref={textareaRef}
-                    autoFocus
-                    value={prompt}
-                    onChange={e => setPrompt(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
-                    placeholder={`Describe the image you want to generate with ${avatar?.name ?? 'your avatar'}...`}
-                    rows={6}
-                    className="mt-8 w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-base text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
-                />
+                {/* Prompt */}
+                <div className="flex flex-col gap-2">
+                    <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Prompt</span>
+                    <textarea
+                        ref={textareaRef}
+                        autoFocus
+                        value={prompt}
+                        onChange={e => setPrompt(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
+                        placeholder={`Describe the photo you want to generate with ${avatar?.name ?? 'your avatar'}...`}
+                        rows={4}
+                        className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
+                    />
+                </div>
 
                 {/* Reference images */}
-                <div className="flex items-center gap-3">
-                    {slots.map((_slot, idx) => (
-                        <div key={idx} className="group relative w-49 h-49 rounded-xl overflow-hidden border border-base-content/10 shrink-0">
-                            {previews[idx] ? (
-                                <>
-                                    <img
-                                        src={previews[idx]!}
-                                        onClick={() => insertReference(idx)}
-                                        className="w-full h-full object-cover object-top cursor-pointer"
-                                    />
-                                    <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-semibold uppercase tracking-widest pointer-events-none">
-                                        image #{idx + 1}
-                                    </span>
+                <div className="flex flex-col gap-2">
+                    <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Reference images · optional</span>
+                    <div className="flex items-center gap-3">
+                        {slots.map((_slot, idx) => (
+                            <div key={idx} className="group relative flex-1 aspect-square rounded-xl overflow-hidden border border-base-content/10">
+                                {previews[idx] ? (
+                                    <>
+                                        <img
+                                            src={previews[idx]!}
+                                            onClick={() => insertReference(idx)}
+                                            className="w-full h-full object-cover object-top cursor-pointer"
+                                        />
+                                        <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] uppercase tracking-widest pointer-events-none">
+                                            image {idx + 1}
+                                        </span>
+                                        <button
+                                            onClick={() => removeSlot(idx)}
+                                            className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                                        >
+                                            <Trash2 size={15} className="text-white" />
+                                        </button>
+                                    </>
+                                ) : (
                                     <button
-                                        onClick={() => removeSlot(idx)}
-                                        className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                                        onClick={() => fileInputRefs[idx].current?.click()}
+                                        className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
                                     >
-                                        <Trash2 size={15} className="text-white" />
+                                        <ImagePlus size={24} strokeWidth={1.5} />
+                                        <span className="text-[10px] uppercase tracking-widest text-center leading-relaxed">Add<br/>image</span>
                                     </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={() => fileInputRefs[idx].current?.click()}
-                                    className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
-                                >
-                                    <ImagePlus size={35} strokeWidth={1.5} />
-                                    <span className="text-[11px] uppercase tracking-widest text-center leading-relaxed">Reference<br/>Image</span>
-                                </button>
-                            )}
-                            <input
-                                ref={fileInputRefs[idx]}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={e => handleFileChange(idx, e)}
-                            />
-                        </div>
-                    ))}
+                                )}
+                                <input
+                                    ref={fileInputRefs[idx]}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => handleFileChange(idx, e)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-[11px] text-base-content/25 leading-relaxed">
+                        Upload reference images, then click on them to insert their tags into the prompt — AI will use them as visual references at those points.
+                    </p>
                 </div>
 
-                {/* ImageRatio */}
-                <div className="flex gap-3">
-                    {IMAGE_RATIOS.map(r => (
-                        <button
-                            key={r.value}
-                            onClick={() => setImageRatio(r.value)}
-                            className={`flex flex-col items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                                ratio === r.value
-                                    ? 'border-primary/50 bg-primary/5 text-primary'
-                                    : 'border-base-content/10 text-base-content/30 hover:border-base-content/20 hover:text-base-content/50'
-                            }`}
-                        >
-                            <div
-                                className={`rounded-sm border-2 transition-colors duration-200 ${ratio === r.value ? 'border-primary' : 'border-current'}`}
-                                style={{ width: r.w, height: r.h }}
-                            />
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.15em]">{r.value}</span>
-                        </button>
-                    ))}
+                {/* Aspect ratio */}
+                <div className="flex flex-col gap-2">
+                    <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Aspect ratio</span>
+                    <div className="flex gap-3">
+                        {IMAGE_RATIOS.map(r => (
+                            <button
+                                key={r.value}
+                                onClick={() => setImageRatio(r.value)}
+                                className={`flex flex-col items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                                    ratio === r.value
+                                        ? 'border-primary/50 bg-primary/5 text-primary'
+                                        : 'border-base-content/10 text-base-content/30 hover:border-base-content/20 hover:text-base-content/50'
+                                }`}
+                            >
+                                <div
+                                    className={`rounded-sm border-2 transition-colors duration-200 ${ratio === r.value ? 'border-primary' : 'border-current'}`}
+                                    style={{ width: r.w, height: r.h }}
+                                />
+                                <span className="text-[10px] uppercase tracking-[0.15em]">{r.value}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="flex justify-end">
+                {/* Actions */}
+                <div className="flex items-center justify-between">
+                    <button
+                        onClick={onClose}
+                        className="px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-base-content/70 transition-colors duration-300"
+                    >
+                        Close
+                    </button>
                     <button
                         onClick={handleGenerate}
                         disabled={!canGenerate()}
-                        className="group flex items-center gap-3 px-7 py-3 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="group flex items-center gap-3 px-7 py-3.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                        <Sparkles size={16} className="group-hover:animate-pulse" />
-                        <span className="text-sm font-semibold uppercase tracking-[0.2em]">Generate</span>
-                        {loading && (<span className="loading loading-spinner loading-xs"></span>)}
+                        {loading
+                            ? <span className="loading loading-dots loading-xs" />
+                            : <Sparkles size={16} className="group-hover:animate-pulse" />
+                        }
+                        <span className="text-sm uppercase tracking-[0.2em]">Generate</span>
                     </button>
                 </div>
             </div>

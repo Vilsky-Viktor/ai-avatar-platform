@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AudioLines } from 'lucide-react';
+import { X, AudioLines } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { MediaTypes } from '@loom24/shared/types';
 
@@ -7,21 +7,25 @@ type Props = {
     src: string | null;
     rect: DOMRect | null;
     mediaType?: MediaTypes;
+    thumbnailSrc?: string;
     onClose: () => void;
 }
 
 const CLOSE_DURATION = 150;
 
-// Spring-like overshoot for opening, fast ease-in for closing
 const SPRING   = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
 const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
 const EASE_IN  = 'cubic-bezier(0.7, 0, 1, 1)';
 
-function FullscreenModal({ src, rect, mediaType, onClose }: Props) {
+function FullscreenModal({ src, rect, mediaType, thumbnailSrc, onClose }: Props) {
     const [visible, setVisible] = useState(false);
+    const [fullResLoaded, setFullResLoaded] = useState(false);
 
     useEffect(() => {
-        if (src) setVisible(true);
+        if (src) {
+            setFullResLoaded(false);
+            setVisible(true);
+        }
     }, [src]);
 
     useScrollLock(!!src);
@@ -71,18 +75,18 @@ function FullscreenModal({ src, rect, mediaType, onClose }: Props) {
             `}
         >
             <button
-                className="absolute top-5 right-6 z-10 text-white text-6xl font-light hover:scale-110 hover:rotate-6 transition-transform duration-200"
+                className="absolute top-5 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer"
                 onClick={handleClose}
                 aria-label="Close fullscreen view"
             >
-                ×
+                <X size={20} strokeWidth={1.5} />
             </button>
 
             {isAudio ? (
                 <div
                     onClick={(e) => e.stopPropagation()}
                     style={mediaStyle}
-                    className="bg-base-100 rounded-2xl p-10 shadow-2xl flex flex-col items-center gap-6 w-[420px]"
+                    className="bg-base-100 rounded-2xl p-10 flex flex-col items-center gap-6 w-[420px]"
                 >
                     <AudioLines size={48} strokeWidth={1} className="text-primary" />
                     <audio src={src} controls autoPlay className="w-full" />
@@ -96,16 +100,33 @@ function FullscreenModal({ src, rect, mediaType, onClose }: Props) {
                     playsInline
                     onClick={(e) => e.stopPropagation()}
                     style={mediaStyle}
-                    className="max-w-[96vw] max-h-[96vh] rounded-xl shadow-2xl"
+                    className="max-w-[96vw] max-h-[96vh] rounded-xl"
                 />
             ) : (
-                <img
-                    src={src}
-                    alt="Full size generated avatar"
-                    onClick={(e) => e.stopPropagation()}
-                    style={mediaStyle}
-                    className="max-w-[96vw] max-h-[96vh] object-contain rounded-xl shadow-2xl"
-                />
+                <>
+                    {/* Full-screen blurred thumbnail background while full-res loads */}
+                    {thumbnailSrc && (
+                        <img
+                            src={thumbnailSrc}
+                            aria-hidden
+                            className="absolute inset-0 h-full w-auto mx-auto object-contain"
+                            style={{
+                                filter: 'blur(24px)',
+                                transform: 'scale(1.08)',
+                                opacity: fullResLoaded ? 0 : 0.5,
+                                transition: 'opacity 400ms ease-out',
+                            }}
+                        />
+                    )}
+                    <img
+                        src={src}
+                        alt="Full size media"
+                        onLoad={() => setFullResLoaded(true)}
+                        onClick={(e) => e.stopPropagation()}
+                        style={mediaStyle}
+                        className="max-w-[96vw] max-h-[96vh] object-contain rounded-xl relative"
+                    />
+                </>
             )}
         </div>
     );

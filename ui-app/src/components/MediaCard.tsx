@@ -1,4 +1,4 @@
-import { Sparkles, User, Clock, Loader2, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Hd, Share2 } from 'lucide-react';
+import { Sparkles, User, Clock, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Share2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { JobStatuses, MediaTypes, type Job } from '@loom24/shared/types';
 import { downloadMediaFromBucket } from '../services/storage';
@@ -15,7 +15,7 @@ type FaceMatchThresholds = {
 type Props = {
     job?: Partial<Job> | null;
     idx: number;
-    onPhotoClick: (url: string, rect: DOMRect, mediaType: MediaTypes) => void;
+    onPhotoClick: (url: string, rect: DOMRect, mediaType: MediaTypes, thumbnailUrl?: string) => void;
     onRegenerate?: (jobId: string) => void;
     onDelete?: (jobId: string) => void | Promise<void>;
     canRestart?: boolean;
@@ -23,6 +23,11 @@ type Props = {
     showOrder?: boolean;
     faceMatchThresholds?: FaceMatchThresholds;
 };
+
+const cornerTL = <div className="absolute top-3 left-3 w-5 h-5 border-t border-l border-primary/30 pointer-events-none" />;
+const cornerTR = <div className="absolute top-3 right-3 w-5 h-5 border-t border-r border-primary/30 pointer-events-none" />;
+const cornerBL = <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-primary/30 pointer-events-none" />;
+const cornerBR = <div className="absolute bottom-3 right-3 w-5 h-5 border-b border-r border-primary/30 pointer-events-none" />;
 
 function MediaCard({
     job,
@@ -53,7 +58,6 @@ function MediaCard({
         return () => clearInterval(interval);
     }, [job?.status, job?.updatedAt]);
 
-
     const handleConfirmDelete = async () => {
         if (!confirmDeleteId || !onDelete) return;
         setIsDeleting(true);
@@ -67,19 +71,21 @@ function MediaCard({
 
     if (!job) {
         return (
-            <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
+            <div className="flex relative rounded-2xl border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
                 <div className="flex flex-col items-center gap-4">
                     <User size={50} strokeWidth={1} className="text-base-content/10" />
                     <div className="text-center">
-                        <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-base-content/30">
+                        <span className="text-[10px] uppercase tracking-[0.4em] text-base-content/30">
                             Photo {idx + 1}
                         </span>
-                        <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
+                        <p className="text-[9px] uppercase tracking-widest text-base-content/20 mt-1">
                             Click generate
                         </p>
                     </div>
                 </div>
                 <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
+                <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-base-content/10 pointer-events-none" />
+                <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-base-content/10 pointer-events-none" />
                 <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
             </div>
         );
@@ -111,20 +117,19 @@ function MediaCard({
                 />
             )}
             {infoVisible && <MediaInfoPopup job={job} onClose={() => setInfoVisible(false)} />}
-            <div className="group flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
+            <div className="group flex relative rounded-2xl border border-base-content/10 bg-transparent flex flex-col items-center justify-center aspect-square overflow-hidden">
                 <div className="flex flex-col items-center gap-6">
-                    <div className="relative">
-                        <Clock size={50} strokeWidth={1} className="text-base-content/30 animate-pulse" />
-                    </div>
+                    <Clock size={40} strokeWidth={1} className="text-base-content/20 animate-pulse" />
                     <div className="text-center">
-                        <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
+                        <span className="text-[10px] uppercase tracking-[0.4em] text-primary/60">
                             Waiting
                         </span>
-                        <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
+                        <p className="text-[9px] uppercase tracking-widest text-base-content/20 mt-1">
                             Queue processing
                         </p>
                     </div>
                 </div>
+                {cornerTL}{cornerTR}{cornerBL}{cornerBR}
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                     {canDelete && onDelete && (
                         <button
@@ -152,31 +157,37 @@ function MediaCard({
                 />
             )}
             {infoVisible && <MediaInfoPopup job={job} onClose={() => setInfoVisible(false)} />}
-            <div className="group flex relative rounded-[1rem] border border-primary/20 bg-primary/[0.02] flex flex-col items-center justify-center aspect-square">
-                <div className="flex flex-col items-center gap-6">
-                    <div className="relative">
-                        <Loader2 size={60} strokeWidth={1} className="text-primary animate-spin" />
-                        <Sparkles size={20} className="absolute -top-3 -right-3 text-primary animate-pulse" />
+            <div
+                className="relative p-[1.5px] rounded-2xl aspect-square animate-spin-border overflow-hidden"
+                style={{ backgroundImage: 'conic-gradient(from var(--gen-angle), transparent 0%, transparent 60%, color-mix(in oklch, var(--color-primary) 85%, transparent) 80%, transparent 100%)' }}
+            >
+                <div className="group relative rounded-2xl bg-base-100 w-full h-full flex flex-col items-center justify-center overflow-hidden">
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="relative">
+                            <span className="loading loading-dots loading-lg text-primary w-14" />
+                            <Sparkles size={18} className="absolute -top-3 -right-3 text-primary animate-pulse" />
+                        </div>
+                        <div className="text-center">
+                            <span className="text-[10px] uppercase tracking-[0.4em] text-primary">
+                                Generating
+                            </span>
+                            <p className="text-[15px] font-mono font-light text-base-content/25 tracking-widest">
+                                {String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}
+                            </p>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-primary">
-                            Generating
-                        </span>
-                        <p className="text-[15px] font-mono font-light text-base-content/25 tracking-widest">
-                            {String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}
-                        </p>
+                    {cornerTL}{cornerTR}{cornerBL}{cornerBR}
+                    <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        {canDelete && onDelete && (
+                            <button
+                                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
+                                onClick={() => jobId && setConfirmDeleteId(jobId)}
+                            >
+                                <Trash2 size={20} className="text-white" />
+                            </button>
+                        )}
+                        {infoButton}
                     </div>
-                </div>
-                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                    {canDelete && onDelete && (
-                        <button
-                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
-                            onClick={() => jobId && setConfirmDeleteId(jobId)}
-                        >
-                            <Trash2 size={20} className="text-white" />
-                        </button>
-                    )}
-                    {infoButton}
                 </div>
             </div>
             </>
@@ -194,20 +205,19 @@ function MediaCard({
                 />
             )}
             {infoVisible && <MediaInfoPopup job={job} onClose={() => setInfoVisible(false)} />}
-            <div className="group flex relative rounded-[1rem] border border-error/20 bg-error/[0.02] flex flex-col items-center justify-center aspect-square">
+            <div className="group flex relative rounded-2xl border border-error/15 bg-transparent flex flex-col items-center justify-center aspect-square overflow-hidden">
                 <div className="flex flex-col items-center gap-6">
-                    <div className="relative">
-                        <CircleOff size={50} strokeWidth={1} className="text-base-content/30 animate-pulse" />
-                    </div>
+                    <CircleOff size={40} strokeWidth={1} className="text-error/30 animate-pulse" />
                     <div className="text-center">
-                        <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-error">
+                        <span className="text-[10px] uppercase tracking-[0.4em] text-error/60">
                             Error
                         </span>
-                        <p className="text-[9px] font-medium uppercase tracking-widest text-base-content/20 mt-1">
+                        <p className="text-[9px] uppercase tracking-widest text-base-content/20 mt-1">
                             Something went wrong
                         </p>
                     </div>
                 </div>
+                {cornerTL}{cornerTR}{cornerBL}{cornerBR}
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                     {canDelete && onDelete && (
                         <button
@@ -235,9 +245,15 @@ function MediaCard({
     if (status === JobStatuses.completed) {
         if (!url) {
             return (
-                <div className="relative rounded-[1rem] border border-base-content/10 bg-base-200/30 aspect-square" />
+                <div className="relative rounded-2xl border border-base-content/10 bg-base-200/30 aspect-square" />
             );
         }
+
+        const mediaTypeLabel = job.mediaType === MediaTypes.video
+            ? 'video'
+            : job.mediaType === MediaTypes.audio
+                ? 'audio'
+                : 'image';
 
         return (
             <>
@@ -261,12 +277,11 @@ function MediaCard({
                 />
             )}
             <div
-                className="group relative rounded-[1rem] border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
-                onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect(), job.mediaType ?? MediaTypes.image)}
+                className="group relative rounded-2xl border border-base-content/10 bg-base-200/30 overflow-hidden cursor-pointer aspect-square"
+                onClick={(e) => onPhotoClick(url, e.currentTarget.getBoundingClientRect(), job.mediaType ?? MediaTypes.image, job.resultThumbnailUrl)}
             >
                 {job.mediaType === MediaTypes.audio ? (
                     <div className="absolute inset-0">
-                        {/* Play + rings — centered in the card */}
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="relative flex items-center justify-center">
                                 <div className="absolute w-20 h-20 rounded-full border border-primary/30 animate-audio-ring" style={{ animationDelay: '0s' }} />
@@ -275,7 +290,6 @@ function MediaCard({
                                 <Play size={50} strokeWidth={1} className="relative z-10 text-primary/50 group-hover:text-primary group-hover:scale-125 transition-all duration-300" />
                             </div>
                         </div>
-                        {/* Bars — pinned to the bottom */}
                         <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-3">
                             {([
                                 [0,    1.9 ], [0.18, 2.8 ], [0.06, 1.65], [0.3,  3.2 ], [0.12, 2.3 ],
@@ -312,25 +326,29 @@ function MediaCard({
                                 onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                             />
                         )}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300">
-                            <div className="w-16 h-16 group-hover:w-20 group-hover:h-20 rounded-full border border-white/20 bg-black/40 flex items-center justify-center transition-all duration-300">
-                                <Play size={28} className="text-white/80 group-hover: ml-1 group-hover:scale-125 transition-all duration-300" />
+                        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none z-[1]" />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]">
+                            <div className="w-12 h-12 group-hover:w-14 group-hover:h-14 rounded-full border border-white/20 bg-black/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300">
+                                <Play size={18} className="text-white/70 group-hover:text-white ml-0.5 transition-all duration-300" />
                             </div>
                         </div>
                     </>
                 ) : (
-                    <img
-                        src={displayUrl}
-                        alt={`Avatar photo ${idx + 1}`}
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
-                    />
+                    <>
+                        <img
+                            src={displayUrl}
+                            alt={`Avatar photo ${idx + 1}`}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none z-[1]" />
+                    </>
                 )}
 
                 {showOrder && (
                     <div className="absolute top-1 left-1 z-10">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] shadow-lg text-white text-xs font-medium">
-                            <span className="font-bold">{order}</span>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-[0.8rem] text-white text-xs">
+                            <span>{order}</span>
                         </div>
                     </div>
                 )}
@@ -358,10 +376,10 @@ function MediaCard({
                                 try {
                                     const blob = await downloadMediaFromBucket(mediaPath);
                                     const blobUrl = URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = blobUrl;
-                                    a.download = `${jobId ?? 'photo'}.${blob.type.split('/')[1] || 'jpg'}`;
-                                    a.click();
+                                    const anchor = document.createElement('a');
+                                    anchor.href = blobUrl;
+                                    anchor.download = `${jobId ?? 'photo'}.${blob.type.split('/')[1] || 'jpg'}`;
+                                    anchor.click();
                                     URL.revokeObjectURL(blobUrl);
                                 } finally {
                                     setIsDownloading(false);
@@ -369,7 +387,7 @@ function MediaCard({
                             }}
                         >
                             {isDownloading
-                                ? <span className="loading loading-spinner loading-xs text-white" />
+                                ? <span className="loading loading-dots loading-xs text-white" />
                                 : <CloudDownload size={20} className="text-white" />
                             }
                         </button>
@@ -402,14 +420,11 @@ function MediaCard({
                     </div>
                 </div>
 
-
-                {job.mediaType !== MediaTypes.audio && (
-                    <div className="absolute bottom-2 left-2 z-10">
-                        <div className="px-1 py-0.5 bg-black/40 backdrop-blur-md rounded-[0.3rem] shadow-lg text-white flex items-center justify-center">
-                            <Hd size={22} strokeWidth={1.5} className="text-white" />
-                        </div>
-                    </div>
-                )}
+                <div className="absolute bottom-2 left-2 z-10">
+                    <span className="px-2 py-0.5 bg-black/40 backdrop-blur-md rounded-lg text-[9px] uppercase tracking-[0.2em] text-white/50">
+                        {mediaTypeLabel}
+                    </span>
+                </div>
             </div>
             </>
         );

@@ -15,6 +15,17 @@ html {
   --animate-modal-card: modal-card 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   --animate-audio-ring: audio-ring 2.4s ease-out infinite;
   --animate-equalizer: equalizer 0.6s ease-in-out infinite;
+  --animate-spin-border: spin-border 2s linear infinite;
+}
+
+@property --gen-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes spin-border {
+  to { --gen-angle: 360deg; }
 }
 
 @keyframes modal-backdrop {

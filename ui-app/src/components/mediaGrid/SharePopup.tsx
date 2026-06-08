@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Link, Loader2 } from 'lucide-react';
+import { Check, Link } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 type Props = {
@@ -88,8 +88,11 @@ function SharePopup({ url, onClose }: Props) {
     return createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="absolute inset-0 bg-base-300/60 animate-modal-backdrop" onClick={onClose} />
-            <div className="relative bg-base-100 w-full max-w-sm rounded-[2.5rem] shadow-2xl border border-base-content/5 p-8 animate-modal-card">
-                <p className="text-center text-sm font-bold tracking-widest uppercase text-base-content/50 mb-6">Share</p>
+            <div className="relative bg-base-100 w-full max-w-sm rounded-2xl border border-base-content/5 p-8 animate-modal-card">
+                <div className="flex items-center gap-3 mb-6">
+                    <span className="w-8 h-px bg-primary/50" />
+                    <h3 className="text-xl uppercase tracking-[0.2em] text-base-content/70">Share</h3>
+                </div>
 
                 <div className="grid grid-cols-4 gap-4 justify-items-center">
                     <PlatformButton label="WhatsApp" href={`https://wa.me/?text=${enc}`} bg="#25D366">
@@ -157,7 +160,7 @@ function SharePopup({ url, onClose }: Props) {
                         >
                             <div className="w-14 h-14 rounded-2xl bg-base-300 flex items-center justify-center transition-transform group-hover:scale-110 duration-200">
                                 {sharing
-                                    ? <Loader2 size={24} className="text-base-content/60 animate-spin" />
+                                    ? <span className="loading loading-dots loading-sm text-base-content/60" />
                                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-base-content/60">
                                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                                         <polyline points="16 6 12 2 8 6" />
@@ -172,12 +175,14 @@ function SharePopup({ url, onClose }: Props) {
                     )}
                 </div>
 
-                <button
-                    onClick={onClose}
-                    className="btn btn-ghost btn-lg rounded-2xl w-full uppercase tracking-widest text-xs opacity-50 hover:opacity-100 mt-6"
-                >
-                    Close
-                </button>
+                <div className="flex justify-end mt-6">
+                    <button
+                        onClick={onClose}
+                        className="px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-base-content/70 transition-colors duration-300"
+                    >
+                        Close
+                    </button>
+                </div>
             </div>
         </div>,
         document.body

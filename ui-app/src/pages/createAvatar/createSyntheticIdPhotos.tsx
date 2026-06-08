@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
+import Loading from "../../components/Loading";
 import { ChevronDown, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
@@ -32,7 +33,7 @@ function CreateSyntheticIdPhotosPage() {
     const [pageLoading, setPageLoading] = useState(true);
     const [jobs, setJobs] = useState([] as (Job | null)[]);
     const jobsRef = useRef<(Job | null)[]>([]);
-    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect; thumbnailSrc?: string } | null>(null);
     const [openSection, setOpenSection] = useState<string>('ethnicity');
 
     const toggleSection = (key: string) =>
@@ -224,7 +225,7 @@ function CreateSyntheticIdPhotosPage() {
 
             {pageLoading ? (
                 <div className="flex items-center justify-center min-h-[60vh]">
-                    <span className="loading loading-spinner loading-xl text-primary scale-150" />
+                    <Loading />
                 </div>
             ) : (
                 <div className="max-w-7xl mx-auto px-4 pt-10 pb-32 flex gap-8 items-start">
@@ -267,12 +268,10 @@ function CreateSyntheticIdPhotosPage() {
                                             <div className="overflow-hidden">
                                                 <div className="pb-5">
                                                     <PillSelect
-                                                        label=""
-                                                        fieldKey={param.key}
                                                         opts={param.opts}
                                                         value={currentValue}
                                                         disabled={stepLocked()}
-                                                        onChange={setParameter}
+                                                        onChange={(val) => val && setParameter(param.key, val)}
                                                     />
                                                 </div>
                                             </div>
@@ -289,11 +288,15 @@ function CreateSyntheticIdPhotosPage() {
                         {/* State: nothing generated yet */}
                         {!generatingStarted() && (
                             <div className="flex flex-col items-center justify-center text-center py-20 gap-8">
-                                <div className="flex flex-col gap-3">
-                                    <h2 className="text-2xl uppercase tracking-[0.2em] text-base-content/70">
-                                        Generate a preview
-                                    </h2>
-                                    <p className="text-sm text-base-content/40 max-w-xs leading-relaxed">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-px bg-primary/50" />
+                                        <h2 className="text-xl uppercase tracking-[0.2em] text-base-content/70">
+                                            Generate a preview
+                                        </h2>
+                                        <div className="w-8 h-px bg-primary/50" />
+                                    </div>
+                                    <p className="text-xs uppercase tracking-[0.1em] text-base-content/30 max-w-xs leading-loose">
                                         Adjust the appearance options on the left, then generate a preview photo to see how your avatar will look.
                                     </p>
                                 </div>
@@ -358,7 +361,7 @@ function CreateSyntheticIdPhotosPage() {
                                             key={idx}
                                             job={job}
                                             idx={idx}
-                                            onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
+                                            onPhotoClick={(src, rect, _mediaType, thumbnailSrc) => setFullscreen({ src, rect, thumbnailSrc })}
                                             onRegenerate={restartJob}
                                             canRestart={!stepLocked() && allJobsStarted() && !isFrontJob(idx)}
                                             showOrder={true}
@@ -379,7 +382,7 @@ function CreateSyntheticIdPhotosPage() {
                 finish={false}
             />
 
-            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
+            <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} thumbnailSrc={fullscreen?.thumbnailSrc} onClose={() => setFullscreen(null)} />
         </>
     );
 }

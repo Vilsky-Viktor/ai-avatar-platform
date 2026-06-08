@@ -9,22 +9,34 @@ const CreateMediaCard = ({ onClick }: Props) => {
         <button
             type="button"
             onClick={onClick}
-            className="group relative overflow-hidden rounded-2xl aspect-square border-2 border-transparent hover:border-primary/50 bg-base-100 transition-all duration-300 cursor-pointer focus:outline-none active:scale-[0.98] w-full"
+            className="group relative p-[1.5px] rounded-2xl aspect-square overflow-hidden active:scale-[0.98] cursor-pointer focus:outline-none w-full"
         >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(var(--p),0.1),transparent)] group-hover:bg-[radial-gradient(circle_at_50%_120%,rgba(var(--p),0.2),transparent)] transition-all duration-500" />
-            <div className="relative z-10 flex flex-col items-center justify-center h-full gap-3">
-                <div className="relative">
-                    <div className="absolute inset-0 blur-2xl bg-primary/20 scale-0 group-hover:scale-150 transition-transform duration-500 rounded-full" />
-                    <div className="relative text-base-content/20 group-hover:text-primary transition-all duration-500 group-hover:rotate-90">
-                        <Plus size={80} strokeWidth={1} />
+            <div
+                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 group-hover:animate-spin-border transition-opacity duration-300 pointer-events-none"
+                style={{ backgroundImage: 'conic-gradient(from var(--gen-angle), transparent 0%, transparent 60%, color-mix(in oklch, var(--color-primary) 85%, transparent) 80%, transparent 100%)' }}
+            />
+            <div className="relative w-full h-full rounded-2xl bg-base-100 border border-base-content/10 group-hover:border-transparent transition-colors duration-300 flex flex-col items-center justify-center overflow-hidden">
+                <div
+                    className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-0 group-hover:opacity-100"
+                    style={{ background: 'radial-gradient(circle at 50% 120%, color-mix(in oklch, var(--color-primary) 12%, transparent), transparent)' }}
+                />
+                <div className="absolute top-3 left-3 w-5 h-5 border-t border-l border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
+                <div className="absolute top-3 right-3 w-5 h-5 border-t border-r border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
+                <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
+                <div className="absolute bottom-3 right-3 w-5 h-5 border-b border-r border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
+                <div className="relative z-10 flex flex-col items-center justify-center h-full gap-3">
+                    <div className="relative">
+                        <div className="absolute inset-0 blur-2xl bg-primary/20 scale-0 group-hover:scale-150 transition-transform duration-500 rounded-full" />
+                        <div className="relative text-base-content/20 group-hover:text-primary transition-all duration-500 group-hover:rotate-90">
+                            <Plus size={80} strokeWidth={1} />
+                        </div>
+                    </div>
+                    <div className="space-y-0.5 text-center">
+                        <span className="block text-sm uppercase tracking-[0.25em] text-base-content/40 group-hover:text-base-content transition-colors">Add Media</span>
+                        <span className="block text-[11px] uppercase tracking-[0.15em] text-base-content/20 group-hover:text-primary/70 transition-colors">Generate content</span>
                     </div>
                 </div>
-                <div className="space-y-0.5 text-center">
-                    <span className="block text-sm font-semibold uppercase tracking-[0.25em] text-base-content/40 group-hover:text-base-content transition-colors">Add Media</span>
-                    <span className="block text-[11px] font-medium uppercase tracking-[0.15em] text-base-content/20 group-hover:text-primary/70 transition-colors">Generate content</span>
-                </div>
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
         </button>
     );
 };

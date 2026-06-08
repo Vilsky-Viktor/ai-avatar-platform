@@ -42,42 +42,35 @@ function BottomDock({ avatarId, canProceed, nextStep, previousStep, finish }: Pr
 
                     {/* Left — Cancel */}
                     <button
-                        className="flex items-center gap-3 px-7 py-4 rounded-xl text-base font-semibold uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-error/70 transition-colors duration-300"
+                        className="flex items-center gap-3 px-10 py-5 rounded-xl text-base uppercase tracking-[0.2em] cursor-pointer text-base-content/30 hover:text-error/70 transition-colors duration-300"
                         onClick={() => setCancelDialogOpen(true)}
                         disabled={cancelLoading}
                     >
-                        <X size={17} strokeWidth={2} />
+                        <X size={16} strokeWidth={1.5} />
                         Cancel
                     </button>
 
                     {/* Right — Back + Next */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         {previousStep && (
                             <button
-                                className="flex items-center gap-3 px-7 py-4 rounded-xl text-base font-semibold uppercase tracking-[0.2em] cursor-pointer border border-base-content/10 text-base-content/40 hover:border-base-content/20 hover:text-base-content/70 transition-all duration-300"
+                                className="flex items-center gap-3 px-10 py-5 rounded-xl text-base uppercase tracking-[0.2em] cursor-pointer border border-base-content/10 text-base-content/40 hover:border-base-content/20 hover:text-base-content/70 transition-all duration-300"
                                 onClick={() => previousStep()}
                             >
-                                <ArrowLeft size={17} strokeWidth={2} />
+                                <ArrowLeft size={16} strokeWidth={1.5} />
                                 Back
                             </button>
                         )}
                         <button
-                            className={`
-                                flex items-center gap-3 px-10 py-4 rounded-xl text-base font-semibold uppercase tracking-[0.2em]
-                                transition-all duration-300
-                                ${canProceed()
-                                    ? 'cursor-pointer bg-primary text-primary-content shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:brightness-110'
-                                    : 'cursor-not-allowed bg-base-content/5 text-base-content/20'
-                                }
-                            `}
+                            className="group flex items-center gap-3 px-14 py-5 rounded-xl text-base uppercase tracking-[0.2em] transition-all duration-300 bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                             disabled={nextLoading || !canProceed()}
                             onClick={next}
                         >
                             {nextLoading
-                                ? <span className="loading loading-spinner loading-sm" />
+                                ? <span className="loading loading-dots loading-sm" />
                                 : finish
-                                    ? <Check size={17} strokeWidth={2.5} />
-                                    : <ArrowRight size={17} strokeWidth={2} />
+                                    ? <Check size={16} strokeWidth={1.5} />
+                                    : <ArrowRight size={16} strokeWidth={1.5} />
                             }
                             {finish ? 'Finish' : 'Next'}
                         </button>

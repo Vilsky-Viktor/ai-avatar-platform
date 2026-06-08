@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepper';
+import Loading from '../../components/Loading';
 import { User, ScanFace, Sparkles } from 'lucide-react';
 import { createAvatar, getAvatarById } from '../../services/apiGateway';
 import { AvatarTypes, AvatarGender, type Avatar } from '@loom24/shared/types';
@@ -20,7 +21,7 @@ const AVATAR_TYPE_OPTIONS = [
         type: AvatarTypes.synthetic,
         icon: Sparkles,
         label: 'Synthetic',
-        description: 'No photos needed. The AI generates a brand-new fictional face based on your settings.',
+        description: 'No photos needed. The AI creates a brand-new face based on your appearance choices.',
     },
 ];
 
@@ -119,14 +120,14 @@ function GeneralPage() {
 
             {pageLoading ? (
                 <div className="flex items-center justify-center min-h-[60vh]">
-                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
+                    <Loading />
                 </div>
             ) : (
                 <div className="mt-12 w-full max-w-3xl mx-auto">
                     <div className="p-12 flex flex-col gap-10">
 
                         {/* Name */}
-                        <div className={`flex flex-col gap-3 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
+                        <div className={`flex flex-col gap-5 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
                             <div className="flex items-center gap-3">
                                 <span className="w-8 h-px bg-primary/50" />
                                 <label className="text-xl uppercase tracking-[0.2em] text-base-content/70">
@@ -155,7 +156,7 @@ function GeneralPage() {
                         </div>
 
                         {/* Gender */}
-                        <div className={`flex flex-col gap-3 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
+                        <div className={`flex flex-col gap-5 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
                             <div className="flex items-center gap-3">
                                 <span className="w-8 h-px bg-primary/50" />
                                 <label className="text-xl uppercase tracking-[0.2em] text-base-content/70">
@@ -188,7 +189,7 @@ function GeneralPage() {
                         </div>
 
                         {/* Avatar type */}
-                        <div className={`flex flex-col gap-3 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
+                        <div className={`flex flex-col gap-5 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
                             <div className="flex items-center gap-3">
                                 <span className="w-8 h-px bg-primary/50" />
                                 <label className="text-xl uppercase tracking-[0.2em] text-base-content/70">
@@ -205,7 +206,7 @@ function GeneralPage() {
                                             disabled={locked}
                                             onClick={() => setType(type)}
                                             className={`
-                                                flex flex-col items-start gap-3 p-5 rounded-2xl border-2 text-left transition-all duration-300
+                                                flex flex-row items-center gap-5 p-5 rounded-2xl border text-left transition-all duration-300
                                                 ${isActive
                                                     ? 'border-primary bg-primary/5 shadow-sm'
                                                     : 'border-base-content/10 bg-base-content/[0.02] hover:border-base-content/20'
@@ -214,8 +215,9 @@ function GeneralPage() {
                                             `}
                                         >
                                             <Icon
-                                                size={28}
-                                                className={`transition-colors duration-300 ${isActive ? 'text-primary' : 'text-base-content/30'}`}
+                                                size={36}
+                                                strokeWidth={1.2}
+                                                className={`flex-shrink-0 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-base-content/30'}`}
                                             />
                                             <div className="flex flex-col gap-1">
                                                 <span className={`text-sm font-bold uppercase tracking-[0.15em] transition-colors duration-300 ${isActive ? 'text-primary' : 'text-base-content/60'}`}>

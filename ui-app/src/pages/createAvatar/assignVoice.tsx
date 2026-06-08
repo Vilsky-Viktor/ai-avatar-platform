@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
+import PillSelect from "../../components/PillSelect";
+import Loading from "../../components/Loading";
 import { useNavigate } from 'react-router-dom';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { getAvatarData, initialAvatarData } from '../../utils/avatarCreation';
@@ -242,7 +244,7 @@ function AssignVoicePage() {
 
             {pageLoading ? (
                 <div className="flex items-center justify-center min-h-[60vh]">
-                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
+                    <Loading />
                 </div>
             ) : (
                 <div className="max-w-7xl mx-auto px-4 pt-10 pb-32 flex gap-8 items-start">
@@ -280,20 +282,14 @@ function AssignVoicePage() {
 
                                         <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                                             <div className="overflow-hidden">
-                                                <div className="pb-5 flex flex-wrap gap-1.5">
-                                                    {options.map(opt => (
-                                                        <button
-                                                            key={opt}
-                                                            onClick={() => set(active === opt ? null : opt)}
-                                                            className={`px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer ${
-                                                                active === opt
-                                                                    ? 'bg-primary text-primary-content'
-                                                                    : 'bg-base-content/5 text-base-content/50 hover:bg-base-content/10 hover:text-base-content/70'
-                                                            }`}
-                                                        >
-                                                            {fmt(opt)}
-                                                        </button>
-                                                    ))}
+                                                <div className="pb-5">
+                                                    <PillSelect
+                                                        opts={options}
+                                                        value={active}
+                                                        nullable
+                                                        fmt={fmt}
+                                                        onChange={set}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -323,9 +319,9 @@ function AssignVoicePage() {
 
                         {voices.length === 0 && loadingMore ? (
                             <div className="flex items-center justify-center py-32">
-                                <span className="loading loading-spinner loading-md text-base-content/20" />
+                                <Loading size="md" />
                             </div>
-                        ) : voices.length === 0 ? (
+                        ) :voices.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-32 gap-3">
                                 <span className="text-base-content/20 text-sm uppercase tracking-[0.2em]">No voices match these filters</span>
                                 <button
@@ -425,7 +421,7 @@ function AssignVoicePage() {
                                                                 `}
                                                             >
                                                                 {loadingId === voice.id
-                                                                    ? <span className="loading loading-spinner loading-xs" />
+                                                                    ? <span className="loading loading-dots loading-xs" />
                                                                     : isPlaying
                                                                         ? <Pause size={15} />
                                                                         : <Play size={15} className="ml-0.5" />
@@ -444,7 +440,7 @@ function AssignVoicePage() {
                         <div ref={sentinelRef} className="h-1" />
                         {loadingMore && voices.length > 0 && (
                             <div className="flex justify-center py-6">
-                                <span className="loading loading-spinner loading-xl text-primary scale-150" />
+                                <Loading size="md" />
                             </div>
                         )}
                     </div>
