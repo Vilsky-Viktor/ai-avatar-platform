@@ -1,76 +1,43 @@
-from dataclasses import dataclass
 import os
 import queue
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
-import mediapipe as mp
 from PIL import Image
+from ultralytics import YOLO
 
 
 CropMode = Literal["front", "quarter", "side", "full_body"]
 
-_PoseLandmark = mp.solutions.pose.PoseLandmark
-_POOL_SIZE = int(os.getenv("MAX_CONCURRENT_CROPS", "4"))
-_pose_pool: queue.Queue = queue.Queue()
+# COCO 17 keypoint indices
+_NOSE           = 0
+_LEFT_EYE       = 1
+_RIGHT_EYE      = 2
+_LEFT_EAR       = 3
+_RIGHT_EAR      = 4
+_LEFT_SHOULDER  = 5
+_RIGHT_SHOULDER = 6
+_LEFT_HIP       = 11
+_RIGHT_HIP      = 12
+_LEFT_KNEE      = 13
+_RIGHT_KNEE     = 14
+_LEFT_ANKLE     = 15
+_RIGHT_ANKLE    = 16
 
+_HEAD_SHOULDER_KPS = [_NOSE, _LEFT_EYE, _RIGHT_EYE, _LEFT_EAR, _RIGHT_EAR, _LEFT_SHOULDER, _RIGHT_SHOULDER]
+_FULL_BODY_KPS     = [_NOSE, _LEFT_EYE, _RIGHT_EYE, _LEFT_EAR, _RIGHT_EAR, _LEFT_SHOULDER, _RIGHT_SHOULDER,
+                      _LEFT_HIP, _RIGHT_HIP, _LEFT_KNEE, _RIGHT_KNEE, _LEFT_ANKLE, _RIGHT_ANKLE]
+_LOWER_BODY_KPS    = [_LEFT_HIP, _RIGHT_HIP, _LEFT_KNEE, _RIGHT_KNEE, _LEFT_ANKLE, _RIGHT_ANKLE]
 
-def _make_pose() -> mp.solutions.pose.Pose:
-    return mp.solutions.pose.Pose(
-        static_image_mode=True,
-        model_complexity=1,
-        min_detection_confidence=0.5,
-    )
+_YOLO_MODEL  = os.getenv("YOLO_MODEL", "models/yolo11n-pose.pt")
+_POOL_SIZE   = int(os.getenv("MAX_CONCURRENT_CROPS", "5"))
+_model_pool: queue.Queue = queue.Queue()
 
-
-def warmup() -> None:
-    dummy = np.zeros((64, 64, 3), dtype=np.uint8)
-    for _ in range(_POOL_SIZE):
-        pose = _make_pose()
-        pose.process(dummy)
-        _pose_pool.put(pose)
-
-
-_HEAD_SHOULDER_LANDMARKS = [
-    _PoseLandmark.NOSE,
-    _PoseLandmark.LEFT_EYE,
-    _PoseLandmark.RIGHT_EYE,
-    _PoseLandmark.LEFT_EAR,
-    _PoseLandmark.RIGHT_EAR,
-    _PoseLandmark.LEFT_SHOULDER,
-    _PoseLandmark.RIGHT_SHOULDER,
-]
-
-_FULL_BODY_LANDMARKS = [
-    _PoseLandmark.NOSE,
-    _PoseLandmark.LEFT_EYE,
-    _PoseLandmark.RIGHT_EYE,
-    _PoseLandmark.LEFT_EAR,
-    _PoseLandmark.RIGHT_EAR,
-    _PoseLandmark.LEFT_SHOULDER,
-    _PoseLandmark.RIGHT_SHOULDER,
-    _PoseLandmark.LEFT_HIP,
-    _PoseLandmark.RIGHT_HIP,
-    _PoseLandmark.LEFT_KNEE,
-    _PoseLandmark.RIGHT_KNEE,
-    _PoseLandmark.LEFT_ANKLE,
-    _PoseLandmark.RIGHT_ANKLE,
-    _PoseLandmark.LEFT_FOOT_INDEX,
-    _PoseLandmark.RIGHT_FOOT_INDEX,
-]
-
-_LOWER_BODY_LANDMARKS = [
-    _PoseLandmark.LEFT_HIP,
-    _PoseLandmark.RIGHT_HIP,
-    _PoseLandmark.LEFT_KNEE,
-    _PoseLandmark.RIGHT_KNEE,
-    _PoseLandmark.LEFT_ANKLE,
-    _PoseLandmark.RIGHT_ANKLE,
-]
-
-_MIN_VISIBILITY           = 0.3
-_MIN_VISIBILITY_FULL_BODY = 0.1  # lower body scores weaker in distant full-body shots
-_MIN_LANDMARKS            = 3
+_MIN_CONF              = 0.3
+_MIN_CONF_FULL_BODY    = 0.1
+_MIN_LANDMARKS         = 3
 _MIN_LOWER_BODY_LANDMARKS = 2
 
 
@@ -91,37 +58,55 @@ _PADDING_CONFIG: dict[str, _PaddingConfig] = {
 }
 
 
+def _make_model() -> YOLO:
+    return YOLO(_YOLO_MODEL)
+
+
+def warmup() -> None:
+    Path(_YOLO_MODEL).parent.mkdir(parents=True, exist_ok=True)
+    dummy = Image.fromarray(np.zeros((64, 64, 3), dtype=np.uint8))
+    for _ in range(_POOL_SIZE):
+        model = _make_model()
+        model(dummy, verbose=False)
+        _model_pool.put(model)
+
+
 def crop(image: Image.Image, mode: CropMode = "front") -> Image.Image:
-    img_rgb   = image.convert("RGB")
-    img_array = np.array(img_rgb)
-    h, w      = img_array.shape[:2]
+    img = image.convert("RGB")
+    w, h = img.size
 
-    pose = _pose_pool.get()
+    model = _model_pool.get()
     try:
-        results = pose.process(img_array)
+        results = model(img, verbose=False)
     finally:
-        _pose_pool.put(pose)
+        _model_pool.put(model)
 
-    if not results.pose_landmarks:
-        raise ValueError("No face or shoulders detected in this image")
+    if not results or results[0].keypoints is None or len(results[0].boxes) == 0:
+        raise ValueError("No person detected in this image")
 
-    lm = results.pose_landmarks.landmark
+    best_idx = int(results[0].boxes.conf.argmax())
+
+    kpts  = results[0].keypoints
+    kpts_xy   = kpts.xy[best_idx].cpu().numpy()    # (17, 2) — pixel coords
+    kpts_conf = kpts.conf[best_idx].cpu().numpy() if kpts.has_visible else np.ones(17, dtype=np.float32)
 
     if mode == "full_body":
-        left, top, right, bottom = _compute_full_body_crop(lm, w, h)
+        left, top, right, bottom = _compute_full_body_crop(kpts_xy, kpts_conf, w, h)
     else:
-        left, top, right, bottom = _compute_headshot_crop(lm, w, h, mode)
+        left, top, right, bottom = _compute_headshot_crop(kpts_xy, kpts_conf, w, h, mode)
 
     left, top, right, bottom = _fit_to_square(left, top, right, bottom, w, h)
 
-    return img_rgb.crop((left, top, right, bottom))
+    return img.crop((left, top, right, bottom))
 
 
-def _compute_headshot_crop(lm, w: int, h: int, mode: str) -> tuple[float, float, float, float]:
+def _compute_headshot_crop(
+    kpts_xy: np.ndarray, kpts_conf: np.ndarray, w: int, h: int, mode: str
+) -> tuple[float, float, float, float]:
     visible = [
-        (lm[i].x * w, lm[i].y * h)
-        for i in _HEAD_SHOULDER_LANDMARKS
-        if lm[i].visibility > _MIN_VISIBILITY
+        (kpts_xy[i, 0], kpts_xy[i, 1])
+        for i in _HEAD_SHOULDER_KPS
+        if kpts_conf[i] > _MIN_CONF
     ]
 
     if len(visible) < _MIN_LANDMARKS:
@@ -136,8 +121,8 @@ def _compute_headshot_crop(lm, w: int, h: int, mode: str) -> tuple[float, float,
     span_x = max_x - min_x
     span_y = max_y - min_y
 
-    shoulder_mid_x = (lm[_PoseLandmark.LEFT_SHOULDER].x + lm[_PoseLandmark.RIGHT_SHOULDER].x) / 2 * w
-    nose_x         = lm[_PoseLandmark.NOSE].x * w
+    shoulder_mid_x = (kpts_xy[_LEFT_SHOULDER, 0] + kpts_xy[_RIGHT_SHOULDER, 0]) / 2
+    nose_x         = kpts_xy[_NOSE, 0]
     face_turn      = (nose_x - shoulder_mid_x) / max(span_x, 1)
 
     p = _PADDING_CONFIG[mode]
@@ -150,19 +135,21 @@ def _compute_headshot_crop(lm, w: int, h: int, mode: str) -> tuple[float, float,
     return left, top, right, bottom
 
 
-def _compute_full_body_crop(lm, w: int, h: int) -> tuple[float, float, float, float]:
+def _compute_full_body_crop(
+    kpts_xy: np.ndarray, kpts_conf: np.ndarray, w: int, h: int
+) -> tuple[float, float, float, float]:
     visible = [
-        (lm[i].x * w, lm[i].y * h)
-        for i in _FULL_BODY_LANDMARKS
-        if lm[i].visibility > _MIN_VISIBILITY_FULL_BODY
+        (kpts_xy[i, 0], kpts_xy[i, 1])
+        for i in _FULL_BODY_KPS
+        if kpts_conf[i] > _MIN_CONF_FULL_BODY
     ]
 
     if len(visible) < _MIN_LANDMARKS:
         raise ValueError("Not enough body landmarks detected — please use a clear full-body photo")
 
     lower_body_visible = sum(
-        1 for i in _LOWER_BODY_LANDMARKS
-        if lm[i].visibility > _MIN_VISIBILITY_FULL_BODY
+        1 for i in _LOWER_BODY_KPS
+        if kpts_conf[i] > _MIN_CONF_FULL_BODY
     )
     if lower_body_visible < _MIN_LOWER_BODY_LANDMARKS:
         raise ValueError("Lower body not detected — please use a photo where the full body (legs, feet) is visible")

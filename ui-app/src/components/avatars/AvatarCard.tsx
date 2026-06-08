@@ -52,7 +52,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
         <figure className="h-full w-full overflow-hidden bg-base-300 relative">
           {imageLoading || !imageSrc ? (
             <div className="flex items-center justify-center w-full h-full">
-              <User size={200} strokeWidth={0.5} className="text-base-content/20" />
+              <User size={250} strokeWidth={0.5} className="text-base-content/20" />
             </div>
           ) : (
             <img

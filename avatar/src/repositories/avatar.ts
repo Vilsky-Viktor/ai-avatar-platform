@@ -30,11 +30,11 @@ export const getBySlug = async (userId: string, avatarSlug: string): Promise<Ava
 }
 
 export const getAll = async (userId: string): Promise<Avatar[]> => {
-    const avatarsCollectionRef = db.collection(USERS_COLLECTION_NAME)
+    const snapshot = await db.collection(USERS_COLLECTION_NAME)
         .doc(userId)
-        .collection(AVATARS_COLLECTION_NAME);
-
-    const snapshot = await avatarsCollectionRef.get();
+        .collection(AVATARS_COLLECTION_NAME)
+        .orderBy('createdAt', 'desc')
+        .get();
 
     return snapshot.docs.map(doc => doc.data() as Avatar);
 }

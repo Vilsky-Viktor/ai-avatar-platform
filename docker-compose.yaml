@@ -12,21 +12,6 @@ secrets:
     file: ./gcp-json-key.json
 
 services:
-  ui-app:
-    <<: *default-dns
-    networks:
-      - app-net
-    build:
-      context: ./ui-app
-      dockerfile: Dockerfile.dev
-      secrets:
-        - gcp_key
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./ui-app:/app
-      - /app/node_modules
-
   api-gateway:
     <<: *default-dns
     networks:
@@ -178,7 +163,9 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - SERVICE_NAME=cropper
       - JOB_MANAGER_URL=http://job-manager:3300
-      - MAX_CONCURRENT_CROPS=4
+      - MAX_CONCURRENT_CROPS=5
+      - GUNICORN_WORKERS=2
+      - YOLO_MODEL=models/yolo11n-pose.pt
       - GLOG_minloglevel=2
 
   ai-model-gateway:
@@ -302,3 +289,18 @@ services:
       - INSIGHTFACE_ROOT=/models/insightface
       - POOL_SIZE=1
       - MAX_CONCURRENT_MESSAGES=1
+
+  ui-app:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./ui-app
+      dockerfile: Dockerfile.dev
+      secrets:
+        - gcp_key
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ui-app:/app
+      - /app/node_modules
