@@ -1,4 +1,4 @@
-# @loom24/shared
+# @loom24/shared — v0.0.23
 
 Shared types, utilities, and services used across all Loom24 backend services.
 
@@ -13,7 +13,7 @@ Shared types, utilities, and services used across all Loom24 backend services.
 - **user** — `User`
 
 ### Services (`@loom24/shared/services`)
-- **messageQueue** — `sendJob`, `sendJobs` (Pub/Sub publishing)
+- **messageQueue** — `sendJob` (single job, no retry), `sendJobs` (batch with per-job retry, chunked in groups of 5, fails fast on first chunk failure)
 - **storage** — `uploadToBucket`, `downloadFromPath`, `downloadResultFile`, `getMediaUrlFromPath` (Firebase Storage)
 
 ### Middlewares (`@loom24/shared/middlewares`)

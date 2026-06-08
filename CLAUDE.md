@@ -15,6 +15,9 @@
 - Never install packages or dependencies yourself. Instead, provide the exact command for the user to run.
 - Always pin dependencies to a concrete version. Never use range specifiers (`^`, `~`, `>=`, `>`). Every dependency in every package file must have an exact version (e.g. `"fastapi": "0.136.3"`, `ultralytics = "8.3.202"`).
 
+## Documentation
+- After making any code or configuration changes, check whether the affected service's README and the root README need updating. Update them as part of the same change.
+
 ## External libraries and APIs
 - Before writing any code that uses an external library, look up the actual API first (PyPI page, GitHub source, or official docs).
 - Never assume an API from memory, training data, or example pseudocode. Verify the real method signatures, return types, and parameter names before writing a single line.

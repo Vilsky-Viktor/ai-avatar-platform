@@ -1,4 +1,4 @@
-# loom24-shared (Python)
+# loom24-shared (Python) — v0.0.23
 
 Shared types and services used across all Loom24 Python services. Pydantic models mirrored 1-to-1 from `@loom24/shared` TypeScript types.
 
@@ -13,6 +13,7 @@ Shared types and services used across all Loom24 Python services. Pydantic model
 - **user** — `User`
 
 ### Services (`loom24_shared.services`)
+- **message_queue** — `send_job` (Pub/Sub publish with 3-attempt exponential backoff + jitter)
 - **service_client** — `ServiceClient`, `create_service_client` (HTTP client with retry logic)
 - **storage_client** — `StorageClient`, `create_storage_client` (GCS client with lazy init)
 
@@ -26,7 +27,7 @@ Services use Poetry for local development and `pip` in Docker.
 
 ```toml
 [tool.poetry.dependencies]
-loom24-shared = {version = "0.0.3", source = "loom24-pypi"}
+loom24-shared = {version = "0.0.23", source = "loom24-pypi"}
 
 [[tool.poetry.source]]
 name = "loom24-pypi"
@@ -58,7 +59,7 @@ RUN --mount=type=secret,id=gcp_key \
     GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gcp_key \
     pip install --no-cache-dir \
         --extra-index-url https://us-central1-python.pkg.dev/loom24-mvp/loom24-pypi/simple/ \
-        "loom24-shared==0.0.2" <other deps...>
+        "loom24-shared==0.0.23" <other deps...>
 ```
 
 The `gcp_key` secret is passed via `docker-compose.yaml`:
