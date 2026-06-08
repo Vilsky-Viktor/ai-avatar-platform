@@ -32,7 +32,7 @@ const removeIntermediatePaths = async (job: Job) => {
 }
 
 const completedHandler = async (job: Job) => {
-  logger.info('Workflow successfully completed');
+  logger.info({curRun: job.curRun}, 'Workflow successfully completed');
   job.status = JobStatuses.completed;
 
   await updateJob(job);
@@ -40,12 +40,13 @@ const completedHandler = async (job: Job) => {
 }
 
 const newWorkflowHandler = async (job: Job) => {
-  logger.info('Starting a new workflow');
-  const stepIdx = 0;
-  const stepData = job.workflow[stepIdx];
-
   job.curRun += 1;
   job.status = JobStatuses.generating;
+
+  logger.info({curRun: job.curRun}, 'Starting a new workflow');
+
+  const stepIdx = 0;
+  const stepData = job.workflow[stepIdx];
 
   await sendJob(stepData.service, job, SERVICE_NAME);
 
@@ -59,7 +60,7 @@ const pendingStepHandler = async (job: Job) => {
   const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
   const stepData = job.workflow[stepIdx];
 
-  logger.info(`Sending job to ${stepData.service} step`)
+  logger.info({curRun: job.curRun}, `Sending job to ${stepData.service} step`)
 
   job.status = JobStatuses.generating;
 
@@ -77,7 +78,7 @@ const jobErrorHandler = async (job: Job) => {
 
   job.status = JobStatuses.error;
 
-  logger.info({ model: stepData.model, error: stepData.error, maxRuns: job.maxRuns }, 'Workflow failed — max runs exhausted');
+  logger.info({ model: stepData.model, error: stepData.error, curRun: job.curRun, maxRuns: job.maxRuns }, 'Workflow failed — max runs exhausted');
   await updateJob(job);
 }
 
@@ -85,10 +86,10 @@ const stepErrorHandler = async (job: Job) => {
   const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.error);
   const stepData = job.workflow[stepIdx];
 
-  logger.info({ model: stepData.model, error: stepData.error, curRun: job.curRun }, 'Restarting workflow');
-
   job.curRun += 1;
   job.workflow = job.workflow.map((step: WorkflowStep) => ({...step, status: JobStatuses.pending, error: undefined}));
+
+  logger.info({ model: stepData.model, error: stepData.error, curRun: job.curRun }, 'Restarting workflow');
 
   await sendJob(job.workflow[0].service, job, SERVICE_NAME);
 
@@ -136,8 +137,8 @@ function listenForResults() {
       }
 
       const allStepsCompleted = job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.completed);
-      const jobError = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun === job.maxRuns;
-      const stepError = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun !== job.maxRuns;
+      const jobError = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun >= job.maxRuns;
+      const stepError = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.error) && job.curRun < job.maxRuns;
       const newWorkflow = job.workflow.every((step: WorkflowStep) => step.status === JobStatuses.pending);
       const pendingStep = job.workflow.some((step: WorkflowStep) => step.status === JobStatuses.pending);
 

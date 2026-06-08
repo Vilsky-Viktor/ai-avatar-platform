@@ -106,6 +106,7 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
     }
 
     job.status = JobStatuses.pending;
+    job.curRun = 0;
 
     job.workflow.forEach((_, idx) => {
       job.workflow[idx].error = '';

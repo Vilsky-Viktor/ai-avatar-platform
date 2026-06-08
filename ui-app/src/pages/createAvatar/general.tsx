@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from '../../components/createAvatar/CreateAvatarStepper';
-import { User } from 'lucide-react';
+import { User, ScanFace, Sparkles } from 'lucide-react';
 import { createAvatar, getAvatarById } from '../../services/apiGateway';
 import { AvatarTypes, AvatarGender, type Avatar } from '@loom24/shared/types';
 import { getAvatarData, initialAvatarData, saveAvatarData } from '../../utils/avatarCreation';
@@ -9,6 +9,20 @@ import { type NewAvatarData  } from "../../types/avatarCreation";
 import BottomDock from '../../components/createAvatar/BottomDock'
 import { scrollToTop } from '../../utils/scroller';
 
+const AVATAR_TYPE_OPTIONS = [
+    {
+        type: AvatarTypes.twin,
+        icon: ScanFace,
+        label: 'Digital Twin',
+        description: 'Upload your real photos. The AI learns your exact face and creates a hyper-realistic version of you.',
+    },
+    {
+        type: AvatarTypes.synthetic,
+        icon: Sparkles,
+        label: 'Synthetic',
+        description: 'No photos needed. The AI generates a brand-new fictional face based on your settings.',
+    },
+];
 
 function GeneralPage() {
     const navigate = useNavigate();
@@ -19,7 +33,6 @@ function GeneralPage() {
 
     useEffect(() => {
         scrollToTop();
-
         initPage();
     }, []);
 
@@ -30,8 +43,8 @@ function GeneralPage() {
     useEffect(() => {
         const slug = avatar.name
         .toLowerCase()
-        .replace(/[_\s]+/g, '-')     
-        .replace(/[^a-z0-9-]/g, '')  
+        .replace(/[_\s]+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
         .replace(/-+/g, '-')
         .replace(/^-+|-+$/g, '');
 
@@ -48,19 +61,19 @@ function GeneralPage() {
     }
 
     const setSlug = (slug: string) => {
-        setAvatar((avatar: Avatar) => ({...avatar, slug}))
+        setAvatar((prev: Avatar) => ({...prev, slug}))
     }
 
     const setName = (name: string) => {
-        setAvatar((avatar: Avatar) => ({...avatar, name}))
+        setAvatar((prev: Avatar) => ({...prev, name}))
     }
 
     const setType = (type: AvatarTypes) => {
-        setAvatar((avatar: Avatar) => ({...avatar, type}))
+        setAvatar((prev: Avatar) => ({...prev, type}))
     }
 
     const setParameter = (key: string, value: string) => {
-        setAvatar((avatar: Avatar) => ({...avatar, parameters: { ...avatar.parameters, [key]: value }}))
+        setAvatar((prev: Avatar) => ({...prev, parameters: { ...prev.parameters, [key]: value }}))
     }
 
     const setAvatarId = (avatarId: string) => {
@@ -73,10 +86,10 @@ function GeneralPage() {
         const nameFilled = avatar.name.trim().length > 2;
         const typeFilled = avatar.type;
         const genderFilled = avatar.parameters.gender;
-        
+
         return nameFilled && typeFilled && genderFilled;
     };
-    
+
     const stepLocked = () => {
         return Boolean(avatar.id);
     }
@@ -95,11 +108,13 @@ function GeneralPage() {
             }
         } catch (error) {
             console.log('Failed to create a new avatar');
-        } 
+        }
     }
 
+    const locked = stepLocked();
+
     return (
-        <div className="max-w-4xl mx-auto px-4 pb-20">
+        <div className="max-w-5xl mx-auto px-4 pb-20">
             <CreateAvatarStepper step={0}/>
 
             {pageLoading ? (
@@ -107,88 +122,115 @@ function GeneralPage() {
                     <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
                 </div>
             ) : (
-                <div className="mt-12 w-full max-w-2xl mx-auto">
-                    <div className="p-12 flex flex-col gap-8">
-                        
-                        <div className={`group flex flex-col gap-1 transition-opacity duration-500 ${stepLocked() ? 'opacity-50' : 'opacity-100'}`}>
-                            <div className="group flex flex-col gap-4">
-                                <div className="flex w-full p-1.5 bg-base-content/5 rounded-2xl">
-                                    {Object.values(AvatarGender).map((gender) => {
-                                        const isActive = avatar.parameters.gender === gender;
-                                        return (
-                                            <button
-                                                key={gender}
-                                                type="button"
-                                                disabled={stepLocked()}
-                                                onClick={() => setParameter('gender', gender)}
-                                                className={`
-                                                    flex-1 py-4 px-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300
-                                                    ${isActive 
-                                                        ? 'bg-base-100 text-primary shadow-sm scale-[1.02]' 
-                                                        : 'text-base-content/40 hover:text-base-content/60'
-                                                    }
-                                                    ${stepLocked() ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
-                                                `}
-                                            >
-                                                {gender}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                <div className="mt-12 w-full max-w-3xl mx-auto">
+                    <div className="p-12 flex flex-col gap-10">
 
-                            <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-base-content/20 mt-6">
-                                Name of Avatar
-                            </label>
-                            <div className="relative">
-                                <input 
-                                    type="text"
-                                    value={avatar.name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    disabled={stepLocked()}
-                                    placeholder="Enter name..."
-                                    maxLength={20}
-                                    className={`w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight ${stepLocked() ? 'cursor-not-allowed' : ''}`}
-                                />
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20 group-focus-within:text-primary transition-colors">
-                                    <User size={18} strokeWidth={2.5} />
-                                </div>
+                        {/* Name */}
+                        <div className={`flex flex-col gap-3 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
+                            <div className="flex items-center gap-3">
+                                <span className="w-8 h-px bg-primary/50" />
+                                <label className="text-xl uppercase tracking-[0.2em] text-base-content/70">
+                                    Name your avatar
+                                </label>
                             </div>
-                        </div>
-
-                        <div className="flex items-center justify-between px-1 -mt-4">
-                            <div className="flex items-center gap-2 group cursor-default">
-                                <span className="text-[11px] font-mono font-bold tracking-tight text-primary bg-primary/5 px-2 py-0.5 rounded-md border border-primary/5">
+                            <div className="flex flex-col gap-4 p-5 rounded-2xl bg-base-content/5">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={avatar.name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        disabled={locked}
+                                        placeholder="Enter a name..."
+                                        maxLength={20}
+                                        className={`w-full py-3 bg-transparent border-b border-base-content/10 focus:border-primary transition-all duration-500 outline-none text-xl font-medium tracking-tight ${locked ? 'cursor-not-allowed' : ''}`}
+                                    />
+                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-base-content/20">
+                                        <User size={18} strokeWidth={2.5} />
+                                    </div>
+                                </div>
+                                <span className="text-[11px] font-mono font-bold tracking-tight text-primary bg-primary/5 px-2 py-0.5 rounded-md border border-primary/5 self-start">
                                     /{avatar.slug || "---"}
                                 </span>
                             </div>
                         </div>
 
-                        <div className="group flex flex-col gap-4">
+                        {/* Gender */}
+                        <div className={`flex flex-col gap-3 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
+                            <div className="flex items-center gap-3">
+                                <span className="w-8 h-px bg-primary/50" />
+                                <label className="text-xl uppercase tracking-[0.2em] text-base-content/70">
+                                    Select gender
+                                </label>
+                            </div>
                             <div className="flex w-full p-1.5 bg-base-content/5 rounded-2xl">
-                                {Object.values(AvatarTypes).map((type) => {
-                                    const isActive = avatar.type === type;
+                                {Object.values(AvatarGender).map((gender) => {
+                                    const isActive = avatar.parameters.gender === gender;
                                     return (
                                         <button
-                                            key={type}
+                                            key={gender}
                                             type="button"
-                                            disabled={stepLocked()}
-                                            onClick={() => setType(type)}
+                                            disabled={locked}
+                                            onClick={() => setParameter('gender', gender)}
                                             className={`
                                                 flex-1 py-4 px-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300
-                                                ${isActive 
-                                                    ? 'bg-base-100 text-primary shadow-sm scale-[1.02]' 
+                                                ${isActive
+                                                    ? 'bg-base-100 text-primary shadow-sm scale-[1.02]'
                                                     : 'text-base-content/40 hover:text-base-content/60'
                                                 }
-                                                ${stepLocked() ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+                                                ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}
                                             `}
                                         >
-                                            {type}
+                                            {gender}
                                         </button>
                                     );
                                 })}
                             </div>
                         </div>
+
+                        {/* Avatar type */}
+                        <div className={`flex flex-col gap-3 transition-opacity duration-500 ${locked ? 'opacity-50' : 'opacity-100'}`}>
+                            <div className="flex items-center gap-3">
+                                <span className="w-8 h-px bg-primary/50" />
+                                <label className="text-xl uppercase tracking-[0.2em] text-base-content/70">
+                                    Choose avatar type
+                                </label>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {AVATAR_TYPE_OPTIONS.map(({ type, icon: Icon, label, description }) => {
+                                    const isActive = avatar.type === type;
+                                    return (
+                                        <button
+                                            key={type}
+                                            type="button"
+                                            disabled={locked}
+                                            onClick={() => setType(type)}
+                                            className={`
+                                                flex flex-col items-start gap-3 p-5 rounded-2xl border-2 text-left transition-all duration-300
+                                                ${isActive
+                                                    ? 'border-primary bg-primary/5 shadow-sm'
+                                                    : 'border-base-content/10 bg-base-content/[0.02] hover:border-base-content/20'
+                                                }
+                                                ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                            `}
+                                        >
+                                            <Icon
+                                                size={28}
+                                                className={`transition-colors duration-300 ${isActive ? 'text-primary' : 'text-base-content/30'}`}
+                                            />
+                                            <div className="flex flex-col gap-1">
+                                                <span className={`text-sm font-bold uppercase tracking-[0.15em] transition-colors duration-300 ${isActive ? 'text-primary' : 'text-base-content/60'}`}>
+                                                    {label}
+                                                </span>
+                                                <span className="text-[11px] leading-relaxed text-base-content/40">
+                                                    {description}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             )}

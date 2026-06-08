@@ -7,36 +7,29 @@ import { getAvatarData, initialAvatarData } from '../../utils/avatarCreation';
 import { AvatarGender, AvatarTypes, type Avatar } from '@loom24/shared/types';
 import { updateAvatar, getVoices } from '../../services/apiGateway';
 import type { Voice } from '@loom24/shared/types';
-import { Play, Pause, Check } from 'lucide-react';
+import { Play, Pause, Check, ChevronDown } from 'lucide-react';
 import { scrollToTop } from '../../utils/scroller';
 import { getAvatarById } from '../../services/apiGateway';
 
 const LANGUAGE_NAMES: Record<string, string> = {
-    af: 'Afrikaans', ar: 'Arabic', bg: 'Bulgarian', bn: 'Bengali', bs: 'Bosnian',
-    ca: 'Catalan', cs: 'Czech', cy: 'Welsh', da: 'Danish', de: 'German',
-    el: 'Greek', en: 'English', eo: 'Esperanto', es: 'Spanish', et: 'Estonian',
-    fa: 'Persian', fi: 'Finnish', fr: 'French', gl: 'Galician', gu: 'Gujarati',
-    he: 'Hebrew', hi: 'Hindi', hr: 'Croatian', hu: 'Hungarian', hy: 'Armenian',
-    id: 'Indonesian', is: 'Icelandic', it: 'Italian', ja: 'Japanese', ka: 'Georgian',
-    km: 'Khmer', kn: 'Kannada', ko: 'Korean', lt: 'Lithuanian', lv: 'Latvian',
-    mk: 'Macedonian', ml: 'Malayalam', mr: 'Marathi', ms: 'Malay', my: 'Burmese',
-    nb: 'Norwegian', no: 'Norwegian', fil: 'Filipino', ne: 'Nepali', nl: 'Dutch', or: 'Odia', pa: 'Punjabi',
-    pl: 'Polish', pt: 'Portuguese', ro: 'Romanian', ru: 'Russian', si: 'Sinhala',
-    sk: 'Slovak', sl: 'Slovenian', sq: 'Albanian', sr: 'Serbian', su: 'Sundanese',
-    sv: 'Swedish', sw: 'Swahili', ta: 'Tamil', te: 'Telugu', th: 'Thai',
-    tr: 'Turkish', uk: 'Ukrainian', ur: 'Urdu', uz: 'Uzbek', vi: 'Vietnamese',
-    zh: 'Chinese', 'zh-CN': 'Chinese (Simplified)', 'zh-TW': 'Chinese (Traditional)',
+    ar: 'Arabic',     bg: 'Bulgarian',  cs: 'Czech',      da: 'Danish',     de: 'German',
+    el: 'Greek',      en: 'English',    es: 'Spanish',    fi: 'Finnish',    fil: 'Filipino',
+    fr: 'French',     hi: 'Hindi',      hr: 'Croatian',   hu: 'Hungarian',  id: 'Indonesian',
+    it: 'Italian',    ja: 'Japanese',   ko: 'Korean',     ms: 'Malay',      nl: 'Dutch',
+    no: 'Norwegian',  pl: 'Polish',     pt: 'Portuguese', ro: 'Romanian',   ru: 'Russian',
+    sk: 'Slovak',     sv: 'Swedish',    ta: 'Tamil',      tr: 'Turkish',    uk: 'Ukrainian',
+    vi: 'Vietnamese', zh: 'Chinese',
 };
 
 const languageLabel = (code: string) => LANGUAGE_NAMES[code] ?? code;
 const sanitize = (value: string) => value.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 
-const VOICE_FILTER_LANGUAGES  = Object.keys(LANGUAGE_NAMES).sort();
-const VOICE_FILTER_AGES        = ['middle_aged', 'old', 'young'];
-const VOICE_FILTER_CATEGORIES  = ['famous', 'generated', 'high_quality', 'premade', 'professional'];
-const VOICE_FILTER_USE_CASES   = ['advertising', 'audiobook', 'candidates_ai', 'characters_animation', 'conversational', 'entertainment_tv', 'ground_truth', 'interactive_characters_games', 'meditation', 'narration', 'news', 'social_media', 'training_promotional'];
+const VOICE_FILTER_LANGUAGES  = Object.keys(LANGUAGE_NAMES);
+const VOICE_FILTER_AGES        = ['middle age', 'middle-aged', 'old', 'young'];
+const VOICE_FILTER_CATEGORIES  = ['high_quality', 'premade', 'professional'];
+const VOICE_FILTER_USE_CASES   = ['advertisement', 'characters_animation', 'conversational', 'entertainment_tv', 'informative_educational', 'narrative_story', 'social_media'];
 
-const COLS = 2;
+const COLS = 1;
 const ROW_HEIGHT = 200;
 
 function AssignVoicePage() {
@@ -55,6 +48,9 @@ function AssignVoicePage() {
     const [filterAge, setFilterAge] = useState<string | null>(null);
     const [filterCategory, setFilterCategory] = useState<string | null>(null);
     const [filterUseCase, setFilterUseCase] = useState<string | null>(null);
+    const [openSection, setOpenSection] = useState<string>('language');
+
+    const toggleSection = (key: string) => setOpenSection(prev => prev === key ? '' : key);
 
     const [optLanguages] = useState<string[]>(VOICE_FILTER_LANGUAGES);
     const [optAges] = useState<string[]>(VOICE_FILTER_AGES);
@@ -233,6 +229,13 @@ function AssignVoicePage() {
         }
     };
 
+    const filters = [
+        { label: 'Language', key: 'language', options: optLanguages, active: filterLanguage, set: setFilterLanguage, fmt: languageLabel },
+        { label: 'Age',      key: 'age',      options: optAges,      active: filterAge,      set: setFilterAge,      fmt: sanitize },
+        { label: 'Category', key: 'category', options: optCategories, active: filterCategory, set: setFilterCategory, fmt: sanitize },
+        { label: 'Use case', key: 'useCase',  options: optUseCases,  active: filterUseCase,  set: setFilterUseCase,  fmt: sanitize },
+    ];
+
     return (
         <>
             <CreateAvatarStepper step={2} />
@@ -242,35 +245,95 @@ function AssignVoicePage() {
                     <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
                 </div>
             ) : (
-                <div className="max-w-6xl mx-auto px-4 pt-12 pb-40">
-                    <div className="flex flex-col gap-8">
+                <div className="max-w-7xl mx-auto px-4 pt-10 pb-32 flex gap-8 items-start">
 
-                        {/* Filters */}
-                        <div className="flex items-center gap-8">
-                            {[
-                                { label: 'Language', options: optLanguages, active: filterLanguage, set: setFilterLanguage, fmt: languageLabel },
-                                { label: 'Age',      options: optAges,      active: filterAge,      set: setFilterAge,      fmt: sanitize },
-                                { label: 'Category', options: optCategories, active: filterCategory, set: setFilterCategory, fmt: sanitize },
-                                { label: 'Use case', options: optUseCases,  active: filterUseCase,  set: setFilterUseCase,  fmt: sanitize },
-                            ].map(({ label, options, active, set, fmt }) => (
-                                <select
-                                    key={label}
-                                    value={active ?? ''}
-                                    onChange={e => set(e.target.value || null)}
-                                    className="flex-1 py-2 bg-transparent border-b border-base-content/10 focus:border-primary focus:outline-none transition-all duration-300 text-sm text-base-content/60 cursor-pointer"
-                                >
-                                    <option value="">{label}</option>
-                                    {options.map(v => (
-                                        <option key={v} value={v}>{fmt(v)}</option>
-                                    ))}
-                                </select>
-                            ))}
+                    {/* Left — Filters */}
+                    <div className="w-96 flex-shrink-0 sticky top-6">
+                        <div className="flex flex-col">
+                            {filters.map(({ label, key, options, active, set, fmt }) => {
+                                const isOpen = openSection === key;
+                                return (
+                                    <div key={key} className="border-b border-base-content/5 last:border-0">
+                                        <button
+                                            className="w-full flex items-center justify-between py-4 cursor-pointer"
+                                            onClick={() => toggleSection(key)}
+                                        >
+                                            <div className="flex flex-col items-start gap-1">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`w-8 h-px transition-colors duration-200 ${isOpen ? 'bg-primary' : 'bg-primary/50'}`} />
+                                                    <span className={`text-sm uppercase tracking-[0.2em] transition-colors duration-200 ${isOpen ? 'text-base-content/90' : 'text-base-content/70'}`}>
+                                                        {label}
+                                                    </span>
+                                                </div>
+                                                {!isOpen && active && (
+                                                    <span className="text-xs text-base-content/30 truncate max-w-[190px] pl-11">
+                                                        {fmt(active)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <ChevronDown
+                                                size={13}
+                                                strokeWidth={2.5}
+                                                className={`text-base-content/30 transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180 text-primary' : ''}`}
+                                            />
+                                        </button>
+
+                                        <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                            <div className="overflow-hidden">
+                                                <div className="pb-5 flex flex-wrap gap-1.5">
+                                                    {options.map(opt => (
+                                                        <button
+                                                            key={opt}
+                                                            onClick={() => set(active === opt ? null : opt)}
+                                                            className={`px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer ${
+                                                                active === opt
+                                                                    ? 'bg-primary text-primary-content'
+                                                                    : 'bg-base-content/5 text-base-content/50 hover:bg-base-content/10 hover:text-base-content/70'
+                                                            }`}
+                                                        >
+                                                            {fmt(opt)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Right — Voice grid */}
+                    <div className="flex-1 flex flex-col gap-8">
+
+                        <div className="flex flex-col gap-2 pt-4">
+                            <div className="flex items-center gap-3">
+                                <span className="w-8 h-px bg-primary/50" />
+                                <h1 className="text-xl uppercase tracking-[0.2em] text-base-content/70">
+                                    Choose a voice
+                                </h1>
+                            </div>
+                            <p className="text-sm text-base-content/40 pl-11 leading-relaxed">
+                                Play any voice to preview it, then click a card to select it for your avatar.
+                            </p>
+                            <p className="text-xs text-base-content/25 pl-11">
+                                You'll also be able to record your own voice later.
+                            </p>
                         </div>
 
-                        {/* Voice grid */}
                         {voices.length === 0 && loadingMore ? (
-                            <div className="flex items-center justify-center py-16">
+                            <div className="flex items-center justify-center py-32">
                                 <span className="loading loading-spinner loading-md text-base-content/20" />
+                            </div>
+                        ) : voices.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-32 gap-3">
+                                <span className="text-base-content/20 text-sm uppercase tracking-[0.2em]">No voices match these filters</span>
+                                <button
+                                    onClick={() => { setFilterLanguage(null); setFilterAge(null); setFilterCategory(null); setFilterUseCase(null); }}
+                                    className="text-xs text-primary/50 hover:text-primary transition-colors cursor-pointer underline underline-offset-4"
+                                >
+                                    Clear all filters
+                                </button>
                             </div>
                         ) : (
                             <div
@@ -290,7 +353,7 @@ function AssignVoicePage() {
                                             transform: `translateY(${virtualRow.start - scrollMargin}px)`,
                                         }}
                                     >
-                                        <div className="grid grid-cols-2 gap-4 pb-4">
+                                        <div className="grid grid-cols-1 gap-4 pb-4">
                                             {rows[virtualRow.index].map((voice) => {
                                                 const isSelected = avatar.voiceId === voice.id;
                                                 const isPlaying = playingId === voice.id;
@@ -309,7 +372,6 @@ function AssignVoicePage() {
                                                             }
                                                         `}
                                                     >
-                                                        {/* Top row: radio + name + tags */}
                                                         <div className="flex items-center gap-3">
                                                             <div className={`
                                                                 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0
@@ -319,27 +381,22 @@ function AssignVoicePage() {
                                                                 {isSelected && <Check size={11} strokeWidth={3} className="text-primary-content" />}
                                                             </div>
 
-                                                            <span className="text-sm font-medium tracking-tight truncate max-w-[12rem]">{voice.name}</span>
+                                                            <span className="text-sm font-medium tracking-tight truncate flex-1">{voice.name}</span>
 
-                                                            <div className="flex items-center gap-1.5 ml-auto flex-wrap justify-end">
+                                                            <div className="flex items-center gap-1.5 ml-auto flex-wrap justify-end flex-shrink-0">
                                                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-primary/8 text-primary/70">
-                                                                    {voice.language}
+                                                                    {languageLabel(voice.language)}
                                                                 </span>
                                                                 <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-base-content/5 text-base-content/40">
                                                                     {sanitize(voice.age)}
                                                                 </span>
-                                                                <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-base-content/5 text-base-content/40">
-                                                                    {sanitize(voice.category)}
-                                                                </span>
                                                             </div>
                                                         </div>
 
-                                                        {/* Description */}
                                                         <p className="text-[12px] text-base-content/50 leading-relaxed line-clamp-2">
                                                             {voice.description}
                                                         </p>
 
-                                                        {/* Bottom row: useCase + progress + play */}
                                                         <div className="flex items-center gap-3 mt-auto">
                                                             <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-base-content/5 text-base-content/40 shrink-0">
                                                                 {sanitize(voice.useCase)}

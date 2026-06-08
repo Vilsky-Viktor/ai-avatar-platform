@@ -70,7 +70,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
   return [
     {
       imageGenerator: {
-        prompt: `Gentle smile showing teeth`,
+        prompt: `Gentle smile showing teeth. Gray studio background`,
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
@@ -92,7 +92,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'rotate person 45 degrees to the left to create a three-quarter view',
+        prompt: 'Rotate the entire person 45 degrees to the left to create a pure three-quarter view. The head, eyes, and gaze must follow the body — do not turn the face back toward the camera. Subject should be looking in the same direction the body is facing. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
@@ -114,7 +114,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'rotate person 45 degrees to the right to create a three-quarter view',
+        prompt: 'Rotate the entire person 45 degrees to the right to create a pure three-quarter view. The head, eyes, and gaze must follow the body — do not turn the face back toward the camera. Subject should be looking in the same direction the body is facing. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
@@ -136,7 +136,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'rotate person 90 degrees to the left to create a side profile view',
+        prompt: 'rotate person 90 degrees to the left to create a pure side profile view. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
@@ -158,7 +158,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'rotate person 90 degrees to the right to create a side profile view',
+        prompt: 'rotate person 90 degrees to the right to create a pure side profile view. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
@@ -180,7 +180,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: `Standing full body wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}, light gray running shorts and white sneakers. ${body} body type, ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'no body hair'}, ${bustSize} chest, ${height} height.`,
+        prompt: `Standing full body wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}, light gray running shorts and white sneakers. ${body} body type, ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'no body hair'}, ${bustSize} chest, ${height} height. Gray studio background`,
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
@@ -215,8 +215,8 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
   return [
     {
       imageGenerator: {
-        prompt: `Change background to gray studio background`,
-        negativePrompt: '',
+        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+        negativePrompt: 'another person, altered face, rotated, blurred',
         ratio,
         imagePaths: [idPhotoSet.front!],
         temperature: 0,
@@ -237,8 +237,8 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     },
     {
       imageGenerator: {
-        prompt: `Change background to gray studio background`,
-        negativePrompt: '',
+        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+        negativePrompt: 'another person, altered face, rotated, blurred',
         ratio,
         imagePaths: [idPhotoSet.frontSmile!],
         temperature: 0,
@@ -259,8 +259,8 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     },
     {
       imageGenerator: {
-        prompt: `Change background to gray studio background`,
-        negativePrompt: '',
+        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+        negativePrompt: 'another person, altered face, rotated, blurred',
         ratio,
         imagePaths: [idPhotoSet.leftQuarter!],
         temperature: 0,
@@ -281,8 +281,8 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     },
     {
       imageGenerator: {
-        prompt: `Change background to gray studio background`,
-        negativePrompt: '',
+        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+        negativePrompt: 'another person, altered face, rotated, blurred',
         ratio,
         imagePaths: [idPhotoSet.rightQuarter!],
         temperature: 0,
@@ -303,8 +303,8 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     },
     {
       imageGenerator: {
-        prompt: `Change background to gray studio background`,
-        negativePrompt: '',
+        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+        negativePrompt: 'another person, altered face, rotated, blurred',
         ratio,
         imagePaths: [idPhotoSet.leftSide!],
         temperature: 0,
@@ -325,8 +325,8 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     },
     {
       imageGenerator: {
-        prompt: `Change background to gray studio background`,
-        negativePrompt: '',
+        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+        negativePrompt: 'another person, altered face, rotated, blurred',
         ratio,
         imagePaths: [idPhotoSet.rightSide!],
         temperature: 0,
@@ -347,8 +347,8 @@ export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: 
     },
     {
       imageGenerator: {
-        prompt: `Change background to gray studio background`,
-        negativePrompt: '',
+        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+        negativePrompt: 'another person, altered face, rotated, blurred',
         ratio,
         imagePaths: [idPhotoSet.body!],
         temperature: 0,

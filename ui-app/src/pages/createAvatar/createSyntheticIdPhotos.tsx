@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import { type Avatar } from '@loom24/shared/types';
 import { updateAvatar, restartJobById, genSyntheticIdPhotos, genSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId, normalizeJob } from '../../services/apiGateway';
 import { JobStatuses, type Job, type IdPhotoJobRequest } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
-import { 
+import {
     AVATAR_PARAMETER_OPTIONS,
     getAvatarData,
     initialAvatarData,
@@ -20,7 +20,7 @@ import { type NewAvatarData } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { listenToCollectionByGroupId } from '../../services/db';
-import { scrollToTop, scrollToBottom } from '../../utils/scroller';
+import { scrollToTop } from '../../utils/scroller';
 import PillSelect from '../../components/PillSelect';
 
 function CreateSyntheticIdPhotosPage() {
@@ -30,40 +30,27 @@ function CreateSyntheticIdPhotosPage() {
     const [newAvatarData, setNewAvatarData] = useState(() => getAvatarData());
     const [avatar, setAvatar] = useState(initialAvatarData);
     const [pageLoading, setPageLoading] = useState(true);
-
     const [jobs, setJobs] = useState([] as (Job | null)[]);
     const jobsRef = useRef<(Job | null)[]>([]);
-
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect } | null>(null);
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ general: true });
+    const [openSection, setOpenSection] = useState<string>('ethnicity');
 
-    const toggleSection = (key: string) => setOpenSections(prev => ({ [key]: !prev[key] }));
+    const toggleSection = (key: string) =>
+        setOpenSection(prev => (prev === key ? '' : key));
 
-    useEffect(() => {
-        scrollToTop();
-    }, []);
-
-    useEffect(() => {
-        initPage()
-    }, []);
-
-    useEffect(() => {
-        saveAvatarData(newAvatarData);
-    }, [newAvatarData]);
+    useEffect(() => { scrollToTop(); }, []);
+    useEffect(() => { initPage(); }, []);
+    useEffect(() => { saveAvatarData(newAvatarData); }, [newAvatarData]);
 
     useEffect(() => {
         if (!newAvatarData.groupId || !user?.id) return;
-
         const unsubscribe = listenToCollectionByGroupId('jobs', user.id, newAvatarData.groupId, async (querySnap: QuerySnapshot) => {
             await listener(querySnap);
         });
-
         return () => unsubscribe();
     }, [newAvatarData.groupId, user?.id]);
 
-    useEffect(() => {
-        jobsRef.current = jobs;
-    }, [jobs]);
+    useEffect(() => { jobsRef.current = jobs; }, [jobs]);
 
     const listener = async (querySnap: QuerySnapshot) => {
         for (const docSnap of querySnap.docs) {
@@ -77,14 +64,14 @@ function CreateSyntheticIdPhotosPage() {
             }
 
             const currentJobs = jobsRef.current;
-            const jobIndex = currentJobs.findIndex((item) => item?.id === job.id);
+            const jobIndex = currentJobs.findIndex(item => item?.id === job.id);
             const oldJob = currentJobs[jobIndex];
 
             if (oldJob && oldJob?.status !== job.status) {
                 setJob(jobIndex, job);
             }
         }
-    }
+    };
 
     const initPage = async () => {
         const existingAvatar = await getAvatarById(newAvatarData.avatarId);
@@ -133,132 +120,103 @@ function CreateSyntheticIdPhotosPage() {
             setJobs(enrichedJobs as Job[]);
         }
         setPageLoading(false);
-    }
-
-    const setJob = (listIdx: number, job: Job | null) => {
-        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
     };
 
-    const setParameter = (key: string, value: string) => {
-        setAvatar((avatar: Avatar) => ({...avatar, parameters: { ...avatar.parameters, [key]: value }}))
-    }
+    const setJob = (listIdx: number, job: Job | null) =>
+        setJobs(prev => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
 
-    const setGroupId = (groupId: string) => {
-        setNewAvatarData((prev: NewAvatarData) => ({...prev, groupId}));
-    }
+    const setParameter = (key: string, value: string) =>
+        setAvatar((prev: Avatar) => ({ ...prev, parameters: { ...prev.parameters, [key]: value } }));
 
-    const jobsCreated = () => {
-        return jobs.length > 0 && jobs.every(job => job !== null);
-    }
+    const setGroupId = (groupId: string) =>
+        setNewAvatarData((prev: NewAvatarData) => ({ ...prev, groupId }));
 
     const createFrontJob = async () => {
         setJobs([null]);
-
-        const payload: Partial<Avatar> = {
-            parameters: avatar.parameters,
-        };
-        await updateAvatar(newAvatarData.avatarId, payload);
-
-        const jobRequest: IdPhotoJobRequest = {
-            avatarId: newAvatarData.avatarId,
-            parameters: avatar.parameters
-        }
-
+        await updateAvatar(newAvatarData.avatarId, { parameters: avatar.parameters });
+        const jobRequest: IdPhotoJobRequest = { avatarId: newAvatarData.avatarId, parameters: avatar.parameters };
         try {
             const job = await genSyntheticFrontIdPhoto(jobRequest);
             setJobs([job as Job]);
             setGroupId(job.groupId!);
-            setTimeout(() => scrollToBottom(), 500);
-        } catch (error) {
-            console.log('Failed to create front job for id photos')
+        } catch {
+            console.log('Failed to create front job for id photos');
         }
-    }
+    };
 
     const createJobs = async () => {
         const emptyJobs = Array(NUM_ID_PHOTOS - 1).fill(null);
         setJobs([...jobsRef.current, ...emptyJobs]);
-
         const jobRequest: IdPhotoJobRequest = {
             groupId: newAvatarData.groupId,
             avatarId: newAvatarData.avatarId,
             parameters: avatar.parameters,
-            frontIdPhotoPath: jobsRef.current[0]?.resultMediaPath
-        }
-
+            frontIdPhotoPath: jobsRef.current[0]?.resultMediaPath,
+        };
         try {
             const newJobs = await genSyntheticIdPhotos(jobRequest);
-            const frontJob = jobsRef.current[0];
-
-            setJobs([frontJob, ...(newJobs as Job[])]);
-            setTimeout(() => scrollToBottom(), 500);
-        } catch (error) {
-            console.log('Failed to create jobs for id photos')
+            setJobs([jobsRef.current[0], ...(newJobs as Job[])]);
+        } catch {
+            console.log('Failed to create jobs for id photos');
         }
-    }
-
-    const restartJob = async (jobId: string) => {
-        const listIdx = jobs.findIndex(j => j?.id === jobId);
-        if (listIdx === -1) return;
-
-        setJob(listIdx, null);
-
-        const restartedJob = await restartJobById(jobId);
-        setJob(listIdx, restartedJob as Job);
-        setTimeout(() => scrollToBottom(), 500);
-    }
-
-    const generatingStarted = () => {
-        return jobs.length > 0;
-    }
-
-    const generatingCompleted = () => {
-        return jobs.length > 0 && jobs.every((job: Job | null) => job && job.status === JobStatuses.completed);
-    }
-
-    const isFrontJob = (idx: number) => {
-        return idx === 0;
-    }
-
-    const onlyFrontJobCompleted = () => {
-        return jobs.length === 1 && jobs[0]?.status === JobStatuses.completed;
-    }
-
-    const allJobsStarted = () => {
-        return jobs.length === NUM_ID_PHOTOS && jobs.every(job => job !== null);
-    }
-
-    const parametersFilled = () => {
-        return Object.values(avatar.parameters).every(v => v !== '');
-    }
-
-    const canProceed = () => {
-        return generatingCompleted();
     };
 
-    const stepLocked = () => {
-        return Boolean(avatar.mainImagePath);
-    }
+    const restartJob = async (jobId: string) => {
+        const listIdx = jobs.findIndex(job => job?.id === jobId);
+        if (listIdx === -1) return;
+        setJob(listIdx, null);
+        const restartedJob = await restartJobById(jobId);
+        setJob(listIdx, restartedJob as Job);
+    };
+
+    const generatingStarted = () => jobs.length > 0;
+    const generatingCompleted = () => jobs.length > 0 && jobs.every(job => job?.status === JobStatuses.completed);
+    const onlyFrontJobCompleted = () => jobs.length === 1 && jobs[0]?.status === JobStatuses.completed;
+    const allJobsStarted = () => jobs.length === NUM_ID_PHOTOS && jobs.every(job => job !== null);
+    const isFrontJob = (idx: number) => idx === 0;
+    const parametersFilled = () => Object.values(avatar.parameters).every(val => val !== '');
+    const stepLocked = () => Boolean(avatar.mainImagePath);
+    const canProceed = () => jobs.length === NUM_ID_PHOTOS && generatingCompleted();
 
     const nextStep = async () => {
-        if (!canProceed()) return
-
+        if (!canProceed()) return;
         try {
             if (!stepLocked()) {
-                const payload: Partial<Avatar> = {
+                await updateAvatar(newAvatarData.avatarId, {
                     mainImagePath: jobs[0]?.resultThumbnailPath || jobs[0]?.resultMediaPath,
-                };
-                await updateAvatar(newAvatarData.avatarId, payload);
+                });
             }
-
             navigate('/avatar/create/assign-voice');
         } catch (error) {
             console.log(`Did not manage to update avatar: ${error}`);
         }
-    }
-        
-    const previousStep = () => {
-        navigate('/avatar/create/general');
-    }
+    };
+
+    const previousStep = () => navigate('/avatar/create/general');
+
+    const gender = avatar.parameters.gender as 'male' | 'female';
+
+    const parameters = [
+        { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
+        { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
+        { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
+        { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[gender].attractiveness },
+        { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[gender].body },
+        { label: "Face Shape", key: "face", opts: AVATAR_PARAMETER_OPTIONS[gender].face },
+        { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes },
+        { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
+        { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
+        { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
+        { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
+        { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
+        { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[gender].facialHair },
+        { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[gender].hairStyle },
+        { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS.hairColor },
+        { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
+        { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[gender].skin },
+        { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
+        { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },
+    ];
 
     return (
         <>
@@ -266,143 +224,138 @@ function CreateSyntheticIdPhotosPage() {
 
             {pageLoading ? (
                 <div className="flex items-center justify-center min-h-[60vh]">
-                    <span className="loading loading-spinner loading-xl text-primary scale-150"></span>
+                    <span className="loading loading-spinner loading-xl text-primary scale-150" />
                 </div>
             ) : (
-                <div className="mx-auto px-4 pt-12 mb-50">
-                    <div className="flex flex-col gap-2">
-                        {([
-                            {
-                                key: 'general',
-                                label: 'General',
-                                fields: [
-                                    { label: "Ethnicity", key: "ethnicity", opts: AVATAR_PARAMETER_OPTIONS.ethnicity },
-                                    { label: "Age", key: "age", opts: AVATAR_PARAMETER_OPTIONS.age },
-                                    { label: "Height", key: "height", opts: AVATAR_PARAMETER_OPTIONS.height },
-                                    { label: "Attractiveness", key: "attractiveness", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].attractiveness },
-                                    { label: "Body", key: "body", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].body },
-                                ],
-                            },
-                            {
-                                key: 'face',
-                                label: 'Face',
-                                fields: [
-                                    { label: "Face", key: "face", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].face },
-                                    { label: "Eyes", key: "eyes", opts: AVATAR_PARAMETER_OPTIONS.eyes },
-                                    { label: "Eye Lashes", key: "eyeLashes", opts: AVATAR_PARAMETER_OPTIONS.eyeLashes },
-                                    { label: "Eye Brows", key: "eyeBrows", opts: AVATAR_PARAMETER_OPTIONS.eyeBrows },
-                                    { label: "Ears", key: "ears", opts: AVATAR_PARAMETER_OPTIONS.ears },
-                                    { label: "Nose", key: "nose", opts: AVATAR_PARAMETER_OPTIONS.nose },
-                                    { label: "Lips", key: "lips", opts: AVATAR_PARAMETER_OPTIONS.lips },
-                                    { label: "Facial Hair", key: "facialHair", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].facialHair },
-                                ],
-                            },
-                            {
-                                key: 'hair',
-                                label: 'Hair',
-                                fields: [
-                                    { label: "Hair Style", key: "hairStyle", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].hairStyle },
-                                    { label: "Hair Color", key: "hairColor", opts: AVATAR_PARAMETER_OPTIONS.hairColor },
-                                ],
-                            },
-                            {
-                                key: 'skin',
-                                label: 'Skin & Body',
-                                fields: [
-                                    { label: "Skin Color", key: "skinColor", opts: AVATAR_PARAMETER_OPTIONS.skinColor },
-                                    { label: "Skin", key: "skin", opts: AVATAR_PARAMETER_OPTIONS[avatar.parameters.gender].skin },
-                                    { label: "Bust Size", key: "bustSize", opts: AVATAR_PARAMETER_OPTIONS.bustSize },
-                                    { label: "Body Hair", key: "bodyHair", opts: AVATAR_PARAMETER_OPTIONS.bodyHair },
-                                ],
-                            },
-                        ] as const).map(section => (
-                            <div key={section.key} className="flex flex-col">
-                                <button
-                                    className="flex items-center justify-between py-4 cursor-pointer group border-b border-base-content/5"
-                                    onClick={() => toggleSection(section.key)}
-                                >
-                                    <span className="text-xs font-medium uppercase tracking-[0.35em] text-base-content/60 group-hover:text-base-content/80 transition-colors">
-                                        {section.label}
-                                    </span>
-                                    <ChevronDown
-                                        size={12}
-                                        strokeWidth={2.5}
-                                        className={`text-base-content/40 group-hover:text-base-content/60 transition-transform duration-300 ${openSections[section.key] ? 'rotate-180' : ''}`}
-                                    />
-                                </button>
-                                <div className={`grid transition-all duration-300 ease-in-out ${openSections[section.key] ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                                    <div className="overflow-hidden">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 py-8">
-                                            {section.fields.map(field => (
-                                                <PillSelect
-                                                    key={field.key}
-                                                    label={field.label}
-                                                    fieldKey={field.key}
-                                                    opts={field.opts}
-                                                    value={avatar.parameters[field.key as keyof typeof avatar.parameters]}
-                                                    disabled={stepLocked()}
-                                                    onChange={setParameter}
-                                                />
-                                            ))}
+                <div className="max-w-7xl mx-auto px-4 pt-10 pb-32 flex gap-8 items-start">
+
+                    {/* Left — Appearance options */}
+                    <div className="w-96 flex-shrink-0 sticky top-6">
+<div className="flex flex-col">
+                            {parameters.map(param => {
+                                const isOpen = openSection === param.key;
+                                const currentValue = avatar.parameters[param.key as keyof typeof avatar.parameters];
+
+                                return (
+                                    <div key={param.key} className="border-b border-base-content/5 last:border-0">
+                                        <button
+                                            className="w-full flex items-center justify-between py-4 cursor-pointer group"
+                                            onClick={() => toggleSection(param.key)}
+                                            disabled={stepLocked()}
+                                        >
+                                            <div className="flex flex-col items-start gap-1">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`w-8 h-px transition-colors duration-200 ${isOpen ? 'bg-primary' : 'bg-primary/50'}`} />
+                                                    <span className={`text-sm uppercase tracking-[0.2em] transition-colors duration-200 ${isOpen ? 'text-base-content/90' : 'text-base-content/70'}`}>
+                                                        {param.label}
+                                                    </span>
+                                                </div>
+                                                {!isOpen && currentValue && (
+                                                    <span className="text-xs text-base-content/30 truncate max-w-[190px] pl-11">
+                                                        {currentValue}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <ChevronDown
+                                                size={13}
+                                                strokeWidth={2.5}
+                                                className={`text-base-content/30 transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180 text-primary' : ''}`}
+                                            />
+                                        </button>
+
+                                        <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                            <div className="overflow-hidden">
+                                                <div className="pb-5">
+                                                    <PillSelect
+                                                        label=""
+                                                        fieldKey={param.key}
+                                                        opts={param.opts}
+                                                        value={currentValue}
+                                                        disabled={stepLocked()}
+                                                        onChange={setParameter}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
+                                );
+                            })}
+                        </div>
                     </div>
 
-                    {parametersFilled() && (
-                        <div className='text-center'>
-                            <button
-                                onClick={createFrontJob}
-                                disabled={generatingStarted() || stepLocked()}
-                                className="inline-flex items-center gap-3 px-12 py-4 my-12 rounded-2xl bg-primary text-primary-content text-sm font-semibold uppercase tracking-[0.35em] transition-all duration-300 hover:opacity-90 hover:scale-[1.005] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                            >
-                                {(generatingStarted() && !generatingCompleted()) && <span className="loading loading-spinner loading-xs"></span>}
-                                <span>Generate Photos</span>
-                            </button>
-                        </div>
-                    )}
+                    {/* Right — Generate & results */}
+                    <div className="flex-1 flex flex-col gap-6">
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {jobs.map((job, idx) => (
-                            <MediaCard
-                                key={idx}
-                                job={job}
-                                idx={idx}
-                                onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
-                                onRegenerate={restartJob}
-                                canRestart={!stepLocked() && allJobsStarted() && !isFrontJob(idx)}
-                                showOrder={true}
-                            />
-                        ))}
-                        {onlyFrontJobCompleted() && (
-                            <div className="flex relative rounded-[1rem] border border-dashed border-base-content/10 bg-transparent items-center justify-center aspect-square">
-                                <div className="flex flex-col items-center gap-4">
-                                    <div className="text-center">
-                                        <p className="text-[12px] font-medium uppercase tracking-widest mt-1">
-                                            Do you like it?
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-error/40 hover:text-error/70 cursor-pointer transition-all duration-200"
-                                            onClick={createFrontJob}
-                                        >
-                                            No
-                                        </button>
-                                        <button
-                                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-[0.15em] border border-base-content/10 text-base-content/40 hover:border-primary/40 hover:text-primary/70 cursor-pointer transition-all duration-200"
-                                            onClick={createJobs}
-                                        >
-                                            Yes
-                                        </button>
-                                    </div>
+                        {/* State: nothing generated yet */}
+                        {!generatingStarted() && (
+                            <div className="flex flex-col items-center justify-center text-center py-20 gap-8">
+                                <div className="flex flex-col gap-3">
+                                    <h2 className="text-2xl uppercase tracking-[0.2em] text-base-content/70">
+                                        Generate a preview
+                                    </h2>
+                                    <p className="text-sm text-base-content/40 max-w-xs leading-relaxed">
+                                        Adjust the appearance options on the left, then generate a preview photo to see how your avatar will look.
+                                    </p>
                                 </div>
-
-                                <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-base-content/10 pointer-events-none" />
-                                <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-base-content/10 pointer-events-none" />
+                                <button
+                                    onClick={createFrontJob}
+                                    disabled={!parametersFilled() || stepLocked()}
+                                    className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-primary text-primary-content text-sm uppercase tracking-[0.3em] transition-all duration-300 hover:brightness-110 hover:scale-[1.02] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
+                                >
+                                    <Sparkles size={16} />
+                                    Generate preview
+                                </button>
                             </div>
+                        )}
+
+                        {/* State: generating or generated */}
+                        {generatingStarted() && (
+                            <>
+                                {/* Front photo approval prompt */}
+                                {onlyFrontJobCompleted() && (
+                                    <div className="flex items-center justify-between px-6 py-4 rounded-2xl bg-base-content/5">
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-sm uppercase tracking-[0.2em] text-base-content/70">
+                                                Happy with this look?
+                                            </span>
+                                            <span className="text-xs text-base-content/40">
+                                                If yes, we'll generate all 7 angle photos. If not, we'll create a new one.
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <button
+                                                onClick={createFrontJob}
+                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-medium uppercase tracking-[0.2em] bg-base-content/5 text-base-content/50 hover:bg-base-content/10 hover:text-base-content/80 cursor-pointer transition-all duration-200"
+                                            >
+                                                <RefreshCw size={13} />
+                                                Try again
+                                            </button>
+                                            <button
+                                                onClick={createJobs}
+                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-medium uppercase tracking-[0.2em] bg-primary text-primary-content hover:brightness-110 cursor-pointer transition-all duration-200"
+                                            >
+                                                <CheckCircle2 size={13} />
+                                                Generate all
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Photo grid */}
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {jobs.map((job, idx) => (
+                                        <MediaCard
+                                            key={idx}
+                                            job={job}
+                                            idx={idx}
+                                            onPhotoClick={(src, rect) => setFullscreen({ src, rect })}
+                                            onRegenerate={restartJob}
+                                            canRestart={!stepLocked() && allJobsStarted() && !isFrontJob(idx)}
+                                            showOrder={true}
+                                        />
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -418,7 +371,7 @@ function CreateSyntheticIdPhotosPage() {
 
             <FullscreenModal src={fullscreen?.src ?? null} rect={fullscreen?.rect ?? null} onClose={() => setFullscreen(null)} />
         </>
-    )
+    );
 }
 
 export default CreateSyntheticIdPhotosPage;

@@ -7,10 +7,11 @@ const MODEL_PATH = '/app/models/det_10g.onnx';
 const INPUT_SIZE = 640;
 const SCORE_THRESHOLD = 0.3;
 const NMS_THRESHOLD = 0.4;
-const FRONT_MAX    = 0.15;
-const QUARTER_MIN  = 0.55;
-const QUARTER_MAX  = 0.85;
-const SIDE_MIN     = 1.05;
+const FRONT_RANGE:          [number, number] = [-0.15,      0.15];
+const LEFT_QUARTER_RANGE:   [number, number] = [-0.80,     -0.4];
+const RIGHT_QUARTER_RANGE:  [number, number] = [ 0.4,      0.80];
+const LEFT_SIDE_RANGE:      [number, number] = [-Infinity, -1.5];
+const RIGHT_SIDE_RANGE:     [number, number] = [ 1.5,  Infinity];
 const NUM_ANCHORS = 2;
 const STRIDES = [8, 16, 32];
 
@@ -21,7 +22,7 @@ let session: ort.InferenceSession | null = null;
 async function getSession(): Promise<ort.InferenceSession> {
   if (session) return session;
   session = await ort.InferenceSession.create(MODEL_PATH, { executionProviders: ['wasm'] });
-  logger.info({ outputNames: session.outputNames }, 'SCRFD ONNX session initialized');
+
   if (session.outputNames.length !== 9) {
     throw new Error(`SCRFD model has unexpected output count ${session.outputNames.length}, expected 9: ${session.outputNames.join(', ')}`);
   }
@@ -155,23 +156,15 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
 
   const yawRatio = (noseTipX - midEyeX) / interOcular;
 
+  const inRange = (value: number, [min, max]: [number, number]) => value >= min && value <= max;
+
   let passed: boolean;
   switch (requiredDirection) {
-    case 'front':
-      passed = Math.abs(yawRatio) < FRONT_MAX;
-      break;
-    case 'leftQuarter':
-      passed = yawRatio <= -QUARTER_MIN && yawRatio > -QUARTER_MAX;
-      break;
-    case 'rightQuarter':
-      passed = yawRatio >= QUARTER_MIN && yawRatio < QUARTER_MAX;
-      break;
-    case 'leftSide':
-      passed = yawRatio <= -SIDE_MIN;
-      break;
-    case 'rightSide':
-      passed = yawRatio >= SIDE_MIN;
-      break;
+    case 'front':        passed = inRange(yawRatio, FRONT_RANGE);         break;
+    case 'leftQuarter':  passed = inRange(yawRatio, LEFT_QUARTER_RANGE);  break;
+    case 'rightQuarter': passed = inRange(yawRatio, RIGHT_QUARTER_RANGE); break;
+    case 'leftSide':     passed = inRange(yawRatio, LEFT_SIDE_RANGE);     break;
+    case 'rightSide':    passed = inRange(yawRatio, RIGHT_SIDE_RANGE);    break;
     default:
       logger.warn({ requiredDirection }, 'Unknown direction — passing by default');
       passed = true;

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 from ultralytics import YOLO
 
 
@@ -53,7 +53,7 @@ _PADDING_CONFIG: dict[str, _PaddingConfig] = {
     "front":     _PaddingConfig(side=0.21, top=0.50, bottom=0.12, turn_scale_side=0.30, turn_scale_top=0.30),
     "quarter":   _PaddingConfig(side=0.23, top=0.50, bottom=0.12, turn_scale_side=0.35, turn_scale_top=0.30),
     "side":      _PaddingConfig(side=0.28, top=0.40, bottom=0.05, turn_scale_side=0.40, turn_scale_top=0.20),
-    "full_body": _PaddingConfig(side=0.20, top=0.15, bottom=0.05),
+    "full_body": _PaddingConfig(side=0.20, top=0.09, bottom=0.15),
 }
 
 
@@ -98,7 +98,8 @@ def crop(image: Image.Image, mode: CropMode = "front") -> Image.Image:
 
     left, top, right, bottom = _fit_to_square(left, top, right, bottom, w, h)
 
-    return img.crop((left, top, right, bottom))
+    cropped = img.crop((left, top, right, bottom))
+    return cropped.filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=3))
 
 
 def _compute_headshot_crop(
