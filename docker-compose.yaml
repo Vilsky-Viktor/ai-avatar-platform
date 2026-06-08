@@ -141,6 +141,7 @@ services:
       - SERVICE_NAME=voice
       - DB_NAME=ai-avatar-db
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - VOICES_COLLECTION_NAME=voices
 
   cropper:
     <<: *default-dns
@@ -289,6 +290,8 @@ services:
       - INSIGHTFACE_ROOT=/models/insightface
       - POOL_SIZE=1
       - MAX_CONCURRENT_MESSAGES=1
+      - EMBEDDING_CACHE_TTL=3600
+      - EMBEDDING_CACHE_MAX_SIZE=500
 
   ui-app:
     <<: *default-dns
