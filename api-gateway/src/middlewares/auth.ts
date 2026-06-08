@@ -12,20 +12,17 @@ function getCachedUid(token: string): string | null {
     tokenCache.delete(token);
     return null;
   }
+  // Move to end so it is the most recently used
+  tokenCache.delete(token);
+  tokenCache.set(token, entry);
   return entry.uid;
 }
 
 function cacheToken(token: string, uid: string): void {
   if (tokenCache.size >= TOKEN_CACHE_MAX_SIZE) {
-    let evictKey: string | undefined;
-    let evictExpiry = Infinity;
-    for (const [k, v] of tokenCache) {
-      if (v.expiresAt < evictExpiry) {
-        evictExpiry = v.expiresAt;
-        evictKey = k;
-      }
-    }
-    if (evictKey) tokenCache.delete(evictKey);
+    // Evict least recently used (first entry in insertion-order Map)
+    const firstKey = tokenCache.keys().next().value;
+    if (firstKey !== undefined) tokenCache.delete(firstKey);
   }
   tokenCache.set(token, { uid, expiresAt: Date.now() + TOKEN_CACHE_TTL_MS });
 }

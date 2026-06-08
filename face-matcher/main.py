@@ -96,7 +96,7 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
             similarity = fr.calc_face_similarity(id_photo_bytes, image_bytes)
 
         if similarity is None:
-            raise ValueError(f"No face detected in image: {step.imagePath}")
+            raise ValueError(f"No usable face found in any ID photo for image: {step.imagePath}")
 
         similarity      = round(float(similarity), 4)
         prev_face_match = step.faceMatch or 0.0
@@ -137,8 +137,8 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         if step.status == JobStatuses.completed and job.maxRuns > 1:
             try:
                 delete_blob(prev_tmp)
-            except Exception:
-                pass
+            except Exception as cleanup_err:
+                logger.warning(f"Failed to delete backup blob {prev_tmp}: {cleanup_err}")
 
     except Exception as e:
         logger.error(f"Face matcher error: {e}", exc_info=True)

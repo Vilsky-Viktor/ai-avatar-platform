@@ -31,7 +31,10 @@ export const getFiltered = async (
 
     if (cursor) {
         const cursorDoc = await db.collection(VOICES_COLLECTION_NAME).doc(cursor).get();
-        if (cursorDoc.exists) query = query.startAfter(cursorDoc);
+        if (!cursorDoc.exists) {
+            return { voices: [], nextCursor: null };
+        }
+        query = query.startAfter(cursorDoc);
     }
 
     const snapshot = await query.get();

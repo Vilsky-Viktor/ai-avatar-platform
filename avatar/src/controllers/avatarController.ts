@@ -104,11 +104,11 @@ export const deleteByAvatarId = async (req: Request, res: Response, next: NextFu
   setLogContext(userId, id);
   try {
     logger.info('Delete avatar');
-    await Promise.all([
-      deleteByAvatarIdDb(userId, id),
-      deleteJobsByAvatarId(userId, id),
-      removeAvatarMediaFolder(userId, id)
-    ]);
+    await deleteByAvatarIdDb(userId, id);
+    await deleteJobsByAvatarId(userId, id);
+    await removeAvatarMediaFolder(userId, id).catch(err => {
+      logger.warn({ err }, 'Failed to remove avatar media folder — skipping');
+    });
 
     return res.status(200).json({'result': 'ok'});
   } catch (error) {

@@ -85,6 +85,8 @@ def crop(image: Image.Image, mode: CropMode = "front") -> Image.Image:
         raise ValueError("No person detected in this image")
 
     best_idx = int(results[0].boxes.conf.argmax())
+    if float(results[0].boxes.conf[best_idx]) < _MIN_CONF:
+        raise ValueError("No person detected in this image")
 
     kpts  = results[0].keypoints
     kpts_xy   = kpts.xy[best_idx].cpu().numpy()    # (17, 2) — pixel coords

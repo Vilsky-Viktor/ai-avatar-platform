@@ -27,7 +27,7 @@ const removeIntermediatePaths = async (job: Job) => {
       await Promise.all(intermediatePaths.map(deleteBlob));
     }
    } catch (error: any) {
-    logger.error(`Did not maange to remove intermediate paths: ${error}`);
+    logger.error(`Did not manage to remove intermediate paths: ${error}`);
    }
 }
 

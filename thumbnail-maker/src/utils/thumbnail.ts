@@ -13,36 +13,31 @@ export const resizeImage = async (input: Buffer, size: number): Promise<Buffer> 
     .toBuffer();
 };
 
-const extractFrame = (videoBuffer: Buffer, seekSec: number): Promise<Buffer> => {
-  return new Promise((resolve, reject) => {
-    const id = randomUUID();
-    const tmpInput = path.join(os.tmpdir(), `thumb-in-${id}.mp4`);
-    const tmpOutput = path.join(os.tmpdir(), `thumb-out-${id}.png`);
+const extractFrame = async (videoBuffer: Buffer, seekSec: number): Promise<Buffer> => {
+  const id = randomUUID();
+  const tmpInput = path.join(os.tmpdir(), `thumb-in-${id}.mp4`);
+  const tmpOutput = path.join(os.tmpdir(), `thumb-out-${id}.png`);
 
-    fs.writeFileSync(tmpInput, videoBuffer);
+  try {
+    await fs.promises.writeFile(tmpInput, videoBuffer);
 
-    ffmpeg(tmpInput)
-      .seekInput(seekSec)
-      .outputOptions(['-vframes 1', '-q:v 1'])
-      .output(tmpOutput)
-      .on('end', () => {
-        try {
-          const frame = fs.readFileSync(tmpOutput);
-          resolve(frame);
-        } catch (err) {
-          reject(err);
-        } finally {
-          fs.rmSync(tmpInput, { force: true });
-          fs.rmSync(tmpOutput, { force: true });
-        }
-      })
-      .on('error', (err) => {
-        fs.rmSync(tmpInput, { force: true });
-        fs.rmSync(tmpOutput, { force: true });
-        reject(err);
-      })
-      .run();
-  });
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(tmpInput)
+        .seekInput(seekSec)
+        .outputOptions(['-vframes 1', '-q:v 1'])
+        .output(tmpOutput)
+        .on('end', () => resolve())
+        .on('error', reject)
+        .run();
+    });
+
+    return await fs.promises.readFile(tmpOutput);
+  } finally {
+    await Promise.all([
+      fs.promises.rm(tmpInput, { force: true }),
+      fs.promises.rm(tmpOutput, { force: true }),
+    ]);
+  }
 };
 
 export const makeThumbnailFromVideo = async (videoBuffer: Buffer, size: number): Promise<Buffer> => {

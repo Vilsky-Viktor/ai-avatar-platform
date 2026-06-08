@@ -29,6 +29,7 @@ export const sendJob = async (topicName: string, job: Job, serviceName: string):
 };
 
 const SEND_JOB_MAX_RETRIES = 3;
+const SEND_JOB_RETRY_BASE_DELAY_MS = 500;
 
 const sendJobWithRetry = async (topicName: string, job: Job, serviceName: string): Promise<void> => {
     let lastError: unknown;
@@ -38,6 +39,11 @@ const sendJobWithRetry = async (topicName: string, job: Job, serviceName: string
             return;
         } catch (err) {
             lastError = err;
+            if (attempt < SEND_JOB_MAX_RETRIES - 1) {
+                const delay = SEND_JOB_RETRY_BASE_DELAY_MS * 2 ** attempt;
+                logger.warn(`Pub/Sub publish attempt ${attempt + 1}/${SEND_JOB_MAX_RETRIES} failed for job ${job.id} — retrying in ${delay}ms`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
         }
     }
     throw lastError;
@@ -54,6 +60,7 @@ export const sendJobs = async (topicName: string, jobs: Job[], serviceName: stri
                 failures.push({ jobId: chunk[idx].id!, error: result.reason });
             }
         });
+        if (failures.length > 0) break;
     }
 
     if (failures.length > 0) {

@@ -1,7 +1,6 @@
-import { fal, QueueStatus } from "@fal-ai/client";
+import { fal } from "@fal-ai/client";
 import { getSecretValue } from "./secretManager";
 import falAiTypes from '../types/falAi';
-import logger from '@loom24/shared/logger';
 import { AiModelGateway, MediaTypes, Models, ImageRatios } from "@loom24/shared/types";
 import platform from '../types/platform';
 import { downloadResultFile, getMediaUrlFromPath } from '@loom24/shared/services';
@@ -30,16 +29,16 @@ export const generate = async <Input extends Record<string, any>>(data: AiModelG
     const resultData = result.data;
     let resultUrl: string;
 
-    if ('image' in resultData) {
+    if ('image' in resultData && resultData.image?.url) {
       resultUrl = resultData.image.url;
-    } else if ('video' in resultData) {
+    } else if ('video' in resultData && resultData.video?.url) {
       resultUrl = resultData.video.url;
-    } else if ('images' in resultData) {
+    } else if ('images' in resultData && resultData.images?.[0]?.url) {
       resultUrl = resultData.images[0].url;
-    } else if ('audio' in resultData) {
+    } else if ('audio' in resultData && resultData.audio?.url) {
       resultUrl = resultData.audio.url;
     } else {
-      throw new Error('Unsupported response type')
+      throw new Error(`Unsupported or malformed response: ${JSON.stringify(resultData)}`)
     }
 
     return await downloadResultFile(resultUrl);

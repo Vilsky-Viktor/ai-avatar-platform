@@ -22,7 +22,10 @@ let session: ort.InferenceSession | null = null;
 async function getSession(): Promise<ort.InferenceSession> {
   if (session) return session;
   session = await ort.InferenceSession.create(MODEL_PATH, { executionProviders: ['wasm'] });
-  logger.info('SCRFD ONNX session initialized');
+  logger.info({ outputNames: session.outputNames }, 'SCRFD ONNX session initialized');
+  if (session.outputNames.length !== 9) {
+    throw new Error(`SCRFD model has unexpected output count ${session.outputNames.length}, expected 9: ${session.outputNames.join(', ')}`);
+  }
   return session;
 }
 
@@ -140,8 +143,8 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
   const keepIdx = nmsKeep(allBoxes, allScores);
 
   if (!keepIdx.length) {
-    logger.warn('No face detected for direction check — passing by default');
-    return true;
+    logger.warn('No face detected for direction check — failing');
+    return false;
   }
 
   // Best detection — keypoint layout: [rightEye_x, rightEye_y, leftEye_x, leftEye_y, nose_x, nose_y, ...]

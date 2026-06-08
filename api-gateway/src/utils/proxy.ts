@@ -31,7 +31,10 @@ export const createProxyHandler = (
   } catch (error: any) {
     if (error.response) {
       req.log.error({ err: error }, `${msg} failed with status ${error.response.status}`);
-      return res.status(error.response.status).json(error.response.data);
+      const errorBody = typeof error.response.data === 'object' && error.response.data !== null
+        ? error.response.data
+        : { message: String(error.response.data || 'Service error') };
+      return res.status(error.response.status).json(errorBody);
     }
     req.log.error({ err: error }, `${msg} failed`);
     return res.status(500).json({ message: error.message || 'Internal server error' });

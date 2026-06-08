@@ -65,9 +65,10 @@ export const getByAvatarId = async (
 
     if (cursor) {
         const cursorDoc = await db.collection(JOBS_COLLECTION_NAME).doc(cursor).get();
-        if (cursorDoc.exists) {
-            query = query.startAfter(cursorDoc);
+        if (!cursorDoc.exists) {
+            return { jobs: [], nextCursor: null };
         }
+        query = query.startAfter(cursorDoc);
     }
 
     const snapshot = await query.get();
