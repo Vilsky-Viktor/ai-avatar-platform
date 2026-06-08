@@ -303,17 +303,3 @@ export const getVoices = async (
   }
 }
 
-export const getVoiceFilterOptions = async (gender: AvatarGender): Promise<{
-  languages: string[];
-  ages: string[];
-  categories: string[];
-  useCases: string[];
-}> => {
-  try {
-    const res = await apiClient.get(`/voices/options/gender/${gender}`);
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching voice filter options:", error);
-    throw error;
-  }
-}

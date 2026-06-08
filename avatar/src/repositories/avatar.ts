@@ -34,6 +34,7 @@ export const getAll = async (userId: string): Promise<Avatar[]> => {
         .doc(userId)
         .collection(AVATARS_COLLECTION_NAME)
         .orderBy('createdAt', 'desc')
+        .limit(100)
         .get();
 
     return snapshot.docs.map(doc => doc.data() as Avatar);

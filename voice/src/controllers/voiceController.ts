@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { AvatarGender } from '../types/avatar';
 import {
     getFiltered as getFilteredDb,
-    getFilterOptions as getFilterOptionsDb,
     type VoiceFilters,
 } from '../repositories/voice';
 
@@ -42,17 +41,3 @@ export const getFiltered = async (req: Request, res: Response, next: NextFunctio
     }
 };
 
-export const getFilterOptions = async (req: Request, res: Response, next: NextFunction) => {
-    const gender = req.params.gender as string;
-    if (!validateGender(gender, res)) return;
-
-    req.log.info({ gender }, 'Get voice filter options');
-
-    try {
-        const options = await getFilterOptionsDb(gender);
-        return res.status(200).json(options);
-    } catch (error) {
-        req.log.error({ gender, err: error }, 'Failed to get voice filter options');
-        next(error);
-    }
-};

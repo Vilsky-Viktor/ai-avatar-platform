@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import BottomDock from '../../components/createAvatar/BottomDock';
 import { getAvatarData, initialAvatarData } from '../../utils/avatarCreation';
 import { AvatarGender, AvatarTypes, type Avatar } from '@loom24/shared/types';
-import { updateAvatar, getVoices, getVoiceFilterOptions } from '../../services/apiGateway';
+import { updateAvatar, getVoices } from '../../services/apiGateway';
 import type { Voice } from '@loom24/shared/types';
 import { Play, Pause, Check } from 'lucide-react';
 import { scrollToTop } from '../../utils/scroller';
@@ -31,6 +31,11 @@ const LANGUAGE_NAMES: Record<string, string> = {
 const languageLabel = (code: string) => LANGUAGE_NAMES[code] ?? code;
 const sanitize = (value: string) => value.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 
+const VOICE_FILTER_LANGUAGES  = Object.keys(LANGUAGE_NAMES).sort();
+const VOICE_FILTER_AGES        = ['middle_aged', 'old', 'young'];
+const VOICE_FILTER_CATEGORIES  = ['famous', 'generated', 'high_quality', 'premade', 'professional'];
+const VOICE_FILTER_USE_CASES   = ['advertising', 'audiobook', 'candidates_ai', 'characters_animation', 'conversational', 'entertainment_tv', 'ground_truth', 'interactive_characters_games', 'meditation', 'narration', 'news', 'social_media', 'training_promotional'];
+
 const COLS = 2;
 const ROW_HEIGHT = 200;
 
@@ -51,10 +56,10 @@ function AssignVoicePage() {
     const [filterCategory, setFilterCategory] = useState<string | null>(null);
     const [filterUseCase, setFilterUseCase] = useState<string | null>(null);
 
-    const [optLanguages, setOptLanguages] = useState<string[]>([]);
-    const [optAges, setOptAges] = useState<string[]>([]);
-    const [optCategories, setOptCategories] = useState<string[]>([]);
-    const [optUseCases, setOptUseCases] = useState<string[]>([]);
+    const [optLanguages] = useState<string[]>(VOICE_FILTER_LANGUAGES);
+    const [optAges] = useState<string[]>(VOICE_FILTER_AGES);
+    const [optCategories] = useState<string[]>(VOICE_FILTER_CATEGORIES);
+    const [optUseCases] = useState<string[]>(VOICE_FILTER_USE_CASES);
 
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -91,17 +96,9 @@ function AssignVoicePage() {
             const g = existingAvatar.parameters.gender;
             setGender(g);
 
-            const [{ voices: v, nextCursor: cursor }, options] = await Promise.all([
-                getVoices(g),
-                getVoiceFilterOptions(g),
-            ]);
-
+            const { voices: v, nextCursor: cursor } = await getVoices(g);
             setVoices(v);
             setNextCursor(cursor);
-            setOptLanguages(options.languages);
-            setOptAges(options.ages);
-            setOptCategories(options.categories);
-            setOptUseCases(options.useCases);
         } finally {
             setPageLoading(false);
         }

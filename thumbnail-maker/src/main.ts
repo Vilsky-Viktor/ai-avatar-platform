@@ -72,6 +72,13 @@ function listenForResults() {
 
     const stepData = job.workflow[stepIdx] as ThumbnailMaker;
 
+    if (!stepData.uploadPath) {
+      logger.error({ stepIdx }, 'thumbnail-maker step missing uploadPath — skipping');
+      message.ack();
+      clearLogContext();
+      return;
+    }
+
     try {
       let thumbnail: Buffer;
 

@@ -104,6 +104,7 @@ export const getAvatarIdPhotos = async (userId: string, avatarId: string): Promi
         .where("userId", "==", userId)
         .where("avatarId", "==", avatarId)
         .where("target", "==", JobTargets.idPhoto)
+        .where("status", "==", JobStatuses.completed)
         .orderBy("order", "asc")
         .limit(10)
         .get();

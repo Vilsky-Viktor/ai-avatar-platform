@@ -28,15 +28,30 @@ export const sendJob = async (topicName: string, job: Job, serviceName: string):
     }
 };
 
+const SEND_JOB_MAX_RETRIES = 3;
+
+const sendJobWithRetry = async (topicName: string, job: Job, serviceName: string): Promise<void> => {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < SEND_JOB_MAX_RETRIES; attempt++) {
+        try {
+            await sendJob(topicName, job, serviceName);
+            return;
+        } catch (err) {
+            lastError = err;
+        }
+    }
+    throw lastError;
+};
+
 export const sendJobs = async (topicName: string, jobs: Job[], serviceName: string): Promise<void> => {
     const failures: Array<{ jobId: string; error: unknown }> = [];
 
     for (let i = 0; i < jobs.length; i += SEND_JOBS_CHUNK_SIZE) {
         const chunk = jobs.slice(i, i + SEND_JOBS_CHUNK_SIZE);
-        const results = await Promise.allSettled(chunk.map(job => sendJob(topicName, job, serviceName)));
+        const results = await Promise.allSettled(chunk.map(job => sendJobWithRetry(topicName, job, serviceName)));
         results.forEach((result, idx) => {
             if (result.status === 'rejected') {
-                failures.push({ jobId: chunk[idx].id, error: result.reason });
+                failures.push({ jobId: chunk[idx].id!, error: result.reason });
             }
         });
     }

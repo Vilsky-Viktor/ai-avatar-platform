@@ -119,16 +119,15 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
 
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
-    const idPhotos = idPhotoJobs.map((job: Job) => job.resultMediaPath);
-
+    const byOrder = Object.fromEntries(idPhotoJobs.map((job: Job) => [job.order!, job.resultMediaPath]));
     const idPhotoSet: IdPhotoSetPaths = {
-      front: idPhotos[0],
-      frontSmile: idPhotos[1],
-      leftQuarter: idPhotos[2],
-      rightQuarter: idPhotos[3],
-      leftSide: idPhotos[4],
-      rightSide: idPhotos[5],
-      body: idPhotos[6]
+      front: byOrder[1],
+      frontSmile: byOrder[2],
+      leftQuarter: byOrder[3],
+      rightQuarter: byOrder[4],
+      leftSide: byOrder[5],
+      rightSide: byOrder[6],
+      body: byOrder[7],
     }
 
     const inputs = functionMapping[jobRequest.type!](userId, jobRequest.avatarId, avatar.parameters, idPhotoSet);

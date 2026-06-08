@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from google.cloud import pubsub_v1
 
 from loom24_shared import logger, set_log_context, clear_log_context
+from loom24_shared.services import send_job
 from loom24_shared.types import FaceMatcherStep, Job, JobStatuses, StepBase
 
 from utils.matcher import get_app, acquire_face_recognition
@@ -30,14 +31,8 @@ def _prev_tmp_path(image_path: str) -> str:
         return f"{image_path[:dot]}-prev-tmp{image_path[dot:]}"
     return f"{image_path}-prev-tmp"
 
-publisher  = pubsub_v1.PublisherClient()
 subscriber = pubsub_v1.SubscriberClient()
 
-
-def _send_job(job: Job) -> None:
-    topic_path = publisher.topic_path(PROJECT_ID, WORKFLOW_MANAGER_TOPIC)
-    publisher.publish(topic_path, json.dumps(job.model_dump(mode="json")).encode()).result()
-    logger.info(f"Published to {WORKFLOW_MANAGER_TOPIC}")
 
 
 def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
@@ -91,9 +86,11 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
     logger.info(f"Starting face match — image={step.imagePath}, threshold={step.threshold}, run={job.curRun}/{job.maxRuns}")
 
     try:
-        image_bytes    = download_bytes(step.imagePath)
         with ThreadPoolExecutor() as executor:
-            id_photo_bytes = list(executor.map(download_bytes, step.idPhotoPaths))
+            all_paths  = [step.imagePath] + step.idPhotoPaths
+            all_bytes  = list(executor.map(download_bytes, all_paths))
+        image_bytes    = all_bytes[0]
+        id_photo_bytes = all_bytes[1:]
 
         with acquire_face_recognition() as fr:
             similarity = fr.calc_face_similarity(id_photo_bytes, image_bytes)
@@ -149,7 +146,7 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         step.error  = str(e)
     finally:
         job.workflow[step_idx] = StepBase.model_validate(step.model_dump(mode="json"))
-        _send_job(job)
+        send_job(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME)
 
         message.ack()
         clear_log_context()
