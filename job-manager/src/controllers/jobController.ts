@@ -14,6 +14,7 @@ import { sendJob } from '@loom24/shared/services';
 import { deleteBlob } from '../services/storageService';
 
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
+const SERVICE_NAME = process.env.SERVICE_NAME || 'job-manager';
 
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
@@ -112,7 +113,7 @@ export const restart = async (req: Request, res: Response, next: NextFunction) =
     });
 
     await updateDb(userId, id, job);
-    await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'job-manager');
+    await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
 
     return res.status(200).json(job);
   } catch (error) {

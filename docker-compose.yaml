@@ -47,6 +47,7 @@ services:
       - NODE_ENV=development
       - PROJECT_ID=loom24-mvp
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - SERVICE_NAME=api-gateway
       - USER_URL=http://user:3100
       - AVATAR_URL=http://avatar:3200
       - JOB_MANAGER_URL=http://job-manager:3300
@@ -74,6 +75,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=user
       - DB_NAME=ai-avatar-db
       - USERS_COLLECTION_NAME=users
 
@@ -97,6 +99,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=avatar
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - DB_NAME=ai-avatar-db
       - USERS_COLLECTION_NAME=users
@@ -123,6 +126,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=job-manager
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - DB_NAME=ai-avatar-db
       - JOBS_COLLECTION_NAME=jobs
@@ -149,6 +153,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=voice
       - DB_NAME=ai-avatar-db
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
 
@@ -171,6 +176,7 @@ services:
       - PORT=3800
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - SERVICE_NAME=cropper
       - JOB_MANAGER_URL=http://job-manager:3300
       - MAX_CONCURRENT_CROPS=4
       - GLOG_minloglevel=2
@@ -193,6 +199,7 @@ services:
       - PROJECT_ID=loom24-mvp
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - SERVICE_NAME=ai-model-gateway
       - SUBSCRIPTION_ID=ai-model-gateway-sub
       - MAX_CONCURRENT_MESSAGES=10
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
@@ -215,6 +222,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=workflow-manager
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - SUBSCRIPTION_ID=workflow-manager-sub
       - JOB_MANAGER_URL=http://job-manager:3300
@@ -238,6 +246,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=head-direction-checker
       - SUBSCRIPTION_ID=head-direction-checker-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
@@ -261,6 +270,7 @@ services:
       - NODE_ENV=development
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=thumbnail-maker
       - SUBSCRIPTION_ID=thumbnail-maker-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
@@ -283,13 +293,12 @@ services:
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=face-matcher
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - SUBSCRIPTION_ID=face-matcher-sub
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - JOB_MANAGER_URL=http://job-manager:3300
       - INSIGHTFACE_MODEL=buffalo_l
       - INSIGHTFACE_ROOT=/models/insightface
-      - ADAFACE_MODEL_DIR=/app/models/adaface
-      - ADAFACE_ARCHITECTURE=ir_101
       - POOL_SIZE=1
       - MAX_CONCURRENT_MESSAGES=1

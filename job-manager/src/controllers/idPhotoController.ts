@@ -22,6 +22,7 @@ import uuid from 'uuid';
 
 
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
+const SERVICE_NAME = process.env.SERVICE_NAME || 'job-manager';
 
 
 export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next: NextFunction) => {
@@ -72,7 +73,7 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
     }
 
     const dbJob = await createDb(userId, job);
-    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, SERVICE_NAME);
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -129,7 +130,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
     })
 
     const dbJobs = await createManyDb(userId, jobs);
-    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
+    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, SERVICE_NAME);
 
     return res.status(201).json(dbJobs);
   } catch (error) {
@@ -194,7 +195,7 @@ export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: 
     })
 
     const dbJobs = await createManyDb(userId, jobs);
-    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
+    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, SERVICE_NAME);
 
     return res.status(201).json(dbJobs);
   } catch (error) {

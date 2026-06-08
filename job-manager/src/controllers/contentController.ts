@@ -30,6 +30,7 @@ import { IdPhotoSetPaths } from '../types/idPhotoSet';
 
 
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
+const SERVICE_NAME = process.env.SERVICE_NAME || 'job-manager';
 
 
 export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunction) => {
@@ -89,7 +90,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     }
 
     const dbJob = await createDb(userId, job);
-    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, SERVICE_NAME);
 
     return res.status(201).json(dbJob);
   } catch (error) {
@@ -164,7 +165,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
     })
 
     const dbJobs = await createManyDb(userId, jobs);
-    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, 'job-manager');
+    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, SERVICE_NAME);
 
     return res.status(201).json(dbJobs);
   } catch (error) {
@@ -278,7 +279,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
     }
 
     const dbJob = await createDb(userId, job);
-    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, SERVICE_NAME);
     return res.status(201).json(dbJob);
   } catch (error) {
     logger.error({ err: error }, 'Failed to generate avatar video');
@@ -341,7 +342,7 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
     }
 
     const dbJob = await createDb(userId, job);
-    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, SERVICE_NAME);
     return res.status(201).json(dbJob);
   } catch (error) {
     logger.error({ err: error }, 'Failed to generate mimic motion video');
@@ -387,7 +388,7 @@ export const genAvatarAudio = async (req: Request, res: Response, next: NextFunc
     }
 
     const dbJob = await createDb(userId, job);
-    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, 'job-manager');
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, SERVICE_NAME);
     return res.status(201).json(dbJob);
   } catch (error) {
     logger.error({ err: error }, 'Failed to generate avatar audio');

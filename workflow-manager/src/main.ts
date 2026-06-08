@@ -11,7 +11,7 @@ admin.initializeApp({ projectId: process.env.PROJECT_ID, storageBucket: process.
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'workflow-manager-sub';
 const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
-const SERVICE_NAME = 'workflow-manager'
+const SERVICE_NAME = process.env.SERVICE_NAME || 'workflow-manager'
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
@@ -100,7 +100,7 @@ function listenForResults() {
     flowControl: { maxMessages: MAX_CONCURRENT_MESSAGES },
   });
 
-  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for workflow updates...');
+  logger.info({ service: SERVICE_NAME, subscription: SUBSCRIPTION_ID }, 'Listening');
 
   const messageHandler = async (message: Message) => {
     let job: Job;

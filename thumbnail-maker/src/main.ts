@@ -17,6 +17,7 @@ const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'thumbnail-maker-sub';
 const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
+const SERVICE_NAME = process.env.SERVICE_NAME || 'thumbnail-maker';
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
@@ -25,7 +26,7 @@ function listenForResults() {
     flowControl: { maxMessages: MAX_CONCURRENT_MESSAGES },
   });
 
-  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for thumbnail jobs...');
+  logger.info({ service: SERVICE_NAME, subscription: SUBSCRIPTION_ID }, 'Listening');
 
   const messageHandler = async (message: Message) => {
     let job: Job;
@@ -89,7 +90,7 @@ function listenForResults() {
       stepData.status = JobStatuses.completed;
       job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'thumbnail-maker');
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
       logger.info('Thumbnail created successfully');
     } catch (error: any) {
       logger.error({ err: error }, 'Thumbnail generation failed');
@@ -98,7 +99,7 @@ function listenForResults() {
       stepData.error = String(error);
       job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'thumbnail-maker');
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
     } finally {
       message.ack();
       clearLogContext();

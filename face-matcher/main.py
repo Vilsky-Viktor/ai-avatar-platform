@@ -21,7 +21,7 @@ WORKFLOW_MANAGER_TOPIC  = os.getenv("WORKFLOW_MANAGER_TOPIC", "workflow-manager"
 POOL_SIZE               = int(os.getenv("POOL_SIZE", "1"))
 MAX_CONCURRENT_MESSAGES = int(os.getenv("MAX_CONCURRENT_MESSAGES", str(POOL_SIZE)))
 
-SERVICE_NAME = "face-matcher"
+SERVICE_NAME = os.getenv("SERVICE_NAME", "face-matcher")
 
 
 def _prev_tmp_path(image_path: str) -> str:
@@ -169,7 +169,7 @@ def main() -> None:
         flow_control=flow_control,
     )
 
-    logger.info(f"Listening on {subscription_path}")
+    logger.info(f"[{SERVICE_NAME}] Listening on {subscription_path}")
 
     def _shutdown(sig, _frame):
         logger.info("Shutting down...")

@@ -23,12 +23,13 @@ google.authenticate().catch((err) => {
 import { sendJob, uploadToBucket } from '@loom24/shared/services';
 import { getJob } from './services/jobManagerService';
 import { AiModelGateway, Job, JobStatuses, MediaTypes, Services, WorkflowStep } from '@loom24/shared/types';
-import { generate } from './controllers/generatorController';
+import { generate, RateLimitError } from './controllers/generatorController';
 
 const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'ai-model-gateway-sub';
 const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
+const SERVICE_NAME = process.env.SERVICE_NAME || 'ai-model-gateway';
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
@@ -37,7 +38,7 @@ function listenForResults() {
     flowControl: { maxMessages: MAX_CONCURRENT_MESSAGES },
   });
 
-  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for AI model jobs...');
+  logger.info({ service: SERVICE_NAME, subscription: SUBSCRIPTION_ID }, 'Listening');
 
   const messageHandler = async (message: Message) => {
     let job: Job;
@@ -87,6 +88,8 @@ function listenForResults() {
         logger.info('Extended ack deadline');
       }, 300_000);
 
+    let shouldNack = false;
+
     try {
       logger.info({ platform: stepData.platform, model: stepData.model }, 'Starting generation');
 
@@ -99,19 +102,24 @@ function listenForResults() {
       stepData.status = JobStatuses.completed;
       job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
     } catch (error: any) {
-      logger.error({ err: error }, 'ai-model-gateway generation failed');
+      if (error instanceof RateLimitError) {
+        logger.warn({ err: error.cause }, 'Rate limit hit — nacking for re-delivery');
+        shouldNack = true;
+      } else {
+        logger.error({ err: error }, 'ai-model-gateway generation failed');
 
-      stepData.status = JobStatuses.error;
-      stepData.error = String(error);
+        stepData.status = JobStatuses.error;
+        stepData.error = String(error);
 
-      job.curRun = job.maxRuns;
-      job.workflow[stepIdx] = stepData;
+        job.curRun = job.maxRuns;
+        job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'ai-model-gateway');
+        await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
+      }
     } finally {
-      message.ack();
+      shouldNack ? message.nack() : message.ack();
       clearInterval(heartbeat);
       clearLogContext();
     }

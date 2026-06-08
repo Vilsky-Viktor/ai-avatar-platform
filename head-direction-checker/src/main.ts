@@ -17,6 +17,7 @@ const PROJECT_ID = process.env.PROJECT_ID || 'loom24-mvp';
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
 const SUBSCRIPTION_ID = process.env.SUBSCRIPTION_ID || 'head-direction-checker-sub';
 const MAX_CONCURRENT_MESSAGES = parseInt(process.env.MAX_CONCURRENT_MESSAGES || '10');
+const SERVICE_NAME = process.env.SERVICE_NAME || 'head-direction-checker';
 
 const pubsub = new PubSub({ projectId: PROJECT_ID });
 
@@ -25,7 +26,7 @@ function listenForResults() {
     flowControl: { maxMessages: MAX_CONCURRENT_MESSAGES },
   });
 
-  logger.info({ subscription: SUBSCRIPTION_ID }, 'Listening for head direction jobs...');
+  logger.info({ service: SERVICE_NAME, subscription: SUBSCRIPTION_ID }, 'Listening');
 
   const messageHandler = async (message: Message) => {
     let job: Job;
@@ -83,7 +84,7 @@ function listenForResults() {
       }
       job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
     } catch (error: any) {
       logger.error({ err: error }, 'Head direction checker failed');
 
@@ -91,7 +92,7 @@ function listenForResults() {
       stepData.error = String(error);
       job.workflow[stepIdx] = stepData;
 
-      await sendJob(WORKFLOW_MANAGER_TOPIC, job, 'head-direction-checker');
+      await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
     } finally {
       message.ack();
       clearLogContext();
