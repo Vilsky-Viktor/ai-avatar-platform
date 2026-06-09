@@ -16,6 +16,8 @@ html {
   --animate-audio-ring: audio-ring 2.4s ease-out infinite;
   --animate-equalizer: equalizer 0.6s ease-in-out infinite;
   --animate-spin-border: spin-border 2s linear infinite;
+  --animate-heartbeat: heartbeat 1.4s ease-in-out infinite;
+  --animate-nudge-right: nudge-right 1.2s ease-in-out infinite;
 }
 
 @property --gen-angle {
@@ -26,6 +28,19 @@ html {
 
 @keyframes spin-border {
   to { --gen-angle: 360deg; }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14%       { transform: scale(1.2); }
+  28%       { transform: scale(1); }
+  42%       { transform: scale(1.12); }
+  70%       { transform: scale(1); }
+}
+
+@keyframes nudge-right {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(10px); }
 }
 
 @keyframes modal-backdrop {
