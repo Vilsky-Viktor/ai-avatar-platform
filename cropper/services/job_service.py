@@ -14,10 +14,6 @@ def _get_client() -> ServiceClient:
     return _client
 
 
-def get_job(job_id: str, user_id: str) -> Job:
-    data = _get_client().get(f"/get/job/{job_id}", user_id)
+def get_job(job: Job) -> Job:
+    data = _get_client().get(f"/get/job/{job.id}", job.userId)
     return Job.model_validate(data)
-
-
-def update_job(job: Job) -> None:
-    _get_client().patch(f"/update/job/{job.id}", job.userId, job.model_dump())

@@ -51,6 +51,13 @@ class Directions(str, Enum):
     rightSide = 'rightSide'
 
 
+class CropperModes(str, Enum):
+    front = 'front'
+    quarter = 'quarter'
+    side = 'side'
+    body = 'body'
+
+
 class Platforms(str, Enum):
     falai = 'fal-ai'
     google = 'google'
@@ -70,7 +77,7 @@ class Models(str, Enum):
     elevenV3 = 'eleven-labs-eleven-v3'
     seedvrImageUpscale = 'seedvr-image-upscale'
     geminiImage3Pro = 'gemini-image-3-pro'
-    none = 'none'
+    birefNetV2 = 'BirefNetV2'
 
 
 class Services(str, Enum):
@@ -78,6 +85,7 @@ class Services(str, Enum):
     headDirectionChecker = 'head-direction-checker'
     aiModelGateway = 'ai-model-gateway'
     thumbnailMaker = 'thumbnail-maker'
+    cropper = 'cropper'
 
 
 class JobMetadata(BaseModel):
@@ -135,8 +143,13 @@ class HeadDirectionCheckerStep(StepBase):
     direction: Directions
 
 
+class CropperStep(StepBase):
+    mediaPath: str
+    mode: CropperModes
+
+
 WorkflowStep = Annotated[
-    Union[FaceMatcherStep, HeadDirectionCheckerStep, ThumbnailMakerStep, AiModelGatewayStep],
+    Union[FaceMatcherStep, HeadDirectionCheckerStep, ThumbnailMakerStep, AiModelGatewayStep, CropperStep],
     Field(discriminator=None),
 ]
 
@@ -145,7 +158,10 @@ class IdPhotoJobRequest(BaseModel):
     groupId: Optional[str] = None
     avatarId: str
     parameters: AvatarParameters
-    frontIdPhotoPath: Optional[str] = None
+    idPhotoPath: Optional[str] = None
+    order: Optional[int] = 1
+    mode: Optional[CropperModes] = CropperModes.front
+    direction: Optional[Directions] = Directions.front
 
 
 class PhotoJobRequest(BaseModel):

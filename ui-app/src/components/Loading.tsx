@@ -1,13 +1,15 @@
 type Props = {
-    size?: 'sm' | 'md' | 'xl';
+    size?: 'xs' | 'sm' | 'md' | 'xl';
+    color?: string;
+    className?: string;
 }
 
-function Loading({ size = 'xl' }: Props) {
-    const sizeClass = size === 'xl' ? 'loading-xl w-16' : size === 'md' ? 'loading-md w-10' : 'loading-sm w-8';
+function Loading({ size = 'xl', color = 'text-primary', className = 'text-center mt-6' }: Props) {
+    const sizeClass = size === 'xl' ? 'loading-xl w-16' : size === 'md' ? 'loading-md w-10' : size === 'sm' ? 'loading-sm w-8' : 'loading-xs w-6';
 
     return (
-        <div className="text-center mt-6">
-            <span className={`loading loading-dots text-primary ${sizeClass}`}></span>
+        <div className={className}>
+            <span className={`loading loading-ring ${color} ${sizeClass}`}></span>
         </div>
     );
 }

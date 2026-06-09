@@ -11,8 +11,8 @@ Pub/Sub subscriber that generates thumbnails for completed media. Downloads the 
 
 ## Processing
 
-- **Image**: resize to `size × size` pixels, fit `cover`, output as JPEG
-- **Video**: write video to a temp file, extract a frame at 0.5 s with ffmpeg, resize the frame, clean up temp files in all cases
+- **Image**: resize so neither dimension exceeds `size × size` (`fit: outside`, Lanczos3 kernel), output as JPEG. If the source has an alpha channel, flatten it onto a dark gray background (`#646b6b`) before encoding.
+- **Video**: write video to a temp file, extract a frame at 0.5 s with ffmpeg (falls back to 0 s on failure), resize the frame, clean up temp files in all cases.
 
 ## Environment variables
 

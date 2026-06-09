@@ -152,7 +152,7 @@ function CreateSyntheticIdPhotosPage() {
             groupId: newAvatarData.groupId,
             avatarId: newAvatarData.avatarId,
             parameters: avatar.parameters,
-            frontIdPhotoPath: jobsRef.current[0]?.resultMediaPath,
+            idPhotoPath: jobsRef.current[0]?.resultMediaPath,
         };
         try {
             const newJobs = await genSyntheticIdPhotos(jobRequest);

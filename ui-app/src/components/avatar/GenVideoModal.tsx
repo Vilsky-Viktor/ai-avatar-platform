@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import Loading from '../Loading';
 import { Sparkles, ImagePlus, Trash2, Mic, Square, RotateCcw, Check, Images, Film, Volume2 } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
 import type { VideoRatio } from '../../types/image';
@@ -390,7 +391,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                                     <img src={objectPhotoPreviews[idx]!} className="w-full h-full object-cover object-top" />
                                                     {objectPhotoUploading[idx] && (
                                                         <div className="absolute inset-0 bg-base-100/60 flex items-center justify-center">
-                                                            <span className="loading loading-dots loading-xs text-primary" />
+                                                            <Loading size="xs" className="" />
                                                         </div>
                                                     )}
                                                     <button
@@ -572,7 +573,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                             <video src={mimicVideoPreviewUrl} muted loop playsInline className="w-full h-full object-cover" />
                                             {mimicVideoUploading && (
                                                 <div className="absolute inset-0 bg-base-100/60 flex items-center justify-center">
-                                                    <span className="loading loading-dots loading-sm text-primary" />
+                                                    <Loading size="sm" className="" />
                                                 </div>
                                             )}
                                             <button

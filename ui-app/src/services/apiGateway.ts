@@ -14,13 +14,6 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-export type CropMode = 'front' | 'quarter' | 'side' | 'full_body';
-
-export const cropPerson = async (imagePath: string, mode: CropMode = 'front'): Promise<{ path: string }> => {
-  const res = await apiClient.post('/cropper/crop', { image_path: imagePath, mode });
-  return res.data;
-};
-
 export const linkGoogleAccount = async (googleIdToken: string): Promise<{ customToken: string }> => {
   const res = await apiClient.post('/auth/link-google', { googleIdToken });
   return res.data;
@@ -144,13 +137,13 @@ export const genSyntheticIdPhotos = async (jobRequest: IdPhotoJobRequest): Promi
   }
 }
 
-export const genDigitalTwinIdPhotos = async (jobRequest: IdPhotoJobRequest): Promise<Job[]> => {
+export const genDigitalTwinIdPhoto = async (jobRequest: IdPhotoJobRequest): Promise<Job> => {
   try {
-    const res = await apiClient.post('/jobs/gen-digital-twin-id-photos', jobRequest);
+    const res = await apiClient.post('/jobs/gen-digital-twin-id-photo', jobRequest);
 
-    return res.data as Job[];
+    return res.data as Job;
   } catch (error) {
-    console.error("Error creating training twin photo jobs:", error);
+    console.error("Error creating training twin photo job:", error);
     throw error;
   }
 }

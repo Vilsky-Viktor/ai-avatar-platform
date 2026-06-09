@@ -25,6 +25,7 @@ namespace Platform {
       genLipSyncV3?: ModelHandler;
       genTopazImageUpscale?: ModelHandler;
       genTopazVideoUpscale?: ModelHandler;
+      genBirefNetV2?: ModelHandler;
       genGeminiImage3Pro?: ModelHandler;
     }
 
@@ -46,6 +47,7 @@ namespace Platform {
         [Models.topazImageUpscale]: 'genTopazImageUpscale',
         [Models.topazVideoUpscale]: 'genTopazVideoUpscale',
         [Models.geminiImage3Pro]: 'genGeminiImage3Pro',
+        [Models.birefNetV2]: 'genBirefNetV2',
     }
 }
 

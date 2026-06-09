@@ -6,11 +6,17 @@ import * as fs from 'fs';
 import { randomUUID } from 'crypto';
 
 export const resizeImage = async (input: Buffer, size: number): Promise<Buffer> => {
-  return sharp(input)
+  const { hasAlpha } = await sharp(input).metadata();
+
+  const pipeline = sharp(input)
     .resize(size, size, { fit: 'outside', kernel: 'lanczos3', withoutEnlargement: false })
-    .sharpen({ sigma: 0.6, m1: 0.5, m2: 0.2 })
-    .jpeg({ quality: 90, mozjpeg: true })
-    .toBuffer();
+    .sharpen({ sigma: 0.6, m1: 0.5, m2: 0.2 });
+
+  if (hasAlpha) {
+    pipeline.flatten({ background: { r: 100, g: 103, b: 107 } });
+  }
+
+  return pipeline.jpeg({ quality: 90, mozjpeg: true }).toBuffer();
 };
 
 const extractFrame = async (videoBuffer: Buffer, seekSec: number): Promise<Buffer> => {

@@ -37,7 +37,6 @@ services:
       - AVATAR_URL=http://avatar:3200
       - JOB_MANAGER_URL=http://job-manager:3300
       - VOICE_URL=http://voice:3600
-      - CROPPER_URL=http://cropper:3800
       - PROXY_TIMEOUT_MS=120000
 
   user:
@@ -153,19 +152,18 @@ services:
       dockerfile: Dockerfile.dev
       secrets:
         - gcp_key
-    ports:
-      - "3800:3800"
     volumes:
       - ./cropper:/app
       - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
     environment:
-      - PORT=3800
+      - PROJECT_ID=loom24-mvp
       - BUCKET_NAME=loom24-mvp.firebasestorage.app
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
       - SERVICE_NAME=cropper
       - JOB_MANAGER_URL=http://job-manager:3300
-      - MAX_CONCURRENT_CROPS=5
-      - GUNICORN_WORKERS=2
+      - SUBSCRIPTION_ID=cropper-sub
+      - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - MAX_CONCURRENT_MESSAGES=10
       - YOLO_MODEL=models/yolo11n-pose.pt
       - GLOG_minloglevel=2
 

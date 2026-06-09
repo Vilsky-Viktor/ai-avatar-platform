@@ -25,8 +25,8 @@ router.post(
     createProxyHandler('post', () => `${BASE}/gen-synthetic-id-photos`, 'Create synthetic ID photos')
 );
 router.post(
-    '/gen-digital-twin-id-photos',
-    createProxyHandler('post', () => `${BASE}/gen-digital-twin-id-photos`, 'Create digital twin ID photos')
+    '/gen-digital-twin-id-photo',
+    createProxyHandler('post', () => `${BASE}/gen-digital-twin-id-photo`, 'Create digital twin ID photo')
 );
 router.post(
     '/gen-avatar-photo',

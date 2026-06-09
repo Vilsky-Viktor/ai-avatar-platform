@@ -9,6 +9,11 @@ import {
   ThumbnailMaker,
   HeadDirectionChecker,
   Directions,
+  ImageRatios,
+  Cropper,
+  AiModelGateway,
+  Models,
+  Platforms,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
@@ -89,7 +94,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
   const jobRequest: IdPhotoJobRequest = req.body;
 
   const idPhotoSet: IdPhotoSetPaths = {
-    front: jobRequest.frontIdPhotoPath,
+    front: jobRequest.idPhotoPath,
   };
 
   setLogContext(userId, jobRequest.avatarId);
@@ -141,63 +146,76 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
   }
 };
 
-export const genDigitalTwinIdPhotos = async (req: Request, res: Response, next: NextFunction) => {
+export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: IdPhotoJobRequest = req.body;
-  const groupId = uuid.v4();
-
-  const avatarMediaPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images`;
-  const idPhotoSet: IdPhotoSetPaths = {
-    front: `${avatarMediaPath}/uploaded/front-cropped.png`,
-    frontSmile: `${avatarMediaPath}/uploaded/front-smile-cropped.png`,
-    rightQuarter: `${avatarMediaPath}/uploaded/right-quarter-cropped.png`,
-    leftQuarter: `${avatarMediaPath}/uploaded/left-quarter-cropped.png`,
-    rightSide: `${avatarMediaPath}/uploaded/right-side-cropped.png`,
-    leftSide: `${avatarMediaPath}/uploaded/left-side-cropped.png`,
-    body: `${avatarMediaPath}/uploaded/full-body-cropped.png`,
-  };
-
+  const imageId = uuid.v4();
+  
   setLogContext(userId, jobRequest.avatarId);
+
   try {
-    logger.info({ groupId }, 'Create digital twin ID photo jobs');
+    logger.info('Create digital twin ID photo job');
 
-    const inputs = genDigitalTwinIdPhotoData(jobRequest.parameters, userId, jobRequest.avatarId, idPhotoSet);
+    const rmbgUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
+    const cropUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-crop.png`;
+    const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-thumbnail.jpg`;
 
-    const jobs: Job[] = inputs.map((input) => {
-      const rawPath = input.imageGenerator.uploadPath as string;
-      const dotIdx = rawPath.lastIndexOf('.');
-      const thumbnailUploadPath = `${dotIdx >= 0 ? rawPath.slice(0, dotIdx) : rawPath}-thumbnail.jpg`;
+    const cropper: Cropper = {
+      service: Services.cropper,
+      status: JobStatuses.pending,
+      mediaPath: jobRequest.idPhotoPath!,
+      mode: jobRequest.mode!,
+      uploadPath: cropUploadPath,
+    }
 
-      const thumbnailMaker: ThumbnailMaker = {
-        mediaType: MediaTypes.image,
-        mediaPath: rawPath,
-        size: 400,
-        service: Services.thumbnailMaker,
-        status: JobStatuses.pending,
-        uploadPath: thumbnailUploadPath,
-      };
+    const headDirectionChecker: HeadDirectionChecker = {
+      service: Services.headDirectionChecker,
+      status: JobStatuses.pending,
+      imagePath: cropUploadPath,
+      direction: jobRequest.direction!
+    }
 
-      return {
-        userId,
-        groupId: groupId,
-        avatarId: jobRequest.avatarId,
-        mediaType: MediaTypes.image,
-        target: JobTargets.idPhoto,
-        status: JobStatuses.pending,
-        maxRuns: 3,
-        curRun: 0,
-        order: input.order,
-        workflow: [input.imageGenerator, input.headDirectionChecker, thumbnailMaker],
-        metadata: input.metadata,
-        resultMediaPath: rawPath,
-        resultThumbnailPath: thumbnailUploadPath,
-      }
-    })
+    const removeBackground: AiModelGateway = {
+      service: Services.aiModelGateway,
+      status: JobStatuses.pending,
+      model: Models.birefNetV2,
+      platform: Platforms.falai,
+      imagePaths: [cropUploadPath],
+      uploadPath: rmbgUploadPath
+    }
 
-    const dbJobs = await createManyDb(userId, jobs);
-    await sendJobs(WORKFLOW_MANAGER_TOPIC, dbJobs, SERVICE_NAME);
+    const thumbnailMaker: ThumbnailMaker = {
+      mediaType: MediaTypes.image,
+      mediaPath: rmbgUploadPath,
+      size: 400,
+      service: Services.thumbnailMaker,
+      status: JobStatuses.pending,
+      uploadPath: thumbnailUploadPath,
+    };
 
-    return res.status(201).json(dbJobs);
+    const job: Job = {
+      userId,
+      groupId: jobRequest.groupId,
+      avatarId: jobRequest.avatarId,
+      mediaType: MediaTypes.image,
+      target: JobTargets.idPhoto,
+      status: JobStatuses.pending,
+      maxRuns: 1,
+      curRun: 0,
+      order: jobRequest.order,
+      workflow: [cropper, headDirectionChecker, removeBackground, thumbnailMaker],
+      metadata: {
+        ratio: ImageRatios['1:1'],
+        dimensions: '2048x2048',
+      },
+      resultMediaPath: rmbgUploadPath,
+      resultThumbnailPath: thumbnailUploadPath,
+    }
+
+    const dbJob = await createDb(userId, job);
+    await sendJob(WORKFLOW_MANAGER_TOPIC, dbJob, SERVICE_NAME);
+
+    return res.status(201).json(dbJob);
   } catch (error) {
     logger.error({ err: error }, 'Failed to create digital twin ID photo jobs');
     next(error);

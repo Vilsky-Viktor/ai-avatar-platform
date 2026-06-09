@@ -20,6 +20,7 @@ namespace FalAi {
         lipSyncV3 = 'sync-lipsync/v3',
         elevenV3 = 'elevenlabs/tts/eleven-v3',
         seedvrImageUpscale = 'seedvr/upscale/image',
+        birefNetV2 = 'birefnet/v2'
     }
 
     export const MODEL_MAPPING: Partial<Record<JobModels,string>> = {
@@ -34,6 +35,7 @@ namespace FalAi {
       [JobModels.lipSyncV3]: Models.lipSyncV3,
       [JobModels.elevenV3]: Models.elevenV3,
       [JobModels.seedvrImageUpscale]: Models.seedvrImageUpscale,
+      [JobModels.birefNetV2]: Models.birefNetV2
     }
 
     export enum ImageSizes {
@@ -56,6 +58,21 @@ namespace FalAi {
         auto = 'auto',
         on = 'on',
         off = 'off'
+    }
+
+     export enum BirefNetV2Models {
+        generalUseLight = 'General Use (Light)',
+        generalUseLight2K = 'General Use (Light 2K)',
+        generalUseHeavy = 'General Use (Heavy)',
+        matting = 'Matting',
+        portrait = 'Portrait',
+        generalUseDynamic = 'General Use (Dynamic)',
+    }
+
+    export enum BirefNetV2Resolutions {
+        _1024 = '1024x1024',
+        _2048 = '2048x2048',
+        _2304 = '2304x2304'
     }
 
     export enum ShotTypes {
@@ -280,6 +297,17 @@ namespace FalAi {
         grain?: number;
         recover_detail?: number;
         H264_output?: boolean;
+    }
+
+    export type BirefNetV2 = {
+        model: BirefNetV2Models;
+        operating_resolution: BirefNetV2Resolutions;
+        output_mask: boolean;
+        refine_foreground: boolean;
+        sync_mode: boolean;
+        image_url: string;
+        output_format: OutputFormats;
+        mask_only: boolean;
     }
 }
 

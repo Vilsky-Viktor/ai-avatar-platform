@@ -5,9 +5,9 @@ from .voice import Voice
 from .user import User
 from .job import (
     Views, ShotTypes, MediaTypes, JobTargets, JobStatuses,
-    Directions, Platforms, Models, Services, JobMetadata,
+    Directions, Platforms, Models, Services, JobMetadata, CropperModes,
     StepBase, AiModelGatewayStep, FaceMatcherStep, HeadDirectionCheckerStep,
-    WorkflowStep,
+    ThumbnailMakerStep, CropperStep, WorkflowStep,
     IdPhotoJobRequest, PhotoJobRequest, VideoJobRequest,
     MimicMotionRequest, AudioJobRequest, PhotoSetJobRequest,
     Job,
@@ -20,9 +20,9 @@ __all__ = [
     "Voice",
     "User",
     "Views", "ShotTypes", "MediaTypes", "JobTargets", "JobStatuses",
-    "Directions", "Platforms", "Models", "Services", "JobMetadata",
+    "Directions", "Platforms", "Models", "Services", "JobMetadata", "CropperModes",
     "StepBase", "AiModelGatewayStep", "FaceMatcherStep", "HeadDirectionCheckerStep",
-    "WorkflowStep",
+    "ThumbnailMakerStep", "CropperStep", "WorkflowStep",
     "IdPhotoJobRequest", "PhotoJobRequest", "VideoJobRequest",
     "MimicMotionRequest", "AudioJobRequest", "PhotoSetJobRequest",
     "Job",

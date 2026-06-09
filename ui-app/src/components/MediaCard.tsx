@@ -1,4 +1,5 @@
 import { Sparkles, User, Clock, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Share2 } from 'lucide-react';
+import Loading from './Loading';
 import { useState, useEffect, useRef } from 'react';
 import { JobStatuses, MediaTypes, type Job } from '@loom24/shared/types';
 import { downloadMediaFromBucket } from '../services/storage';
@@ -164,7 +165,7 @@ function MediaCard({
                 <div className="group relative rounded-2xl bg-base-100 w-full h-full flex flex-col items-center justify-center overflow-hidden">
                     <div className="flex flex-col items-center gap-6">
                         <div className="relative">
-                            <span className="loading loading-dots loading-md text-primary w-14" />
+                            <Loading size="md" className="" />
                             <Sparkles size={20} className="absolute -top-5 -right-2 text-primary animate-pulse" />
                         </div>
                         <div className="text-center">

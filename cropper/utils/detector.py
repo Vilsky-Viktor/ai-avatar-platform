@@ -31,7 +31,7 @@ _FULL_BODY_KPS     = [_NOSE, _LEFT_EYE, _RIGHT_EYE, _LEFT_EAR, _RIGHT_EAR, _LEFT
 _LOWER_BODY_KPS    = [_LEFT_HIP, _RIGHT_HIP, _LEFT_KNEE, _RIGHT_KNEE, _LEFT_ANKLE, _RIGHT_ANKLE]
 
 _YOLO_MODEL  = os.getenv("YOLO_MODEL", "models/yolo11n-pose.pt")
-_POOL_SIZE   = int(os.getenv("MAX_CONCURRENT_CROPS", "5"))
+_POOL_SIZE   = int(os.getenv("MAX_CONCURRENT_MESSAGES", "10"))
 _model_pool: queue.Queue = queue.Queue()
 
 _MIN_CONF              = 0.3
@@ -193,18 +193,19 @@ def _fit_to_square(
 
     side = min(right - left, float(img_w), float(img_h))
     cx   = (left + right) / 2
-    cy   = (top + bottom) / 2
-    left, right  = cx - side / 2, cx + side / 2
-    top,  bottom = cy - side / 2, cy + side / 2
 
+    left = cx - side / 2
+    right = left + side
     if left < 0:
-        right -= left;  left = 0.0
-    if top < 0:
-        bottom -= top;  top = 0.0
-    if right > img_w:
-        left -= right - img_w;  right = float(img_w)
+        left, right = 0.0, side
+    elif right > img_w:
+        right, left = float(img_w), float(img_w) - side
+
+    top = max(0.0, top)
+    bottom = top + side
     if bottom > img_h:
-        top  -= bottom - img_h; bottom = float(img_h)
+        bottom = float(img_h)
+        top = float(img_h) - side
 
     l, t, r, b = int(left), int(top), int(right), int(bottom)
 

@@ -45,7 +45,7 @@ All routes require a valid `Authorization: Bearer <firebase-id-token>` header.
 | GET | `/jobs/counts/avatar/:avatarId` | `job-manager` |
 | POST | `/jobs/gen-synthetic-front-id-photo` | `job-manager` |
 | POST | `/jobs/gen-synthetic-id-photos` | `job-manager` |
-| POST | `/jobs/gen-digital-twin-id-photos` | `job-manager` |
+| POST | `/jobs/gen-digital-twin-id-photo` | `job-manager` |
 | POST | `/jobs/gen-avatar-photo` | `job-manager` |
 | POST | `/jobs/gen-avatar-photo-set` | `job-manager` |
 | POST | `/jobs/gen-avatar-video` | `job-manager` |
@@ -60,12 +60,6 @@ All routes require a valid `Authorization: Bearer <firebase-id-token>` header.
 |---|---|---|
 | GET | `/voices/get/gender/:gender` | `voice` |
 
-### Cropper (`/cropper`)
-
-| Method | Path | Downstream |
-|---|---|---|
-| POST | `/cropper/crop` | `cropper` |
-
 ## Environment variables
 
 | Variable | Description |
@@ -79,7 +73,6 @@ All routes require a valid `Authorization: Bearer <firebase-id-token>` header.
 | `AVATAR_URL` | Internal URL of the `avatar` service |
 | `JOB_MANAGER_URL` | Internal URL of the `job-manager` service |
 | `VOICE_URL` | Internal URL of the `voice` service |
-| `CROPPER_URL` | Internal URL of the `cropper` service |
 | `PROXY_TIMEOUT_MS` | Proxy request timeout in ms (default `120000`) |
 
 ## Running locally

@@ -15,6 +15,13 @@ export enum ShotTypes {
   fullBody = 'fullBody',
 }
 
+export enum CropperModes {
+  front = 'front',
+  quarter = 'quarter',
+  side = 'side',
+  body = 'body'
+}
+
 export type PhotoSetType =
   'whatsapp-stickers' |
   'around-the-world' |
@@ -25,7 +32,10 @@ export type IdPhotoJobRequest = {
   groupId?: string;
   avatarId: string;
   parameters: AvatarParameters;
-  frontIdPhotoPath?: string;
+  idPhotoPath?: string;
+  order?: number;
+  mode?: CropperModes;
+  direction?: Directions;
 }
 
 export type PhotoJobRequest = {
@@ -116,7 +126,7 @@ export enum Models {
   elevenV3 = 'eleven-labs-eleven-v3',
   seedvrImageUpscale = 'seedvr-image-upscale',
   geminiImage3Pro = 'gemini-image-3-pro',
-  none = 'none',
+  birefNetV2 = 'BirefNetV2',
 }
 
 export enum Services {
@@ -124,6 +134,7 @@ export enum Services {
   headDirectionChecker = 'head-direction-checker',
   aiModelGateway = 'ai-model-gateway',
   thumbnailMaker = 'thumbnail-maker',
+  cropper = 'cropper'
 }
 
 export type StepBase = {
@@ -172,11 +183,17 @@ export type ThumbnailMaker = StepBase & {
   size: number;
 }
 
+export type Cropper = StepBase & {
+  mediaPath: string;
+  mode: CropperModes;
+}
+
 export type WorkflowStep =
   AiModelGateway |
   FaceMatcher |
   HeadDirectionChecker |
-  ThumbnailMaker;
+  ThumbnailMaker |
+  Cropper;
 
 export type Job = {
   id?: string;

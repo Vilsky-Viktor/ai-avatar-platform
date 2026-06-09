@@ -6,17 +6,16 @@ authors = []
 
 [tool.poetry.dependencies]
 python = "^3.12"
-fastapi = "0.136.3"
-uvicorn = {extras = ["standard"], version = "0.49.0"}
-ultralytics = "8.3.202"
-torch = {version = "2.7.1", source = "pytorch-cpu"}
-torchvision = {version = "0.22.1", source = "pytorch-cpu"}
+ultralytics = {version = "8.3.202", markers = "sys_platform == 'linux'"}
+torch = {version = "2.7.1+cpu", source = "pytorch-cpu", markers = "sys_platform == 'linux'"}
+torchvision = {version = "0.22.1+cpu", source = "pytorch-cpu", markers = "sys_platform == 'linux'"}
 Pillow = "12.2.0"
 google-cloud-storage = "3.11.0"
+google-cloud-pubsub = "2.39.0"
 python-dotenv = "1.2.2"
 numpy = "1.26.4"
-loom24-shared = {version = "0.0.23", source = "loom24-pypi"}
-gunicorn = "26.0.0"
+loom24-shared = {version = "0.0.28", source = "loom24-pypi"}
+watchfiles = "1.2.0"
 
 [[tool.poetry.source]]
 name = "pytorch-cpu"

@@ -11,8 +11,7 @@ Browser
               ├─ user       (port 3100)  — user accounts
               ├─ avatar     (port 3200)  — avatar CRUD
               ├─ job-manager(port 3300)  — job creation + REST
-              ├─ voice      (port 3600)  — voice catalog
-              └─ cropper    (port 3800)  — image crop (Python/FastAPI)
+              └─ voice      (port 3600)  — voice catalog
 
 Job pipeline (Google Cloud Pub/Sub):
   job-manager → [workflow-manager topic]
@@ -21,6 +20,7 @@ Job pipeline (Google Cloud Pub/Sub):
       ↓ (routes to service topic)
   ┌─────────────────────────────────────────┐
   │  ai-model-gateway  (fal.ai + Google AI) │
+  │  cropper           (YOLO11, Python)     │
   │  head-direction-checker (SCRFD ONNX)    │
   │  face-matcher       (InsightFace)       │
   │  thumbnail-maker    (sharp + ffmpeg)    │
@@ -38,7 +38,7 @@ Job pipeline (Google Cloud Pub/Sub):
 | [avatar](avatar/) | HTTP | 3200 | Avatar CRUD with cascading media cleanup |
 | [job-manager](job-manager/) | HTTP | 3300 | Job store, content generation orchestration |
 | [voice](voice/) | HTTP | 3600 | Voice catalog |
-| [cropper](cropper/) | HTTP | 3800 | YOLO11-based image cropping (Python) |
+| [cropper](cropper/) | Pub/Sub | — | YOLO11-based image cropping (Python) |
 | [workflow-manager](workflow-manager/) | Pub/Sub | — | Drives multi-step job workflows |
 | [ai-model-gateway](ai-model-gateway/) | Pub/Sub | — | Executes AI generation steps |
 | [head-direction-checker](head-direction-checker/) | Pub/Sub | — | Validates head orientation |

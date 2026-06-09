@@ -26,10 +26,10 @@ const LANGUAGE_NAMES: Record<string, string> = {
 const languageLabel = (code: string) => LANGUAGE_NAMES[code] ?? code;
 const sanitize = (value: string) => value.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 
-const VOICE_FILTER_LANGUAGES  = Object.keys(LANGUAGE_NAMES);
-const VOICE_FILTER_AGES        = ['middle age', 'middle-aged', 'old', 'young'];
-const VOICE_FILTER_CATEGORIES  = ['high_quality', 'premade', 'professional'];
-const VOICE_FILTER_USE_CASES   = ['advertisement', 'characters_animation', 'conversational', 'entertainment_tv', 'informative_educational', 'narrative_story', 'social_media'];
+const VOICE_FILTER_LANGUAGES  = Object.keys(LANGUAGE_NAMES).sort((a, b) => languageLabel(a).localeCompare(languageLabel(b)));
+const VOICE_FILTER_AGES        = ['middle-aged', 'old', 'young'].sort((a, b) => sanitize(a).localeCompare(sanitize(b)));
+const VOICE_FILTER_CATEGORIES  = ['high_quality', 'premade', 'professional'].sort((a, b) => sanitize(a).localeCompare(sanitize(b)));
+const VOICE_FILTER_USE_CASES   = ['advertisement', 'characters_animation', 'conversational', 'entertainment_tv', 'informative_educational', 'narrative_story', 'social_media'].sort((a, b) => sanitize(a).localeCompare(sanitize(b)));
 
 const COLS = 1;
 const ROW_HEIGHT = 200;

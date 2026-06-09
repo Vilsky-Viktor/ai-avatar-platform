@@ -18,7 +18,7 @@ Creates jobs that generate headshot-style ID photos of an avatar. Three modes:
 
 - **`gen-synthetic-front-id-photo`** — single front-facing synthetic ID photo (1 job, workflow: `ai-model-gateway` → `head-direction-checker` → `thumbnail-maker`)
 - **`gen-synthetic-id-photos`** — full set of synthetic ID photos across multiple angles (batch)
-- **`gen-digital-twin-id-photos`** — ID photos using the avatar's uploaded reference images for higher fidelity (batch)
+- **`gen-digital-twin-id-photo`** — single ID photo using the avatar's uploaded reference image for higher fidelity
 
 ### Content generation
 
@@ -38,7 +38,7 @@ All routes expect `x-user-id` header (injected by `api-gateway`).
 |---|---|---|
 | POST | `/gen-synthetic-front-id-photo` | Create synthetic front ID photo job |
 | POST | `/gen-synthetic-id-photos` | Create full synthetic ID photo set |
-| POST | `/gen-digital-twin-id-photos` | Create digital twin ID photo set |
+| POST | `/gen-digital-twin-id-photo` | Create a single digital twin ID photo job |
 | POST | `/gen-avatar-photo` | Generate a single avatar photo |
 | POST | `/gen-avatar-photo-set` | Generate a themed photo set |
 | POST | `/gen-avatar-video` | Generate an avatar video |

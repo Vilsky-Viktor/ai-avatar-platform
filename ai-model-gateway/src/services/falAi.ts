@@ -274,6 +274,26 @@ export const genTopazVideoUpscale = async (data: AiModelGateway): Promise<platfo
   };
 }
 
+export const genBirefNetV2 = async (data: AiModelGateway): Promise<platform.HandlerResponse> => {
+  const imageUrl = await getMediaUrlFromPath(data.imagePaths![0]);
+
+  const payload: falAiTypes.BirefNetV2 = {
+      model: falAiTypes.BirefNetV2Models.generalUseHeavy,
+      operating_resolution: falAiTypes.BirefNetV2Resolutions._2048,
+      output_mask: false,
+      refine_foreground: true,
+      sync_mode: false,
+      image_url: imageUrl,
+      output_format: OutputFormats.png,
+      mask_only: false
+  }
+
+  return {
+    type: MediaTypes.image,
+    data: await generate(data, payload)
+  };
+}
+
 export default {
     authenticate,
     generate,
@@ -287,5 +307,6 @@ export default {
     genSeedvrImageUpscale,
     genLipSyncV3,
     genTopazImageUpscale,
-    genTopazVideoUpscale
+    genTopazVideoUpscale,
+    genBirefNetV2
 }

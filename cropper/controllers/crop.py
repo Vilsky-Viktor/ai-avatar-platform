@@ -1,18 +1,20 @@
-from pathlib import PurePosixPath
-
 from google.cloud.exceptions import NotFound
+from PIL import Image
 
 from loom24_shared import logger
 from services.storage import download_image, upload_image
 from utils.detector import crop, CropMode
 
+_MODE_MAP = {
+    "front":   "front",
+    "quarter": "quarter",
+    "side":    "side",
+    "body":    "full_body",
+}
 
-def _cropped_path(original_path: str) -> str:
-    p = PurePosixPath(original_path)
-    return str(p.with_name(f"{p.stem}-cropped.png"))
+def crop_to_path(image_path: str, upload_path: str, mode: str = "front") -> None:
+    detector_mode: CropMode = _MODE_MAP.get(mode, mode)  # type: ignore[assignment]
 
-
-def crop_to_bucket(image_path: str, mode: CropMode = "front") -> str:
     logger.info(f"Downloading image — path={image_path} mode={mode}")
     try:
         image = download_image(image_path)
@@ -20,9 +22,7 @@ def crop_to_bucket(image_path: str, mode: CropMode = "front") -> str:
         raise FileNotFoundError(f"Image not found in bucket: {image_path}")
 
     logger.info(f"Running pose detection — path={image_path} size={image.size}")
-    cropped = crop(image, mode=mode)
+    cropped = crop(image, mode=detector_mode)
 
-    dest = _cropped_path(image_path)
-    logger.info(f"Uploading crop — src={image_path} dest={dest}")
-    upload_image(cropped, dest)
-    return dest
+    logger.info(f"Uploading result — dest={upload_path} size={cropped.size}")
+    upload_image(cropped, upload_path)
