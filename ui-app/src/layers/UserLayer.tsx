@@ -7,6 +7,8 @@ import AssignVoicePage from '../pages/createAvatar/assignVoice';
 import FinalizePage from '../pages/createAvatar/finalize';
 import GeneralPage from '../pages/createAvatar/general';
 import AvatarPage from '../pages/Avatar';
+import CreditsPage from '../pages/Credits';
+import SettingsPage from '../pages/Settings';
 
 function UserLayer() {
     return (
@@ -22,6 +24,8 @@ function UserLayer() {
                         <Route path="/avatar/create/assign-voice" element={<AssignVoicePage />} />
                         <Route path="/avatar/create/finalize" element={<FinalizePage />} />
                         <Route path="/avatar/:slug" element={<AvatarPage />} />
+                        <Route path="/credits" element={<CreditsPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
                     </Routes>
                 </div>
             </main>

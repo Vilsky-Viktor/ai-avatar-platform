@@ -34,7 +34,7 @@ function Header() {
 
             <div className="pointer-events-auto flex items-center gap-4">
                 {/* Credits pill */}
-                <div className="group relative p-[1.5px] rounded-full cursor-pointer active:scale-[0.97] transition-transform duration-150">
+                <Link to="/credits" className="group relative p-[1.5px] rounded-full cursor-pointer active:scale-[0.97] transition-transform duration-150">
                     <div
                         className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-spin-border transition-opacity duration-300 pointer-events-none"
                         style={{ backgroundImage: 'conic-gradient(from var(--gen-angle), transparent 0%, transparent 60%, color-mix(in oklch, var(--color-primary) 85%, transparent) 80%, transparent 100%)' }}
@@ -51,7 +51,7 @@ function Header() {
                             </span>
                         </div>
                     </div>
-                </div>
+                </Link>
 
                 {/* Avatar dropdown */}
                 <div className="dropdown dropdown-end cursor-pointer">
@@ -91,7 +91,7 @@ function Header() {
                             </label>
                         </li>
                         <div className="divider my-0 opacity-30" />
-                        <li><a className="py-2 text-xs uppercase tracking-[0.15em] text-base-content/50 hover:text-base-content/80">Settings</a></li>
+                        <li><Link to="/settings" className="py-2 text-xs uppercase tracking-[0.15em] text-base-content/50 hover:text-base-content/80">Settings</Link></li>
                         <li><a onClick={logoutUser} className="py-2 text-xs uppercase tracking-[0.15em] text-error/60 hover:text-error cursor-pointer">Logout</a></li>
                     </ul>
                 </div>
