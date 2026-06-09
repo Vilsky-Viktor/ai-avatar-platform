@@ -1,46 +1,28 @@
 import { useState } from 'react';
-import { HeartPulse, Sparkles, Zap, Crown, Plus, Minus, Check, MoveRight } from 'lucide-react';
+import { HeartPulse, Repeat2, Plus, Minus, MoveRight, Image, Video, Mic } from 'lucide-react';
 import { useApp } from '../providers/ContextProvider';
 
 const PULSES_PER_DOLLAR = 127;
+const PULSES_PER_IMAGE = 60;
+const PULSES_PER_VIDEO_SEC = 65;
+const PULSES_PER_AUDIO_SEC = 12;
 
 const CONIC_GRADIENT = 'conic-gradient(from var(--gen-angle), transparent 0%, transparent 60%, color-mix(in oklch, var(--color-primary) 85%, transparent) 80%, transparent 100%)';
 
-const PLANS = [
-    {
-        key: 'base',
-        label: 'Base',
-        price: 29,
-        pulses: 3683,
-        icon: Zap,
-        features: ['3,683 pulses / month', 'Image/video/voice generation', '~58 images', '~58 sec of video'],
-    },
-    {
-        key: 'standard',
-        label: 'Standard',
-        price: 49,
-        pulses: 6223,
-        icon: Sparkles,
-        features: ['6,223 pulses / month', 'Image/video/voice generation', '~98 images', '~98 sec of video'],
-    },
-    {
-        key: 'pro',
-        label: 'Pro',
-        price: 99,
-        pulses: 12573,
-        icon: Crown,
-        features: ['12,573 pulses / month', 'Image/video/voice generation', '~198 images', '~198 sec of video'],
-    },
-] as const;
-
 function CreditsPage() {
     const { user } = useApp();
-    const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
     const [topUpDollars, setTopUpDollars] = useState(10);
+    const [autoTopUpDollars, setAutoTopUpDollars] = useState(49);
 
     const adjustTopUp = (delta: number) => {
         setTopUpDollars(prev => Math.max(5, Math.min(5000, prev + delta)));
     };
+
+    const adjustAutoTopUp = (delta: number) => {
+        setAutoTopUpDollars(prev => Math.max(5, Math.min(5000, prev + delta)));
+    };
+
+    const autoTopUpPulses = autoTopUpDollars * PULSES_PER_DOLLAR;
 
     return (
         <div className="px-15 pt-12 pb-20 bg-base-200 relative">
@@ -145,111 +127,111 @@ function CreditsPage() {
 
                 </div>
 
-                {/* Subscription plans */}
+                {/* Automatic top up */}
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
                         <span className="w-5 h-px bg-primary/40" />
-                        <span className="text-sm uppercase tracking-[0.2em] text-base-content/60">Subscriptions</span>
+                        <span className="text-sm uppercase tracking-[0.2em] text-base-content/60">Automatic top up</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        {PLANS.map((plan) => {
-                            const isPopular = plan.key === 'standard';
-                            const isSelected = selectedPlan === plan.key;
-                            const Icon = plan.icon;
 
-                            return (
-                                <div
-                                    key={plan.key}
-                                    className={`group relative p-[1.5px] rounded-2xl overflow-hidden transition-all duration-500 ${isSelected ? 'bg-primary' : ''}`}
-                                >
-                                    {!isSelected && (
-                                        <div
-                                            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 group-hover:animate-spin-border transition-opacity duration-300 pointer-events-none"
-                                            style={{ backgroundImage: CONIC_GRADIENT }}
-                                        />
-                                    )}
+                    <div className="group relative p-[1.5px] rounded-2xl">
+                        <div
+                            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 group-hover:animate-spin-border transition-opacity duration-300 pointer-events-none"
+                            style={{ backgroundImage: CONIC_GRADIENT }}
+                        />
+                        <div className="relative flex items-center gap-10 px-10 py-8 rounded-2xl bg-base-100 border border-base-content/8 group-hover:border-transparent transition-colors duration-300">
+                            <div className="absolute top-3 left-3 w-4 h-4 border-t border-l border-base-content/8 group-hover:border-primary/30 pointer-events-none transition-colors duration-300" />
+                            <div className="absolute top-3 right-3 w-4 h-4 border-t border-r border-base-content/8 group-hover:border-primary/30 pointer-events-none transition-colors duration-300" />
+                            <div className="absolute bottom-3 left-3 w-4 h-4 border-b border-l border-base-content/8 group-hover:border-primary/30 pointer-events-none transition-colors duration-300" />
+                            <div className="absolute bottom-3 right-3 w-4 h-4 border-b border-r border-base-content/8 group-hover:border-primary/30 pointer-events-none transition-colors duration-300" />
 
+                            {/* Amount picker */}
+                            <div className="flex flex-col gap-2 shrink-0">
+                                <span className="text-[10px] uppercase tracking-[0.2em] text-base-content/30">Monthly · USD</span>
+                                <div className="flex items-center gap-3">
                                     <button
-                                        onClick={() => setSelectedPlan(isSelected ? null : plan.key)}
-                                        className={`relative w-full h-full flex flex-col gap-6 p-7 rounded-2xl text-left transition-all duration-500 cursor-pointer focus:outline-none
-                                            ${isSelected
-                                                ? 'bg-base-100 border border-transparent'
-                                                : 'bg-base-100 border border-base-content/8 group-hover:border-transparent'
-                                            }`}
+                                        onClick={() => adjustAutoTopUp(-5)}
+                                        className="w-9 h-9 rounded-xl border border-base-content/10 flex items-center justify-center text-base-content/40 hover:border-primary/30 hover:text-primary transition-all cursor-pointer"
                                     >
-                                        <div
-                                            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
-                                            style={{ background: 'radial-gradient(circle at top right, color-mix(in oklch, var(--color-primary) 12%, transparent) 0%, transparent 65%)' }}
-                                        />
-
-                                        <div className={`absolute top-3 left-3 w-4 h-4 border-t border-l pointer-events-none transition-colors duration-500 ${isSelected ? 'border-primary/40' : 'border-base-content/8 group-hover:border-primary/30'}`} />
-                                        <div className={`absolute bottom-3 left-3 w-4 h-4 border-b border-l pointer-events-none transition-colors duration-500 ${isSelected ? 'border-primary/40' : 'border-base-content/8 group-hover:border-primary/30'}`} />
-                                        <div className={`absolute bottom-3 right-3 w-4 h-4 border-b border-r pointer-events-none transition-colors duration-500 ${isSelected ? 'border-primary/40' : 'border-base-content/8 group-hover:border-primary/30'}`} />
-
-                                        <div className={`absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${isSelected ? 'bg-base-content/80 opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
-                                            <Check size={11} strokeWidth={2.5} className="text-base-100" />
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <Icon size={18} strokeWidth={1.2} className={`transition-colors duration-500 ${isSelected ? 'text-base-content/60' : 'text-base-content/25 group-hover:text-base-content/50'}`} />
-                                                <span className={`text-sm uppercase tracking-[0.25em] transition-colors duration-500 ${isSelected ? 'text-base-content/80' : 'text-base-content/50 group-hover:text-base-content/70'}`}>
-                                                    {plan.label}
-                                                </span>
-                                            </div>
-                                            {isPopular && (
-                                                <span className="px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-[0.2em] bg-base-content/5 text-base-content/30 border border-base-content/10">
-                                                    Popular
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-baseline gap-1.5">
-                                                <span className={`text-3xl tabular-nums transition-colors duration-500 ${isSelected ? 'text-base-content/90' : 'text-base-content/60 group-hover:text-base-content/80'}`}>
-                                                    ${plan.price}
-                                                </span>
-                                                <span className="text-[10px] uppercase tracking-[0.15em] text-base-content/25">/ mo</span>
-                                            </div>
-                                            <div className="flex items-baseline gap-1.5">
-                                                <span className="text-sm tabular-nums text-base-content/40">
-                                                    {plan.pulses.toLocaleString('de-DE')}
-                                                </span>
-                                                <span className="text-[9px] uppercase tracking-[0.15em] text-base-content/25">pulses</span>
-                                            </div>
-                                        </div>
-
-                                        <ul className="flex flex-col gap-2">
-                                            {plan.features.map((feature) => (
-                                                <li key={feature} className="flex items-center gap-2.5">
-                                                    <span className="w-3 h-px bg-base-content/20 shrink-0" />
-                                                    <span className="text-[11px] uppercase tracking-[0.1em] text-base-content/35">{feature}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-
-                                        <div className={`mt-auto pt-2 flex items-center justify-center px-5 py-2.5 rounded-xl border text-xs uppercase tracking-[0.2em] transition-all duration-500
-                                            ${isSelected
-                                                ? 'bg-primary border-primary text-primary-content'
-                                                : 'bg-transparent border-base-content/8 text-base-content/30 group-hover:border-primary/30 group-hover:text-primary/70'
-                                            }`}
-                                        >
-                                            {isSelected ? 'Selected' : 'Select plan'}
-                                        </div>
+                                        <Minus size={14} />
+                                    </button>
+                                    <input
+                                        type="number"
+                                        min={5}
+                                        max={5000}
+                                        step={5}
+                                        value={autoTopUpDollars}
+                                        onChange={e => setAutoTopUpDollars(Math.max(5, Math.min(5000, Number(e.target.value))))}
+                                        className="w-24 bg-base-200/50 border border-base-content/10 rounded-xl px-4 py-2.5 text-center text-sm tabular-nums text-base-content/80 focus:outline-none focus:border-primary/40 transition-colors"
+                                    />
+                                    <button
+                                        onClick={() => adjustAutoTopUp(5)}
+                                        className="w-9 h-9 rounded-xl border border-base-content/10 flex items-center justify-center text-base-content/40 hover:border-primary/30 hover:text-primary transition-all cursor-pointer"
+                                    >
+                                        <Plus size={14} />
                                     </button>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
 
-                    {selectedPlan && (
-                        <div className="flex justify-center">
-                            <button className="flex items-center gap-3 px-7 py-3.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer">
-                                <Sparkles size={16} />
-                                <span className="text-sm uppercase tracking-[0.2em]">Subscribe to {PLANS.find(p => p.key === selectedPlan)?.label}</span>
+                            <div className="w-px h-14 bg-base-content/6 shrink-0" />
+
+                            {/* Pulses per month */}
+                            <div className="flex flex-col gap-1 shrink-0">
+                                <span className="text-[10px] uppercase tracking-[0.2em] text-base-content/30">You get / month</span>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-3xl tabular-nums text-base-content/75">
+                                        {autoTopUpPulses.toLocaleString('de-DE')}
+                                    </span>
+                                    <span className="text-xs uppercase tracking-[0.15em] text-base-content/30">pulses</span>
+                                </div>
+                            </div>
+
+                            <div className="w-px h-14 bg-base-content/6 shrink-0" />
+
+                            {/* Approximate breakdown */}
+                            <div className="flex-1 flex items-center gap-8">
+                                <div className="flex flex-col gap-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <Image size={13} strokeWidth={1.2} className="text-base-content/25" />
+                                        <span className="text-[10px] uppercase tracking-[0.2em] text-base-content/30">Images</span>
+                                    </div>
+                                    <span className="text-xl tabular-nums text-base-content/65">
+                                        ~{Math.floor(autoTopUpPulses / PULSES_PER_IMAGE).toLocaleString('de-DE')}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <Video size={13} strokeWidth={1.2} className="text-base-content/25" />
+                                        <span className="text-[10px] uppercase tracking-[0.2em] text-base-content/30">Video</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-xl tabular-nums text-base-content/65">
+                                            ~{Math.floor(autoTopUpPulses / PULSES_PER_VIDEO_SEC).toLocaleString('de-DE')}
+                                        </span>
+                                        <span className="text-[9px] uppercase tracking-[0.15em] text-base-content/30">sec</span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <Mic size={13} strokeWidth={1.2} className="text-base-content/25" />
+                                        <span className="text-[10px] uppercase tracking-[0.2em] text-base-content/30">Audio</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-xl tabular-nums text-base-content/65">
+                                            ~{Math.floor(autoTopUpPulses / PULSES_PER_AUDIO_SEC).toLocaleString('de-DE')}
+                                        </span>
+                                        <span className="text-[9px] uppercase tracking-[0.15em] text-base-content/30">sec</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Subscribe button */}
+                            <button className="group/btn shrink-0 flex items-center gap-3 px-7 py-3.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer">
+                                <Repeat2 size={16} />
+                                <span className="text-sm uppercase tracking-[0.2em]">Subscribe</span>
                             </button>
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Pricing table */}
