@@ -16,11 +16,7 @@ const CreateMediaCard = ({ onClick }: Props) => {
                 style={{ backgroundImage: 'conic-gradient(from var(--gen-angle), transparent 0%, transparent 60%, color-mix(in oklch, var(--color-primary) 85%, transparent) 80%, transparent 100%)' }}
             />
             <div className="relative w-full h-full rounded-2xl bg-base-100 border border-base-content/10 group-hover:border-transparent transition-colors duration-300 flex flex-col items-center justify-center overflow-hidden">
-                <div
-                    className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-0 group-hover:opacity-100"
-                    style={{ background: 'radial-gradient(circle at 50% 120%, color-mix(in oklch, var(--color-primary) 12%, transparent), transparent)' }}
-                />
-                <div className="absolute top-3 left-3 w-5 h-5 border-t border-l border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
+<div className="absolute top-3 left-3 w-5 h-5 border-t border-l border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
                 <div className="absolute top-3 right-3 w-5 h-5 border-t border-r border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
                 <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />
                 <div className="absolute bottom-3 right-3 w-5 h-5 border-b border-r border-base-content/10 group-hover:border-primary/40 pointer-events-none transition-colors duration-300" />

@@ -14,11 +14,7 @@ const CreateAvatarCard = () => {
                 style={{ backgroundImage: 'conic-gradient(from var(--gen-angle), transparent 0%, transparent 60%, color-mix(in oklch, var(--color-primary) 85%, transparent) 80%, transparent 100%)' }}
             />
             <div className="relative w-full h-full rounded-2xl bg-base-100 border border-base-content/10 group-hover:border-transparent transition-colors duration-300 flex flex-col items-center justify-center overflow-hidden">
-                <div
-                    className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-0 group-hover:opacity-100"
-                    style={{ background: 'radial-gradient(circle at 50% 120%, color-mix(in oklch, var(--color-primary) 12%, transparent), transparent)' }}
-                />
-                <div
+<div
                     className="absolute inset-0 opacity-[0.03] pointer-events-none"
                     style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }}
                 />
