@@ -14,6 +14,7 @@ import {
   AiModelGateway,
   Models,
   Platforms,
+  VideoRatios,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
@@ -156,7 +157,7 @@ export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: N
   try {
     logger.info('Create digital twin ID photo job');
 
-    const rmbgUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
+    const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
     const cropUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-crop.png`;
     const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-thumbnail.jpg`;
 
@@ -175,18 +176,22 @@ export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: N
       direction: jobRequest.direction!
     }
 
-    const removeBackground: AiModelGateway = {
-      service: Services.aiModelGateway,
-      status: JobStatuses.pending,
-      model: Models.birefNetV2,
-      platform: Platforms.falai,
+    const imageGenerator: AiModelGateway = {
+      prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
+      negativePrompt: 'another person, altered face, rotated, blurred',
+      ratio: VideoRatios['1:1'],
       imagePaths: [cropUploadPath],
-      uploadPath: rmbgUploadPath
-    }
+      temperature: 0,
+      uploadPath: generatorUploadPath,
+      status: JobStatuses.pending,
+      model: Models.geminiImage3Pro,
+      platform: Platforms.google,
+      service: Services.aiModelGateway
+    };
 
     const thumbnailMaker: ThumbnailMaker = {
       mediaType: MediaTypes.image,
-      mediaPath: rmbgUploadPath,
+      mediaPath: generatorUploadPath,
       size: 400,
       service: Services.thumbnailMaker,
       status: JobStatuses.pending,
@@ -203,12 +208,12 @@ export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: N
       maxRuns: 1,
       curRun: 0,
       order: jobRequest.order,
-      workflow: [cropper, headDirectionChecker, removeBackground, thumbnailMaker],
+      workflow: [cropper, headDirectionChecker, imageGenerator, thumbnailMaker],
       metadata: {
         ratio: ImageRatios['1:1'],
         dimensions: '2048x2048',
       },
-      resultMediaPath: rmbgUploadPath,
+      resultMediaPath: generatorUploadPath,
       resultThumbnailPath: thumbnailUploadPath,
     }
 

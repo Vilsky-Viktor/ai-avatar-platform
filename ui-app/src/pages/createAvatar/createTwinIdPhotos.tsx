@@ -16,6 +16,7 @@ import {
     NUM_ID_PHOTOS,
 } from '../../utils/avatarCreation';
 import BottomDock from '../../components/createAvatar/BottomDock';
+import FullscreenModal from '../../components/createAvatar/FullscreenModal';
 import { type UploadedIdPhoto, type NewAvatarData } from "../../types/avatarCreation";
 import type { QuerySnapshot } from 'firebase/firestore';
 import { listenToCollectionByGroupId } from '../../services/db';
@@ -61,6 +62,7 @@ function CreateTwinIdPhotosPage() {
     const [uploadedPhotos, setUploadedPhotos] = useState(initialUploadedIdPhotoSet as UploadedIdPhoto[]);
     const [uploadingIndices, setUploadingIndices] = useState<number[]>([]);
     const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
+    const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect | null; thumbnailSrc?: string } | null>(null);
 
     const uploadedPhotosConfig: { label: string; name: string; ref: React.RefObject<HTMLInputElement | null>; mode: CropperModes; direction: Directions }[] = [
         { label: 'Front',         name: 'front',         ref: useRef<HTMLInputElement>(null), mode: CropperModes.front,   direction: Directions.front },
@@ -440,10 +442,18 @@ function CreateTwinIdPhotosPage() {
                                         onDragOver={(e) => !hasPhoto && !isUploading && !hasError && handleDragOver(index, e)}
                                         onDragLeave={(e) => handleDragLeave(index, e)}
                                         onDrop={(e) => !hasPhoto && !isUploading && !hasError && handleDrop(index, e)}
-                                        onClick={() => !isUploading && !isProcessing && !hasPhoto && !hasError && config.ref.current?.click()}
+                                        onClick={(event) => {
+                                            if (isUploading || isProcessing) return;
+                                            if (isCompleted && displaySrc) {
+                                                setFullscreen({ src: job.resultMediaUrl!, rect: event.currentTarget.getBoundingClientRect(), thumbnailSrc: job.resultThumbnailUrl });
+                                                return;
+                                            }
+                                            if (!hasPhoto && !hasError) config.ref.current?.click();
+                                        }}
                                         className={`relative rounded-2xl border border-dashed flex flex-col items-center justify-center aspect-square group transition-all duration-300 overflow-hidden
                                             ${isUploading || isProcessing ? 'border-primary/20 bg-primary/[0.02] cursor-not-allowed'
                                             : hasError ? 'border-error/20 bg-base-200 cursor-pointer'
+                                            : isCompleted ? 'border-primary/20 bg-base-200 cursor-pointer'
                                             : hasPhoto ? 'border-primary/20 bg-base-200'
                                             : 'border-base-content/10 bg-transparent cursor-pointer hover:border-primary/30'}
                                             ${photoData?.isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : ''}`}
@@ -465,7 +475,7 @@ function CreateTwinIdPhotosPage() {
                                             <>
                                                 <img
                                                     src={displaySrc!}
-                                                    className="absolute inset-0 w-full h-full object-cover object-top z-0 rounded-2xl"
+                                                    className={`absolute inset-0 w-full h-full object-cover object-top z-0 rounded-2xl transition-all duration-500${isCompleted ? ' group-hover:scale-105 group-hover:opacity-90' : ''}`}
                                                     alt={config.label}
                                                 />
                                                 <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none z-[1]" />
@@ -492,14 +502,16 @@ function CreateTwinIdPhotosPage() {
                                                     </div>
                                                 )}
                                                 {!isProcessing && !hasError && (
-                                                    <div className="tooltip tooltip-left absolute top-3 right-3 z-20" data-tip="Remove">
-                                                        <button
-                                                            onClick={(event) => { event.stopPropagation(); removePhotoAtIndex(index); }}
-                                                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-                                                        >
-                                                            <Trash2 size={17} />
-                                                        </button>
-                                                    </div>
+                                                    <>
+                                                        <div className="tooltip tooltip-left absolute top-3 right-3 z-20" data-tip="Remove">
+                                                            <button
+                                                                onClick={(event) => { event.stopPropagation(); removePhotoAtIndex(index); }}
+                                                                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                                                            >
+                                                                <Trash2 size={17} />
+                                                            </button>
+                                                        </div>
+                                                    </>
                                                 )}
                                             </>
                                         ) : hasError ? (
@@ -550,6 +562,13 @@ function CreateTwinIdPhotosPage() {
                 nextStep={nextStep}
                 previousStep={previousStep}
                 finish={false}
+            />
+
+            <FullscreenModal
+                src={fullscreen?.src ?? null}
+                rect={fullscreen?.rect ?? null}
+                thumbnailSrc={fullscreen?.thumbnailSrc}
+                onClose={() => setFullscreen(null)}
             />
 
         </>

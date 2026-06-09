@@ -178,15 +178,7 @@ function MediaCard({
                         </div>
                     </div>
                     {cornerTL}{cornerTR}{cornerBL}{cornerBR}
-                    <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                        {canDelete && onDelete && (
-                            <button
-                                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-colors cursor-pointer"
-                                onClick={() => jobId && setConfirmDeleteId(jobId)}
-                            >
-                                <Trash2 size={20} className="text-white" />
-                            </button>
-                        )}
+                    <div className="absolute top-5 right-5 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                         {infoButton}
                     </div>
                 </div>
