@@ -34,7 +34,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
 
             <div className="relative w-full h-full rounded-2xl overflow-hidden bg-base-100 border border-base-content/10 group-hover:border-transparent transition-colors duration-300">
 
-                <div className="tooltip tooltip-bottom absolute top-4 right-4 z-[60] opacity-0 group-hover:opacity-100 transition-all" data-tip="Remove">
+                <div className="tooltip tooltip-left absolute top-3 right-3 z-[60] opacity-0 group-hover:opacity-100 transition-all" data-tip="Remove">
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete?.(avatar.id!); }}
                         className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-all cursor-pointer"

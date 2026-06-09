@@ -164,8 +164,8 @@ function MediaCard({
                 <div className="group relative rounded-2xl bg-base-100 w-full h-full flex flex-col items-center justify-center overflow-hidden">
                     <div className="flex flex-col items-center gap-6">
                         <div className="relative">
-                            <span className="loading loading-dots loading-lg text-primary w-14" />
-                            <Sparkles size={18} className="absolute -top-3 -right-3 text-primary animate-pulse" />
+                            <span className="loading loading-dots loading-md text-primary w-14" />
+                            <Sparkles size={20} className="absolute -top-5 -right-2 text-primary animate-pulse" />
                         </div>
                         <div className="text-center">
                             <span className="text-[10px] uppercase tracking-[0.4em] text-primary">

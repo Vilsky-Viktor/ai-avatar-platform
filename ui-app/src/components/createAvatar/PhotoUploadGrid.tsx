@@ -80,7 +80,7 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative">
                                     <span className="loading loading-dots loading-md text-primary" />
-                                    <Sparkles size={16} className="absolute -top-2 -right-2 text-primary animate-pulse" />
+                                    <Sparkles size={16} className="absolute -top-4 -right-2 text-primary animate-pulse" />
                                 </div>
                                 <div className="text-center">
                                     <span className="text-[11px] uppercase tracking-[0.35em] text-primary">Cropping</span>
@@ -104,12 +104,14 @@ function PhotoUploadGrid({ viewConfig, uploadedPhotos, onDragOver, onDragLeave, 
                                     alt={view.label}
                                 />
                                 {removable && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); onRemovePhoto(index); }}
-                                        className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-all cursor-pointer"
-                                    >
-                                        <Trash2 size={17} />
-                                    </button>
+                                    <div className="tooltip tooltip-left absolute top-3 right-3 z-10" data-tip="Remove">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onRemovePhoto(index); }}
+                                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-error transition-all cursor-pointer"
+                                        >
+                                            <Trash2 size={17} />
+                                        </button>
+                                    </div>
                                 )}
                             </>
                         ) : (

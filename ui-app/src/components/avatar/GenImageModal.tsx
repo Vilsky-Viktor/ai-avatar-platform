@@ -15,7 +15,7 @@ type Props = {
 
 function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
-    const [ratio, setImageRatio] = useState<ImageRatio>('9:16');
+    const [ratio, setImageRatio] = useState<ImageRatio>('3:4');
     const [loading, setLoading] = useState(false);
     const [slots, setSlots] = useState<(File | null)[]>([...EMPTY_SLOTS]);
     const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
