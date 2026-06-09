@@ -12,6 +12,9 @@ _MODE_MAP = {
     "body":    "full_body",
 }
 
+MAX_SIZE = 2048
+
+
 def crop_to_path(image_path: str, upload_path: str, mode: str = "front") -> None:
     detector_mode: CropMode = _MODE_MAP.get(mode, mode)  # type: ignore[assignment]
 
@@ -23,6 +26,10 @@ def crop_to_path(image_path: str, upload_path: str, mode: str = "front") -> None
 
     logger.info(f"Running pose detection — path={image_path} size={image.size}")
     cropped = crop(image, mode=detector_mode)
+
+    if cropped.width > MAX_SIZE:
+        logger.info(f"Resizing crop from {cropped.size} to {MAX_SIZE}x{MAX_SIZE}")
+        cropped = cropped.resize((MAX_SIZE, MAX_SIZE), Image.Resampling.LANCZOS)
 
     logger.info(f"Uploading result — dest={upload_path} size={cropped.size}")
     upload_image(cropped, upload_path)
