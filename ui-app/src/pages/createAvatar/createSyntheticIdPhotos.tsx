@@ -6,7 +6,7 @@ import { ChevronDown, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
 import FullscreenModal from "../../components/createAvatar/FullscreenModal";
 import MediaCard from "../../components/MediaCard";
 import { type Avatar } from '@loom24/shared/types';
-import { updateAvatar, restartJobById, genSyntheticIdPhotos, genSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId, normalizeJob } from '../../services/apiGateway';
+import { updateAvatar, restartJobById, genSyntheticIdPhotos, genSyntheticFrontIdPhoto, getAvatarById, getJobsByGroupId, normalizeJob, deleteJobById } from '../../services/apiGateway';
 import { JobStatuses, type Job, type IdPhotoJobRequest } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
 import {
@@ -133,8 +133,12 @@ function CreateSyntheticIdPhotosPage() {
         setNewAvatarData((prev: NewAvatarData) => ({ ...prev, groupId }));
 
     const createFrontJob = async () => {
+        const existingFrontJobId = jobsRef.current[0]?.id;
         setJobs([null]);
         await updateAvatar(newAvatarData.avatarId, { parameters: avatar.parameters });
+        if (existingFrontJobId) {
+            await deleteJobById(existingFrontJobId).catch(error => console.error(`Failed to delete front job ${existingFrontJobId}:`, error));
+        }
         const jobRequest: IdPhotoJobRequest = { avatarId: newAvatarData.avatarId, parameters: avatar.parameters };
         try {
             const job = await genSyntheticFrontIdPhoto(jobRequest);
@@ -346,11 +350,12 @@ function CreateSyntheticIdPhotosPage() {
 
                                 {/* Hint */}
                                 {allJobsStarted() && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-8 h-px bg-primary/50 flex-shrink-0" />
-                                        <p className="text-sm text-base-content/35 leading-relaxed">
-                                            Review each photo — if the face or colors look off, hit regenerate.
-                                        </p>
+                                    <div className="flex items-start gap-4 px-5 py-4 rounded-2xl border border-primary/15 bg-primary/[0.04]">
+                                        <span className="w-8 h-px bg-primary/50 mt-[9px] flex-shrink-0" />
+                                        <div className="flex flex-col gap-1">
+                                            <p className="text-sm text-base-content/70">Review each photo before continuing.</p>
+                                            <p className="text-xs text-base-content/35 leading-relaxed">If the face or colors look off, hit regenerate on that card.</p>
+                                        </div>
                                     </div>
                                 )}
 

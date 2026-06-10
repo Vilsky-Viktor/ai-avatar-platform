@@ -52,19 +52,19 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     switch (jobRequest.direction) {
       case Directions.leftQuarter:
         idPhotos.push(idPhotosByOrder[3]);
-        instructionPrompt += 'Turned to the left, three-quarter';
+        instructionPrompt += 'Three-quarter to the left';
         break;
       case Directions.rightQuarter:
         idPhotos.push(idPhotosByOrder[4]);
-        instructionPrompt += 'Turned to the right, three-quarter';
+        instructionPrompt += 'Three-quarter to the right';
         break;
       case Directions.leftSide:
         idPhotos.push(idPhotosByOrder[5]);
-        instructionPrompt += 'Turned to the left, side profile';
+        instructionPrompt += 'Side profile to the left';
         break;
       case Directions.rightSide:
         idPhotos.push(idPhotosByOrder[6]);
-        instructionPrompt += 'Turned to the right, side profile';
+        instructionPrompt += 'Side profile to the right';
         break;
       default:
         idPhotos.push(idPhotosByOrder[1]);
@@ -93,7 +93,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       prompt: `${jobRequest.prompt}. ${instructionPrompt}. Preserve the exact identity from images ${idPhotoStart} to ${idPhotoEnd}.`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...(jobRequest.mediaPaths ?? []), ...idPhotos],
-      temperature: 1.0,
+      temperature: 0,
       ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,

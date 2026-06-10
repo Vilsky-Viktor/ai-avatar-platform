@@ -80,7 +80,7 @@ function MediaCard({
                             Photo {idx + 1}
                         </span>
                         <p className="text-[9px] uppercase tracking-widest text-base-content/20 mt-1">
-                            Click generate
+                            Starting soon
                         </p>
                     </div>
                 </div>

@@ -23,12 +23,12 @@ import { listenToCollectionByGroupId } from '../../services/db';
 import { scrollToTop } from '../../utils/scroller';
 
 const DIRECTION_DESCRIPTIONS: Record<string, string> = {
-    'front':         'Look straight at camera',
-    'front-smile':   'Look at camera, show teeth',
-    'left-quarter':  'Turn to show your left side, 45°',
-    'right-quarter': 'Turn to show your right side, 45°',
-    'left-side':     'Show full left profile',
-    'right-side':    'Show full right profile',
+    'front':         'Look at camera, neutral expression',
+    'front-smile':   'Look at camera, gentle smile with teeth',
+    'left-quarter':  'Turn to show three-quarters',
+    'right-quarter': 'Turn to show three-quarters',
+    'left-side':     'Turn to show side profile',
+    'right-side':    'Turn to show side profile',
     'full-body':     'Stand straight, face forward',
 };
 
@@ -70,11 +70,11 @@ function CreateTwinIdPhotosPage() {
     }[] = [
         { label: 'Front',         name: 'front',         ref: useRef<HTMLInputElement>(null), mode: CropperModes.front,   direction: Directions.front },
         { label: 'Front smile',   name: 'front-smile',   ref: useRef<HTMLInputElement>(null), mode: CropperModes.front,   direction: Directions.front },
-        { label: 'Left quarter',  name: 'left-quarter',  ref: useRef<HTMLInputElement>(null), mode: CropperModes.quarter, direction: Directions.leftQuarter },
-        { label: 'Right quarter', name: 'right-quarter', ref: useRef<HTMLInputElement>(null), mode: CropperModes.quarter, direction: Directions.rightQuarter },
-        { label: 'Left side',     name: 'left-side',     ref: useRef<HTMLInputElement>(null), mode: CropperModes.side,    direction: Directions.leftSide },
-        { label: 'Right side',    name: 'right-side',    ref: useRef<HTMLInputElement>(null), mode: CropperModes.side,    direction: Directions.rightSide },
-        { label: 'Full body',     name: 'full-body',     ref: useRef<HTMLInputElement>(null), mode: CropperModes.body,    direction: Directions.front },
+        { label: '45° to the left',  name: 'left-quarter',  ref: useRef<HTMLInputElement>(null), mode: CropperModes.quarter, direction: Directions.leftQuarter },
+        { label: '45° to the right', name: 'right-quarter', ref: useRef<HTMLInputElement>(null), mode: CropperModes.quarter, direction: Directions.rightQuarter },
+        { label: '90° to the left',     name: 'left-side',     ref: useRef<HTMLInputElement>(null), mode: CropperModes.side,    direction: Directions.leftSide },
+        { label: '90° to the right',    name: 'right-side',    ref: useRef<HTMLInputElement>(null), mode: CropperModes.side,    direction: Directions.rightSide },
+        { label: 'Front full body',     name: 'full-body',     ref: useRef<HTMLInputElement>(null), mode: CropperModes.body,    direction: Directions.front },
     ];
 
     useEffect(() => {
@@ -546,6 +546,9 @@ function CreateTwinIdPhotosPage() {
                                             <div className="flex flex-col items-center gap-4 px-4">
                                                 <CircleOff size={40} strokeWidth={1} className="text-error/50 animate-pulse" />
                                                 <span className="text-[11px] uppercase tracking-[0.35em] text-error">Failed</span>
+                                                <p className="text-[9px] text-error/50 text-center leading-snug">
+                                                    Check that the view, direction<br/>and angle are correct
+                                                </p>
                                                 <button
                                                     onClick={(event) => { event.stopPropagation(); removePhotoAtIndex(index); }}
                                                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-error/10 text-[10px] uppercase tracking-widest text-error/80 hover:bg-error hover:text-white transition-all cursor-pointer"

@@ -67,7 +67,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
   return [
     {
       imageGenerator: {
-        prompt: `Gentle smile showing teeth. Gray studio background`,
+        prompt: `Gentle smile showing teeth. Preserve the exact same identity from image 1. Gray studio background.`,
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
@@ -75,7 +75,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
-        temperature: 1.0,
+        temperature: 0,
         service: Services.aiModelGateway
       },
       headDirectionChecker: {
@@ -88,12 +88,12 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'Rotate the entire person 45 degrees to the left to create a pure three-quarter view. The head, eyes, and gaze must follow the body — do not turn the face back toward the camera. Subject should be looking in the same direction the body is facing. Gray studio background',
+        prompt: 'Rotate the entire person 45 degrees to the left to create a pure three-quarter view. Preserve the exact same identity from image 1. The head, eyes, and gaze must follow the body — do not turn the face back toward the camera. Subject should be looking in the same direction the body is facing. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
         uploadPath: imagePaths[1],
-        temperature: 1.0,
+        temperature: 0,
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
         platform: Platforms.google,
@@ -109,11 +109,11 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'Rotate the entire person 45 degrees to the right to create a pure three-quarter view. The head, eyes, and gaze must follow the body — do not turn the face back toward the camera. Subject should be looking in the same direction the body is facing. Gray studio background',
+        prompt: 'Rotate the entire person 45 degrees to the right to create a pure three-quarter view. Preserve the exact same identity from image 1. The head, eyes, and gaze must follow the body — do not turn the face back toward the camera. Subject should be looking in the same direction the body is facing. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        temperature: 1.0,
+        temperature: 0,
         uploadPath: imagePaths[2],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
@@ -130,11 +130,11 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'rotate person 90 degrees to the left to create a pure side profile view. Gray studio background',
+        prompt: 'rotate person 90 degrees to the left to create a pure side profile view. Preserve the exact same identity from image 1. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        temperature: 1.0,
+        temperature: 0,
         uploadPath: imagePaths[3],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
@@ -151,11 +151,11 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: 'rotate person 90 degrees to the right to create a pure side profile view. Gray studio background',
+        prompt: 'rotate person 90 degrees to the right to create a pure side profile view. Preserve the exact same identity from image 1. Gray studio background',
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        temperature: 1.0,
+        temperature: 0,
         uploadPath: imagePaths[4],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,
@@ -172,11 +172,11 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
     },
     {
       imageGenerator: {
-        prompt: `Standing full body wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}, light gray running shorts and white sneakers. ${body} body type, ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'no body hair'}, ${bustSize} chest, ${height} height. Gray studio background`,
+        prompt: `Standing full body wearing ${isFemale ? 'white strapless top' : 'white polo with open buttons'}, light gray running shorts and white sneakers. ${body} body type, ${bodyHair !== 'none' ? `${bodyHair} body hair` : 'no body hair'}, ${bustSize} chest, ${height} height. Preserve the exact same identity from image 1. Gray studio background`,
         negativePrompt: '',
         ratio,
         imagePaths: [idPhotoSet.front!],
-        temperature: 1.0,
+        temperature: 0,
         uploadPath: imagePaths[5],
         status: JobStatuses.pending,
         model: Models.geminiImage3Pro,

@@ -44,9 +44,8 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
                 </div>
 
                 <button
-                    className={`w-full h-full text-left focus:outline-none transition-transform duration-150 ${avatar.voiceId ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default'}`}
-                    disabled={!avatar.voiceId}
-                    onClick={() => avatar.voiceId && navigate(`/avatar/${avatar.slug}`)}
+                    className="w-full h-full text-left focus:outline-none transition-transform duration-150 cursor-pointer active:scale-[0.99]"
+                    onClick={() => avatar.voiceId ? navigate(`/avatar/${avatar.slug}`) : navigate('/avatar/create/general')}
                 >
                     <div
                         className="absolute inset-0 z-10 pointer-events-none transition-opacity duration-500 opacity-0 group-hover:opacity-100"
@@ -78,7 +77,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
 
                         <div className="absolute bottom-4 left-7 right-7 z-30 flex flex-col gap-2">
                             <div className="flex items-center gap-2">
-                                <span className="text-[9px] uppercase tracking-[0.25em] px-2 py-0.5 rounded-full bg-base-content/10 text-base-content/40">
+                                <span className="px-2 py-0.5 bg-black/40 backdrop-blur-md rounded-lg text-[9px] uppercase tracking-[0.2em] text-white/50">
                                     {avatar.type === AvatarTypes.twin ? 'Twin' : 'Synthetic'}
                                 </span>
                                 {!avatar.voiceId && (
