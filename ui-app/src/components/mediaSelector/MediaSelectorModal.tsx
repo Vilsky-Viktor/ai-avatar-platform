@@ -3,6 +3,7 @@ import Loading from '../Loading';
 import { MediaTypes, JobStatuses, JobTargets, type Job } from '@loom24/shared/types';
 import type { VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -29,6 +30,7 @@ function MediaSelectorModal({ isOpen, onClose, avatarId, onSelect, title = 'Sele
     const sentinelRef = useRef<HTMLDivElement>(null);
 
     useScrollLock(isOpen);
+    useEscapeKey(onClose, isOpen);
 
     const fetchPage = useCallback(async (cursor?: string) => {
         const { jobs, nextCursor: next } = await getJobsByAvatarId(

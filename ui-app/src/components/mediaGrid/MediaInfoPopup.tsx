@@ -1,8 +1,9 @@
-import { Maximize2, LayoutTemplate, MessageSquare, Copy, Check, Clock, Hd, CalendarDays } from 'lucide-react';
+import { Maximize2, LayoutTemplate, MessageSquare, Copy, Check, Clock, CalendarDays, Hash } from 'lucide-react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import { MediaTypes, type Job } from '@loom24/shared/types';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { type Job } from '@loom24/shared/types';
 
 type Props = {
     job: Partial<Job>;
@@ -31,9 +32,18 @@ function InfoRow({ icon, label, value, action }: RowProps) {
     );
 }
 
+function resolutionLabel(dimensions: string): string {
+    const [width, height] = dimensions.split('x').map(Number);
+    const maxDim = Math.max(width, height);
+    if (maxDim >= 3840) return '4K';
+    if (maxDim >= 2048) return '2K';
+    if (maxDim >= 1280) return 'HD';
+    return 'SD';
+}
+
 function MediaInfoPopup({ job, onClose }: Props) {
     useScrollLock();
-    const mediaType = job.mediaType;
+    useEscapeKey(onClose);
     const ratio = job.metadata?.ratio;
     const prompt = job.metadata?.userPrompt;
     const dimensions = job.metadata?.dimensions;
@@ -42,12 +52,20 @@ function MediaInfoPopup({ job, onClose }: Props) {
         ? job.createdAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
         : null;
     const [copied, setCopied] = useState(false);
+    const [copiedId, setCopiedId] = useState(false);
 
     const handleCopy = () => {
         if (!prompt) return;
         navigator.clipboard.writeText(prompt);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleCopyId = () => {
+        if (!job.id) return;
+        navigator.clipboard.writeText(job.id);
+        setCopiedId(true);
+        setTimeout(() => setCopiedId(false), 2000);
     };
     
     return createPortal(
@@ -56,13 +74,28 @@ function MediaInfoPopup({ job, onClose }: Props) {
                 className="absolute inset-0 bg-base-300/60 animate-modal-backdrop"
                 onClick={onClose}
             />
-            <div className="relative bg-base-100 w-full max-w-md rounded-2xl border border-base-content/5 p-8 animate-modal-card">
+            <div className="relative bg-base-100 w-full max-w-lg rounded-2xl border border-base-content/5 p-8 animate-modal-card">
                 <div className="flex flex-col gap-6">
                     <div className="flex items-center gap-3">
                         <span className="w-8 h-px bg-primary/50" />
                         <h3 className="text-xl uppercase tracking-[0.2em] text-base-content/70">Media info</h3>
                     </div>
                     <div className="flex flex-col">
+                    {job.id && (
+                        <InfoRow
+                            icon={<Hash size={22} className="text-base-content/50" />}
+                            label="ID"
+                            value={job.id}
+                            action={
+                                <button
+                                    onClick={handleCopyId}
+                                    className="w-8 h-8 rounded-xl flex items-center justify-center text-base-content/40 hover:text-base-content hover:bg-base-300 transition-colors cursor-pointer"
+                                >
+                                    {copiedId ? <Check size={16} /> : <Copy size={16} />}
+                                </button>
+                            }
+                        />
+                    )}
                     {dimensions && (
                         <InfoRow
                             icon={<Maximize2 size={22} className="text-base-content/50" />}
@@ -91,11 +124,11 @@ function MediaInfoPopup({ job, onClose }: Props) {
                             value={ratio}
                         />
                     )}
-                    {(mediaType === MediaTypes.image || mediaType === MediaTypes.video) && (
+                    {dimensions && (
                         <InfoRow
-                            icon={<Hd size={22} className="text-base-content/50" />}
-                            label="High Definition"
-                            value='Yes'
+                            icon={<span className="text-[10px] font-bold tracking-wider text-base-content/50">{resolutionLabel(dimensions)}</span>}
+                            label="Resolution"
+                            value={resolutionLabel(dimensions)}
                         />
                     )}
                     {prompt && (

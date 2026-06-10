@@ -4,6 +4,7 @@ import { Sparkles, ImagePlus, Trash2, Mic, Square, RotateCcw, Check, Images, Fil
 import type { Avatar } from '@loom24/shared/types';
 import type { VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useApp } from '../../providers/ContextProvider';
 import MediaSelectorModal from '../mediaSelector/MediaSelectorModal';
 import { uploadBlobToBucket } from '../../services/storage';
@@ -107,6 +108,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
     }, [isOpen]);
 
     useScrollLock(isOpen);
+    useEscapeKey(onClose, isOpen);
     if (!isOpen) return null;
 
     const canGenerate = () => {

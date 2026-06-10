@@ -5,7 +5,7 @@ Shared types, utilities, and services used across all Loom24 backend services.
 ## Contents
 
 ### Types (`@loom24/shared/types`)
-- **job** — `Job`, `WorkflowStep`, `StepBase`, `AiModelGateway`, `FaceMatcher`, `HeadDirectionChecker`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `Views`, `ShotTypes`
+- **job** — `Job`, `WorkflowStep`, `StepBase`, `AiModelGateway`, `FaceMatcher`, `HeadDirectionChecker`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `ShotTypes`
 - **avatar** — `Avatar`, `AvatarParameters`, `AvatarGender`, `AvatarTypes`
 - **voice** — `Voice`
 - **image** — `ImageRatios`, `OutputFormats`, `OutputMimeTypes`

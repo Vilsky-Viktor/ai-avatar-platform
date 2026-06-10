@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Link } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 type Props = {
     url: string;
@@ -38,6 +39,7 @@ const PlatformButton = ({
 
 function SharePopup({ url, onClose }: Props) {
     useScrollLock();
+    useEscapeKey(onClose);
     const [copied, setCopied] = useState(false);
     const [sharing, setSharing] = useState(false);
     const enc = encodeURIComponent(url);

@@ -2,14 +2,6 @@ import { ImageRatios } from './image';
 import { VideoRatios } from './video';
 import type { AvatarParameters } from './avatar';
 
-export enum Views {
-  front = 'front',
-  leftQuarter = 'leftQuarter',
-  rightQuarter = 'rightQuarter',
-  leftSide = 'leftSide',
-  rightSide = 'rightSide',
-}
-
 export enum ShotTypes {
   upperBody = 'upperBody',
   fullBody = 'fullBody',
@@ -43,6 +35,8 @@ export type PhotoJobRequest = {
   ratio: ImageRatios;
   prompt: string;
   mediaPaths?: string[];
+  shotType: ShotTypes,
+  direction: Directions,
 }
 
 export type VideoJobRequest = {

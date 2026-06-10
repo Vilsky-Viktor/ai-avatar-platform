@@ -15,7 +15,7 @@ import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import GenVideoModal from '../components/avatar/GenVideoModal';
 import GenAudioModal from '../components/avatar/GenAudioModal';
 import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, type AudioJobRequest, JobStatuses, JobTargets, MediaTypes } from '@loom24/shared/types';
-import { ImageRatios, VideoRatios } from '@loom24/shared/types';
+import { Directions, ImageRatios, ShotTypes, VideoRatios } from '@loom24/shared/types';
 import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
@@ -154,7 +154,7 @@ function AvatarPage() {
         scrollToTop();
     };
 
-    const handleGenerateImage = async (prompt: string, ratio: string, imageFiles: File[]) => {
+    const handleGenerateImage = async (prompt: string, ratio: string, imageFiles: File[], direction: Directions, shotType: ShotTypes) => {
         const uploadedPaths: string[] = [];
 
         for (const file of imageFiles) {
@@ -175,6 +175,8 @@ function AvatarPage() {
             mediaPaths: uploadedPaths,
             ratio: ratio as ImageRatios,
             avatarId: avatar.id!,
+            direction,
+            shotType,
         };
 
         const job = await genAvatarPhoto(jobRequest);
@@ -337,7 +339,7 @@ function AvatarPage() {
                                     <span className="text-[9px] uppercase tracking-[0.25em] px-2 py-0.5 rounded-full bg-base-content/10 text-base-content/40">
                                         {avatar.type === AvatarTypes.twin ? 'Twin' : 'Synthetic'}
                                     </span>
-                                    <span className="text-xs text-base-content/25 font-mono">/{avatar.slug}</span>
+                                    <span className="text-xs text-base-content/25 font-mono">{avatar.id}</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-6 text-base-content/40 flex-shrink-0">

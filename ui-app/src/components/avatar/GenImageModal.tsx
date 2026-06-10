@@ -1,21 +1,33 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, ImagePlus, Trash2 } from 'lucide-react';
+import { Sparkles, ImagePlus, Trash2, ArrowLeft, ArrowDownLeft, ArrowDown, ArrowDownRight, ArrowRight } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
+import { Directions, ShotTypes } from '@loom24/shared/types';
 import { type ImageRatio, IMAGE_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const EMPTY_SLOTS: [null, null, null] = [null, null, null];
+
+const DIRECTION_STEPS: { value: Directions; label: string; icon: React.ElementType }[] = [
+    { value: Directions.leftSide,     label: '90°',   icon: ArrowLeft      },
+    { value: Directions.leftQuarter,  label: '45°',   icon: ArrowDownLeft  },
+    { value: Directions.front,        label: 'Front', icon: ArrowDown      },
+    { value: Directions.rightQuarter, label: '45°',   icon: ArrowDownRight },
+    { value: Directions.rightSide,    label: '90°',   icon: ArrowRight     },
+];
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatar?: Avatar;
-    onGenerate: (prompt: string, ratio: ImageRatio, referenceImages: File[]) => Promise<void>;
+    onGenerate: (prompt: string, ratio: ImageRatio, referenceImages: File[], direction: Directions, shotType: ShotTypes) => Promise<void>;
 };
 
 function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
     const [ratio, setImageRatio] = useState<ImageRatio>('3:4');
+    const [direction, setDirection] = useState<Directions>(Directions.front);
+    const [shotType, setShotType] = useState<ShotTypes>(ShotTypes.upperBody);
     const [loading, setLoading] = useState(false);
     const [slots, setSlots] = useState<(File | null)[]>([...EMPTY_SLOTS]);
     const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
@@ -29,6 +41,8 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     useEffect(() => {
         if (!isOpen) {
             setPrompt('');
+            setDirection(Directions.front);
+            setShotType(ShotTypes.upperBody);
             setSlots([...EMPTY_SLOTS]);
             setPreviews([null, null, null]);
         }
@@ -42,6 +56,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     }, [slots]);
 
     useScrollLock(isOpen);
+    useEscapeKey(onClose, isOpen);
     if (!isOpen) return null;
 
     const handleFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +93,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const handleGenerate = async () => {
         if (!canGenerate()) return;
         setLoading(true);
-        await onGenerate(prompt.trim(), ratio, slots.filter((f): f is File => f !== null));
+        await onGenerate(prompt.trim(), ratio, slots.filter((f): f is File => f !== null), direction, shotType);
         setLoading(false);
     };
 
@@ -153,10 +168,60 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                     <p className="text-[11px] text-base-content/25 leading-relaxed">
                         Upload reference images, then click on them to insert their tags into the prompt — AI will use them as visual references at those points.
                     </p>
+                    <div className="flex flex-col gap-3 mt-4">
+                        <div className="flex p-1.5 bg-base-content/5 rounded-2xl">
+                            {([ShotTypes.upperBody, ShotTypes.fullBody] as ShotTypes[]).map(type => (
+                                <button
+                                    key={type}
+                                    onClick={() => setShotType(type)}
+                                    className={`flex-1 py-2.5 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer ${
+                                        shotType === type ? 'bg-base-100 text-primary shadow-sm' : 'text-base-content/40 hover:text-base-content/60'
+                                    }`}
+                                >
+                                    {type === ShotTypes.upperBody ? 'Upper body' : 'Full body'}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <div className="flex p-1.5 bg-base-content/5 rounded-2xl">
+                                {DIRECTION_STEPS.map(step => (
+                                    <button
+                                        key={step.value}
+                                        onClick={() => setDirection(step.value)}
+                                        className={`flex-1 py-2.5 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer ${
+                                            direction === step.value ? 'bg-base-100 text-primary shadow-sm' : 'text-base-content/40 hover:text-base-content/60'
+                                        }`}
+                                    >
+                                        <div className="flex flex-col items-center gap-1">
+                                            <step.icon size={15} strokeWidth={2} />
+                                            {step.label}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex px-1.5 mt-1 items-end">
+                                <div className="flex-[2] flex items-end">
+                                    <div className="w-px h-3 bg-base-content/15" />
+                                    <div className="flex-1 h-px bg-base-content/15" />
+                                    <span className="text-[9px] uppercase tracking-[0.15em] text-base-content/25 px-2">Left</span>
+                                    <div className="flex-1 h-px bg-base-content/15" />
+                                    <div className="w-px h-3 bg-base-content/15" />
+                                </div>
+                                <div className="flex-[1]" />
+                                <div className="flex-[2] flex items-end">
+                                    <div className="w-px h-3 bg-base-content/15" />
+                                    <div className="flex-1 h-px bg-base-content/15" />
+                                    <span className="text-[9px] uppercase tracking-[0.15em] text-base-content/25 px-2">Right</span>
+                                    <div className="flex-1 h-px bg-base-content/15" />
+                                    <div className="w-px h-3 bg-base-content/15" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Aspect ratio */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 mt-1">
                     <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Aspect ratio</span>
                     <div className="flex gap-3">
                         {IMAGE_RATIOS.map(r => (

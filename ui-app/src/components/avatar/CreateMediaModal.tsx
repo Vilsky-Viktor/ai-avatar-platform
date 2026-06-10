@@ -1,5 +1,6 @@
 import { Camera, Video, Images, AudioLines } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 type Props = {
     isOpen: boolean;
@@ -19,6 +20,7 @@ const OPTIONS = [
 
 function CreateMediaModal({ isOpen, onClose, onImage, onVideo, onPhotoSet, onAudio }: Props) {
     useScrollLock(isOpen);
+    useEscapeKey(onClose, isOpen);
     if (!isOpen) return null;
 
     const props = { isOpen, onClose, onImage, onVideo, onPhotoSet, onAudio };

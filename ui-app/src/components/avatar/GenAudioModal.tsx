@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, ChevronDown } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { Avatar } from '@loom24/shared/types';
 
 type Props = {
@@ -28,6 +29,7 @@ function GenAudioModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     }, [isOpen]);
 
     useScrollLock(isOpen);
+    useEscapeKey(onClose, isOpen);
     if (!isOpen) return null;
 
     const canGenerate = () => text.trim().length >= 5 && !loading;

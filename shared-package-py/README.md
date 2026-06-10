@@ -5,7 +5,7 @@ Shared types and services used across all Loom24 Python services. Pydantic model
 ## Contents
 
 ### Types (`loom24_shared.types`)
-- **job** — `Job`, `StepBase`, `AiModelGatewayStep`, `FaceMatcherStep`, `HeadDirectionCheckerStep`, `WorkflowStep`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `Views`, `ShotTypes`
+- **job** — `Job`, `StepBase`, `AiModelGatewayStep`, `FaceMatcherStep`, `HeadDirectionCheckerStep`, `WorkflowStep`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `ShotTypes`
 - **avatar** — `Avatar`, `AvatarParameters`, `AvatarGender`, `AvatarTypes`
 - **voice** — `Voice`
 - **image** — `ImageRatios`, `OutputFormats`, `OutputMimeTypes`

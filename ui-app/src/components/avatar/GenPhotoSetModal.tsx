@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { PhotoSetType } from '@loom24/shared/types';
 
 type PhotoSetOption = {
@@ -41,6 +42,7 @@ type Props = {
 function GenPhotoSetModal({ isOpen, onClose, onGenerate }: Props) {
     const [loadingId, setLoadingId] = useState<PhotoSetType | null>(null);
     useScrollLock(isOpen);
+    useEscapeKey(onClose, isOpen);
     if (!isOpen) return null;
 
     return (
