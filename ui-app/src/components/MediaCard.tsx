@@ -159,7 +159,7 @@ function MediaCard({
                                 Generating
                             </span>
                             <p className="text-[9px] uppercase tracking-widest text-base-content/20">
-                                It's coming soon
+                                It's coming soon...
                             </p>
                         </div>
                     </div>

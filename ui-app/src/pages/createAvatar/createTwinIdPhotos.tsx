@@ -114,16 +114,14 @@ function CreateTwinIdPhotosPage() {
                 }
             }
 
-            const currentJobs = jobsRef.current;
-            const jobIndex = currentJobs.findIndex((item) => item?.id === job.id);
-            const oldJob = currentJobs[jobIndex];
-
-            if (oldJob && oldJob?.status !== job.status) {
-                setJob(jobIndex, job);
+            setJobs(prev => {
+                const idx = prev.findIndex(j => j?.id === job.id);
+                if (idx === -1 || prev[idx]?.status === job.status) return prev;
                 if (job.status === JobStatuses.error) {
-                    setSlotErrors(prev => ({ ...prev, [jobIndex]: 'Processing failed' }));
+                    setSlotErrors(errors => ({ ...errors, [idx]: 'Processing failed' }));
                 }
-            }
+                return prev.map((j, i) => i === idx ? job : j);
+            });
         }
     };
 
@@ -310,9 +308,6 @@ function CreateTwinIdPhotosPage() {
         if (file) onFileSelected(index, file);
     };
 
-    const setJob = (listIdx: number, job: Job | null) => {
-        setJobs((prev: (Job | null)[]) => prev.map((oldJob, idx) => idx === listIdx ? job : oldJob));
-    };
 
     const stepLocked = () => {
         return Boolean(avatar.mainImagePath);

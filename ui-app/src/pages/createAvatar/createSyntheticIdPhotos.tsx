@@ -64,13 +64,11 @@ function CreateSyntheticIdPhotosPage() {
                 }
             }
 
-            const currentJobs = jobsRef.current;
-            const jobIndex = currentJobs.findIndex(item => item?.id === job.id);
-            const oldJob = currentJobs[jobIndex];
-
-            if (oldJob && oldJob?.status !== job.status) {
-                setJob(jobIndex, job);
-            }
+            setJobs(prev => {
+                const idx = prev.findIndex(j => j?.id === job.id);
+                if (idx === -1 || prev[idx]?.status === job.status) return prev;
+                return prev.map((j, i) => i === idx ? job : j);
+            });
         }
     };
 
