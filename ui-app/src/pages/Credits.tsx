@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { HeartPulse, Repeat2, Plus, Minus, MoveRight, Image, Video, Mic } from 'lucide-react';
 import { useApp } from '../providers/ContextProvider';
 
-const PULSES_PER_DOLLAR = 127;
-const PULSES_PER_IMAGE = 60;
-const PULSES_PER_VIDEO_SEC = 65;
-const PULSES_PER_AUDIO_SEC = 12;
+const PULSES_PER_DOLLAR = 10;
+const PULSES_PER_IMAGE = 4;
+const PULSES_PER_VIDEO_SEC = 5;
+const PULSES_PER_AUDIO_SEC = 2;
 
 const CONIC_GRADIENT = 'conic-gradient(from var(--gen-angle), transparent 0%, transparent 60%, color-mix(in oklch, var(--color-primary) 85%, transparent) 80%, transparent 100%)';
 
 function CreditsPage() {
     const { user } = useApp();
     const [topUpDollars, setTopUpDollars] = useState(10);
-    const [autoTopUpDollars, setAutoTopUpDollars] = useState(49);
+    const [autoTopUpDollars, setAutoTopUpDollars] = useState(50);
 
     const adjustTopUp = (delta: number) => {
         setTopUpDollars(prev => Math.max(5, Math.min(5000, prev + delta)));
@@ -242,11 +242,11 @@ function CreditsPage() {
                     </div>
                     <div className="rounded-2xl bg-base-100 border border-base-content/8 overflow-hidden">
                         {[
-                            { action: 'Image generation', unit: 'per image', pulses: 15 },
-                            { action: 'Video generation', unit: 'per second', pulses: 80 },
-                            { action: 'Video with voice generation', unit: 'per second', pulses: 120 },
-                            { action: 'Voice generation', unit: 'per second', pulses: 25 },
-                            { action: 'Photoset generation', unit: 'per set', pulses: 60 },
+                            { action: 'Image generation', unit: 'per image', pulses: 4 },
+                            { action: 'Video generation', unit: 'per second', pulses: 5 },
+                            { action: 'Video with voice generation', unit: 'per second', pulses: 6 },
+                            { action: 'Voice generation', unit: 'per second', pulses: 2 },
+                            { action: 'Photoset generation', unit: 'per set', pulses: 50 },
                         ].map((row, index, arr) => (
                             <div
                                 key={row.action}

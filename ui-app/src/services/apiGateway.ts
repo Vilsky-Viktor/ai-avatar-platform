@@ -217,7 +217,9 @@ export const getJobsByGroupId  = async (groupId: string): Promise<Job[]> => {
 const toDate = (raw: any): Date | undefined => {
   if (!raw) return undefined;
   if (raw instanceof Date) return raw;
+  if (typeof raw.toDate === 'function') return raw.toDate();
   if (typeof raw._seconds === 'number') return new Date(raw._seconds * 1000);
+  if (typeof raw.seconds === 'number') return new Date(raw.seconds * 1000);
   return undefined;
 };
 

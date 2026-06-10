@@ -1,6 +1,6 @@
 import { Sparkles, User, Clock, CircleOff, RefreshCcw, Trash2, Text, CloudDownload, Play, Share2 } from 'lucide-react';
 import Loading from './Loading';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { JobStatuses, MediaTypes, type Job } from '@loom24/shared/types';
 import { downloadMediaFromBucket } from '../services/storage';
 import DeleteMediaModal from './mediaGrid/DeleteMediaModal';
@@ -45,19 +45,6 @@ function MediaCard({
     const [isDownloading, setIsDownloading] = useState(false);
     const [infoVisible, setInfoVisible] = useState(false);
     const [shareVisible, setShareVisible] = useState(false);
-    const [elapsed, setElapsed] = useState(0);
-    const startRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        if (job?.status !== JobStatuses.generating) return;
-        const startSec: number = job.createdAt ? new Date(job.createdAt as any).getTime() / 1000 : Date.now() / 1000;
-        startRef.current = startSec;
-        setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startSec)));
-        const interval = setInterval(() =>
-            setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startRef.current!))), 1000);
-        return () => clearInterval(interval);
-    }, [job?.status]);
-
     const handleConfirmDelete = async () => {
         if (!confirmDeleteId || !onDelete) return;
         setIsDeleting(true);
@@ -167,12 +154,12 @@ function MediaCard({
                             <Loading size="md" className="" />
                             <Sparkles size={20} className="absolute -top-5 -right-2 text-primary animate-pulse" />
                         </div>
-                        <div className="text-center">
+                        <div className="flex flex-col items-center gap-1">
                             <span className="text-[10px] uppercase tracking-[0.4em] text-primary">
                                 Generating
                             </span>
-                            <p className="text-[15px] font-mono font-light text-base-content/25 tracking-widest">
-                                {String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}
+                            <p className="text-[9px] uppercase tracking-widest text-base-content/20">
+                                It's coming soon
                             </p>
                         </div>
                     </div>
