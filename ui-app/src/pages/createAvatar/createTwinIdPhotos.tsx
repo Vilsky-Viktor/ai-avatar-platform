@@ -110,7 +110,9 @@ function CreateTwinIdPhotosPage() {
             if (!job?.id) return;
             const isProcessing = job.status !== JobStatuses.completed && job.status !== JobStatuses.error;
             if (isProcessing && !processingStartRef.current[job.id]) {
-                processingStartRef.current[job.id] = Date.now();
+                processingStartRef.current[job.id] = job.createdAt
+                    ? new Date(job.createdAt as any).getTime()
+                    : Date.now();
             }
         });
         const hasProcessing = jobs.some(

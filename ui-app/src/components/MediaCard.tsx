@@ -50,14 +50,13 @@ function MediaCard({
 
     useEffect(() => {
         if (job?.status !== JobStatuses.generating) return;
-        const startDate = job.updatedAt ?? job.createdAt;
-        const startSec: number = startDate ? startDate.getTime() / 1000 : Date.now() / 1000;
+        const startSec: number = job.createdAt ? new Date(job.createdAt as any).getTime() / 1000 : Date.now() / 1000;
         startRef.current = startSec;
         setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startSec)));
         const interval = setInterval(() =>
             setElapsed(Math.max(0, Math.floor(Date.now() / 1000 - startRef.current!))), 1000);
         return () => clearInterval(interval);
-    }, [job?.status, job?.updatedAt]);
+    }, [job?.status]);
 
     const handleConfirmDelete = async () => {
         if (!confirmDeleteId || !onDelete) return;

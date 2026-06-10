@@ -14,7 +14,7 @@ const PHOTO_SETS: PhotoSetOption[] = [
     {
         id: 'whatsapp-stickers',
         name: 'WhatsApp Stickers',
-        description: 'Different emotions: sad, angry, laughing, disgusted, shy, scared, sleepy, confused, surprised, anxious.',
+        description: 'Different emotions: sad, angry, smiling, laughing, disgusted, shy, scared, sleepy, confused, surprised.',
     },
     {
         id: 'around-the-world',

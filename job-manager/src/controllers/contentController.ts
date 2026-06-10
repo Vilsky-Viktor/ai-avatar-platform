@@ -193,7 +193,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
         curRun: 0,
         order: input.order,
         workflow: [input.imageGenerator, thumbnailMaker],
-        metadata: {userPrompt: input.imageGenerator.prompt},
+        metadata: {},
         resultMediaPath: input.imageGenerator.uploadPath!,
         resultThumbnailPath: thumbnailUploadPath,
       }
