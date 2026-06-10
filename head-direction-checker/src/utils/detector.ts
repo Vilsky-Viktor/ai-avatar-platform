@@ -220,7 +220,7 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
   if (interOcular < 1) {
     if (requiredDirection === 'leftSide' || requiredDirection === 'rightSide') {
       const noseOffset = noseTipX - midEyeX;
-      const passed = requiredDirection === 'leftSide' ? noseOffset > 0 : noseOffset < 0;
+      const passed = requiredDirection === 'rightSide' ? noseOffset > 0 : noseOffset < 0;
       logger.info({ noseOffset: noseOffset.toFixed(1), expected: requiredDirection, passed }, 'Face direction check (side fallback)');
       return passed;
     }
