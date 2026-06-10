@@ -14,7 +14,7 @@ google-cloud-storage = "3.11.0"
 google-cloud-pubsub = "2.39.0"
 python-dotenv = "1.2.2"
 numpy = "1.26.4"
-loom24-shared = {version = "0.0.28", source = "loom24-pypi"}
+loom24-shared = {version = "0.0.29", source = "loom24-pypi"}
 watchfiles = "1.2.0"
 
 [[tool.poetry.source]]

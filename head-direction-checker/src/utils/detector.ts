@@ -7,11 +7,12 @@ const MODEL_PATH = '/app/models/det_10g.onnx';
 const INPUT_SIZE = 640;
 const SCORE_THRESHOLD = 0.3;
 const NMS_THRESHOLD = 0.4;
-const FRONT_RANGE:          [number, number] = [-0.15,      0.15];
-const LEFT_QUARTER_RANGE:   [number, number] = [-0.80,     -0.4];
-const RIGHT_QUARTER_RANGE:  [number, number] = [ 0.4,      0.80];
-const LEFT_SIDE_RANGE:      [number, number] = [-Infinity, -1.5];
-const RIGHT_SIDE_RANGE:     [number, number] = [ 1.5,  Infinity];
+const FACE_PADDING = 0.5;
+const FRONT_RANGE:          [number, number] = [-0.1,      0.1];
+const LEFT_QUARTER_RANGE:   [number, number] = [-0.9,     -0.4];
+const RIGHT_QUARTER_RANGE:  [number, number] = [ 0.4,      0.9];
+const LEFT_SIDE_RANGE:      [number, number] = [-Infinity, -1.3];
+const RIGHT_SIDE_RANGE:     [number, number] = [ 1.3,  Infinity];
 const NUM_ANCHORS = 2;
 const STRIDES = [8, 16, 32];
 
@@ -75,23 +76,25 @@ function nmsKeep(boxes: number[][], scores: number[]): number[] {
   return keep;
 }
 
-export const checkDirection = async (image: Buffer, requiredDirection: string): Promise<boolean> => {
-  const sess = await getSession();
-
-  const { data } = await sharp(image)
-    .resize(INPUT_SIZE, INPUT_SIZE, { fit: 'contain', background: { r: 0, g: 0, b: 0 } })
-    .removeAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const float32 = new Float32Array(3 * INPUT_SIZE * INPUT_SIZE);
+function toFloat32(pixelData: Buffer): Float32Array {
   const plane = INPUT_SIZE * INPUT_SIZE;
+  const float32 = new Float32Array(3 * plane);
   for (let i = 0; i < plane; i++) {
-    float32[0 * plane + i] = (data[i * 3 + 0] - 127.5) / 128;
-    float32[1 * plane + i] = (data[i * 3 + 1] - 127.5) / 128;
-    float32[2 * plane + i] = (data[i * 3 + 2] - 127.5) / 128;
+    float32[0 * plane + i] = (pixelData[i * 3 + 0] - 127.5) / 128;
+    float32[1 * plane + i] = (pixelData[i * 3 + 1] - 127.5) / 128;
+    float32[2 * plane + i] = (pixelData[i * 3 + 2] - 127.5) / 128;
   }
+  return float32;
+}
 
+interface ScrfdResult {
+  boxes: number[][];
+  scores: number[];
+  kps: number[][];
+}
+
+async function runScrfd(pixelData: Buffer, sess: ort.InferenceSession): Promise<ScrfdResult> {
+  const float32 = toFloat32(pixelData);
   const inputName = sess.inputNames[0];
   const feeds: Record<string, ort.Tensor> = {
     [inputName]: new ort.Tensor('float32', float32, [1, 3, INPUT_SIZE, INPUT_SIZE]),
@@ -134,14 +137,79 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
     }
   }
 
-  const keepIdx = nmsKeep(allBoxes, allScores);
+  return { boxes: allBoxes, scores: allScores, kps: allKps };
+}
+
+export const checkDirection = async (image: Buffer, requiredDirection: string): Promise<boolean> => {
+  const sess = await getSession();
+
+  const { data: rotatedBuffer, info: rotatedInfo } = await sharp(image)
+    .rotate()
+    .toBuffer({ resolveWithObject: true });
+
+  const origW = rotatedInfo.width;
+  const origH = rotatedInfo.height;
+
+  const detectScale = Math.min(INPUT_SIZE / origW, INPUT_SIZE / origH);
+  const scaledW = Math.round(origW * detectScale);
+  const scaledH = Math.round(origH * detectScale);
+  const padX = Math.round((INPUT_SIZE - scaledW) / 2);
+  const padY = Math.round((INPUT_SIZE - scaledH) / 2);
+
+  const { data: detectData } = await sharp(rotatedBuffer)
+    .resize(INPUT_SIZE, INPUT_SIZE, { fit: 'contain', background: { r: 0, g: 0, b: 0 } })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { boxes, scores } = await runScrfd(detectData as Buffer, sess);
+  const keepIdx = nmsKeep(boxes, scores);
 
   if (!keepIdx.length) {
     logger.warn('No face detected for direction check — failing');
     return false;
   }
 
-  const kps = allKps[keepIdx[0]];
+  const [x1d, y1d, x2d, y2d] = boxes[keepIdx[0]];
+  const origX1 = Math.max(0, (x1d - padX) / detectScale);
+  const origY1 = Math.max(0, (y1d - padY) / detectScale);
+  const origX2 = Math.min(origW, (x2d - padX) / detectScale);
+  const origY2 = Math.min(origH, (y2d - padY) / detectScale);
+
+  const faceW = origX2 - origX1;
+  const faceH = origY2 - origY1;
+  const side = Math.max(faceW, faceH) * (1 + FACE_PADDING);
+  const cx = (origX1 + origX2) / 2;
+  const cy = (origY1 + origY2) / 2;
+
+  const cropLeft   = Math.max(0, Math.round(cx - side / 2));
+  const cropTop    = Math.max(0, Math.round(cy - side / 2));
+  const cropRight  = Math.min(origW, Math.round(cx + side / 2));
+  const cropBottom = Math.min(origH, Math.round(cy + side / 2));
+  const cropW = cropRight - cropLeft;
+  const cropH = cropBottom - cropTop;
+
+  if (cropW <= 0 || cropH <= 0) {
+    logger.warn({ cropW, cropH }, 'Invalid face crop dimensions — failing');
+    return false;
+  }
+
+  const { data: faceData } = await sharp(rotatedBuffer)
+    .extract({ left: cropLeft, top: cropTop, width: cropW, height: cropH })
+    .resize(INPUT_SIZE, INPUT_SIZE, { fit: 'fill' })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { boxes: faceBoxes, scores: faceScores, kps: faceKps } = await runScrfd(faceData as Buffer, sess);
+  const faceKeepIdx = nmsKeep(faceBoxes, faceScores);
+
+  if (!faceKeepIdx.length) {
+    logger.warn('Face not detected in cropped region — failing');
+    return false;
+  }
+
+  const kps = faceKps[faceKeepIdx[0]];
   const rightEyeX = kps[0];
   const leftEyeX  = kps[2];
   const noseTipX  = kps[4];

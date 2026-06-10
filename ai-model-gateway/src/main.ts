@@ -20,8 +20,10 @@ google.authenticate().catch((err) => {
     process.exit(1);
 });
 
+import sharp from 'sharp';
 import { sendJob, uploadToBucket } from '@loom24/shared/services';
 import { getJob } from './services/jobManagerService';
+import { getMediaDuration } from './utils/mediaDuration';
 import { AiModelGateway, Job, JobStatuses, MediaTypes, Services, WorkflowStep } from '@loom24/shared/types';
 import { generate, RateLimitError } from './controllers/generatorController';
 
@@ -101,6 +103,22 @@ function listenForResults() {
 
       stepData.status = JobStatuses.completed;
       job.workflow[stepIdx] = stepData;
+
+      if (result.type === MediaTypes.image || result.type === MediaTypes.video || result.type === MediaTypes.audio) {
+        let dimensions: string | undefined;
+        if (result.type === MediaTypes.image) {
+          const imageInfo = await sharp(result.data as Buffer).metadata();
+          if (imageInfo.width && imageInfo.height) dimensions = `${imageInfo.width}x${imageInfo.height}`;
+        }
+
+        let lengthSec: number | undefined;
+        if (result.type === MediaTypes.video || result.type === MediaTypes.audio) {
+          const durationSec = await getMediaDuration(result.data as Buffer);
+          if (durationSec != null) lengthSec = Math.round(durationSec);
+        }
+
+        job.metadata = { ...job.metadata, ratio: stepData.ratio, dimensions, lengthSec };
+      }
 
       await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);
     } catch (error: any) {

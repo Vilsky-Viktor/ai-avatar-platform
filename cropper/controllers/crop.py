@@ -15,7 +15,7 @@ _MODE_MAP = {
 MAX_SIZE = 2048
 
 
-def crop_to_path(image_path: str, upload_path: str, mode: str = "front") -> None:
+def crop_to_path(image_path: str, upload_path: str, mode: str = "front") -> tuple[int, int]:
     detector_mode: CropMode = _MODE_MAP.get(mode, mode)  # type: ignore[assignment]
 
     logger.info(f"Downloading image — path={image_path} mode={mode}")
@@ -33,3 +33,4 @@ def crop_to_path(image_path: str, upload_path: str, mode: str = "front") -> None
 
     logger.info(f"Uploading result — dest={upload_path} size={cropped.size}")
     upload_image(cropped, upload_path)
+    return cropped.width, cropped.height

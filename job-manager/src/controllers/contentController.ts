@@ -43,8 +43,8 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     logger.info({ ratio: jobRequest.ratio }, 'Generate avatar photo');
 
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
-    const idPhotos = idPhotoJobs
-      .map((job: Job) => job.resultMediaPath);
+    const IdPhotosByOrder = Object.fromEntries(idPhotoJobs.map((job: Job) => [job.order!, job.resultMediaPath]));
+    const idPhotos = [IdPhotosByOrder[1], IdPhotosByOrder[3], IdPhotosByOrder[4], IdPhotosByOrder[7]]
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
     const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-thumbnail.jpg`
@@ -54,7 +54,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const idPhotoEnd = refCount + idPhotos.length;
 
     const imageGenerator: AiModelGateway = {
-      prompt: `${jobRequest.prompt}. Person identity images from image ${idPhotoStart} to image ${idPhotoEnd}`,
+      prompt: `${jobRequest.prompt}. Preserve the exact identity from images ${idPhotoStart} to ${idPhotoEnd}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...(jobRequest.mediaPaths ?? []), ...idPhotos],
       temperature: 1.0,
@@ -119,15 +119,15 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
 
     const avatar = await getAvatarById(userId, jobRequest.avatarId);
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
-    const byOrder = Object.fromEntries(idPhotoJobs.map((job: Job) => [job.order!, job.resultMediaPath]));
+    const IdPhotosByOrder = Object.fromEntries(idPhotoJobs.map((job: Job) => [job.order!, job.resultMediaPath]));
     const idPhotoSet: IdPhotoSetPaths = {
-      front: byOrder[1],
-      frontSmile: byOrder[2],
-      leftQuarter: byOrder[3],
-      rightQuarter: byOrder[4],
-      leftSide: byOrder[5],
-      rightSide: byOrder[6],
-      body: byOrder[7],
+      front: IdPhotosByOrder[1],
+      frontSmile: IdPhotosByOrder[2],
+      leftQuarter: IdPhotosByOrder[3],
+      rightQuarter: IdPhotosByOrder[4],
+      leftSide: IdPhotosByOrder[5],
+      rightSide: IdPhotosByOrder[6],
+      body: IdPhotosByOrder[7],
     }
 
     const inputs = functionMapping[jobRequest.type!](userId, jobRequest.avatarId, avatar.parameters, idPhotoSet);

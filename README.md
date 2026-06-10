@@ -24,6 +24,7 @@ Job pipeline (Google Cloud Pub/Sub):
   │  head-direction-checker (SCRFD ONNX)    │
   │  face-matcher       (InsightFace)       │
   │  thumbnail-maker    (sharp + ffmpeg)    │
+  │  image-resizer      (sharp)             │
   └─────────────────────────────────────────┘
       ↓ (results back to workflow-manager topic)
   workflow-manager  → next step or complete
@@ -44,6 +45,7 @@ Job pipeline (Google Cloud Pub/Sub):
 | [head-direction-checker](head-direction-checker/) | Pub/Sub | — | Validates head orientation |
 | [face-matcher](face-matcher/) | Pub/Sub | — | Face similarity scoring |
 | [thumbnail-maker](thumbnail-maker/) | Pub/Sub | — | Generates thumbnails from images/videos |
+| [image-resizer](image-resizer/) | Pub/Sub | — | Resizes images to exact dimensions |
 
 ## Shared Libraries
 

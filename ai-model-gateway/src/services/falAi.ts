@@ -214,7 +214,7 @@ export const genSeedvrImageUpscale = async (data: AiModelGateway): Promise<platf
     image_url: imageUrl,
     upscale_mode: falAiTypes.SeedvrUpscaleModes.factor,
     upscale_factor: 2,
-    noise_scale: 0.1,
+    noise_scale: 0.25,
     output_format: OutputFormats.png
   }
 

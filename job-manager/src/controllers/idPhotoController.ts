@@ -14,11 +14,11 @@ import {
   AiModelGateway,
   Models,
   Platforms,
-  VideoRatios,
+  ImageResizer,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
-import { genDigitalTwinIdPhotoData, genSyntheticFrontIdPhtotoData, genSyntheticIdPhotoData } from '../utils/idPhotoInputData';
+import { genSyntheticFrontIdPhtotoData, genSyntheticIdPhotoData } from '../utils/idPhotoInputData';
 import {
   create as createDb,
   createMany as createManyDb,
@@ -159,7 +159,15 @@ export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: N
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
     const cropUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-crop.png`;
+    const upscalerUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-upscaled.png`;
     const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-thumbnail.jpg`;
+
+    const headDirectionChecker: HeadDirectionChecker = {
+      service: Services.headDirectionChecker,
+      status: JobStatuses.pending,
+      imagePath: jobRequest.idPhotoPath!,
+      direction: jobRequest.direction!
+    }
 
     const cropper: Cropper = {
       service: Services.cropper,
@@ -169,24 +177,31 @@ export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: N
       uploadPath: cropUploadPath,
     }
 
-    const headDirectionChecker: HeadDirectionChecker = {
-      service: Services.headDirectionChecker,
+    const upscaler: AiModelGateway = {
+      service: Services.aiModelGateway,
       status: JobStatuses.pending,
-      imagePath: cropUploadPath,
-      direction: jobRequest.direction!
+      platform: Platforms.falai,
+      model: Models.seedvrImageUpscale,
+      imagePaths: [cropUploadPath],
+      uploadPath: upscalerUploadPath,
     }
 
-    const imageGenerator: AiModelGateway = {
-      prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-      negativePrompt: 'another person, altered face, rotated, blurred',
-      ratio: VideoRatios['1:1'],
-      imagePaths: [cropUploadPath],
-      temperature: 0,
-      uploadPath: generatorUploadPath,
+    const removeBackground: AiModelGateway = {
+      service: Services.aiModelGateway,
       status: JobStatuses.pending,
-      model: Models.geminiImage3Pro,
-      platform: Platforms.google,
-      service: Services.aiModelGateway
+      model: Models.birefNetV2,
+      platform: Platforms.falai,
+      imagePaths: [upscalerUploadPath],
+      uploadPath: generatorUploadPath
+    }
+
+    const imageResizer: ImageResizer = {
+      service: Services.imageResizer,
+      status: JobStatuses.pending,
+      mediaPath: generatorUploadPath,
+      width: 2048,
+      height: 2048,
+      uploadPath: generatorUploadPath,
     };
 
     const thumbnailMaker: ThumbnailMaker = {
@@ -208,7 +223,7 @@ export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: N
       maxRuns: 1,
       curRun: 0,
       order: jobRequest.order,
-      workflow: [cropper, headDirectionChecker, imageGenerator, thumbnailMaker],
+      workflow: [headDirectionChecker, cropper, upscaler, removeBackground, imageResizer, thumbnailMaker],
       metadata: {
         ratio: ImageRatios['1:1'],
         dimensions: '2048x2048',

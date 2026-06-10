@@ -9,7 +9,7 @@ from google.cloud import pubsub_v1
 
 from loom24_shared import logger, set_log_context, clear_log_context
 from loom24_shared.services import send_job
-from loom24_shared.types import CropperStep, Job, JobStatuses, StepBase
+from loom24_shared.types import CropperStep, Job, JobMetadata, JobStatuses, StepBase
 
 from services.job_service import get_job
 from controllers.crop import crop_to_path
@@ -78,10 +78,13 @@ def _callback(message: pubsub_v1.subscriber.message.Message) -> None:
         if not step.uploadPath:
             raise ValueError("Missing uploadPath in workflow step")
 
-        crop_to_path(step.mediaPath, step.uploadPath, mode=step.mode.value)
+        width, height = crop_to_path(step.mediaPath, step.uploadPath, mode=step.mode.value)
 
         step.status = JobStatuses.completed
         step.error = None
+
+        existing_metadata = job.metadata.model_dump() if job.metadata else {}
+        job.metadata = JobMetadata(**{**existing_metadata, "ratio": "1:1", "dimensions": f"{width}x{height}"})
     except Exception as error:
         logger.error(f"Crop failed: {error}", exc_info=True)
         step.status = JobStatuses.error

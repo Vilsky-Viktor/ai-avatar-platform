@@ -86,6 +86,7 @@ class Services(str, Enum):
     aiModelGateway = 'ai-model-gateway'
     thumbnailMaker = 'thumbnail-maker'
     cropper = 'cropper'
+    imageResizer = 'image-resizer'
 
 
 class JobMetadata(BaseModel):
@@ -147,9 +148,14 @@ class CropperStep(StepBase):
     mediaPath: str
     mode: CropperModes
 
+class ImageResizerStep(StepBase):
+    mediaPath: str
+    width: int
+    height: int
+
 
 WorkflowStep = Annotated[
-    Union[FaceMatcherStep, HeadDirectionCheckerStep, ThumbnailMakerStep, AiModelGatewayStep, CropperStep],
+    Union[FaceMatcherStep, HeadDirectionCheckerStep, ThumbnailMakerStep, AiModelGatewayStep, CropperStep, ImageResizerStep],
     Field(discriminator=None),
 ]
 

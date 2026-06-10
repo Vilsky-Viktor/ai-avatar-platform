@@ -134,7 +134,8 @@ export enum Services {
   headDirectionChecker = 'head-direction-checker',
   aiModelGateway = 'ai-model-gateway',
   thumbnailMaker = 'thumbnail-maker',
-  cropper = 'cropper'
+  cropper = 'cropper',
+  imageResizer = 'image-resizer'
 }
 
 export type StepBase = {
@@ -188,12 +189,19 @@ export type Cropper = StepBase & {
   mode: CropperModes;
 }
 
+export type ImageResizer = StepBase & {
+  mediaPath: string;
+  width: number;
+  height: number;
+}
+
 export type WorkflowStep =
   AiModelGateway |
   FaceMatcher |
   HeadDirectionChecker |
   ThumbnailMaker |
-  Cropper;
+  Cropper |
+  ImageResizer;
 
 export type Job = {
   id?: string;

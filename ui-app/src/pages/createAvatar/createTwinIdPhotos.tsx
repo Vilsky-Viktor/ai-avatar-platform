@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateAvatarStepper from "../../components/createAvatar/CreateAvatarStepper";
 import Loading from "../../components/Loading";
 import { type Avatar } from '@loom24/shared/types';
-import { Check, TriangleAlert, Trash2, CircleOff, ArrowLeft, ArrowRight, ArrowDownLeft, ArrowDownRight, User, PersonStanding } from 'lucide-react';
+import { Check, TriangleAlert, Trash2, CircleOff, ArrowLeft, ArrowRight, ArrowDownLeft, ArrowDownRight, User, PersonStanding, RefreshCcw } from 'lucide-react';
 import { updateAvatar, genDigitalTwinIdPhoto, getJobsByGroupId, getAvatarById, normalizeJob, deleteJobById } from '../../services/apiGateway';
 import { CropperModes, Directions, JobStatuses, type Job, type IdPhotoJobRequest } from '@loom24/shared/types';
 import { useApp } from '../../providers/ContextProvider';
@@ -64,7 +64,9 @@ function CreateTwinIdPhotosPage() {
     const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect | null; thumbnailSrc?: string } | null>(null);
 
-    const uploadedPhotosConfig: { label: string; name: string; ref: React.RefObject<HTMLInputElement | null>; mode: CropperModes; direction: Directions }[] = [
+    const uploadedPhotosConfig: { 
+        label: string; name: string; ref: React.RefObject<HTMLInputElement | null>; mode: CropperModes; direction: Directions 
+    }[] = [
         { label: 'Front',         name: 'front',         ref: useRef<HTMLInputElement>(null), mode: CropperModes.front,   direction: Directions.front },
         { label: 'Front smile',   name: 'front-smile',   ref: useRef<HTMLInputElement>(null), mode: CropperModes.front,   direction: Directions.front },
         { label: 'Left quarter',  name: 'left-quarter',  ref: useRef<HTMLInputElement>(null), mode: CropperModes.quarter, direction: Directions.leftQuarter },
@@ -496,8 +498,8 @@ function CreateTwinIdPhotosPage() {
                                                             onClick={(event) => { event.stopPropagation(); removePhotoAtIndex(index); }}
                                                             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-md text-[10px] uppercase tracking-widest text-white/70 hover:bg-error hover:text-white transition-all cursor-pointer mt-1"
                                                         >
-                                                            <Trash2 size={13} />
-                                                            Remove
+                                                            <RefreshCcw size={13} />
+                                                            Try again
                                                         </button>
                                                     </div>
                                                 )}
