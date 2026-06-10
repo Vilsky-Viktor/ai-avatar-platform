@@ -8,11 +8,11 @@ const INPUT_SIZE = 640;
 const SCORE_THRESHOLD = 0.3;
 const NMS_THRESHOLD = 0.4;
 const FACE_PADDING = 0.5;
-const FRONT_RANGE:          [number, number] = [-0.1,      0.1];
-const LEFT_QUARTER_RANGE:   [number, number] = [-0.9,     -0.4];
-const RIGHT_QUARTER_RANGE:  [number, number] = [ 0.4,      0.9];
-const LEFT_SIDE_RANGE:      [number, number] = [-Infinity, -1.3];
-const RIGHT_SIDE_RANGE:     [number, number] = [ 1.3,  Infinity];
+const FRONT_RANGE:          [number, number] = [-0.03, 0.03];
+const LEFT_QUARTER_RANGE:   [number, number] = [-0.8, -0.5];
+const RIGHT_QUARTER_RANGE:  [number, number] = [ 0.5, 0.8];
+const LEFT_SIDE_RANGE:      [number, number] = [-Infinity, -2];
+const RIGHT_SIDE_RANGE:     [number, number] = [ 2, Infinity];
 const NUM_ANCHORS = 2;
 const STRIDES = [8, 16, 32];
 
@@ -218,6 +218,12 @@ export const checkDirection = async (image: Buffer, requiredDirection: string): 
   const interOcular = Math.abs(rightEyeX - leftEyeX);
 
   if (interOcular < 1) {
+    if (requiredDirection === 'leftSide' || requiredDirection === 'rightSide') {
+      const noseOffset = noseTipX - midEyeX;
+      const passed = requiredDirection === 'leftSide' ? noseOffset > 0 : noseOffset < 0;
+      logger.info({ noseOffset: noseOffset.toFixed(1), expected: requiredDirection, passed }, 'Face direction check (side fallback)');
+      return passed;
+    }
     logger.warn('Inter-ocular distance too small — passing by default');
     return true;
   }

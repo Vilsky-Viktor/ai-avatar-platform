@@ -13,6 +13,7 @@ export const updateJob = async (job: Job): Promise<void> => {
       status: job.status,
       workflow: job.workflow,
       curRun: job.curRun,
+      metadata: job.metadata
     });
   } catch (error: any) {
     if (error.response?.status === 404) {

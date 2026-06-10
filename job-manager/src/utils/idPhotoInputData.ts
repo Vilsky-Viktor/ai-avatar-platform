@@ -3,7 +3,7 @@ import { IdPhotoSetPaths } from '../types/idPhotoSet';
 import uuid from 'uuid';
 
 export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, userId: string, avatarId: string): {
-  imageGenerator: AiModelGateway, metadata: JobMetadata
+  imageGenerator: AiModelGateway
 } => {
   const {
     gender,
@@ -28,7 +28,6 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
   } = parameters;
 
   const ratio = ImageRatios['1:1'];
-  const dimensions = '2048x2048';
   const isFemale = gender === 'female';
   const imageId = uuid.v4();
   const uploadPath = `media/${userId}-user/avatars/${avatarId}-avatar/images/${imageId}.png`
@@ -45,13 +44,12 @@ export const genSyntheticFrontIdPhtotoData = (parameters: AvatarParameters, user
       temperature: 1.0,
       imagePaths: [],
       service: Services.aiModelGateway
-    },
-    metadata: { ratio, dimensions }
+    }
   }
 }
 
 export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): {
-  imageGenerator: AiModelGateway, headDirectionChecker: HeadDirectionChecker, metadata: JobMetadata, order: number
+  imageGenerator: AiModelGateway, headDirectionChecker: HeadDirectionChecker, order: number
 }[] => {
   const {
     gender,
@@ -62,7 +60,6 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
   } = parameters;
 
   const ratio = ImageRatios['1:1'];
-  const dimensions = '2048x2048';
   const isFemale = gender === 'female';
 
   const imagePaths = Array.from({ length: 6 }, () => `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`);
@@ -87,7 +84,6 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         imagePath: imagePaths[0],
         direction: Directions.front
       },
-      metadata: { ratio, dimensions },
       order: 2,
     },
     {
@@ -109,7 +105,6 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         imagePath: imagePaths[1],
         direction: Directions.leftQuarter
       },
-      metadata: { ratio, dimensions },
       order: 3,
     },
     {
@@ -131,7 +126,6 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         imagePath: imagePaths[2],
         direction: Directions.rightQuarter
       },
-      metadata: { ratio, dimensions },
       order: 4,
     },
     {
@@ -153,7 +147,6 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         imagePath: imagePaths[3],
         direction: Directions.leftSide
       },
-      metadata: { ratio, dimensions },
       order: 5,
     },
     {
@@ -175,7 +168,6 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         imagePath: imagePaths[4],
         direction: Directions.rightSide
       },
-      metadata: { ratio, dimensions },
       order: 6,
     },
     {
@@ -197,175 +189,7 @@ export const genSyntheticIdPhotoData = (parameters: AvatarParameters, userId: st
         imagePath: imagePaths[5],
         direction: Directions.front
       },
-      metadata: { ratio, dimensions },
       order: 7,
     }
-  ]
-}
-
-
-export const genDigitalTwinIdPhotoData = (parameters: AvatarParameters, userId: string, avatarId: string, idPhotoSet: IdPhotoSetPaths): { 
-  imageGenerator: AiModelGateway, headDirectionChecker: HeadDirectionChecker, metadata: JobMetadata, order: number 
-}[] => {
-  const ratio = ImageRatios['1:1'];
-  const dimensions = '2048x2048';
-
-  const imagePaths = Array.from({ length: 7 }, () => `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`);
-
-  return [
-    {
-      imageGenerator: {
-        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-        negativePrompt: 'another person, altered face, rotated, blurred',
-        ratio,
-        imagePaths: [idPhotoSet.front!],
-        temperature: 1.0,
-        uploadPath: imagePaths[0],
-        status: JobStatuses.pending,
-        model: Models.geminiImage3Pro,
-        platform: Platforms.google,
-        service: Services.aiModelGateway
-      },
-      headDirectionChecker: {
-        service: Services.headDirectionChecker,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[0],
-        direction: Directions.front
-      },
-      metadata: { ratio, dimensions },
-      order: 1,
-    },
-    {
-      imageGenerator: {
-        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-        negativePrompt: 'another person, altered face, rotated, blurred',
-        ratio,
-        imagePaths: [idPhotoSet.frontSmile!],
-        temperature: 1.0,
-        uploadPath: imagePaths[1],
-        status: JobStatuses.pending,
-        model: Models.geminiImage3Pro,
-        platform: Platforms.google,
-        service: Services.aiModelGateway
-      },
-      headDirectionChecker: {
-        service: Services.headDirectionChecker,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[1],
-        direction: Directions.front
-      },
-      metadata: { ratio, dimensions },
-      order: 2,
-    },
-    {
-      imageGenerator: {
-        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-        negativePrompt: 'another person, altered face, rotated, blurred',
-        ratio,
-        imagePaths: [idPhotoSet.leftQuarter!],
-        temperature: 1.0,
-        uploadPath: imagePaths[2],
-        status: JobStatuses.pending,
-        model: Models.geminiImage3Pro,
-        platform: Platforms.google,
-        service: Services.aiModelGateway
-      },
-      headDirectionChecker: {
-        service: Services.headDirectionChecker,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[2],
-        direction: Directions.leftQuarter
-      },
-      metadata: { ratio, dimensions },
-      order: 3,
-    },
-    {
-      imageGenerator: {
-        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-        negativePrompt: 'another person, altered face, rotated, blurred',
-        ratio,
-        imagePaths: [idPhotoSet.rightQuarter!],
-        temperature: 1.0,
-        uploadPath: imagePaths[3],
-        status: JobStatuses.pending,
-        model: Models.geminiImage3Pro,
-        platform: Platforms.google,
-        service: Services.aiModelGateway
-      },
-      headDirectionChecker: {
-        service: Services.headDirectionChecker,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[3],
-        direction: Directions.rightQuarter
-      },
-      metadata: { ratio, dimensions },
-      order: 4,
-    },
-    {
-      imageGenerator: {
-        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-        negativePrompt: 'another person, altered face, rotated, blurred',
-        ratio,
-        imagePaths: [idPhotoSet.leftSide!],
-        temperature: 1.0,
-        uploadPath: imagePaths[4],
-        status: JobStatuses.pending,
-        model: Models.geminiImage3Pro,
-        platform: Platforms.google,
-        service: Services.aiModelGateway
-      },
-      headDirectionChecker: {
-        service: Services.headDirectionChecker,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[4],
-        direction: Directions.leftSide
-      },
-      metadata: { ratio, dimensions },
-      order: 5,
-    },
-    {
-      imageGenerator: {
-        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-        negativePrompt: 'another person, altered face, rotated, blurred',
-        ratio,
-        imagePaths: [idPhotoSet.rightSide!],
-        temperature: 1.0,
-        uploadPath: imagePaths[5],
-        status: JobStatuses.pending,
-        model: Models.geminiImage3Pro,
-        platform: Platforms.google,
-        service: Services.aiModelGateway
-      },
-      headDirectionChecker: {
-        service: Services.headDirectionChecker,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[5],
-        direction: Directions.rightSide
-      },
-      metadata: { ratio, dimensions },
-      order: 6,
-    },
-    {
-      imageGenerator: {
-        prompt: `Change background to gray studio background. Preserve the exact identity, facial features, and likeness of the person from image 1 with 100% fidelity. Do not alter face shape, eye shape, eye color, eyebrows, nose, mouth, lips, jawline, skin tone, skin texture, freckles, moles, or any distinguishing features. Keep hair color, hairstyle, and hairline identical. Only the background changes — the person must be pixel-identical to the source.`,
-        negativePrompt: 'another person, altered face, rotated, blurred',
-        ratio,
-        imagePaths: [idPhotoSet.body!],
-        temperature: 1.0,
-        uploadPath: imagePaths[6],
-        status: JobStatuses.pending,
-        model: Models.geminiImage3Pro,
-        platform: Platforms.google,
-        service: Services.aiModelGateway
-      },
-      headDirectionChecker: {
-        service: Services.headDirectionChecker,
-        status: JobStatuses.pending,
-        imagePath: imagePaths[6],
-        direction: Directions.front
-      },
-      metadata: { ratio, dimensions },
-      order: 7,
-    },
   ]
 }

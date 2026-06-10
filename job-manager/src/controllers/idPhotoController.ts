@@ -9,7 +9,6 @@ import {
   ThumbnailMaker,
   HeadDirectionChecker,
   Directions,
-  ImageRatios,
   Cropper,
   AiModelGateway,
   Models,
@@ -73,7 +72,7 @@ export const genSyntheticFrontIdPhoto = async (req: Request, res: Response, next
       curRun: 0,
       order: 1,
       workflow: [input.imageGenerator, headDirectionChecker, thumbnailMaker],
-      metadata: input.metadata,
+      metadata: {},
       resultMediaPath: rawPath,
       resultThumbnailPath: thumbnailUploadPath,
     }
@@ -129,7 +128,7 @@ export const genSyntheticIdPhotos = async (req: Request, res: Response, next: Ne
         curRun: 0,
         order: input.order,
         workflow: [input.imageGenerator, input.headDirectionChecker, thumbnailMaker],
-        metadata: input.metadata,
+        metadata: {},
         resultMediaPath: rawPath,
         resultThumbnailPath: thumbnailUploadPath,
       }
@@ -224,10 +223,7 @@ export const genDigitalTwinIdPhoto = async (req: Request, res: Response, next: N
       curRun: 0,
       order: jobRequest.order,
       workflow: [headDirectionChecker, cropper, upscaler, removeBackground, imageResizer, thumbnailMaker],
-      metadata: {
-        ratio: ImageRatios['1:1'],
-        dimensions: '2048x2048',
-      },
+      metadata: {},
       resultMediaPath: generatorUploadPath,
       resultThumbnailPath: thumbnailUploadPath,
     }

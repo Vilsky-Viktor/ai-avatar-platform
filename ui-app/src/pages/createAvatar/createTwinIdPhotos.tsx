@@ -63,6 +63,7 @@ function CreateTwinIdPhotosPage() {
     const [uploadingIndices, setUploadingIndices] = useState<number[]>([]);
     const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
     const [fullscreen, setFullscreen] = useState<{ src: string; rect: DOMRect | null; thumbnailSrc?: string } | null>(null);
+    const [, setTick] = useState(0);
 
     const uploadedPhotosConfig: { 
         label: string; name: string; ref: React.RefObject<HTMLInputElement | null>; mode: CropperModes; direction: Directions 
@@ -100,6 +101,24 @@ function CreateTwinIdPhotosPage() {
 
     useEffect(() => {
         jobsRef.current = jobs;
+    }, [jobs]);
+
+    const processingStartRef = useRef<Record<string, number>>({});
+
+    useEffect(() => {
+        jobs.forEach((job) => {
+            if (!job?.id) return;
+            const isProcessing = job.status !== JobStatuses.completed && job.status !== JobStatuses.error;
+            if (isProcessing && !processingStartRef.current[job.id]) {
+                processingStartRef.current[job.id] = Date.now();
+            }
+        });
+        const hasProcessing = jobs.some(
+            (job) => job && job.status !== JobStatuses.completed && job.status !== JobStatuses.error,
+        );
+        if (!hasProcessing) return;
+        const interval = setInterval(() => setTick((previous) => previous + 1), 1000);
+        return () => clearInterval(interval);
     }, [jobs]);
 
     const listener = async (querySnap: QuerySnapshot) => {
@@ -437,6 +456,8 @@ function CreateTwinIdPhotosPage() {
                                 const rawImageSrc = photoData?.photo || photoData?.mediaUrl;
                                 const displaySrc = isCompleted ? (job.resultThumbnailUrl || job.resultMediaUrl) : rawImageSrc;
                                 const hasPhoto = !!displaySrc;
+                                const startMs = (job?.id && processingStartRef.current[job.id]) ? processingStartRef.current[job.id] : Date.now();
+                                const processingElapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
 
                                 return (
                                     <div
@@ -487,7 +508,12 @@ function CreateTwinIdPhotosPage() {
                                                 {isProcessing && (
                                                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 rounded-2xl gap-3 pointer-events-none">
                                                         <Loading size="md" color="text-white" className="" />
-                                                        <span className="text-[11px] uppercase tracking-[0.35em] text-white/80">Processing</span>
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <span className="text-[11px] uppercase tracking-[0.35em] text-white/80">Processing</span>
+                                                            <p className="text-[15px] font-mono font-light text-white/50 tracking-widest">
+                                                                {String(Math.floor(processingElapsed / 60)).padStart(2, '0')}:{String(processingElapsed % 60).padStart(2, '0')}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 )}
                                                 {hasError && (

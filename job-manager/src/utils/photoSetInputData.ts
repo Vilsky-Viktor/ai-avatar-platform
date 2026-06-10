@@ -4,7 +4,7 @@ import { IdPhotoSetPaths } from "../types/idPhotoSet";
 
 
 export const genWhatsappStickersData = (userId: string, avatarId: string, parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): {
-    imageGenerator: AiModelGateway, metadata: JobMetadata, order: number
+    imageGenerator: AiModelGateway, order: number
 }[] => {
     const ratio = ImageRatios['1:1'];
 
@@ -22,7 +22,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 1,
         },
         {
@@ -38,7 +37,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 2,
         },
         {
@@ -54,7 +52,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 3,
         },
         {
@@ -70,7 +67,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 4,
         },
         {
@@ -86,7 +82,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 5,
         },
         {
@@ -102,7 +97,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 6,
         },
         {
@@ -118,7 +112,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 7,
         },
         {
@@ -134,7 +127,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 8,
         },
         {
@@ -150,7 +142,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 9,
         },
         {
@@ -166,7 +157,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 10,
         },
         {
@@ -182,7 +172,6 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 11,
         },
     ]
@@ -190,7 +179,7 @@ export const genWhatsappStickersData = (userId: string, avatarId: string, parame
 
 
 export const genOutfitStylesData = (userId: string, avatarId: string, parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): {
-    imageGenerator: AiModelGateway, metadata: JobMetadata, order: number
+    imageGenerator: AiModelGateway, order: number
 }[] => {
     const { gender } = parameters;
     const isFemale = gender === 'female';
@@ -210,7 +199,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 1,
         },
         {
@@ -226,7 +214,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 2,
         },
         {
@@ -242,7 +229,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 3,
         },
         {
@@ -258,7 +244,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 4,
         },
         {
@@ -274,7 +259,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 5,
         },
         {
@@ -290,7 +274,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 6,
         },
         {
@@ -306,7 +289,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 7,
         },
         {
@@ -322,7 +304,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 8,
         },
         {
@@ -338,7 +319,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 9,
         },
         {
@@ -354,7 +334,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 10,
         },
         {
@@ -370,7 +349,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 11,
         },
         {
@@ -386,7 +364,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 12,
         },
         {
@@ -402,7 +379,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 13,
         },
         {
@@ -418,7 +394,6 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 14,
         },
         {
@@ -434,14 +409,13 @@ export const genOutfitStylesData = (userId: string, avatarId: string, parameters
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 15,
         },
     ]
 }
 
 export const genTravelingAroundTheWorldData = (userId: string, avatarId: string, parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): {
-    imageGenerator: AiModelGateway, metadata: JobMetadata, order: number
+    imageGenerator: AiModelGateway, order: number
 }[] => {
     const { gender } = parameters;
     const isFemale = gender === 'female';
@@ -461,7 +435,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 1,
         },
         {
@@ -477,7 +450,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 2,
         },
         {
@@ -493,7 +465,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 3,
         },
         {
@@ -509,7 +480,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 4,
         },
         {
@@ -525,7 +495,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 5,
         },
         {
@@ -541,7 +510,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 6,
         },
         {
@@ -557,7 +525,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 7,
         },
         {
@@ -573,7 +540,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 8,
         },
         {
@@ -589,7 +555,6 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 9,
         },
         {
@@ -605,14 +570,13 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 10,
         },
     ]
 }
 
 export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: AvatarParameters, idPhotoSet: IdPhotoSetPaths): {
-    imageGenerator: AiModelGateway, metadata: JobMetadata, order: number
+    imageGenerator: AiModelGateway, order: number
 }[] => {
     const { gender } = parameters;
     const isFemale = gender === 'female';
@@ -632,7 +596,6 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 1,
         },
         {
@@ -648,7 +611,6 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 2,
         },
         {
@@ -664,7 +626,6 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 3,
         },
         {
@@ -680,7 +641,6 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 4,
         },
         {
@@ -696,7 +656,6 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 5,
         },
         {
@@ -712,7 +671,6 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 6,
         },
         {
@@ -728,7 +686,6 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
                 platform: Platforms.google,
                 service: Services.aiModelGateway
             },
-            metadata: { ratio },
             order: 7,
         },
     ]

@@ -84,7 +84,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       maxRuns: 3,
       curRun: 0,
       workflow: [imageGenerator, thumbnailMaker],
-      metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
+      metadata: { userPrompt: jobRequest.prompt },
       resultMediaPath: generatorUploadPath,
       resultThumbnailPath: thumbnailUploadPath
     }
@@ -157,7 +157,7 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
         curRun: 0,
         order: input.order,
         workflow: [input.imageGenerator, thumbnailMaker],
-        metadata: {...input.metadata, userPrompt: input.imageGenerator.prompt},
+        metadata: {userPrompt: input.imageGenerator.prompt},
         resultMediaPath: input.imageGenerator.uploadPath!,
         resultThumbnailPath: thumbnailUploadPath,
       }
@@ -272,7 +272,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       maxRuns: 1,
       curRun: 0,
       workflow: [...workflow, thumbnailMaker],
-      metadata: { ratio: jobRequest.ratio, userPrompt: jobRequest.prompt },
+      metadata: { userPrompt: jobRequest.prompt },
       resultMediaPath: generatorUploadPath,
       resultThumbnailPath: thumbnailUploadPath,
     }
