@@ -26,7 +26,7 @@ function Header() {
                     <div className="p-2 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors duration-300">
                         <ScanFace size={22} className="text-primary" strokeWidth={1.5} />
                     </div>
-                    <span className="text-sm uppercase tracking-[0.25em] text-base-content/70 group-hover:text-base-content transition-colors duration-300">
+                    <span className="flex items-center gap-0 text-sm uppercase tracking-[0.25em] text-base-content/70 group-hover:text-base-content transition-colors duration-300">
                         loom24.ai
                     </span>
                 </Link>

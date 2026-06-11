@@ -409,10 +409,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
     return [
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a chic beige trench coat over a striped top, slim jeans, and tan leather ankle boots' : 'a navy wool coat over a white shirt, dark trousers, and dark leather oxford shoes'}. In front of the Eiffel Tower in Paris`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a chic beige trench coat over a striped top, slim jeans' : 'a navy wool coat over a white shirt, dark trousers'}. In front of the Eiffel Tower in Paris`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -424,10 +424,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'an elegant white linen sundress with a tan leather belt, and strappy tan leather sandals' : 'a light blue linen shirt, beige chinos, and brown leather loafers'}. In front of the Colosseum in Rome, Italy`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'an elegant white linen sundress with a tan leather belt' : 'a light blue linen shirt, beige chinos'}. In front of the Colosseum in Rome, Italy`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -439,10 +439,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a flowy beige maxi dress, a wide-brim straw hat, and tan flat leather sandals' : 'a beige linen shirt, khaki trousers, a wide-brim hat, and brown leather sandals'}. In front of the Pyramids of Giza in Egypt, with desert sand and camels in the background`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a flowy beige maxi dress, a wide-brim straw hat' : 'a beige linen shirt, khaki trousers, a wide-brim hat'}. In front of the Pyramids of Giza in Egypt, with desert sand and camels in the background`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -454,10 +454,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a casual white linen blouse, light blue jeans, and white leather sneakers' : 'a white t-shirt, beige cargo shorts, and white sneakers'}. Jerusalem old city background, Israel`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a casual white linen blouse, light blue jeans' : 'a white t-shirt, beige cargo shorts'}. Jerusalem old city background, Israel`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -469,10 +469,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a tropical floral sundress and flat woven sandals' : 'a light tropical short-sleeve shirt, beige shorts, and casual leather sandals'}. In front of temple in Bangkok, Thailand`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a tropical floral sundress' : 'a light tropical short-sleeve shirt, beige shorts'}. In front of temple in Bangkok, Thailand`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -484,10 +484,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a flowing earth-toned dress with a light scarf, and flat leather sandals' : 'a beige linen shirt, light trousers, a light scarf, and sturdy brown leather sandals'}. In front of the rock-hewn churches of Lalibela in Ethiopia`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a flowing earth-toned dress with a light scarf' : 'a beige linen shirt, light trousers, a light scarf'}. In front of the rock-hewn churches of Lalibela in Ethiopia`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -499,10 +499,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a long boho-style dress with a light shawl, and flat tan leather sandals' : 'a white linen shirt, beige trousers, and tan leather loafers'}. In front of the Hagia Sophia in Istanbul, Turkey`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a long boho-style dress with a light shawl' : 'a white linen shirt, beige trousers'}. In front of the Hagia Sophia in Istanbul, Turkey`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -514,10 +514,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a wool coat, knitted scarf, and black leather knee-high boots' : 'a heavy wool coat, dark scarf, and dark leather lace-up boots'}. In Red Square, Moscow, Russia, with light snow on the ground`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a wool coat, knitted scarf' : 'a heavy wool coat, dark scarf'}. In Red Square, Moscow, Russia, with light snow on the ground`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -529,10 +529,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a denim jacket, white t-shirt, blue jeans, and classic white sneakers' : 'a casual gray hoodie, blue jeans, and white sneakers'}. In Times Square, New York City, USA, with bright billboards in the background`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a denim jacket, white t-shirt, blue jeans' : 'a casual gray hoodie, blue jeans'}. In Times Square, New York City, USA, with bright billboards in the background`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -544,10 +544,10 @@ export const genTravelingAroundTheWorldData = (userId: string, avatarId: string,
         },
         {
             imageGenerator: {
-                prompt: `Front full body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a colorful embroidered blouse, denim shorts, and comfortable white sneakers' : 'a white embroidered linen shirt, beige shorts, and tan suede desert boots'}. In front of the Chichen Itza pyramid in Mexico`,
+                prompt: `Front upper body standing. Preserve exact identity from image 1, wearing ${isFemale ? 'a colorful embroidered blouse, denim shorts' : 'a white embroidered linen shirt, beige shorts'}. In front of the Chichen Itza pyramid in Mexico`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -570,7 +570,7 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
     return [
         {
             imageGenerator: {
-                prompt: `Three quarter to the right. Preserve exact identity from image 1, sitting on the back seat of a luxurious car with leather seats. Photo taken from the front passenger seat. Wearing ${isFemale ? 'a sleek black turtleneck under a tailored camel wool coat, a delicate gold chain necklace, and a small Hermès Kelly bag resting on the lap' : 'a fitted deep navy turtleneck, a sharp charcoal cashmere overcoat'}. Overcast daylight`,
+                prompt: `Upper body three quarter to the right. Preserve exact identity from image 1, sitting on the back seat of a luxurious car with leather seats. Photo taken from the front passenger seat. Wearing ${isFemale ? 'a sleek black turtleneck under a tailored camel wool coat, a delicate gold chain necklace, and a small Hermès Kelly bag resting on the lap' : 'a fitted deep navy turtleneck, a sharp charcoal cashmere overcoat'}. Overcast daylight`,
                 negativePrompt: '',
                 ratio,
                 imagePaths: [idPhotoSet.rightQuarter!, idPhotoSet.body!],
@@ -585,7 +585,7 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
         },
         {
             imageGenerator: {
-                prompt: `Front full body. Preserve exact identity from image 1, sitting in a private jet, cream leather seat, oval window on the left showing blue sky. Wearing ${isFemale ? 'a caramel cashmere wrap cardigan over a cream silk blouse, tailored wide-leg ivory trousers, a gold Cartier Love bracelet on the wrist, and a Hermès Birkin bag visible beside the seat' : 'a fitted off-white linen shirt with the top two buttons open, tailored sand-colored trousers'}`,
+                prompt: `Front upper body. Preserve exact identity from image 1, sitting in a private jet, cream leather seat, oval window on the left showing blue sky. Wearing ${isFemale ? 'a caramel cashmere wrap cardigan over a cream silk blouse, tailored wide-leg ivory trousers, a gold Cartier Love bracelet on the wrist, and a Hermès Birkin bag visible beside the seat' : 'a fitted off-white linen shirt with the top two buttons open, tailored sand-colored trousers'}`,
                 negativePrompt: '',
                 ratio,
                 imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
@@ -615,7 +615,7 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
         },
         {
             imageGenerator: {
-                prompt: `Front full body. Preserve exact identity from image 1, standing at the yard of luxury villa. Wearing ${isFemale ? 'a fitted ribbed white tank top tucked into high-waisted wide-leg tailored trousers in cream, pointed-toe slingback heels in nude, a structured mini shoulder bag in soft beige, delicate layered gold jewelry' : 'a white cotton t-shirt, white shorts, clean white minimalist leather sneakers, and a matte silver watch'}`,
+                prompt: `Front upper body. Preserve exact identity from image 1, standing at the yard of luxury villa. Wearing ${isFemale ? 'a fitted ribbed white tank top tucked into high-waisted wide-leg tailored trousers in cream, a structured mini shoulder bag in soft beige, delicate layered gold jewelry' : 'a white cotton t-shirt, white shorts and a matte silver watch'}`,
                 negativePrompt: '',
                 ratio,
                 imagePaths: [idPhotoSet.body!, idPhotoSet.front!, idPhotoSet.frontSmile!],
@@ -630,10 +630,10 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
         },
         {
             imageGenerator: {
-                prompt: `Full body front shot. Preserve exact identity from image 1, reclining on a sunbed at an overwater bungalow resort, turquoise ocean and palm trees in the background, tropical cocktail on the side table. Wearing ${isFemale ? 'a luxurious coral silk slip dress, and layered delicate gold necklaces' : 'a crisp white open-collar linen shirt, tailored light blue linen shorts'}`,
+                prompt: `Upper body front shot. Preserve exact identity from image 1, reclining on a sunbed at an overwater bungalow resort, turquoise ocean and palm trees in the background, tropical cocktail on the side table. Wearing ${isFemale ? 'a luxurious coral silk slip dress, and layered delicate gold necklaces' : 'a crisp white open-collar linen shirt, tailored light blue linen shorts'}`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!, idPhotoSet.frontSmile!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.frontSmile!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,
@@ -645,10 +645,10 @@ export const genLuxuryLifeData = (userId: string, avatarId: string, parameters: 
         },
         {
             imageGenerator: {
-                prompt: `Front full body. Preserve exact identity from image 1, standing inside a Louis Vuitton flagship boutique, neutral expression, iconic monogram displays. Wearing ${isFemale ? 'a tailored ivory blazer over a black silk camisole, high-waisted black wide-leg trousers, black strappy heeled sandals, and a Louis Vuitton Speedy 25 bag held in the hand' : 'a fitted black ribbed turtleneck, tailored dark charcoal slim-fit trousers, polished black Chelsea boots, and a Louis Vuitton Keepall bag held in the hand'}`,
+                prompt: `Front upper body. Preserve exact identity from image 1, standing inside a Louis Vuitton flagship boutique, neutral expression, iconic monogram displays. Wearing ${isFemale ? 'a tailored ivory blazer over a black silk camisole, high-waisted black wide-leg trousers and a Louis Vuitton Speedy 25 bag held in the hand' : 'a fitted black ribbed turtleneck, tailored dark charcoal slim-fit trousers and a Louis Vuitton Keepall bag held in the hand'}`,
                 negativePrompt: '',
                 ratio,
-                imagePaths: [idPhotoSet.body!, idPhotoSet.front!],
+                imagePaths: [idPhotoSet.front!, idPhotoSet.body!],
                 uploadPath: `media/${userId}-user/avatars/${avatarId}-avatar/images/${uuid.v4()}.png`,
                 temperature: 0,
                 status: JobStatuses.pending,

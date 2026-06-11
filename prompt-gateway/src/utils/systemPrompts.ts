@@ -23,7 +23,7 @@ Directions:
 - side profile to the right
 
 Rules:
-- Pick the best 1-4 id photos for the given scene prompt
+- Pick the best 2-4 id photos for the given scene prompt
 - Prefer front/quarter for face-forward scenes
 - Prefer profile/quarter for side-on scenes
 - Use front smile ID photo only in front shots if requested in the prompt and put it in front of others

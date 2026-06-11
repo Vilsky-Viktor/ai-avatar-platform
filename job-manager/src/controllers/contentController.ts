@@ -64,7 +64,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const idPhotoEnd = refCount + idPhotos.length;
 
     const imageGenerator: AiModelGateway = {
-      prompt: `${jobRequest.prompt}. ${instruction}. Preserve the exact identity from image ${idPhotoStart}`,
+      prompt: `${jobRequest.prompt}. ${instruction}. Preserve the exact identity from image ${idPhotoStart} through ${idPhotoEnd}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...(jobRequest.mediaPaths ?? []), ...idPhotos],
       temperature: 0,
