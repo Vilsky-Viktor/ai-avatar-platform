@@ -70,7 +70,7 @@ function AvatarsPage() {
                                 <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-base-content/10" />
                                 <div className="absolute bottom-3 right-3 w-5 h-5 border-b border-r border-base-content/10" />
                                 <div className="flex items-center justify-center w-full h-full">
-                                    <ScanFace size={80} strokeWidth={0.8} className="text-base-content/10" />
+                                    <ScanFace size={100} strokeWidth={0.8} className="text-base-content/10" />
                                 </div>
                             </div>
                         ))}

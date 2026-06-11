@@ -3,6 +3,7 @@ import { type Avatar, AvatarTypes } from '@loom24/shared/types';
 import { useEffect, useState } from 'react';
 import { getMediaUrlFromPath } from '../../services/storage';
 import { useNavigate } from 'react-router-dom';
+import Loading from '../Loading';
 
 type PropType = {
     avatar: Avatar;
@@ -23,7 +24,7 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
             .finally(() => setImageLoading(false));
     }, []);
 
-    const noImage = imageLoading || !imageSrc;
+    const noImage = !imageSrc;
 
     return (
         <div className="group relative p-[1.5px] rounded-2xl aspect-square overflow-hidden">
@@ -57,9 +58,13 @@ const AvatarCard = ({ avatar, onDelete }: PropType) => {
                     />
 
                     <figure className="h-full w-full overflow-hidden relative">
-                        {noImage ? (
+                        {imageLoading ? (
                             <div className="flex items-center justify-center w-full h-full bg-base-200/50">
-                                <ScanFace size={80} strokeWidth={0.8} className="text-base-content/15" />
+                                <Loading size="xl" />
+                            </div>
+                        ) : noImage ? (
+                            <div className="flex items-center justify-center w-full h-full bg-base-200/50">
+                                <ScanFace size={100} strokeWidth={0.8} className="text-base-content/15" />
                                 <div className="absolute top-3 left-3 w-5 h-5 border-t border-l border-base-content/10 pointer-events-none" />
                                 <div className="absolute top-3 right-3 w-5 h-5 border-t border-r border-base-content/10 pointer-events-none" />
                                 <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-base-content/10 pointer-events-none" />
