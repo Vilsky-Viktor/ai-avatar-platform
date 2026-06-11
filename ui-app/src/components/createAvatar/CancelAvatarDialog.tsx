@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Trash2 } from 'lucide-react';
+import Loading from '../Loading';
 
 type Props = {
     isOpen: boolean;
@@ -43,7 +44,7 @@ function CancelAvatarDialog({ isOpen, cancelLoading, onClose, onConfirm }: Props
                             disabled={cancelLoading}
                         >
                             {cancelLoading
-                                ? <span className="loading loading-dots loading-xs" />
+                                ? <Loading size="xs" className="" />
                                 : <Trash2 size={13} strokeWidth={2} />
                             }
                             Discard

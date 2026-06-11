@@ -366,7 +366,7 @@ function MediaCard({
                             }}
                         >
                             {isDownloading
-                                ? <span className="loading loading-dots loading-xs text-white" />
+                                ? <Loading size="xs" color="text-white" className="" />
                                 : <CloudDownload size={20} className="text-white" />
                             }
                         </button>

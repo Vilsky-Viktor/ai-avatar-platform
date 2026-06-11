@@ -11,8 +11,9 @@ namespace Google {
     }
 
     export enum PersonGenerations {
-        dontAllow = 'dont_allow',
-        allowAdult = 'allow_adult'
+        dontAllow = 'DONT_ALLOW',
+        allowAdult = 'ALLOW_ADULT',
+        allowAll = 'ALLOW_ALL'
     }
 
     export enum EditModes {

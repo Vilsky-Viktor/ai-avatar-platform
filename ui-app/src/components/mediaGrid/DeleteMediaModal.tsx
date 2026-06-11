@@ -1,4 +1,5 @@
 import { Trash2 } from 'lucide-react';
+import Loading from '../Loading';
 import { createPortal } from 'react-dom';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
@@ -41,7 +42,7 @@ function DeleteMediaModal({ isDeleting, onConfirm, onCancel }: Props) {
                             className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] cursor-pointer border border-error/20 text-error/50 hover:border-error/50 hover:text-error transition-all duration-300"
                         >
                             {isDeleting
-                                ? <span className="loading loading-dots loading-xs" />
+                                ? <Loading size="xs" className="" />
                                 : <Trash2 size={13} strokeWidth={2} />
                             }
                             Delete

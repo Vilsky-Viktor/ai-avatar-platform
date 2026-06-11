@@ -421,7 +421,7 @@ function AssignVoicePage() {
                                                                 `}
                                                             >
                                                                 {loadingId === voice.id
-                                                                    ? <span className="loading loading-dots loading-xs" />
+                                                                    ? <Loading size="xs" className="" />
                                                                     : isPlaying
                                                                         ? <Pause size={15} />
                                                                         : <Play size={15} className="ml-0.5" />

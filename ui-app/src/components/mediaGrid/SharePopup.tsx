@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Loading from '../Loading';
 import { createPortal } from 'react-dom';
 import { Check, Link } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -162,7 +163,7 @@ function SharePopup({ url, onClose }: Props) {
                         >
                             <div className="w-14 h-14 rounded-2xl bg-base-300 flex items-center justify-center transition-transform group-hover:scale-110 duration-200">
                                 {sharing
-                                    ? <span className="loading loading-dots loading-sm text-base-content/60" />
+                                    ? <Loading size="sm" color="text-base-content/60" className="" />
                                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-base-content/60">
                                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                                         <polyline points="16 6 12 2 8 6" />

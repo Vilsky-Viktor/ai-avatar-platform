@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
+import Loading from '../Loading';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { PhotoSetType } from '@loom24/shared/types';
@@ -78,7 +79,7 @@ function GenPhotoSetModal({ isOpen, onClose, onGenerate }: Props) {
                                 className="group shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loadingId === set.id
-                                    ? <span className="loading loading-dots loading-xs" />
+                                    ? <Loading size="xs" className="" />
                                     : <Sparkles size={14} className="group-hover:animate-pulse" />
                                 }
                                 <span className="text-[11px] uppercase tracking-[0.2em]">Generate</span>

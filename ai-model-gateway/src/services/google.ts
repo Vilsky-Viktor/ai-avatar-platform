@@ -72,7 +72,7 @@ export const genGeminiImage3Pro = async (data: AiModelGateway): Promise<platform
             aspectRatio: data.ratio as googleTypes.GeminiImageConfig['aspectRatio'],
             imageOutputFormat: OutputMimeTypes.png,
             imageSize: googleTypes.ImageSizes._2k,
-            personGeneration: googleTypes.PersonGenerations.allowAdult,
+            personGeneration: googleTypes.PersonGenerations.allowAll,
             editMode: googleTypes.EditModes.default,
             enhancePrompt: false
         },

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Loading from '../Loading';
 import { handleCancel } from '../../utils/avatarCreation';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, X, Check } from 'lucide-react';
@@ -67,7 +68,7 @@ function BottomDock({ avatarId, canProceed, nextStep, previousStep, finish }: Pr
                             onClick={next}
                         >
                             {nextLoading
-                                ? <span className="loading loading-dots loading-sm" />
+                                ? <Loading size="sm" className="" />
                                 : finish
                                     ? <Check size={16} strokeWidth={1.5} />
                                     : <ArrowRight size={16} strokeWidth={1.5} />

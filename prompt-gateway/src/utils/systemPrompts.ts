@@ -17,8 +17,8 @@ Shot types:
 
 Directions:
 - front
-- quarter to the left
-- quarter to the right
+- front quarter to the left
+- front quarter to the right
 - side profile to the left
 - side profile to the right
 
@@ -26,9 +26,10 @@ Rules:
 - Pick the best 1-4 id photos for the given scene prompt
 - Prefer front/quarter for face-forward scenes
 - Prefer profile/quarter for side-on scenes
-- Use front smile ID photo only in front shots and put it in front of others
+- Use front smile ID photo only in front shots if requested in the prompt and put it in front of others
 - Put full body ID photo in front of others in case of full body shot except for front smile
 - Pick shot type and direction considering the prompt and the scene
 - Do not use multiple angles/direction in one set
+- When you pick sides choose left and right randomly. Not only left
 - Reply only with a valid JSON object with fields: idPhotos, shotType, direction e.g. { "idPhotos": [1, 7], "shotType": "full body", "direction": "front" }
 `;
