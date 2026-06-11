@@ -19,6 +19,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const [prompt, setPrompt] = useState('');
     const [ratio, setImageRatio] = useState<ImageRatio>('3:4');
     const [loading, setLoading] = useState(false);
+    const [referenceImagesEnabled, setReferenceImagesEnabled] = useState(false);
     const [slots, setSlots] = useState<(File | null)[]>([...EMPTY_SLOTS]);
     const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -31,6 +32,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     useEffect(() => {
         if (!isOpen) {
             setPrompt('');
+            setReferenceImagesEnabled(false);
             setSlots([...EMPTY_SLOTS]);
             setPreviews([null, null, null]);
         }
@@ -81,7 +83,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     const handleGenerate = async () => {
         if (!canGenerate()) return;
         setLoading(true);
-        await onGenerate(prompt.trim(), ratio, slots.filter((f): f is File => f !== null));
+        await onGenerate(prompt.trim(), ratio, referenceImagesEnabled ? slots.filter((f): f is File => f !== null) : []);
         setLoading(false);
     };
 
@@ -112,50 +114,66 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                 </div>
 
                 {/* Reference images */}
-                <div className="flex flex-col gap-2">
-                    <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Reference images · optional</span>
-                    <div className="flex items-center gap-3">
-                        {slots.map((_slot, idx) => (
-                            <div key={idx} className="group relative flex-1 aspect-square rounded-xl overflow-hidden border border-base-content/10">
-                                {previews[idx] ? (
-                                    <>
-                                        <img
-                                            src={previews[idx]!}
-                                            onClick={() => insertReference(idx)}
-                                            className="w-full h-full object-cover object-top cursor-pointer"
-                                        />
-                                        <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] uppercase tracking-widest pointer-events-none">
-                                            image {idx + 1}
-                                        </span>
-                                        <button
-                                            onClick={() => removeSlot(idx)}
-                                            className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
-                                        >
-                                            <Trash2 size={15} className="text-white" />
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button
-                                        onClick={() => fileInputRefs[idx].current?.click()}
-                                        className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
-                                    >
-                                        <ImagePlus size={24} strokeWidth={1.5} />
-                                        <span className="text-[10px] uppercase tracking-widest text-center leading-relaxed">Add<br/>image</span>
-                                    </button>
-                                )}
-                                <input
-                                    ref={fileInputRefs[idx]}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={e => handleFileChange(idx, e)}
-                                />
+                <div className={`rounded-2xl border transition-all duration-300 ${referenceImagesEnabled ? 'border-primary/30 bg-primary/[0.03]' : 'border-base-content/10'}`}>
+                    <label className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer">
+                        <div className="flex items-center gap-3">
+                            <ImagePlus size={22} strokeWidth={1.2} className={`shrink-0 transition-colors duration-300 ${referenceImagesEnabled ? 'text-primary' : 'text-base-content/25'}`} />
+                            <div>
+                                <p className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${referenceImagesEnabled ? 'text-primary' : 'text-base-content/50'}`}>Add reference images</p>
+                                <p className="text-[10px] text-base-content/30 mt-0.5">Show AI visual references to use in the scene</p>
                             </div>
-                        ))}
-                    </div>
-                    <p className="text-[11px] text-base-content/25 leading-relaxed">
-                        Upload reference images, then click on them to insert their tags into the prompt — AI will use them as visual references at those points.
-                    </p>
+                        </div>
+                        <div className={`relative w-9 h-5 rounded-full transition-colors duration-300 shrink-0 ${referenceImagesEnabled ? 'bg-primary/30' : 'bg-base-content/10'}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 ${referenceImagesEnabled ? 'left-[18px] bg-primary' : 'left-0.5 bg-base-content/30'}`} />
+                        </div>
+                        <input type="checkbox" checked={referenceImagesEnabled} onChange={e => setReferenceImagesEnabled(e.target.checked)} className="hidden" />
+                    </label>
+
+                    {referenceImagesEnabled && (
+                        <div className="px-5 pb-5">
+                            <p className="text-[11px] text-base-content/30 leading-relaxed mb-4">
+                                Upload reference images, then click on them to insert their tags into the prompt — AI will use them as visual references at those points.
+                            </p>
+                            <div className="flex items-center gap-3">
+                                {slots.map((_slot, idx) => (
+                                    <div key={idx} className="group relative flex-1 aspect-square rounded-xl overflow-hidden border border-base-content/10">
+                                        {previews[idx] ? (
+                                            <>
+                                                <img
+                                                    src={previews[idx]!}
+                                                    onClick={() => insertReference(idx)}
+                                                    className="w-full h-full object-cover object-top cursor-pointer"
+                                                />
+                                                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] uppercase tracking-widest pointer-events-none">
+                                                    image {idx + 1}
+                                                </span>
+                                                <button
+                                                    onClick={() => removeSlot(idx)}
+                                                    className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                                                >
+                                                    <Trash2 size={15} className="text-white" />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={() => fileInputRefs[idx].current?.click()}
+                                                className="w-full h-full flex flex-col items-center justify-center gap-2 text-base-content/30 hover:text-primary transition-all cursor-pointer border border-dashed border-base-content/20 hover:border-primary/50 rounded-xl"
+                                            >
+                                                <ImagePlus size={24} strokeWidth={1.5} />
+                                            </button>
+                                        )}
+                                        <input
+                                            ref={fileInputRefs[idx]}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={e => handleFileChange(idx, e)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Aspect ratio */}

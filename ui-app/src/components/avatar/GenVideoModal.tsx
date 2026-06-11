@@ -42,7 +42,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
     const [error, setError] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<{ path: string; url: string; thumbnailUrl?: string } | null>(null);
     const [selectorOpen, setSelectorOpen] = useState(false);
-    const [lengthSec, setLengthSec] = useState(3);
+    const [lengthSec, setLengthSec] = useState(5);
     const [generateVoice, setGenerateVoice] = useState(false);
     const [voiceMode, setVoiceMode] = useState<VoiceMode>('text');
     const [audioText, setAudioText] = useState('');
