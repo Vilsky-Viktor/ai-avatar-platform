@@ -54,7 +54,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       return idPhotosByOrder[order];
     })
 
-    const instruction = `${promptGateway.result.shotType} shot ${promptGateway.result.direction} view with ${promptGateway.result.expression} expression`
+    const instruction = `${promptGateway.result.direction} ${promptGateway.result.shotType}`;
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
     const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-thumbnail.jpg`
@@ -64,7 +64,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const idPhotoEnd = refCount + idPhotos.length;
 
     const imageGenerator: AiModelGateway = {
-      prompt: `${instruction}. ${jobRequest.prompt}. Preserve the exact identity from image ${idPhotoStart}`,
+      prompt: `${jobRequest.prompt}. ${instruction}. Preserve the exact identity from image ${idPhotoStart}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...(jobRequest.mediaPaths ?? []), ...idPhotos],
       temperature: 0,

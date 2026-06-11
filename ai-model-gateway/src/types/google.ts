@@ -33,6 +33,7 @@ namespace Google {
         imageSize?: ImageSizes;
         imageOutputFormat?: OutputMimeTypes;
         editMode: EditModes;
+        enhancePrompt: boolean;
     }
 
     export type GeminiImage3Pro = {

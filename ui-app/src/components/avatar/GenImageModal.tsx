@@ -4,6 +4,7 @@ import type { Avatar } from '@loom24/shared/types';
 import { type ImageRatio, IMAGE_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import Loading from '../Loading';
 
 const EMPTY_SLOTS: [null, null, null] = [null, null, null];
 
@@ -195,7 +196,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                         className="group flex items-center gap-3 px-7 py-3.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary hover:border-primary text-primary hover:text-primary-content transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         {loading
-                            ? <span className="loading loading-dots loading-xs" />
+                            ? <Loading size="xs" color="text-primary" className="" />
                             : <Sparkles size={16} className="group-hover:animate-pulse" />
                         }
                         <span className="text-sm uppercase tracking-[0.2em]">Generate</span>

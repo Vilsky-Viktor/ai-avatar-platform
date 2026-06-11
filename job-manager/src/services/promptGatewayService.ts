@@ -8,7 +8,6 @@ interface SelectIdPhotosResponse {
         idPhotos: number[];
         shotType: string;
         direction: string;
-        expression: string;
     };
 }
 
