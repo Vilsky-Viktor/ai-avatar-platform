@@ -4,7 +4,7 @@ from .video import VideoRatios
 from .voice import Voice
 from .user import User
 from .job import (
-    ShotTypes, MediaTypes, JobTargets, JobStatuses,
+    MediaTypes, JobTargets, JobStatuses,
     Directions, Platforms, Models, Services, JobMetadata, CropperModes,
     StepBase, AiModelGatewayStep, FaceMatcherStep, HeadDirectionCheckerStep,
     ThumbnailMakerStep, CropperStep, WorkflowStep,
@@ -19,7 +19,7 @@ __all__ = [
     "VideoRatios",
     "Voice",
     "User",
-    "ShotTypes", "MediaTypes", "JobTargets", "JobStatuses",
+    "MediaTypes", "JobTargets", "JobStatuses",
     "Directions", "Platforms", "Models", "Services", "JobMetadata", "CropperModes",
     "StepBase", "AiModelGatewayStep", "FaceMatcherStep", "HeadDirectionCheckerStep",
     "ThumbnailMakerStep", "CropperStep", "WorkflowStep",

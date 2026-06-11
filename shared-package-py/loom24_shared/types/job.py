@@ -10,11 +10,6 @@ from .image import ImageRatios
 from .video import VideoRatios
 
 
-class ShotTypes(str, Enum):
-    upperBody = 'upperBody'
-    fullBody = 'fullBody'
-
-
 class MediaTypes(str, Enum):
     image = 'image'
     video = 'video'
@@ -167,8 +162,6 @@ class PhotoJobRequest(BaseModel):
     ratio: ImageRatios
     prompt: str
     mediaPaths: Optional[List[str]] = None
-    shotType: ShotTypes
-    direction: Directions
 
 
 class VideoJobRequest(BaseModel):

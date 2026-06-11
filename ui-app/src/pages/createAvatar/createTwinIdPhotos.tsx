@@ -104,8 +104,9 @@ function CreateTwinIdPhotosPage() {
 
 
     const listener = async (querySnap: QuerySnapshot) => {
-        for (const docSnap of querySnap.docs) {
-            const job = normalizeJob(docSnap.data()) as Job;
+        for (const change of querySnap.docChanges()) {
+            if (change.type === 'removed') continue;
+            const job = normalizeJob(change.doc.data()) as Job;
 
             if (job.status === JobStatuses.completed && job.resultMediaPath) {
                 job.resultMediaUrl = await getMediaUrlFromPath(job.resultMediaPath);

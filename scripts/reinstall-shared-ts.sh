@@ -28,6 +28,7 @@ JS_SERVICES=(
     workflow-manager
     thumbnail-maker
     image-resizer
+    prompt-gateway
 )
 
 FAILED=()

@@ -2,10 +2,6 @@ import { ImageRatios } from './image';
 import { VideoRatios } from './video';
 import type { AvatarParameters } from './avatar';
 
-export enum ShotTypes {
-  upperBody = 'upperBody',
-  fullBody = 'fullBody',
-}
 
 export enum CropperModes {
   front = 'front',
@@ -35,8 +31,6 @@ export type PhotoJobRequest = {
   ratio: ImageRatios;
   prompt: string;
   mediaPaths?: string[];
-  shotType: ShotTypes,
-  direction: Directions,
 }
 
 export type VideoJobRequest = {

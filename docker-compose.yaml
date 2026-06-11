@@ -116,6 +116,29 @@ services:
       - JOBS_COLLECTION_NAME=jobs
       - WORKFLOW_MANAGER_TOPIC=workflow-manager
       - AVATAR_URL=http://avatar:3200
+      - PROMPT_GATEWAY_URL=http://prompt-gateway:3400
+
+  prompt-gateway:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./prompt-gateway
+      dockerfile: Dockerfile.dev
+      secrets:
+        - gcp_key
+    ports:
+      - "3400:3400"
+    volumes:
+      - ./prompt-gateway:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - PORT=3400
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=prompt-gateway
 
   voice:
     <<: *default-dns

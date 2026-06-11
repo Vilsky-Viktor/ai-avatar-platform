@@ -15,8 +15,6 @@ import {
   Platforms,
   Services,
   ThumbnailMaker,
-  Directions,
-  ShotTypes,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import {
@@ -29,6 +27,7 @@ import { getAvatarById } from '../services/avatarService';
 import uuid from 'uuid';
 import { genOutfitStylesData, genTravelingAroundTheWorldData, genLuxuryLifeData, genWhatsappStickersData } from '../utils/photoSetInputData';
 import { IdPhotoSetPaths } from '../types/idPhotoSet';
+import { selectIdPhotos } from '../services/promptGatewayService';
 
 
 const WORKFLOW_MANAGER_TOPIC = process.env.WORKFLOW_MANAGER_TOPIC || 'workflow-manager';
@@ -46,41 +45,16 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
 
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotosByOrder = Object.fromEntries(idPhotoJobs.map((job: Job) => [job.order!, job.resultMediaPath]));
-    const idPhotos: string[] = []
-    let instructionPrompt = '';
+    
+    const promptGateway = await selectIdPhotos(userId, jobRequest.prompt);
 
-    switch (jobRequest.direction) {
-      case Directions.leftQuarter:
-        idPhotos.push(idPhotosByOrder[3]);
-        instructionPrompt += 'Three-quarter to the left';
-        break;
-      case Directions.rightQuarter:
-        idPhotos.push(idPhotosByOrder[4]);
-        instructionPrompt += 'Three-quarter to the right';
-        break;
-      case Directions.leftSide:
-        idPhotos.push(idPhotosByOrder[5]);
-        instructionPrompt += 'Side profile to the left';
-        break;
-      case Directions.rightSide:
-        idPhotos.push(idPhotosByOrder[6]);
-        instructionPrompt += 'Side profile to the right';
-        break;
-      default:
-        idPhotos.push(idPhotosByOrder[1]);
-        instructionPrompt += 'Front';
-    }
+    logger.info(`Selected ID photos and instruciton ${JSON.stringify(promptGateway.result)}`)
 
-    switch (jobRequest.shotType) {
-      case ShotTypes.fullBody:
-        idPhotos.push(idPhotosByOrder[7]);
-        instructionPrompt += ' full body shot';
-        break;
-      default:
-        instructionPrompt += ' upper body shot';
-    }
+    const idPhotos: string[] = promptGateway.result.idPhotos.map((order: number) => {
+      return idPhotosByOrder[order];
+    })
 
-    idPhotos.push(idPhotosByOrder[2])
+    const instruction = `${promptGateway.result.shotType} shot ${promptGateway.result.direction} view with ${promptGateway.result.expression} expression`
 
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}.png`;
     const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/images/${imageId}-thumbnail.jpg`
@@ -90,7 +64,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
     const idPhotoEnd = refCount + idPhotos.length;
 
     const imageGenerator: AiModelGateway = {
-      prompt: `${jobRequest.prompt}. ${instructionPrompt}. Preserve the exact identity from images ${idPhotoStart} to ${idPhotoEnd}.`,
+      prompt: `${instruction}. ${jobRequest.prompt}. Preserve the exact identity from image ${idPhotoStart}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...(jobRequest.mediaPaths ?? []), ...idPhotos],
       temperature: 0,

@@ -15,7 +15,7 @@ import GenPhotoSetModal from '../components/avatar/GenPhotoSetModal';
 import GenVideoModal from '../components/avatar/GenVideoModal';
 import GenAudioModal from '../components/avatar/GenAudioModal';
 import { type Job, type PhotoJobRequest, type PhotoSetJobRequest, type VideoJobRequest, type AudioJobRequest, JobStatuses, JobTargets, MediaTypes } from '@loom24/shared/types';
-import { Directions, ImageRatios, ShotTypes, VideoRatios } from '@loom24/shared/types';
+import { ImageRatios, VideoRatios } from '@loom24/shared/types';
 import type { VideoRatio } from '../types/image';
 import { listenToCollectionByAvatarId } from '../services/db';
 import type { QuerySnapshot } from 'firebase/firestore';
@@ -72,8 +72,9 @@ function AvatarPage() {
         if (!avatar.id || !user?.id) return;
 
         const unsubscribe = listenToCollectionByAvatarId('jobs', user.id, avatar.id, async (querySnap: QuerySnapshot) => {
-            for (const docSnap of querySnap.docs) {
-                const job = normalizeJob(docSnap.data());
+            for (const change of querySnap.docChanges()) {
+                if (change.type === 'removed') continue;
+                const job = normalizeJob(change.doc.data());
 
                 if (job.status === JobStatuses.completed && job.resultMediaPath) {
                     job.resultMediaUrl = await getMediaUrlFromPath(job.resultMediaPath);
@@ -152,7 +153,7 @@ function AvatarPage() {
         scrollToTop();
     };
 
-    const handleGenerateImage = async (prompt: string, ratio: string, imageFiles: File[], direction: Directions, shotType: ShotTypes) => {
+    const handleGenerateImage = async (prompt: string, ratio: string, imageFiles: File[]) => {
         const uploadedPaths: string[] = [];
 
         for (const file of imageFiles) {
@@ -168,14 +169,12 @@ function AvatarPage() {
             uploadedPaths.push(storedPath);
         }
 
-        const jobRequest: PhotoJobRequest = {
+        const jobRequest = {
             prompt,
             mediaPaths: uploadedPaths,
             ratio: ratio as ImageRatios,
             avatarId: avatar.id!,
-            direction,
-            shotType,
-        };
+        } as PhotoJobRequest;
 
         const job = await genAvatarPhoto(jobRequest);
         pushJobs([job]);
