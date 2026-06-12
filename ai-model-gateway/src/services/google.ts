@@ -65,8 +65,8 @@ export const genGeminiImage3Pro = async (data: AiModelGateway): Promise<platform
 
     const config: googleTypes.GeminiImage3Pro = {
         candidateCount: 1,
-        topP: 0.8,
-        topK: 20,
+        topP: 0.85,
+        topK: 40,
         temperature: data.temperature,
         imageConfig: {
             aspectRatio: data.ratio as googleTypes.GeminiImageConfig['aspectRatio'],

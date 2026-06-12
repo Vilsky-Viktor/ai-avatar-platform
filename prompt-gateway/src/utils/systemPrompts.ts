@@ -10,26 +10,30 @@ Available ID photos:
 6 - right side profile closeup, neutral expression
 7 - full body, neutral expression
 
-Shot types:
-- closeup
-- upper body
-- full body
-
 Directions:
 - front
-- front quarter to the left
-- front quarter to the right
-- side profile to the left
-- side profile to the right
+- leftQuarter
+- rightQuarter
+- leftSide
+- rightSide
+
+Shot type:
+- closeup
+- upperBody
+- fullBody
+
+Available ID photo sets:
+- [1,3,4] (front)
+- [3,5] (left quarter)
+- [4,6] (right quarter)
+- [5,3] (left side)
+- [6,4] (right side)
 
 Rules:
-- Pick the best 2-4 id photos for the given scene prompt
-- Prefer front/quarter for face-forward scenes
-- Prefer profile/quarter for side-on scenes
-- Use front smile ID photo only in front shots if requested in the prompt and put it in front of others
-- Put full body ID photo in front of others in case of full body shot except for front smile
-- Pick shot type and direction considering the prompt and the scene
-- Do not use multiple angles/direction in one set
-- When you pick sides choose left and right randomly. Not only left
-- Reply only with a valid JSON object with fields: idPhotos, shotType, direction e.g. { "idPhotos": [1, 7], "shotType": "full body", "direction": "front" }
+- Pick the best ID photo set for the given prompt
+- Pick direction depending on the demends of the prompt
+- If the prompt does not specify direction pick the best for the described scene
+- If any type of emotion requested in the prompt add ID photo 2 to the end of the array eg. [1,3,4,2]
+- if full body shot requested add ID photo 7 to the second index eg. [1,7,3,4]
+- Reply only with a valid JSON object with fields: idPhotos, direction, shotType e.g. { "idPhotos": [1,3,4], direction: "front", shotType: "upper body" }
 `;

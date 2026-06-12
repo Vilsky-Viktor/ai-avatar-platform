@@ -6,8 +6,8 @@ interface SelectIdPhotosResponse {
     prompt: string;
     result: {
         idPhotos: number[];
-        shotType: string;
         direction: string;
+        shotType: string;
     };
 }
 
