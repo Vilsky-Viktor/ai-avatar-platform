@@ -27,7 +27,7 @@ const isNonRetryable = (error: any): boolean => {
   const status = error?.status ?? error?.response?.status;
   if (status && new Set([400, 401, 403, 404, 422]).has(status)) return true;
   const msg: string = error?.message ?? error?.response?.data?.error?.message ?? '';
-  return [/inappropriat/i, /invalid/i, /not.found/i, /forbidden/i, /unauthorized/i, /IMAGE_SAFETY/i, /billing/i].some(p => p.test(msg));
+  return [/inappropriat/i, /invalid/i, /not.found/i, /forbidden/i, /unauthorized/i, /safety/i, /prohibited/i, /billing/i].some(p => p.test(msg));
 };
 
 const withRetry = async <T>(fn: () => Promise<T>, context: object): Promise<T> => {
