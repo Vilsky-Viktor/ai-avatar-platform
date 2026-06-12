@@ -3,7 +3,7 @@ import { useApp } from '../providers/ContextProvider';
 import { signOut } from "firebase/auth";
 import { auth } from '../firebase';
 import { ThemeColor } from '../types/settings';
-import { ScanFace, HeartPulse } from 'lucide-react';
+import { HeartPulse } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function Header() {
@@ -22,13 +22,8 @@ function Header() {
     return (
         <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between px-6 pt-4 pointer-events-none">
             <div className="pointer-events-auto">
-                <Link to="/" className="flex items-center gap-2.5 cursor-pointer group">
-                    <div className="p-2 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors duration-300">
-                        <ScanFace size={22} className="text-primary" strokeWidth={1.5} />
-                    </div>
-                    <span className="flex items-center gap-0 text-sm uppercase tracking-[0.25em] text-base-content/70 group-hover:text-base-content transition-colors duration-300">
-                        loom24.ai
-                    </span>
+                <Link to="/" className="flex items-center cursor-pointer">
+                    <img src="/logo.png" alt="Loom24.ai" className="h-7 w-auto" />
                 </Link>
             </div>
 

@@ -167,14 +167,8 @@ nav {
   margin: 0 auto;
   padding: 0 28px;
 }
-.nav-logo {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--content-70);
-}
-.nav-logo span { color: var(--primary); }
+.nav-logo { display: flex; align-items: center; }
+.nav-logo-img { height: 28px; width: auto; display: block; }
 .nav-links {
   display: flex;
   align-items: center;

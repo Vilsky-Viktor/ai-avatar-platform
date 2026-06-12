@@ -5,7 +5,7 @@ import { createUserWithEmailAndPassword, signInWithPopup, signInWithCustomToken,
 import { auth } from '../../firebase';
 import { syncUser, linkGoogleAccount } from '../../services/apiGateway';
 import Loading from '../../components/Loading';
-import { ScanFace, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { scrollToTop } from '../../utils/scroller';
 
 function RegistrationPage() {
@@ -101,13 +101,8 @@ function RegistrationPage() {
                     <div className="w-full max-w-[400px] px-8 py-10 flex flex-col gap-10">
 
                         {/* Logo */}
-                        <Link to="/" className="flex items-center gap-2.5 group self-center">
-                            <div className="p-3 bg-primary/10 rounded-2xl group-hover:bg-primary/20 transition-colors duration-300">
-                                <ScanFace size={36} className="text-primary" strokeWidth={1.2} />
-                            </div>
-                            <span className="text-lg uppercase tracking-[0.25em] text-base-content/70 group-hover:text-base-content transition-colors duration-300">
-                                loom24.ai
-                            </span>
+                        <Link to="/" className="self-center">
+                            <img src="/logo.png" alt="Loom24.ai" className="h-10 w-auto" />
                         </Link>
 
                         {/* Heading */}
