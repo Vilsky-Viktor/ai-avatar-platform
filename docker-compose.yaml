@@ -310,6 +310,30 @@ services:
       - JOB_MANAGER_URL=http://job-manager:3300
       - MAX_CONCURRENT_MESSAGES=10
 
+  video-trimmer:
+    <<: *default-dns
+    networks:
+      - app-net
+    build:
+      context: ./video-trimmer
+      dockerfile: Dockerfile.dev
+      secrets:
+        - gcp_key
+    volumes:
+      - ./video-trimmer:/app
+      - /app/node_modules
+      - ./gcp-json-key.json:/root/.config/gcloud/gcp-json-key.json:ro
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/gcp-json-key.json
+      - PROJECT_ID=loom24-mvp
+      - SERVICE_NAME=video-trimmer
+      - SUBSCRIPTION_ID=video-trimmer-sub
+      - WORKFLOW_MANAGER_TOPIC=workflow-manager
+      - BUCKET_NAME=loom24-mvp.firebasestorage.app
+      - JOB_MANAGER_URL=http://job-manager:3300
+      - MAX_CONCURRENT_MESSAGES=10
+
   face-matcher:
     <<: *default-dns
     platform: linux/amd64

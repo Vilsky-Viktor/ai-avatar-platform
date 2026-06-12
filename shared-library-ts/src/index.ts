@@ -1,3 +1,4 @@
+export * from './types/constants';
 export * from './types/job';
 export * from './types/avatar';
 export * from './types/voice';

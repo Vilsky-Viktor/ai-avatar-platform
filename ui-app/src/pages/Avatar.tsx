@@ -181,7 +181,7 @@ function AvatarPage() {
         closeGenerateImage();
     };
 
-    const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null, audioPath: string | null, objectPhotoPaths: string[]) => {
+    const handleGenerateVideo = async (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, durationSec: number, audioText: string | null, audioPath: string | null, objectPhotoPaths: string[]) => {
         const jobRequest: VideoJobRequest = {
             prompt,
             ratio: ratio as VideoRatios,
@@ -190,7 +190,7 @@ function AvatarPage() {
                 ...(referenceImagePath ? [referenceImagePath] : []),
                 ...objectPhotoPaths,
             ],
-            lengthSec,
+            durationSec,
             ...(audioText ? { audioText } : {}),
             ...(audioPath ? { audioPath } : {}),
         };

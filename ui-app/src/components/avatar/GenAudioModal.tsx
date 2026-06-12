@@ -4,6 +4,7 @@ import { Sparkles, ChevronDown } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import type { Avatar } from '@loom24/shared/types';
+import { MIN_AUDIO_TEXT_CHARS, MAX_AUDIO_TEXT_CHARS } from '@loom24/shared/types';
 
 type Props = {
     isOpen: boolean;
@@ -33,7 +34,7 @@ function GenAudioModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     useEscapeKey(onClose, isOpen);
     if (!isOpen) return null;
 
-    const canGenerate = () => text.trim().length >= 5 && !loading;
+    const canGenerate = () => text.trim().length >= MIN_AUDIO_TEXT_CHARS && !loading;
 
     const handleGenerate = async () => {
         if (!canGenerate()) return;
@@ -83,8 +84,12 @@ function GenAudioModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                         onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
                         placeholder={`Write what you want ${avatar?.name ?? 'your avatar'} to say...`}
                         rows={5}
+                        maxLength={MAX_AUDIO_TEXT_CHARS}
                         className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                     />
+                    <span className={`self-end text-[10px] tabular-nums transition-colors ${text.length >= MAX_AUDIO_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
+                        {text.length}/{MAX_AUDIO_TEXT_CHARS}
+                    </span>
                     <p className="text-[11px] text-base-content/25 leading-relaxed">
                         The voice will be generated using {avatar?.name ?? "your avatar"}'s assigned voice.
                     </p>

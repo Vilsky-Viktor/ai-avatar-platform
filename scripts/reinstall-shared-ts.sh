@@ -29,6 +29,7 @@ JS_SERVICES=(
     thumbnail-maker
     image-resizer
     prompt-gateway
+    video-trimmer
 )
 
 FAILED=()

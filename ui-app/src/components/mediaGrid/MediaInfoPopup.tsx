@@ -47,7 +47,7 @@ function MediaInfoPopup({ job, onClose }: Props) {
     const ratio = job.metadata?.ratio;
     const prompt = job.metadata?.userPrompt;
     const dimensions = job.metadata?.dimensions;
-    const lengthSec = job.metadata?.lengthSec;
+    const durationSec = job.metadata?.durationSec;
     const createdAt = job.createdAt
         ? job.createdAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
         : null;
@@ -103,11 +103,11 @@ function MediaInfoPopup({ job, onClose }: Props) {
                             value={dimensions.replace('x', ' × ')}
                         />
                     )}
-                    {lengthSec != null && (
+                    {durationSec != null && (
                         <InfoRow
                             icon={<Clock size={22} className="text-base-content/50" />}
                             label="Length"
-                            value={`${lengthSec} sec`}
+                            value={`${durationSec} sec`}
                         />
                     )}
                     {createdAt && (

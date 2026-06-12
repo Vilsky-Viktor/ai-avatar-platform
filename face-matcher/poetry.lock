@@ -762,13 +762,13 @@ test = ["coverage[toml] (>=7.2)", "pytest (>=8.0)", "pytest-cov (>=5.0)"]
 
 [[package]]
 name = "loom24-shared"
-version = "0.0.31"
+version = "0.0.33"
 description = ""
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "loom24_shared-0.0.31-py3-none-any.whl", hash = "sha256:9b88ee74f5ced3ce06053fe9776e8acf58ebb1d5c450cbf74c4bd36477d4f083"},
-    {file = "loom24_shared-0.0.31.tar.gz", hash = "sha256:9740cc6807de1b1c12af3c4303e4bb87c71f1fdb6f068d92a0de19eb59abc07a"},
+    {file = "loom24_shared-0.0.33-py3-none-any.whl", hash = "sha256:6792697246c6af390edfa2094815cc72403e55b0bb85517eccaaa594c916b0a9"},
+    {file = "loom24_shared-0.0.33.tar.gz", hash = "sha256:5c3ed193630bdd00fbf6f925a6d7c4bd8f1ac599c3ed5f43b62293099336541f"},
 ]
 
 [package.dependencies]
@@ -1862,4 +1862,4 @@ anyio = ">=3.0.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "b54e7f55d12288ec997dfdf6a03cb9d4643fdc88f5a8ae96efcfce7b7e8245ed"
+content-hash = "38afff8631a7e1fd9463a20539c32754454f19f5c93934616b0bf40d0713a307"

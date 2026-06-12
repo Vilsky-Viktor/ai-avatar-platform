@@ -74,13 +74,14 @@ class Services(str, Enum):
     thumbnailMaker = 'thumbnail-maker'
     cropper = 'cropper'
     imageResizer = 'image-resizer'
+    videoTrimmer = 'video-trimmer'
 
 
 class JobMetadata(BaseModel):
     ratio: Optional[str] = None
     dimensions: Optional[str] = None
     userPrompt: Optional[str] = None
-    lengthSec: Optional[int] = None
+    durationSec: Optional[int] = None
 
 
 class StepBase(BaseModel):
@@ -141,8 +142,13 @@ class ImageResizerStep(StepBase):
     height: int
 
 
+class VideoTrimmerStep(StepBase):
+    videoPath: str
+    maxDurationSec: int
+
+
 WorkflowStep = Annotated[
-    Union[FaceMatcherStep, HeadDirectionCheckerStep, ThumbnailMakerStep, AiModelGatewayStep, CropperStep, ImageResizerStep],
+    Union[FaceMatcherStep, HeadDirectionCheckerStep, ThumbnailMakerStep, AiModelGatewayStep, CropperStep, ImageResizerStep, VideoTrimmerStep],
     Field(discriminator=None),
 ]
 
@@ -169,7 +175,7 @@ class VideoJobRequest(BaseModel):
     ratio: VideoRatios
     prompt: str
     mediaPaths: Optional[List[str]] = None
-    lengthSec: Optional[int] = None
+    durationSec: Optional[int] = None
     audioText: Optional[str] = None
     audioPath: Optional[str] = None
 

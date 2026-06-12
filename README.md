@@ -10,8 +10,9 @@ Browser
         └─ api-gateway (Express, port 3000)
               ├─ user       (port 3100)  — user accounts
               ├─ avatar     (port 3200)  — avatar CRUD
-              ├─ job-manager(port 3300)  — job creation + REST
-              └─ voice      (port 3600)  — voice catalog
+              ├─ job-manager    (port 3300)  — job creation + REST
+              ├─ prompt-gateway (port 3400)  — AI prompt utilities
+              └─ voice          (port 3600)  — voice catalog
 
 Job pipeline (Google Cloud Pub/Sub):
   job-manager → [workflow-manager topic]
@@ -25,6 +26,7 @@ Job pipeline (Google Cloud Pub/Sub):
   │  face-matcher       (InsightFace)       │
   │  thumbnail-maker    (sharp + ffmpeg)    │
   │  image-resizer      (sharp)             │
+  │  video-trimmer      (ffmpeg)            │
   └─────────────────────────────────────────┘
       ↓ (results back to workflow-manager topic)
   workflow-manager  → next step or complete
@@ -38,6 +40,7 @@ Job pipeline (Google Cloud Pub/Sub):
 | [user](user/) | HTTP | 3100 | User accounts, Firebase auth sync |
 | [avatar](avatar/) | HTTP | 3200 | Avatar CRUD with cascading media cleanup |
 | [job-manager](job-manager/) | HTTP | 3300 | Job store, content generation orchestration |
+| [prompt-gateway](prompt-gateway/) | HTTP | 3400 | AI prompt utilities (ID photo selection) |
 | [voice](voice/) | HTTP | 3600 | Voice catalog |
 | [cropper](cropper/) | Pub/Sub | — | YOLO11-based image cropping (Python) |
 | [workflow-manager](workflow-manager/) | Pub/Sub | — | Drives multi-step job workflows |
@@ -46,13 +49,14 @@ Job pipeline (Google Cloud Pub/Sub):
 | [face-matcher](face-matcher/) | Pub/Sub | — | Face similarity scoring |
 | [thumbnail-maker](thumbnail-maker/) | Pub/Sub | — | Generates thumbnails from images/videos |
 | [image-resizer](image-resizer/) | Pub/Sub | — | Resizes images to exact dimensions |
+| [video-trimmer](video-trimmer/) | Pub/Sub | — | Trims videos to a maximum duration in place |
 
 ## Shared Libraries
 
 | Package | Language | Description |
 |---|---|---|
-| [shared-library-ts](shared-library-ts/) | TypeScript | Types, Pub/Sub, GCS storage, logger, error handler |
-| [shared-package-py](shared-package-py/) | Python | Pydantic types, Pub/Sub, GCS storage, logger |
+| [shared-library-ts](shared-library-ts/) | TypeScript | Types, shared constants, Pub/Sub, GCS storage, logger, error handler |
+| [shared-package-py](shared-package-py/) | Python | Pydantic types, shared constants, Pub/Sub, GCS storage, logger |
 
 ## Infrastructure
 
@@ -96,9 +100,30 @@ Every generation request creates a `Job` document in Firestore with an ordered `
 
 ```
 workflow: [
-  { service: "ai-model-gateway",      status: "pending" },  // generate image
+  { service: "ai-model-gateway",       status: "pending" },  // generate image
   { service: "head-direction-checker", status: "pending" },  // validate direction
   { service: "thumbnail-maker",        status: "pending" },  // resize thumbnail
+]
+```
+
+### Workflow example — avatar video with voice (text)
+
+```
+workflow: [
+  { service: "ai-model-gateway",  model: "eleven-v3",                  status: "pending" },  // generate TTS audio → sets metadata.durationSec
+  { service: "ai-model-gateway",  model: "kling-v3-pro-image-to-video", status: "pending" },  // generate video (duration injected from audio)
+  { service: "ai-model-gateway",  model: "lip-sync-v3",                status: "pending" },  // sync lips to audio
+  { service: "thumbnail-maker",                                         status: "pending" },  // resize thumbnail
+]
+```
+
+### Workflow example — mimic motion
+
+```
+workflow: [
+  { service: "video-trimmer",     status: "pending" },  // trim reference video to max 10 s in place
+  { service: "ai-model-gateway",  model: "kling-v3-pro-motion-control", status: "pending" },  // generate motion video
+  { service: "thumbnail-maker",   status: "pending" },  // resize thumbnail
 ]
 ```
 

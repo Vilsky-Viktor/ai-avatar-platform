@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@google/genai": "2.8.0",
-    "@loom24/shared": "^0.0.30",
+    "@loom24/shared": "^0.0.32",
     "cors": "2.8.6",
     "express": "5.2.1",
     "pino": "10.3.0",

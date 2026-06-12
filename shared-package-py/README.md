@@ -5,12 +5,13 @@ Shared types and services used across all Loom24 Python services. Pydantic model
 ## Contents
 
 ### Types (`loom24_shared.types`)
-- **job** — `Job`, `StepBase`, `AiModelGatewayStep`, `FaceMatcherStep`, `HeadDirectionCheckerStep`, `WorkflowStep`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `ShotTypes`
+- **job** — `Job`, `StepBase`, `AiModelGatewayStep`, `FaceMatcherStep`, `HeadDirectionCheckerStep`, `VideoTrimmerStep`, `WorkflowStep`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `ShotTypes`
 - **avatar** — `Avatar`, `AvatarParameters`, `AvatarGender`, `AvatarTypes`
 - **voice** — `Voice`
 - **image** — `ImageRatios`, `OutputFormats`, `OutputMimeTypes`
 - **video** — `VideoRatios`
 - **user** — `User`
+- **constants** — `MIN_VIDEO_DURATION_SEC`, `MAX_VIDEO_DURATION_SEC`, `MAX_VIDEO_AUDIO_RECORDING_SEC`, `MAX_VIDEO_AUDIO_TEXT_CHARS`, `MIN_PROMPT_TEXT_CHARS`, `MAX_PROMPT_TEXT_CHARS`, `MIN_AUDIO_TEXT_CHARS`, `MAX_AUDIO_TEXT_CHARS`
 
 ### Services (`loom24_shared.services`)
 - **message_queue** — `send_job` (Pub/Sub publish with 3-attempt exponential backoff + jitter)
@@ -105,10 +106,13 @@ gcloud auth application-default login
 ```python
 # Types
 from loom24_shared.types import Job, JobStatuses, Models, Platforms, Services
-from loom24_shared.types import StepBase, FaceMatcherStep, AiModelGatewayStep, HeadDirectionCheckerStep
+from loom24_shared.types import StepBase, FaceMatcherStep, AiModelGatewayStep, HeadDirectionCheckerStep, VideoTrimmerStep
 from loom24_shared.types import Avatar, AvatarGender, AvatarTypes, AvatarParameters
 from loom24_shared.types import ImageRatios, VideoRatios
 from loom24_shared.types import User, Voice
+
+# Constants
+from loom24_shared.types import MAX_VIDEO_DURATION_SEC, MAX_PROMPT_TEXT_CHARS
 
 # Services
 from loom24_shared.services import create_service_client, create_storage_client

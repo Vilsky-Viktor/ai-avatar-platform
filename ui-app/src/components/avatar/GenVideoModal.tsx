@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Loading from '../Loading';
 import { Sparkles, ImagePlus, Trash2, Mic, Square, RotateCcw, Check, Images, Film, Volume2 } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
+import { MIN_VIDEO_DURATION_SEC, MAX_VIDEO_DURATION_SEC, MAX_VIDEO_AUDIO_RECORDING_SEC, MAX_VIDEO_AUDIO_TEXT_CHARS, MIN_PROMPT_TEXT_CHARS, MAX_PROMPT_TEXT_CHARS, MIN_AUDIO_TEXT_CHARS } from '@loom24/shared/types';
 import type { VideoRatio } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -17,9 +18,10 @@ type Props = {
     isOpen: boolean;
     onClose: () => void;
     avatar?: Avatar;
-    onGenerate: (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, lengthSec: number, audioText: string | null, audioPath: string | null, objectPhotoPaths: string[]) => Promise<void>;
+    onGenerate: (prompt: string, ratio: VideoRatio, referenceImagePath: string | null, durationSec: number, audioText: string | null, audioPath: string | null, objectPhotoPaths: string[]) => Promise<void>;
     onMimicMotion: (imagePath: string, videoPath: string, keepOriginalAudio: boolean) => Promise<void>;
 };
+
 
 function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: Props) {
     const { user } = useApp();
@@ -42,7 +44,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
     const [error, setError] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<{ path: string; url: string; thumbnailUrl?: string } | null>(null);
     const [selectorOpen, setSelectorOpen] = useState(false);
-    const [lengthSec, setLengthSec] = useState(5);
+    const [durationSec, setLengthSec] = useState(5);
     const [generateVoice, setGenerateVoice] = useState(false);
     const [voiceMode, setVoiceMode] = useState<VoiceMode>('text');
     const [audioText, setAudioText] = useState('');
@@ -116,14 +118,14 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
         if (modalMode === 'mimic-motion') {
             return !mimicVideoUploading && mimicVideoPath !== null && mimicImagePath !== null;
         }
-        if (!prompt.trim() || prompt.trim().length < 5) return false;
+        if (!prompt.trim() || prompt.trim().length < MIN_PROMPT_TEXT_CHARS) return false;
         if (!selectedImage) return false;
         if (objectPhotosEnabled) {
             if (objectPhotoUploading.some(u => u)) return false;
             if (objectPhotoSlots.filter(p => p !== null).length < 2) return false;
         }
         if (generateVoice) {
-            if (voiceMode === 'text') return audioText.trim().length >= 3;
+            if (voiceMode === 'text') return audioText.trim().length >= MIN_AUDIO_TEXT_CHARS;
             if (voiceMode === 'record') return !isConverting && !isUploading && uploadedAudioPath !== null;
         }
         return true;
@@ -140,7 +142,8 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                 const audioTextVal = generateVoice && voiceMode === 'text' ? audioText.trim() : null;
                 const audioPathVal = generateVoice && voiceMode === 'record' ? uploadedAudioPath : null;
                 const objPaths = objectPhotosEnabled ? objectPhotoSlots.filter((p): p is string => p !== null) : [];
-                await onGenerate(prompt.trim(), ratio, selectedImage?.path ?? null, lengthSec, audioTextVal, audioPathVal, objPaths);
+                const effectiveLengthSec = generateVoice && voiceMode === 'record' ? recordingTime : durationSec;
+                await onGenerate(prompt.trim(), ratio, selectedImage?.path ?? null, effectiveLengthSec, audioTextVal, audioPathVal, objPaths);
             }
         } catch (err: any) {
             setError(err?.message ?? 'Something went wrong. Please try again.');
@@ -240,7 +243,14 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
             setRecordedUrl(null);
             setUploadedAudioPath(null);
 
-            timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+            let elapsed = 0;
+            timerRef.current = setInterval(() => {
+                elapsed += 1;
+                setRecordingTime(elapsed);
+                if (elapsed >= MAX_VIDEO_AUDIO_RECORDING_SEC && mediaRecorderRef.current?.state === 'recording') {
+                    mediaRecorderRef.current.stop();
+                }
+            }, 1000);
         } catch (err) {
             console.error('Microphone access denied:', err);
         }
@@ -335,34 +345,38 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                 onChange={e => setPrompt(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
                                 placeholder={`Describe what ${avatar?.name ?? 'your avatar'} is doing...`}
+                                maxLength={MAX_PROMPT_TEXT_CHARS}
                                 className="flex-1 bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                             />
+                            <span className={`self-end text-[10px] tabular-nums transition-colors ${prompt.length >= MAX_PROMPT_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
+                                {prompt.length}/{MAX_PROMPT_TEXT_CHARS}
+                            </span>
                         </div>
                     </div>
 
                     {/* Length slider */}
-                    <div className="relative rounded-2xl border border-base-content/10 px-6 py-5 flex flex-col gap-3 overflow-hidden">
+                    {!generateVoice && <div className="relative rounded-2xl border border-base-content/10 px-6 py-5 flex flex-col gap-3 overflow-hidden">
                         <div className="flex items-center justify-between">
                             <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Duration</span>
                             <span className="text-2xl text-primary tabular-nums leading-none">
-                                {lengthSec}<span className="text-sm text-base-content/30 ml-1">sec</span>
+                                {durationSec}<span className="text-sm text-base-content/30 ml-1">sec</span>
                             </span>
                         </div>
                         <input
                             type="range"
-                            min={3}
-                            max={10}
+                            min={MIN_VIDEO_DURATION_SEC}
+                            max={MAX_VIDEO_DURATION_SEC}
                             step={1}
-                            value={lengthSec}
+                            value={durationSec}
                             onChange={e => setLengthSec(Number(e.target.value))}
                             className="range range-primary range-sm w-full"
                         />
                         <div className="flex justify-between px-0.5">
-                            {[3,4,5,6,7,8,9,10].map(n => (
-                                <span key={n} className={`text-[10px] tabular-nums transition-colors duration-200 ${n === lengthSec ? 'text-primary' : 'text-base-content/25'}`}>{n}</span>
+                            {Array.from({ length: MAX_VIDEO_DURATION_SEC - MIN_VIDEO_DURATION_SEC + 1 }, (_, index) => index + MIN_VIDEO_DURATION_SEC).map(n => (
+                                <span key={n} className={`text-[10px] tabular-nums transition-colors duration-200 ${n === durationSec ? 'text-primary' : 'text-base-content/25'}`}>{n}</span>
                             ))}
                         </div>
-                    </div>
+                    </div>}
 
                     {/* Object photos section */}
                     <div className={`rounded-2xl border transition-all duration-300 ${objectPhotosEnabled ? 'border-primary/30 bg-primary/[0.03]' : 'border-base-content/10'}`}>
@@ -488,11 +502,17 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                         onChange={e => setAudioText(e.target.value)}
                                         placeholder={`Write what you want ${avatar?.name ?? 'your avatar'} to say in the video...`}
                                         rows={3}
+                                        maxLength={MAX_VIDEO_AUDIO_TEXT_CHARS}
                                         className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                                     />
-                                    <p className="text-[11px] text-base-content/30 leading-relaxed">
-                                        Use <span className="font-mono text-base-content/40">[tags]</span> to add emotions or actions — e.g. <span className="font-mono text-base-content/40">[excited]</span>, <span className="font-mono text-base-content/40">[laughs]</span>, <span className="font-mono text-base-content/40">[whispers]</span>.
-                                    </p>
+                                    <div className="flex items-start justify-between gap-4">
+                                        <p className="text-[11px] text-base-content/30 leading-relaxed">
+                                            Use <span className="font-mono text-base-content/40">[tags]</span> to add emotions or actions — e.g. <span className="font-mono text-base-content/40">[excited]</span>, <span className="font-mono text-base-content/40">[laughs]</span>, <span className="font-mono text-base-content/40">[whispers]</span>.
+                                        </p>
+                                        <span className={`text-[10px] tabular-nums shrink-0 transition-colors ${audioText.length >= MAX_VIDEO_AUDIO_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
+                                            {audioText.length}/{MAX_VIDEO_AUDIO_TEXT_CHARS}
+                                        </span>
+                                    </div>
                                     </>
                                 )}
 
@@ -511,7 +531,8 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="flex items-center gap-3">
                                                     <span className="w-2.5 h-2.5 rounded-full bg-error animate-pulse" />
-                                                    <span className="font-mono text-sm  text-base-content/70">{formatTime(recordingTime)}</span>
+                                                    <span className="font-mono text-sm text-base-content/70">{formatTime(recordingTime)}</span>
+                                                    <span className="text-[10px] text-base-content/30">/ {formatTime(MAX_VIDEO_AUDIO_RECORDING_SEC)}</span>
                                                 </div>
                                                 <button
                                                     onClick={stopRecording}

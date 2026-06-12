@@ -1,0 +1,8 @@
+export const MIN_VIDEO_DURATION_SEC = 3;
+export const MAX_VIDEO_DURATION_SEC = 10;
+export const MAX_VIDEO_AUDIO_RECORDING_SEC = 10;
+export const MAX_VIDEO_AUDIO_TEXT_CHARS = 150;
+export const MIN_PROMPT_TEXT_CHARS = 5;
+export const MAX_PROMPT_TEXT_CHARS = 1000;
+export const MIN_AUDIO_TEXT_CHARS = 2;
+export const MAX_AUDIO_TEXT_CHARS = 500;

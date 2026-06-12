@@ -38,7 +38,7 @@ export type VideoJobRequest = {
   ratio: VideoRatios;
   prompt: string;
   mediaPaths?: string[];
-  lengthSec?: number;
+  durationSec?: number;
   audioText?: string;
   audioPath?: string;
 }
@@ -92,7 +92,7 @@ export type JobMetadata = {
   ratio?: string;
   dimensions?: string;
   userPrompt?: string;
-  lengthSec?: number;
+  durationSec?: number;
 }
 
 export enum Platforms {
@@ -123,7 +123,8 @@ export enum Services {
   aiModelGateway = 'ai-model-gateway',
   thumbnailMaker = 'thumbnail-maker',
   cropper = 'cropper',
-  imageResizer = 'image-resizer'
+  imageResizer = 'image-resizer',
+  videoTrimmer = 'video-trimmer'
 }
 
 export type StepBase = {
@@ -183,13 +184,19 @@ export type ImageResizer = StepBase & {
   height: number;
 }
 
+export type VideoTrimmer = StepBase & {
+  videoPath: string;
+  maxDurationSec: number;
+}
+
 export type WorkflowStep =
   AiModelGateway |
   FaceMatcher |
   HeadDirectionChecker |
   ThumbnailMaker |
   Cropper |
-  ImageResizer;
+  ImageResizer |
+  VideoTrimmer;
 
 export type Job = {
   id?: string;

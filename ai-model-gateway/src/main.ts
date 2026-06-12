@@ -111,13 +111,13 @@ function listenForResults() {
           if (imageInfo.width && imageInfo.height) dimensions = `${imageInfo.width}x${imageInfo.height}`;
         }
 
-        let lengthSec: number | undefined;
+        let durationSec: number | undefined;
         if (result.type === MediaTypes.video || result.type === MediaTypes.audio) {
-          const durationSec = await getMediaDuration(result.data as Buffer);
-          if (durationSec != null) lengthSec = Math.round(durationSec);
+          const mediaDuration = await getMediaDuration(result.data as Buffer);
+          if (mediaDuration != null) durationSec = Math.round(mediaDuration);
         }
 
-        job.metadata = { ...job.metadata, ratio: stepData.ratio, dimensions, lengthSec };
+        job.metadata = { ...job.metadata, ratio: stepData.ratio, dimensions, durationSec };
       }
 
       await sendJob(WORKFLOW_MANAGER_TOPIC, job, SERVICE_NAME);

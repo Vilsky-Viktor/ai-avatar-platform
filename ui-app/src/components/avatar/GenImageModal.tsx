@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
+import { MIN_PROMPT_TEXT_CHARS, MAX_PROMPT_TEXT_CHARS } from '@loom24/shared/types';
 import { type ImageRatio, IMAGE_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -78,7 +79,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
         });
     };
 
-    const canGenerate = () => prompt.trim().length >= 5 && !loading;
+    const canGenerate = () => prompt.trim().length >= MIN_PROMPT_TEXT_CHARS && !loading;
 
     const handleGenerate = async () => {
         if (!canGenerate()) return;
@@ -109,8 +110,12 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                         onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
                         placeholder={`Describe the photo you want to generate with ${avatar?.name ?? 'your avatar'}...`}
                         rows={4}
+                        maxLength={MAX_PROMPT_TEXT_CHARS}
                         className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                     />
+                    <span className={`self-end text-[10px] tabular-nums transition-colors ${prompt.length >= MAX_PROMPT_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
+                        {prompt.length}/{MAX_PROMPT_TEXT_CHARS}
+                    </span>
                 </div>
 
                 {/* Reference images */}

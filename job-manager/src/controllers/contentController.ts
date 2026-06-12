@@ -15,6 +15,12 @@ import {
   Platforms,
   Services,
   ThumbnailMaker,
+  VideoTrimmer,
+  MIN_VIDEO_DURATION_SEC,
+  MAX_VIDEO_DURATION_SEC,
+  MAX_PROMPT_TEXT_CHARS,
+  MAX_AUDIO_TEXT_CHARS,
+  MAX_VIDEO_AUDIO_TEXT_CHARS,
 } from '@loom24/shared/types';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import {
@@ -37,6 +43,7 @@ const SERVICE_NAME = process.env.SERVICE_NAME || 'job-manager';
 export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: PhotoJobRequest = req.body;
+  jobRequest.prompt = jobRequest.prompt.slice(0, MAX_PROMPT_TEXT_CHARS);
   const imageId = uuid.v4();
 
   setLogContext(userId, jobRequest.avatarId);
@@ -186,11 +193,13 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
 export const genAvatarVideo = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: VideoJobRequest = req.body;
+  jobRequest.prompt = jobRequest.prompt.slice(0, MAX_PROMPT_TEXT_CHARS);
+  if (jobRequest.audioText) jobRequest.audioText = jobRequest.audioText.slice(0, MAX_VIDEO_AUDIO_TEXT_CHARS);
   const videoId = uuid.v4();
 
   setLogContext(userId, jobRequest.avatarId);
   try {
-    logger.info({ ratio: jobRequest.ratio, lengthSec: jobRequest.lengthSec }, 'Generate avatar video');
+    logger.info({ ratio: jobRequest.ratio, durationSec: jobRequest.durationSec }, 'Generate avatar video');
 
     const idPhotoJobs = await getAvatarIdPhotosDb(userId, jobRequest.avatarId);
     const idPhotos = idPhotoJobs
@@ -211,7 +220,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       imagePaths: mediaPaths,
       idPhotoPaths: idPhotos,
       objectRefPaths,
-      duration: jobRequest.lengthSec!,
+      duration: Math.min(jobRequest.durationSec ?? MIN_VIDEO_DURATION_SEC, MAX_VIDEO_DURATION_SEC),
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,
       model: Models.klingV3ProImageToVideo,
@@ -247,7 +256,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
         service: Services.aiModelGateway
       };
 
-      workflow = [videoGenerator, audioGenerator, lipSync];
+      workflow = [audioGenerator, videoGenerator, lipSync];
     } else if (jobRequest.audioPath) {
       const lipSync: AiModelGateway = {
         model: Models.lipSyncV3,
@@ -280,7 +289,7 @@ export const genAvatarVideo = async (req: Request, res: Response, next: NextFunc
       maxRuns: 1,
       curRun: 0,
       workflow: [...workflow, thumbnailMaker],
-      metadata: { userPrompt: jobRequest.prompt },
+      metadata: { userPrompt: jobRequest.prompt, durationSec: jobRequest.durationSec },
       resultMediaPath: generatorUploadPath,
       resultThumbnailPath: thumbnailUploadPath,
     }
@@ -313,6 +322,13 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
     const generatorUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}.mp4`;
     const thumbnailUploadPath = `media/${userId}-user/avatars/${jobRequest.avatarId}-avatar/videos/${videoId}-thumbnail.jpg`;
 
+    const videoTrimmer: VideoTrimmer = {
+      videoPath: jobRequest.videoPath,
+      maxDurationSec: MAX_VIDEO_DURATION_SEC,
+      status: JobStatuses.pending,
+      service: Services.videoTrimmer
+    };
+
     const videoGenerator: AiModelGateway = {
       imagePaths: [jobRequest.imagePath],
       videoPaths: [jobRequest.videoPath],
@@ -342,7 +358,7 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
       status: JobStatuses.pending,
       maxRuns: 1,
       curRun: 0,
-      workflow: [videoGenerator, thumbnailMaker],
+      workflow: [videoTrimmer, videoGenerator, thumbnailMaker],
       metadata: { userPrompt: 'Mimic motion' },
       resultMediaPath: generatorUploadPath,
       resultThumbnailPath: thumbnailUploadPath
@@ -362,6 +378,7 @@ export const mimicMotion = async (req: Request, res: Response, next: NextFunctio
 export const genAvatarAudio = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: AudioJobRequest = req.body;
+  jobRequest.prompt = jobRequest.prompt.slice(0, MAX_AUDIO_TEXT_CHARS);
   const audioId = uuid.v4();
 
   setLogContext(userId, jobRequest.avatarId);

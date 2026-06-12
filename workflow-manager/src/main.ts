@@ -2,7 +2,7 @@ import { PubSub, Message } from '@google-cloud/pubsub';
 import admin from 'firebase-admin';
 import logger, { setLogContext, clearLogContext } from '@loom24/shared/logger';
 import { sendJob } from '@loom24/shared/services';
-import { Job, JobStatuses, WorkflowStep } from '@loom24/shared/types';
+import { AiModelGateway, Job, JobStatuses, MediaTypes, WorkflowStep, MAX_VIDEO_DURATION_SEC } from '@loom24/shared/types';
 import { updateJob, getJob } from './services/jobManagerService';
 import { deleteBlob } from './services/storageService';
 
@@ -59,6 +59,10 @@ const newWorkflowHandler = async (job: Job) => {
 const pendingStepHandler = async (job: Job) => {
   const stepIdx = job.workflow.findIndex((step: WorkflowStep) => step.status === JobStatuses.pending);
   const stepData = job.workflow[stepIdx];
+
+  if (job.mediaType === MediaTypes.video && job.metadata?.durationSec && 'duration' in stepData) {
+    stepData.duration = Math.min(job.metadata.durationSec, MAX_VIDEO_DURATION_SEC);
+  }
 
   logger.info({curRun: job.curRun}, `Sending job to ${stepData.service} step`)
 

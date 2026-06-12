@@ -5,12 +5,13 @@ Shared types, utilities, and services used across all Loom24 backend services.
 ## Contents
 
 ### Types (`@loom24/shared/types`)
-- **job** — `Job`, `WorkflowStep`, `StepBase`, `AiModelGateway`, `FaceMatcher`, `HeadDirectionChecker`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `ShotTypes`
+- **job** — `Job`, `WorkflowStep`, `StepBase`, `AiModelGateway`, `FaceMatcher`, `HeadDirectionChecker`, `VideoTrimmer`, and all enums: `JobStatuses`, `Models`, `Platforms`, `Services`, `MediaTypes`, `JobTargets`, `Directions`, `ShotTypes`
 - **avatar** — `Avatar`, `AvatarParameters`, `AvatarGender`, `AvatarTypes`
 - **voice** — `Voice`
 - **image** — `ImageRatios`, `OutputFormats`, `OutputMimeTypes`
 - **video** — `VideoRatios`
 - **user** — `User`
+- **constants** — `MIN_VIDEO_DURATION_SEC`, `MAX_VIDEO_DURATION_SEC`, `MAX_VIDEO_AUDIO_RECORDING_SEC`, `MAX_VIDEO_AUDIO_TEXT_CHARS`, `MIN_PROMPT_TEXT_CHARS`, `MAX_PROMPT_TEXT_CHARS`, `MIN_AUDIO_TEXT_CHARS`, `MAX_AUDIO_TEXT_CHARS`
 
 ### Services (`@loom24/shared/services`)
 - **messageQueue** — `sendJob` (single job, no retry), `sendJobs` (batch with per-job retry, chunked in groups of 5, fails fast on first chunk failure)
@@ -67,6 +68,9 @@ import { Voice } from '@loom24/shared/types';
 import { ImageRatios, OutputMimeTypes } from '@loom24/shared/types';
 import { VideoRatios } from '@loom24/shared/types';
 import { User } from '@loom24/shared/types';
+
+// Constants
+import { MAX_VIDEO_DURATION_SEC, MAX_PROMPT_TEXT_CHARS } from '@loom24/shared/types';
 
 // Logger
 import logger from '@loom24/shared/logger';
