@@ -23,7 +23,7 @@ function Header() {
         <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between px-6 pt-4 pointer-events-none">
             <div className="pointer-events-auto">
                 <Link to="/" className="flex items-center cursor-pointer">
-                    <img src="/logo.png" alt="Loom24.ai" className="h-7 w-auto" />
+                    <img src="/logo.png" alt="Loom24.ai" className="h-8 w-auto" />
                 </Link>
             </div>
 
