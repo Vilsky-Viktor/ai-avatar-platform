@@ -78,13 +78,20 @@ function listenForResults() {
       const durationSec = await getDurationSec(videoBuffer);
       logger.info({ durationSec }, 'Video duration detected');
 
+      let finalDurationSec = durationSec;
+
       if (durationSec != null && durationSec > stepData.maxDurationSec) {
         logger.info({ durationSec, maxDurationSec: stepData.maxDurationSec }, 'Trimming video');
         const trimmed = await trimVideo(videoBuffer, stepData.maxDurationSec);
         await uploadToBucket(trimmed, stepData.videoPath);
         logger.info({ videoPath: stepData.videoPath }, 'Trimmed video uploaded');
+        finalDurationSec = stepData.maxDurationSec;
       } else {
         logger.info('Video within limit — no trimming needed');
+      }
+
+      if (finalDurationSec != null) {
+        job.metadata = { ...job.metadata, durationSec: Math.ceil(finalDurationSec) };
       }
 
       stepData.status = JobStatuses.completed;
