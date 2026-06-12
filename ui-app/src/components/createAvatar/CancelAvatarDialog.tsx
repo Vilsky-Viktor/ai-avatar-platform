@@ -44,7 +44,7 @@ function CancelAvatarDialog({ isOpen, cancelLoading, onClose, onConfirm }: Props
                             disabled={cancelLoading}
                         >
                             {cancelLoading
-                                ? <Loading size="xs" className="" />
+                                ? <Loading size="xs" color="text-error" className="" />
                                 : <Trash2 size={13} strokeWidth={2} />
                             }
                             Discard

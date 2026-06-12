@@ -30,6 +30,11 @@ const cornerTR = <div className="absolute top-3 right-3 w-5 h-5 border-t border-
 const cornerBL = <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-primary/30 pointer-events-none" />;
 const cornerBR = <div className="absolute bottom-3 right-3 w-5 h-5 border-b border-r border-primary/30 pointer-events-none" />;
 
+const errorCornerTL = <div className="absolute top-3 left-3 w-5 h-5 border-t border-l border-error/30 pointer-events-none" />;
+const errorCornerTR = <div className="absolute top-3 right-3 w-5 h-5 border-t border-r border-error/30 pointer-events-none" />;
+const errorCornerBL = <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-error/30 pointer-events-none" />;
+const errorCornerBR = <div className="absolute bottom-3 right-3 w-5 h-5 border-b border-r border-error/30 pointer-events-none" />;
+
 function MediaCard({
     job,
     idx,
@@ -196,7 +201,7 @@ function MediaCard({
                         </p>
                     </div>
                 </div>
-                {cornerTL}{cornerTR}{cornerBL}{cornerBR}
+                {errorCornerTL}{errorCornerTR}{errorCornerBL}{errorCornerBR}
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                     {canDelete && onDelete && (
                         <button
