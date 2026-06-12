@@ -114,7 +114,7 @@ function listenForResults() {
         let durationSec: number | undefined;
         if (result.type === MediaTypes.video || result.type === MediaTypes.audio) {
           const mediaDuration = await getMediaDuration(result.data as Buffer);
-          if (mediaDuration != null) durationSec = Math.round(mediaDuration);
+          if (mediaDuration != null) durationSec = Math.ceil(mediaDuration);
         }
 
         job.metadata = { ...job.metadata, ratio: stepData.ratio, dimensions, durationSec };

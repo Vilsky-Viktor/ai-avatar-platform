@@ -61,7 +61,7 @@ const pendingStepHandler = async (job: Job) => {
   const stepData = job.workflow[stepIdx];
 
   if (job.mediaType === MediaTypes.video && job.metadata?.durationSec && 'duration' in stepData) {
-    stepData.duration = Math.min(job.metadata.durationSec, MAX_VIDEO_DURATION_SEC);
+    stepData.duration = Math.ceil(Math.min(job.metadata.durationSec, MAX_VIDEO_DURATION_SEC));
   }
 
   logger.info({curRun: job.curRun}, `Sending job to ${stepData.service} step`)

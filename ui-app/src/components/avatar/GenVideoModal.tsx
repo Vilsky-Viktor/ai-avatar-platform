@@ -10,6 +10,7 @@ import { useApp } from '../../providers/ContextProvider';
 import MediaSelectorModal from '../mediaSelector/MediaSelectorModal';
 import { uploadBlobToBucket } from '../../services/storage';
 import { convertBlobToWav } from '../../utils/audioConverter';
+import TextareaWithCounter from '../TextareaWithCounter';
 
 type VoiceMode = 'text' | 'record';
 type ModalMode = 'gen-video' | 'mimic-motion';
@@ -66,6 +67,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const audioUploadPathRef = useRef<string | null>(null);
     const mimicVideoInputRef = useRef<HTMLInputElement>(null);
     const objInputRef0 = useRef<HTMLInputElement>(null);
@@ -82,6 +84,10 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
             if (timerRef.current) {
                 clearInterval(timerRef.current);
                 timerRef.current = null;
+            }
+            if (autoStopRef.current) {
+                clearTimeout(autoStopRef.current);
+                autoStopRef.current = null;
             }
             setPrompt('');
             setSelectedImage(null);
@@ -205,7 +211,8 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
 
             mediaRecorder.onstop = async () => {
                 stream.getTracks().forEach(t => t.stop());
-                if (timerRef.current) clearInterval(timerRef.current);
+                if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+                if (autoStopRef.current) { clearTimeout(autoStopRef.current); autoStopRef.current = null; }
                 setIsRecording(false);
 
                 const rawBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
@@ -247,10 +254,13 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
             timerRef.current = setInterval(() => {
                 elapsed += 1;
                 setRecordingTime(elapsed);
-                if (elapsed >= MAX_VIDEO_AUDIO_RECORDING_SEC && mediaRecorderRef.current?.state === 'recording') {
+            }, 1000);
+
+            autoStopRef.current = setTimeout(() => {
+                if (mediaRecorderRef.current?.state === 'recording') {
                     mediaRecorderRef.current.stop();
                 }
-            }, 1000);
+            }, MAX_VIDEO_AUDIO_RECORDING_SEC * 1000 + 300);
         } catch (err) {
             console.error('Microphone access denied:', err);
         }
@@ -263,6 +273,10 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
         if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
+        }
+        if (autoStopRef.current) {
+            clearTimeout(autoStopRef.current);
+            autoStopRef.current = null;
         }
     };
 
@@ -339,18 +353,15 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                             </div>
                         </div>
                         <div className="flex flex-col gap-2 flex-1">
-                            <textarea
+                            <TextareaWithCounter
                                 autoFocus
                                 value={prompt}
                                 onChange={e => setPrompt(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
                                 placeholder={`Describe what ${avatar?.name ?? 'your avatar'} is doing...`}
                                 maxLength={MAX_PROMPT_TEXT_CHARS}
-                                className="flex-1 bg-base-200/50 border border-base-content/10 rounded-2xl px-6 py-5 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
+                                className="flex-1"
                             />
-                            <span className={`self-end text-[10px] tabular-nums transition-colors ${prompt.length >= MAX_PROMPT_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
-                                {prompt.length}/{MAX_PROMPT_TEXT_CHARS}
-                            </span>
                         </div>
                     </div>
 
@@ -496,23 +507,17 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
 
                                 {voiceMode === 'text' && (
                                     <>
-                                    <textarea
+                                    <TextareaWithCounter
                                         autoFocus
                                         value={audioText}
                                         onChange={e => setAudioText(e.target.value)}
                                         placeholder={`Write what you want ${avatar?.name ?? 'your avatar'} to say in the video...`}
                                         rows={3}
                                         maxLength={MAX_VIDEO_AUDIO_TEXT_CHARS}
-                                        className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                                     />
-                                    <div className="flex items-start justify-between gap-4">
-                                        <p className="text-[11px] text-base-content/30 leading-relaxed">
-                                            Use <span className="font-mono text-base-content/40">[tags]</span> to add emotions or actions — e.g. <span className="font-mono text-base-content/40">[excited]</span>, <span className="font-mono text-base-content/40">[laughs]</span>, <span className="font-mono text-base-content/40">[whispers]</span>.
-                                        </p>
-                                        <span className={`text-[10px] tabular-nums shrink-0 transition-colors ${audioText.length >= MAX_VIDEO_AUDIO_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
-                                            {audioText.length}/{MAX_VIDEO_AUDIO_TEXT_CHARS}
-                                        </span>
-                                    </div>
+                                    <p className="text-[11px] text-base-content/30 leading-relaxed">
+                                        Use <span className="font-mono text-base-content/40">[tags]</span> to add emotions, actions or sounds — e.g. <span className="font-mono text-base-content/40">[excited]</span>, <span className="font-mono text-base-content/40">[laughs]</span>, <span className="font-mono text-base-content/40">[whispers]</span>.
+                                    </p>
                                     </>
                                 )}
 

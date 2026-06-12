@@ -6,6 +6,7 @@ import { type ImageRatio, IMAGE_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import Loading from '../Loading';
+import TextareaWithCounter from '../TextareaWithCounter';
 
 const EMPTY_SLOTS: [null, null, null] = [null, null, null];
 
@@ -102,7 +103,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                 {/* Prompt */}
                 <div className="flex flex-col gap-2">
                     <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Prompt</span>
-                    <textarea
+                    <TextareaWithCounter
                         ref={textareaRef}
                         autoFocus
                         value={prompt}
@@ -111,11 +112,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                         placeholder={`Describe the photo you want to generate with ${avatar?.name ?? 'your avatar'}...`}
                         rows={4}
                         maxLength={MAX_PROMPT_TEXT_CHARS}
-                        className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                     />
-                    <span className={`self-end text-[10px] tabular-nums transition-colors ${prompt.length >= MAX_PROMPT_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
-                        {prompt.length}/{MAX_PROMPT_TEXT_CHARS}
-                    </span>
                 </div>
 
                 {/* Reference images */}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Loading from '../Loading';
+import TextareaWithCounter from '../TextareaWithCounter';
 import { Sparkles, ChevronDown } from 'lucide-react';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -76,7 +77,7 @@ function GenAudioModal({ isOpen, onClose, avatar, onGenerate }: Props) {
 
                 <div className="flex flex-col gap-2">
                     <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Script</span>
-                    <textarea
+                    <TextareaWithCounter
                         ref={textareaRef}
                         autoFocus
                         value={text}
@@ -85,11 +86,7 @@ function GenAudioModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                         placeholder={`Write what you want ${avatar?.name ?? 'your avatar'} to say...`}
                         rows={5}
                         maxLength={MAX_AUDIO_TEXT_CHARS}
-                        className="w-full bg-base-200/50 border border-base-content/10 rounded-2xl px-5 py-4 text-sm text-base-content placeholder:text-base-content/25 resize-none focus:outline-none focus:border-primary/40 transition-colors"
                     />
-                    <span className={`self-end text-[10px] tabular-nums transition-colors ${text.length >= MAX_AUDIO_TEXT_CHARS ? 'text-error' : 'text-base-content/30'}`}>
-                        {text.length}/{MAX_AUDIO_TEXT_CHARS}
-                    </span>
                     <p className="text-[11px] text-base-content/25 leading-relaxed">
                         The voice will be generated using {avatar?.name ?? "your avatar"}'s assigned voice.
                     </p>
@@ -118,7 +115,7 @@ function GenAudioModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                                 ))}
                                 <div className="border-t border-base-content/8 -mx-5" />
                                 <p className="text-[11px] text-base-content/50 border-l-2 border-primary/40 pl-3 leading-relaxed italic my-2">
-                                    These are examples — any descriptive tag in brackets may work.
+                                    These are examples — any descriptive tag in brackets may work for edding actions, emotions or sounds.
                                 </p>
                             </div>
                         </div>
