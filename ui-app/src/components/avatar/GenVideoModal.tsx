@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import Loading from '../Loading';
 import { Sparkles, ImagePlus, Trash2, Mic, Square, RotateCcw, Check, Images, Film, Volume2 } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
@@ -10,7 +10,66 @@ import { useApp } from '../../providers/ContextProvider';
 import MediaSelectorModal from '../mediaSelector/MediaSelectorModal';
 import { uploadBlobToBucket } from '../../services/storage';
 import { convertBlobToWav } from '../../utils/audioConverter';
-import TextareaWithCounter from '../TextareaWithCounter';
+
+
+function renderHighlighted(text: string) {
+    const display = text.endsWith('\n') ? text + ' ' : text;
+    return display.split(/(\[[^\]]+\])/g).map((part, idx) =>
+        /^\[[^\]]+\]$/.test(part)
+            ? <span key={idx} className="bg-primary/20 text-primary rounded">{part}</span>
+            : <span key={idx}>{part}</span>
+    );
+}
+
+type PromptTextareaProps = {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    maxLength: number;
+    placeholder?: string;
+    rows?: number;
+    autoFocus?: boolean;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+    className?: string;
+};
+
+const PromptTextarea = forwardRef<HTMLTextAreaElement, PromptTextareaProps>(
+    ({ value, onChange, maxLength, placeholder, rows, autoFocus, onKeyDown, className }, ref) => {
+        const overlayRef = useRef<HTMLDivElement>(null);
+        const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+            if (overlayRef.current) overlayRef.current.scrollTop = e.currentTarget.scrollTop;
+        };
+        return (
+            <div className={`flex flex-col bg-base-200/50 border border-base-content/10 rounded-2xl focus-within:border-primary/40 transition-colors ${className ?? ''}`}>
+                <div className="relative flex-1 min-h-0">
+                    <div
+                        ref={overlayRef}
+                        aria-hidden
+                        className="absolute inset-0 px-5 pt-4 pb-2 text-sm whitespace-pre-wrap break-words pointer-events-none overflow-hidden"
+                    >
+                        {renderHighlighted(value)}
+                    </div>
+                    <textarea
+                        ref={ref}
+                        value={value}
+                        onChange={onChange}
+                        onKeyDown={onKeyDown}
+                        onScroll={handleScroll}
+                        placeholder={placeholder}
+                        rows={rows}
+                        autoFocus={autoFocus}
+                        maxLength={maxLength}
+                        className="relative w-full h-full bg-transparent px-5 pt-4 pb-2 text-sm text-transparent caret-base-content placeholder:text-base-content/25 resize-none focus:outline-none"
+                    />
+                </div>
+                <span className={`text-center text-[10px] tabular-nums pt-2 pb-2.5 border-t transition-colors ${value.length >= maxLength ? 'text-error border-error/20' : 'text-base-content/25 border-base-content/8'}`}>
+                    {value.length}/{maxLength}
+                </span>
+            </div>
+        );
+    }
+);
+
+PromptTextarea.displayName = 'PromptTextarea';
 
 type VoiceMode = 'text' | 'record';
 type ModalMode = 'gen-video' | 'mimic-motion';
@@ -64,6 +123,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
     const [objectPhotoPreviews, setObjectPhotoPreviews] = useState<(string | null)[]>([null, null, null, null]);
     const [objectPhotoUploading, setObjectPhotoUploading] = useState<boolean[]>([false, false, false, false]);
 
+    const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -190,6 +250,24 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
         } finally {
             setObjectPhotoUploading(prev => prev.map((u, i) => i === idx ? false : u));
         }
+    };
+
+    const insertObjectReference = () => {
+        const tag = '[object1]';
+        const el = promptTextareaRef.current;
+        if (!el) return;
+        const start = el.selectionStart ?? prompt.length;
+        const end = el.selectionEnd ?? prompt.length;
+        const before = prompt.slice(0, start);
+        const after = prompt.slice(end);
+        const separator = before.length > 0 && !before.endsWith(' ') ? ' ' : '';
+        const next = `${before}${separator}${tag} ${after}`;
+        setPrompt(next);
+        const newCursor = before.length + separator.length + tag.length + 1;
+        requestAnimationFrame(() => {
+            el.focus();
+            el.setSelectionRange(newCursor, newCursor);
+        });
     };
 
     const removeObjectPhoto = (idx: number) => {
@@ -353,7 +431,8 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                             </div>
                         </div>
                         <div className="flex flex-col gap-2 flex-1">
-                            <TextareaWithCounter
+                            <PromptTextarea
+                                ref={promptTextareaRef}
                                 autoFocus
                                 value={prompt}
                                 onChange={e => setPrompt(e.target.value)}
@@ -415,11 +494,20 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                         <div key={idx} className={`group relative aspect-square rounded-xl overflow-hidden border transition-colors duration-300 ${idx === 0 ? 'border-primary/20' : 'border-base-content/10'}`}>
                                             {objectPhotoPreviews[idx] ? (
                                                 <>
-                                                    <img src={objectPhotoPreviews[idx]!} className="w-full h-full object-cover object-top" />
+                                                    <img
+                                                        src={objectPhotoPreviews[idx]!}
+                                                        onClick={() => insertObjectReference()}
+                                                        className="w-full h-full object-cover object-top cursor-pointer"
+                                                    />
                                                     {objectPhotoUploading[idx] && (
                                                         <div className="absolute inset-0 bg-base-100/60 flex items-center justify-center">
                                                             <Loading size="xs" className="" />
                                                         </div>
+                                                    )}
+                                                    {idx === 0 && (
+                                                        <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] uppercase tracking-widest pointer-events-none">
+                                                            object 1
+                                                        </span>
                                                     )}
                                                     <button
                                                         onClick={() => removeObjectPhoto(idx)}
@@ -447,10 +535,10 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                                     ))}
                                 </div>
                                 <button
-                                    onClick={() => setPrompt(p => p + (p.length > 0 && !p.endsWith(' ') ? ' ' : '') + '@Element1')}
-                                    className="text-[10px]  uppercase tracking-[0.2em] text-base-content/40 hover:text-primary transition-colors cursor-pointer"
+                                    onClick={() => insertObjectReference()}
+                                    className="text-[10px] uppercase tracking-[0.2em] text-base-content/40 hover:text-primary transition-colors cursor-pointer"
                                 >
-                                    + Add reference to prompt
+                                    + Add object to prompt
                                 </button>
                             </div>
                         )}
@@ -507,7 +595,7 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
 
                                 {voiceMode === 'text' && (
                                     <>
-                                    <TextareaWithCounter
+                                    <PromptTextarea
                                         autoFocus
                                         value={audioText}
                                         onChange={e => setAudioText(e.target.value)}

@@ -259,8 +259,13 @@ nav {
   padding-top: 20px;
   border-top: 1px solid var(--content-5);
 }
+.hero-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .hero-stat-val {
-  font-size: 1.8rem;
+  font-size: 3rem;
   font-weight: 800;
   color: var(--content-70);
   letter-spacing: -0.02em;
@@ -271,7 +276,8 @@ nav {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--content-25);
-  margin-top: 4px;
+  margin-top: 6px;
+  text-align: center;
 }
 .powered-row {
   display: flex;
@@ -301,7 +307,7 @@ nav {
 }
 .hero-card img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
 .hero-card:first-child {
-  left: -20%;
+  left: calc(-20% + 10px);
   bottom: 0;
   transform: rotate(-4deg);
   z-index: 1;
@@ -408,23 +414,20 @@ nav {
 }
 .quality-item {
   padding: 28px 28px 32px;
-  background: var(--base-100);
+  background:
+    radial-gradient(ellipse 80% 80% at 100% 0%, color-mix(in oklch, var(--primary) 14%, transparent), transparent),
+    var(--base-100);
   border: 1px solid var(--content-5);
   border-radius: var(--radius-2xl);
 }
-.quality-icon {
-  font-size: 1rem;
-  color: var(--primary-50);
-  margin-bottom: 14px;
-}
 .quality-item strong {
   display: block;
-  font-size: 0.82rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--content-70);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .quality-item p {
   font-size: 0.83rem;
@@ -691,15 +694,40 @@ nav {
   grid-template-columns: 60px 1fr;
   align-items: center;
   gap: 32px;
-  padding: 32px 0;
+  padding: 24px 16px;
+  margin: 0 -16px;
   border-bottom: 1px solid var(--content-5);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
 }
+.simplicity-row::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 16px; bottom: 16px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.simplicity-row:hover { background: color-mix(in oklch, var(--primary) 5%, transparent); }
+.simplicity-row:hover::before { opacity: 0.4; }
+.simplicity-row.active { background: color-mix(in oklch, var(--primary) 8%, transparent); }
+.simplicity-row.active::before { opacity: 1; }
+.simplicity-row:hover .simplicity-num,
+.simplicity-row.active .simplicity-num { color: var(--primary); }
+.simplicity-row:hover .simplicity-body strong { color: color-mix(in oklch, var(--base-content) 80%, transparent); }
+.simplicity-row.active .simplicity-body strong { color: var(--base-content); }
 .simplicity-num {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--primary-50);
   flex-shrink: 0;
+  transition: color 0.2s;
 }
 .simplicity-body strong {
   display: block;
@@ -709,6 +737,7 @@ nav {
   text-transform: uppercase;
   color: var(--content-70);
   margin-bottom: 6px;
+  transition: color 0.2s;
 }
 .simplicity-body p {
   font-size: 0.87rem;
@@ -717,6 +746,8 @@ nav {
   max-width: 600px;
   margin: 0;
 }
+.simplicity-panel { display: none; flex-direction: column; gap: 12px; }
+.simplicity-panel.active { display: flex; animation: tab-fade-in 0.35s ease; }
 
 @media (max-width: 860px) {
   .simplicity-row { grid-template-columns: 40px 1fr; gap: 20px; }
@@ -726,16 +757,13 @@ nav {
 
 .simplicity-layout {
   display: grid;
-  grid-template-columns: 1fr 420px;
+  grid-template-columns: 1fr 580px;
   gap: 72px;
   align-items: start;
 }
 .simplicity-right {
   position: sticky;
   top: 100px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
 }
 .simplicity-screen {
   border-radius: var(--radius-2xl);
@@ -744,13 +772,13 @@ nav {
   background: var(--base-200);
 }
 .simplicity-screen--sm {
-  margin-left: 24px;
+  margin-left: 0;
 }
 .simplicity-screen-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--content-5);
   background: var(--base-300);
 }
@@ -758,11 +786,29 @@ nav {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--content-10);
+  flex-shrink: 0;
+}
+.simplicity-dot--red   { background: #ff5f57; }
+.simplicity-dot--yellow { background: #febc2e; }
+.simplicity-dot--green  { background: #28c840; }
+.simplicity-url-bar {
+  flex: 1;
+  margin: 0 10px;
+  padding: 3px 10px;
+  background: color-mix(in oklch, var(--base-content) 5%, transparent);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  color: var(--content-30);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .simplicity-screen-img {
   width: 100%;
-  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: top;
   display: block;
 }
 
@@ -1011,6 +1057,40 @@ nav {
   color: var(--primary);
 }
 
+/* ─── CLOSING QUOTE ─── */
+.closing-quote-section {
+  padding: 100px 0 80px;
+  text-align: center;
+}
+.closing-quote {
+  position: relative;
+  display: inline-block;
+  padding: 40px 80px 80px;
+  text-align: left;
+}
+.closing-quote-mark {
+  position: absolute;
+  font-size: 8rem;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+  font-style: italic;
+}
+.closing-quote-mark--open { top: 0; left: -15px; color: var(--content-70); opacity: 0.2; }
+.closing-quote-mark--close { bottom: 0; right: 0; color: var(--primary); opacity: 0.3; }
+.closing-quote blockquote {
+  font-size: clamp(2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--content-70);
+  line-height: 1.15;
+}
+.closing-quote blockquote em {
+  font-style: normal;
+  color: var(--primary);
+}
+
 /* ─── FOOTER ─── */
 footer {
   border-top: 1px solid var(--content-5);
@@ -1024,14 +1104,8 @@ footer {
   flex-wrap: wrap;
   gap: 20px;
 }
-.footer-logo {
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--content-40);
-}
-.footer-logo span { color: var(--primary); }
+.footer-logo { display: flex; align-items: center; }
+.footer-logo-img { height: 24px; width: auto; display: block; }
 .footer-links {
   display: flex;
   gap: 24px;

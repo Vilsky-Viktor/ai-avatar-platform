@@ -43,8 +43,9 @@ const SERVICE_NAME = process.env.SERVICE_NAME || 'job-manager';
 export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: PhotoJobRequest = req.body;
-  jobRequest.prompt = jobRequest.prompt.slice(0, MAX_PROMPT_TEXT_CHARS);
   const imageId = uuid.v4();
+
+  jobRequest.prompt = jobRequest.prompt.slice(0, MAX_PROMPT_TEXT_CHARS).replace(/\[image(\d+)\]/g, 'image $1');
 
   setLogContext(userId, jobRequest.avatarId);
   try {
@@ -193,9 +194,11 @@ export const genAvatarPhotoSet = async (req: Request, res: Response, next: NextF
 export const genAvatarVideo = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.headers['x-user-id'] as string;
   const jobRequest: VideoJobRequest = req.body;
-  jobRequest.prompt = jobRequest.prompt.slice(0, MAX_PROMPT_TEXT_CHARS);
+  
   if (jobRequest.audioText) jobRequest.audioText = jobRequest.audioText.slice(0, MAX_VIDEO_AUDIO_TEXT_CHARS);
   const videoId = uuid.v4();
+
+  jobRequest.prompt = jobRequest.prompt.slice(0, MAX_PROMPT_TEXT_CHARS).replace(/\[object(\d+)\]/g, '@Element$1');
 
   setLogContext(userId, jobRequest.avatarId);
   try {

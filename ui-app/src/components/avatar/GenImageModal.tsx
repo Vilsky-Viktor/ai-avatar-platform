@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import type { Avatar } from '@loom24/shared/types';
 import { MIN_PROMPT_TEXT_CHARS, MAX_PROMPT_TEXT_CHARS } from '@loom24/shared/types';
@@ -6,9 +6,66 @@ import { type ImageRatio, IMAGE_RATIOS } from '../../types/image';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import Loading from '../Loading';
-import TextareaWithCounter from '../TextareaWithCounter';
 
 const EMPTY_SLOTS: [null, null, null] = [null, null, null];
+
+function renderHighlighted(text: string) {
+    const display = text.endsWith('\n') ? text + ' ' : text;
+    return display.split(/(\[[^\]]+\])/g).map((part, idx) =>
+        /^\[[^\]]+\]$/.test(part)
+            ? <span key={idx} className="bg-primary/20 text-primary rounded">{part}</span>
+            : <span key={idx}>{part}</span>
+    );
+}
+
+type PromptTextareaProps = {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    maxLength: number;
+    placeholder?: string;
+    rows?: number;
+    autoFocus?: boolean;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+};
+
+const PromptTextarea = forwardRef<HTMLTextAreaElement, PromptTextareaProps>(
+    ({ value, onChange, maxLength, placeholder, rows, autoFocus, onKeyDown }, ref) => {
+        const overlayRef = useRef<HTMLDivElement>(null);
+        const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+            if (overlayRef.current) overlayRef.current.scrollTop = e.currentTarget.scrollTop;
+        };
+        return (
+            <div className="flex flex-col bg-base-200/50 border border-base-content/10 rounded-2xl focus-within:border-primary/40 transition-colors">
+                <div className="relative">
+                    <div
+                        ref={overlayRef}
+                        aria-hidden
+                        className="absolute inset-0 px-5 pt-4 pb-2 text-sm whitespace-pre-wrap break-words pointer-events-none overflow-hidden"
+                    >
+                        {renderHighlighted(value)}
+                    </div>
+                    <textarea
+                        ref={ref}
+                        value={value}
+                        onChange={onChange}
+                        onKeyDown={onKeyDown}
+                        onScroll={handleScroll}
+                        placeholder={placeholder}
+                        rows={rows}
+                        autoFocus={autoFocus}
+                        maxLength={maxLength}
+                        className="relative w-full bg-transparent px-5 pt-4 pb-2 text-sm text-transparent caret-base-content placeholder:text-base-content/25 resize-none focus:outline-none"
+                    />
+                </div>
+                <span className={`text-center text-[10px] tabular-nums pt-2 pb-2.5 border-t transition-colors ${value.length >= maxLength ? 'text-error border-error/20' : 'text-base-content/25 border-base-content/8'}`}>
+                    {value.length}/{maxLength}
+                </span>
+            </div>
+        );
+    }
+);
+
+PromptTextarea.displayName = 'PromptTextarea';
 
 type Props = {
     isOpen: boolean;
@@ -63,7 +120,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
     };
 
     const insertReference = (idx: number) => {
-        const tag = `image ${idx + 1}`;
+        const tag = `[image${idx + 1}]`;
         const el = textareaRef.current;
         if (!el) return;
         const start = el.selectionStart ?? prompt.length;
@@ -103,7 +160,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                 {/* Prompt */}
                 <div className="flex flex-col gap-2">
                     <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Prompt</span>
-                    <TextareaWithCounter
+                    <PromptTextarea
                         ref={textareaRef}
                         autoFocus
                         value={prompt}
@@ -151,7 +208,7 @@ function GenImageModal({ isOpen, onClose, avatar, onGenerate }: Props) {
                                                 </span>
                                                 <button
                                                     onClick={() => removeSlot(idx)}
-                                                    className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
+                                                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-error transition-all cursor-pointer"
                                                 >
                                                     <Trash2 size={15} className="text-white" />
                                                 </button>
