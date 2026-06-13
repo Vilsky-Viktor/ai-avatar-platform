@@ -301,11 +301,11 @@ nav {
   width: 68%;
   aspect-ratio: 3 / 4;
   border-radius: var(--radius-2xl);
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--content-5);
   background: var(--base-200);
 }
-.hero-card img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.hero-card img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: calc(var(--radius-2xl) - 1px); overflow: hidden; display: block; }
 .hero-card:first-child {
   left: calc(-20% + 10px);
   bottom: 0;
@@ -332,6 +332,21 @@ nav {
   border: 1px solid var(--content-10);
   border-radius: 999px;
 }
+.hero-card-insta {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--content-25);
+  transition: color .2s;
+  white-space: nowrap;
+}
+.hero-card-insta:hover { color: var(--primary); }
 
 /* ─── FIDELITY ─── */
 .fidelity-section {
@@ -1056,11 +1071,55 @@ nav {
   font-size: 0.9rem;
   color: var(--primary);
 }
+.creator-copy-icon {
+  color: var(--content-25);
+  flex-shrink: 0;
+}
+.creator-email-btn.creator-email-copied {
+  color: var(--success);
+  border-color: var(--success-30);
+}
+.creator-email-btn.creator-email-copied .creator-copy-icon { display: none; }
 
 /* ─── CLOSING QUOTE ─── */
 .closing-quote-section {
   padding: 100px 0 80px;
   text-align: center;
+}
+.closing-socials-card {
+  display: inline-flex;
+  margin-top: 56px;
+  background: var(--base-100);
+  border: 1px solid var(--content-5);
+  border-radius: var(--radius-2xl);
+  padding: 36px 56px;
+}
+.closing-socials {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 96px;
+}
+.closing-social-link {
+  color: var(--content-25);
+  transition: color .2s, transform .2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.closing-social-link .fa-brands {
+  font-size: 60px;
+  line-height: 1;
+}
+.closing-social-link:hover {
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+.closing-social-name {
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
 }
 .closing-quote {
   position: relative;
