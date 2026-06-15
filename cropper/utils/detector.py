@@ -5,8 +5,11 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
+import torch
 from PIL import Image, ImageFilter
 from ultralytics import YOLO
+
+torch.set_num_threads(1)
 
 
 CropMode = Literal["front", "quarter", "side", "full_body"]
