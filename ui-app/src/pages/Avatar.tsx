@@ -83,16 +83,23 @@ function AvatarPage() {
                     }
                 }
 
+                const existingJob = jobsRef.current.find(j => j?.id === job.id);
+                const transitionedToCompleted =
+                    existingJob &&
+                    existingJob.status !== JobStatuses.completed &&
+                    job.status === JobStatuses.completed;
+
                 setJobs(prev => {
                     const idx = prev.findIndex(j => j?.id === job.id);
                     if (idx === -1 || prev[idx]?.status === job.status) return prev;
-                    if (job.status === JobStatuses.completed) {
-                        if (job.mediaType === MediaTypes.image) setNumImages(n => n + 1);
-                        else if (job.mediaType === MediaTypes.video) setNumVideos(n => n + 1);
-                        else if (job.mediaType === MediaTypes.audio) setNumAudios(n => n + 1);
-                    }
                     return prev.map((j, i) => i === idx ? job : j);
                 });
+
+                if (transitionedToCompleted) {
+                    if (job.mediaType === MediaTypes.image) setNumImages(n => n + 1);
+                    else if (job.mediaType === MediaTypes.video) setNumVideos(n => n + 1);
+                    else if (job.mediaType === MediaTypes.audio) setNumAudios(n => n + 1);
+                }
             }
         });
 
