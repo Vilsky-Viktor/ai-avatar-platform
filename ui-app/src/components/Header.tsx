@@ -23,7 +23,7 @@ function Header() {
         <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between px-6 pt-4 pointer-events-none">
             <div className="pointer-events-auto">
                 <Link to="/" className="flex items-center cursor-pointer">
-                    <img src="/logo.png" alt="Loom24.ai" className="h-8 w-auto" />
+                    <img src="/logo.png" alt="Loom24.ai" className="h-7 w-auto" />
                 </Link>
             </div>
 
@@ -40,9 +40,6 @@ function Header() {
                         <div className="flex items-baseline gap-1.5">
                             <span className="text-sm tabular-nums text-base-content/80 group-hover:text-base-content transition-colors duration-200">
                                 {(user?.credits || 0).toLocaleString('de-DE')}
-                            </span>
-                            <span className="text-[9px] uppercase tracking-[0.15em] text-base-content/35 group-hover:text-primary/60 transition-colors duration-200">
-                                pulses
                             </span>
                         </div>
                     </div>

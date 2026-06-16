@@ -73,7 +73,7 @@ export const genAvatarPhoto = async (req: Request, res: Response, next: NextFunc
       prompt: `${jobRequest.prompt}. Preserve the exact same identity and face from image ${idPhotoStart} through ${idPhotoEnd}`,
       negativePrompt: 'disproportion, low quality, blurred face, blurry, distorted face, warped facial features, wrong body type, wrong body hair density, another person, changed identity, low resolution, compression artifacts',
       imagePaths: [...(jobRequest.mediaPaths ?? []), ...idPhotos],
-      temperature: 0.3,
+      temperature: 0,
       ratio: jobRequest.ratio,
       uploadPath: generatorUploadPath,
       status: JobStatuses.pending,

@@ -445,22 +445,24 @@ function GenVideoModal({ isOpen, onClose, avatar, onGenerate, onMimicMotion }: P
                     </div>
 
                     {/* Length slider */}
-                    {!generateVoice && <div className="relative rounded-2xl border border-base-content/10 px-6 py-5 flex flex-col gap-3 overflow-hidden">
+                    {!generateVoice && <div className="relative rounded-2xl border border-base-content/10 px-6 py-5 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <span className="text-xs uppercase tracking-[0.25em] text-base-content/40">Duration</span>
                             <span className="text-2xl text-primary tabular-nums leading-none">
                                 {durationSec}<span className="text-sm text-base-content/30 ml-1">sec</span>
                             </span>
                         </div>
-                        <input
-                            type="range"
-                            min={MIN_VIDEO_DURATION_SEC}
-                            max={MAX_VIDEO_DURATION_SEC}
-                            step={1}
-                            value={durationSec}
-                            onChange={e => setLengthSec(Number(e.target.value))}
-                            className="range range-primary range-sm w-full"
-                        />
+                        <div className="w-full @container">
+                            <input
+                                type="range"
+                                min={MIN_VIDEO_DURATION_SEC}
+                                max={MAX_VIDEO_DURATION_SEC}
+                                step={1}
+                                value={durationSec}
+                                onChange={e => setLengthSec(Number(e.target.value))}
+                                className="range range-primary range-sm w-full"
+                            />
+                        </div>
                         <div className="flex justify-between px-0.5">
                             {Array.from({ length: MAX_VIDEO_DURATION_SEC - MIN_VIDEO_DURATION_SEC + 1 }, (_, index) => index + MIN_VIDEO_DURATION_SEC).map(n => (
                                 <span key={n} className={`text-[10px] tabular-nums transition-colors duration-200 ${n === durationSec ? 'text-primary' : 'text-base-content/25'}`}>{n}</span>

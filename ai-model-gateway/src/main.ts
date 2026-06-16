@@ -23,7 +23,7 @@ google.authenticate().catch((err) => {
 import sharp from 'sharp';
 import { sendJob, uploadToBucket } from '@loom24/shared/services';
 import { getJob } from './services/jobManagerService';
-import { getMediaDuration } from './utils/mediaDuration';
+import { getMediaInfo } from './utils/mediaDuration';
 import { AiModelGateway, Job, JobStatuses, MediaTypes, Services, WorkflowStep } from '@loom24/shared/types';
 import { generate, RateLimitError } from './controllers/generatorController';
 
@@ -106,15 +106,17 @@ function listenForResults() {
 
       if (result.type === MediaTypes.image || result.type === MediaTypes.video || result.type === MediaTypes.audio) {
         let dimensions: string | undefined;
+        let durationSec: number | undefined;
+
         if (result.type === MediaTypes.image) {
           const imageInfo = await sharp(result.data as Buffer).metadata();
           if (imageInfo.width && imageInfo.height) dimensions = `${imageInfo.width}x${imageInfo.height}`;
         }
 
-        let durationSec: number | undefined;
         if (result.type === MediaTypes.video || result.type === MediaTypes.audio) {
-          const mediaDuration = await getMediaDuration(result.data as Buffer);
-          if (mediaDuration != null) durationSec = Math.ceil(mediaDuration);
+          const mediaInfo = await getMediaInfo(result.data as Buffer);
+          if (mediaInfo.duration != null) durationSec = Math.ceil(mediaInfo.duration);
+          if (mediaInfo.dimensions) dimensions = mediaInfo.dimensions;
         }
 
         job.metadata = { ...job.metadata, ratio: stepData.ratio, dimensions, durationSec };
