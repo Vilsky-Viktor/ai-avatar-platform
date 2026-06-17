@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q7TM00MMMY"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-Q7TM00MMMY');
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Loom24.ai — Hyper-realistic AI avatars</title>
@@ -1126,6 +1134,46 @@
       }, 2000);
     });
   }
+
+  // avatar Instagram clicks
+  document.querySelectorAll('.hero-card-insta').forEach(el => {
+    el.addEventListener('click', () => {
+      gtag('event', 'avatar_instagram_click', { handle: el.textContent.trim() });
+    });
+  });
+
+  // GA custom events
+  document.querySelectorAll('.nav-desktop-cta, .nav-mobile-cta').forEach(el => {
+    el.addEventListener('click', () => gtag('event', 'join_waitlist_click', { source: 'nav' }));
+  });
+
+  document.getElementById('heroForm').addEventListener('submit', () => {
+    gtag('event', 'get_early_access_submit', { source: 'hero' });
+  });
+
+  document.getElementById('waitlistForm').addEventListener('submit', () => {
+    gtag('event', 'notify_me_submit', { source: 'waitlist' });
+  });
+
+  document.querySelector('a[href*="ko-fi.com"]')?.addEventListener('click', () => {
+    gtag('event', 'support_kofi_click');
+  });
+
+  document.getElementById('investorForm').addEventListener('submit', () => {
+    gtag('event', 'send_message_submit', { source: 'investor' });
+  });
+
+  document.querySelectorAll('.closing-social-link').forEach(el => {
+    el.addEventListener('click', () => {
+      gtag('event', 'social_click', { platform: el.getAttribute('aria-label') });
+    });
+  });
+
+  audTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      gtag('event', 'audience_tab_click', { tab: tab.dataset.tab });
+    });
+  });
 
 </script>
 
