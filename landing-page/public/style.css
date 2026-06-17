@@ -168,6 +168,7 @@ nav {
   padding: 0 28px;
 }
 .nav-logo { display: flex; align-items: center; }
+.nav-desktop-cta { padding: 8px 18px; font-size: 0.68rem; }
 .nav-logo-img { height: 28px; width: auto; display: block; }
 .nav-links {
   display: flex;
