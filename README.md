@@ -132,3 +132,7 @@ workflow: [
 ### Job statuses
 
 `pending` → `generating` → `completed` | `error`
+
+### Developer
+
+Developed by Viktor Vilskyi [viktor.vilskyi@gmail.com]
