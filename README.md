@@ -2,6 +2,8 @@
 
 AI-powered avatar media generation platform. Users create digital avatars and generate photos, videos, and audio of them using a multi-model AI pipeline.
 
+Youtube video is here - https://www.youtube.com/watch?v=DiuRsgTXekA&t=12s
+
 ## Architecture
 
 ```
