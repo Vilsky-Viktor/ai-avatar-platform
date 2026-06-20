@@ -53,6 +53,10 @@ Job pipeline (Google Cloud Pub/Sub):
 | [image-resizer](image-resizer/) | Pub/Sub | — | Resizes images to exact dimensions |
 | [video-trimmer](video-trimmer/) | Pub/Sub | — | Trims videos to a maximum duration in place |
 
+And other services for training LORAs and running inferences for Qwen Image Edit 2511, Flux 2 Dev and Wan 2.2.
+The training and inference services are not in use in the workflows but can be used as a working references.
+For golden images you need to have FA2, FA3 and Sage attention to be pre-compiled
+
 ## Shared Libraries
 
 | Package | Language | Description |
